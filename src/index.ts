@@ -78,6 +78,8 @@ export * from "./Documents/Operations/Etl/ConnectionString";
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
 export { CollectionDetails } from "./Documents/Operations/CollectionDetails";
+export * from "./Documents/Operations/Backups/BackupConfiguration";
+export * from "./Documents/Operations/Backups/BackupTaskType";
 export { DatabaseHealthCheckOperation } from "./Documents/Operations/DatabaseHealthCheckOperation";
 export { DetailedCollectionStatistics } from "./Documents/Operations/DetailedCollectionStatistics";
 export { GetDetailedCollectionStatisticsOperation } from "./Documents/Operations/GetDetailedCollectionStatisticsOperation";
@@ -135,6 +137,7 @@ export {
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
+export { GetServerWideExternalReplicationsResponse } from "./Documents/Operations/GetServerWideExternalReplicationsResponse";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
 export { KillOperationCommand } from "./Documents/Commands/KillOperationCommand";
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand";
@@ -184,6 +187,16 @@ export {
 export {
     PutPullReplicationAsHubOperation
 } from "./Documents/Operations/Replication/PutPullReplicationAsHubOperation";
+export * from "./Documents/Operations/Replication/DetailedReplicationHubAccess";
+export * from "./Documents/Operations/Replication/GetReplicationHubAccessOperation";
+export * from "./Documents/Operations/Replication/IExternalReplication";
+export * from "./Documents/Operations/Replication/PreventDeletionsMode";
+export * from "./Documents/Operations/Replication/PullReplicationMode";
+export * from "./Documents/Operations/Replication/RegisterReplicationHubAccessOperation";
+export * from "./Documents/Operations/Replication/ReplicationHubAccess";
+export * from "./Documents/Operations/Replication/ReplicationHubAccessResult";
+export * from "./Documents/Operations/Replication/ReplicationHubAccessResponse";
+export * from "./Documents/Operations/Replication/UnregisterReplicationHubAccessOperation";
 export {
     UpdatePullReplicationAsSinkOperation
 } from "./Documents/Operations/Replication/UpdatePullReplicationAsSinkOperation";
@@ -210,6 +223,7 @@ export * from "./Documents/Commands/StreamResultResponse";
 export * from "./Documents/Commands/StreamResult";
 export * from "./Documents/Session/Operations/BatchOperation";
 export * from "./Documents/Session/Operations/GetRevisionOperation";
+export * from "./Documents/Session/Operations/GetRevisionsCountOperation";
 export * from "./Documents/Lazy";
 export * from "./Documents/Session/Operations/Lazy/IEagerSessionOperations";
 export * from "./Documents/Session/Operations/Lazy/ILazyOperation";
@@ -223,6 +237,9 @@ export * from "./Documents/Session/Operations/Lazy/LazySuggestionQueryOperation"
 export * from "./Documents/Session/Operations/Lazy/LazyClusterTransactionOperations";
 export * from "./Documents/Session/Operations/Lazy/LazyGetCompareExchangeValueOperation";
 export * from "./Documents/Session/Operations/Lazy/LazyGetCompareExchangeValuesOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyConditionalLoadOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyRevisionOperation";
+export * from "./Documents/Session/Operations/Lazy/LazyRevisionOperations";
 
 export * from "./Documents/Session/Operations/LoadOperation";
 export * from "./Documents/Session/Operations/LoadStartingWithOperation";
@@ -234,6 +251,8 @@ export * from "./Documents/Operations/Attachments/PutAttachmentOperation";
 export * from "./Documents/Operations/PatchResult";
 export * from "./Documents/Operations/PatchStatus";
 export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation";
+export * from "./Documents/Operations/Revisions/GetRevisionsOperation";
+export * from "./Documents/Operations/Revisions/RevisionsResult";
 export * from "./Documents/Operations/RevisionsCollectionConfiguration";
 export * from "./Documents/Operations/RevisionsConfiguration";
 export * from "./Documents/Operations/DetailedDatabaseStatistics";
@@ -246,6 +265,9 @@ export * from "./Documents/Operations/Etl/EtlConfiguration";
 export * from "./Documents/Operations/Etl/RavenEtlConfiguration";
 export * from "./Documents/Operations/Etl/Sql/SqlEtlConfiguration";
 export * from "./Documents/Operations/Etl/Sql/SqlEtlTable";
+export * from "./Documents/Operations/Etl/Olap/OlapEtlConfiguration";
+export * from "./Documents/Operations/Etl/Olap/OlapEtlFileFormat";
+export * from "./Documents/Operations/Etl/Olap/OlapEtlTable";
 export * from "./Documents/Operations/Etl/Transformation";
 export * from "./Documents/Operations/Expiration/ExpirationConfiguration";
 export * from "./Documents/Operations/Replication/PullReplicationAsSink";
@@ -312,19 +334,25 @@ export * from "./Documents/Operations/Backups/RetentionPolicy";
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
 export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation";
 export * from "./Documents/Indexes/Enums";
+export * from "./Documents/Indexes/IndexDeploymentMode";
 export * from "./Documents/Indexes/IndexDefinition";
 export * from "./Documents/Indexes/AbstractCommonApiForIndexes";
 export * from "./Documents/Indexes/AbstractIndexDefinitionBuilder";
 export * from "./Documents/Indexes/IAbstractIndexCreationTask";
 export * from "./Documents/Indexes/Errors";
+export * from "./Documents/Indexes/AdditionalAssembly";
 export * from "./Documents/Indexes/IndexDefinitionHelper";
 export * from "./Documents/Indexes/IndexFieldOptions";
 export * from "./Documents/Indexes/Spatial";
 export * from "./Documents/Indexes/IndexingStatus";
+export * from "./Documents/Indexes/RollingIndex";
+export * from "./Documents/Indexes/RollingIndexDeployment";
+export * from "./Documents/Indexes/RollingIndexState";
 export * from "./Documents/Indexes/IndexStats";
 export * from "./Documents/Indexes/IndexSourceType";
 export * from "./Documents/Indexes";
 export * from "./Documents/Indexes/StronglyTyped";
+export * from "./Documents/Indexes/Analysis/AnalyzerDefinition";
 export * from "./Documents/Indexes/AbstractCsharpIndexCreationTask";
 export * from "./Documents/Indexes/AbstractCsharpMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
@@ -335,11 +363,15 @@ export * from "./Documents/Indexes/AutoIndexFieldOptions";
 export * from "./Documents/Indexes/Spatial/AutoSpatialOptions";
 export * from "./Documents/Indexes/Counters/AbstractCountersIndexCreationTask";
 export * from "./Documents/Indexes/Counters/AbstractGenericCountersIndexCreationTask";
+export * from "./Documents/Indexes/Counters/AbstractCsharpCountersIndexCreationTask";
 export * from "./Documents/Indexes/Counters/AbstractMultiMapCountersIndexCreationTask";
+export * from "./Documents/Indexes/Counters/AbstractRawJavaScriptCountersIndexCreationTask";
 export * from "./Documents/Indexes/Counters/CountersIndexDefinition";
 export * from "./Documents/Indexes/Counters/CountersIndexDefinitionBuilder";
 export * from "./Documents/Indexes/TimeSeries/AbstractGenericTimeSeriesIndexCreationTask";
 export * from "./Documents/Indexes/TimeSeries/AbstractMultiMapTimeSeriesIndexCreationTask";
+export * from "./Documents/Indexes/TimeSeries/AbstractCsharpTimeSeriesIndexCreationTask";
+export * from "./Documents/Indexes/TimeSeries/AbstractRawJavaScriptTimeSeriesIndexCreationTask";
 export * from "./Documents/Indexes/TimeSeries/AbstractTimeSeriesIndexCreationTask";
 export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinition";
 export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinitionBuilder";
@@ -384,6 +416,8 @@ export * from "./Documents/Session/GraphDocumentQuery";
 export * from "./Documents/Session/GroupByDocumentQuery";
 export * from "./Documents/Session/GroupByField";
 export * from "./Documents/Session/IAbstractDocumentQuery";
+export * from "./Documents/Session/IAbstractDocumentQueryImpl";
+export * from "./Documents/Session/ILazyRevisionsOperations";
 export * from "./Documents/Session/IAdvancedSessionOperations";
 export * from "./Documents/Session/IDocumentQuery";
 export * from "./Documents/Session/IDocumentQueryBase";
@@ -423,10 +457,14 @@ export *  from "./Documents/Session/SessionDocumentTimeSeries";
 export *  from "./Documents/Session/SessionDocumentTypedTimeSeries";
 export *  from "./Documents/Session/SessionTimeSeriesBase";
 export * from "./Documents/Session/Loaders/ICounterIncludeBuilder";
+export * from "./Documents/Session/Loaders/IAbstractTimeSeriesIncludeBuilder";
 export * from "./Documents/Session/Loaders/ICompareExchangeValueIncludeBuilder";
 export * from "./Documents/Session/Loaders/IDocumentIncludeBuilder";
 export * from "./Documents/Session/Loaders/IGenericIncludeBuilder";
+export * from "./Documents/Session/Loaders/IGenericTimeSeriesIncludeBuilder";
 export * from "./Documents/Session/Loaders/ISubscriptionIncludeBuilder";
+export * from "./Documents/Session/Loaders/ISubscriptionTimeSeriesIncludeBuilder";
+export * from "./Documents/Session/Loaders/TimeSeriesIncludeBuilder";
 export * from "./Documents/Session/Loaders/SubscriptionIncludeBuilder";
 export * from "./Documents/Session/Loaders/ILazyLoaderWithInclude";
 export * from "./Documents/Session/Loaders/ILoaderWithInclude";
@@ -444,6 +482,7 @@ export * from "./Documents/Session/IRevisionsSessionOperations";
 export * from "./Documents/Session/ResponseTimeInformation";
 export * from "./Documents/Session/MetadataObject";
 export * from "./Documents/Session/TransactionMode";
+export * from "./Documents/Session/ConditionalLoadResult";
 export * from "./Documents/Session/IClusterTransactionOperations";
 export * from "./Documents/Session/ISessionDocumentCounters";
 export * from "./Documents/Session/ClusterTransactionOperations";
@@ -510,8 +549,12 @@ export { TimeSeriesItemDetail } from "./Documents/Operations/TimeSeries/TimeSeri
 export { TimeSeriesOperation } from "./Documents/Operations/TimeSeries/TimeSeriesOperation";
 export { TimeSeriesPolicy } from "./Documents/Operations/TimeSeries/TimeSeriesPolicy";
 export { TimeSeriesRange } from "./Documents/Operations/TimeSeries/TimeSeriesRange";
+export { TimeSeriesCountRange } from "./Documents/Operations/TimeSeries/TimeSeriesCountRange";
+export { TimeSeriesRangeType } from "./Documents/Operations/TimeSeries/TimeSeriesRangeType";
+export { TimeSeriesTimeRange } from "./Documents/Operations/TimeSeries/TimeSeriesTimeRange";
 export { TimeSeriesRangeResult } from "./Documents/Operations/TimeSeries/TimeSeriesRangeResult";
 export { TimeSeriesStatistics } from "./Documents/Operations/TimeSeries/TimeSeriesStatistics";
+export { AbstractTimeSeriesRange } from "./Documents/Operations/TimeSeries/AbstractTimeSeriesRange";
 
 // AUTH
 export * from "./Auth/AuthOptions";
@@ -528,6 +571,7 @@ export * from "./Documents/Queries/QueryOperator";
 export * from "./Documents/Queries/SearchOperator";
 export * from "./Documents/Queries/IIndexQuery";
 export * from "./Documents/Queries/GroupByMethod";
+export * from "./Documents/Queries/ProjectionBehavior";
 export * from "./Documents/Queries/Spatial/SpatialCriteriaFactory";
 export * from "./Documents/Queries/Spatial/SpatialCriteria";
 export * from "./Documents/Queries/Spatial/CircleCriteria";
@@ -596,6 +640,12 @@ export * from "./Documents/Attachments";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 export * from "./Documents/Operations/Attachments/AttachmentRequest";
 
+
+// ANALYZERS
+
+export * from "./Documents/Operations/Analyzers/DeleteAnalyzerOperation";
+export * from "./Documents/Operations/Analyzers/PutAnalyzersOperation";
+
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
 export * from "./Documents/Changes/DatabaseChangesOptions";
@@ -631,6 +681,7 @@ export * from "./Documents/Smuggler/IDatabaseSmugglerImportOptions";
 export * from "./Documents/Smuggler/DatabaseSmugglerOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerOptions";
 
+
 // Certificates
 export * from "./ServerWide/Operations/Certificates/CertificateDefinition";
 export * from "./ServerWide/Operations/Certificates/CertificateRawData";
@@ -644,7 +695,20 @@ export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperatio
 export * from "./ServerWide/Operations/Certificates/SecurityClearance";
 export * from "./ServerWide/Operations/AddDatabaseNodeOperation";
 export * from "./ServerWide/Operations/PromoteDatabaseNodeOperation";
-
+export * from "./ServerWide/Operations/Analyzers/DeleteServerWideAnalyzerOperation";
+export * from "./ServerWide/Operations/Analyzers/PutServerWideAnalyzersOperation";
+export * from "./ServerWide/Operations/DocumentsCompression/DocumentCompressionConfigurationResult";
+export * from "./ServerWide/Operations/DocumentsCompression/UpdateDocumentsCompressionConfigurationOperation";
+export * from "./ServerWide/Operations/OngoingTasks/IServerWideTask";
+export * from "./ServerWide/Operations/OngoingTasks/DeleteServerWideTaskOperation";
+export * from "./ServerWide/Operations/OngoingTasks/SetDatabasesLockOperation";
+export * from "./ServerWide/Operations/OngoingTasks/ToggleServerWideTaskStateOperation";
+export * from "./ServerWide/Operations/OngoingTasks/GetServerWideExternalReplicationOperation";
+export * from "./ServerWide/Operations/OngoingTasks/PutServerWideExternalReplicationOperation";
+export * from "./ServerWide/Operations/OngoingTasks/ServerWideTaskResponse";
+export * from "./ServerWide/Operations/OngoingTasks/ServerWideExternalReplication";
+export * from "./ServerWide/Operations/Sorters/DeleteServerWideSorterOperation";
+export * from "./ServerWide/Operations/Sorters/PutServerWideSortersOperation";
 
 
 // MAPPING

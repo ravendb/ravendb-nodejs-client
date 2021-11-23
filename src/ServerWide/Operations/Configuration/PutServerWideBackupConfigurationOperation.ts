@@ -8,7 +8,10 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
-import { ServerWideTaskResponse } from "../OngoingTasks/ServerWideTaskResponse";
+import {
+    PutServerWideBackupConfigurationResponse,
+    ServerWideTaskResponse
+} from "../OngoingTasks/ServerWideTaskResponse";
 
 export class PutServerWideBackupConfigurationOperation implements IServerOperation<PutServerWideBackupConfigurationResponse> {
     private readonly _configuration: ServerWideBackupConfiguration;
@@ -67,7 +70,4 @@ class PutServerWideBackupConfigurationCommand extends RavenCommand<PutServerWide
     async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         return this._parseResponseDefaultAsync(bodyStream);
     }
-}
-
-export interface PutServerWideBackupConfigurationResponse extends ServerWideTaskResponse {
 }
