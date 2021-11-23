@@ -18,7 +18,7 @@ describe("TimeSeriesBulkInsertTest", function () {
         await disposeTestDocumentStore(store));
 
     it("canCreateSimpleTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -56,7 +56,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canCreateSimpleTimeSeries2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -90,7 +90,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canDeleteTimestamp", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -156,7 +156,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("usingDifferentTags", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -205,7 +205,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("usingDifferentNumberOfValues_SmallToLarge", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -269,7 +269,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("usingDifferentNumberOfValues_LargeToSmall", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -334,7 +334,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canStoreAndReadMultipleTimestamps", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -396,7 +396,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canStoreLargeNumberOfValues", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -438,7 +438,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canStoreValuesOutOfOrder", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -511,7 +511,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canRequestNonExistingTimeSeriesRange", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -549,7 +549,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canGetTimeSeriesNames", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId1 = "users/karmel";
         const documentId2 = "users/ayende";
 
@@ -649,7 +649,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canGetTimeSeriesNames2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -733,7 +733,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     }).timeout(100_000);
 
     it("shouldDeleteTimeSeriesUponDocumentDeletion", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -781,7 +781,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canSkipAndTakeTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -820,7 +820,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("canStoreAndReadMultipleTimeseriesForDifferentDocuments", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId1 = "users/ayende";
         const documentId2 = "users/grisha";
@@ -924,7 +924,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     it("canAppendALotOfTimeSeries", async () => {
         const numberOfTimeSeries = 10 * 1024;
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         let offset = 0;
@@ -977,7 +977,7 @@ describe("TimeSeriesBulkInsertTest", function () {
     });
 
     it("errorHandling", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const documentId = "users/ayende";
 
         {
@@ -1057,7 +1057,7 @@ describe("TimeSeriesBulkInsertTest", function () {
         const count = 100;
         const size = 64 * 1024;
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const streams = new Map<string, Map<string, Buffer>>();
         const counters = new Map<string, string>();

@@ -26,7 +26,7 @@ import { delay } from "bluebird";
         await disposeTestDocumentStore(store));
 
     it("canIncludeTypedTimeSeries", async () => {
-        const baseLine = moment().startOf("month");
+        const baseLine = moment().utc().startOf("month");
 
         {
             const session = store.openSession();
@@ -63,7 +63,7 @@ import { delay } from "bluebird";
 
     it("canServeTimeSeriesFromCache_Typed", async function () {
         //RavenDB-16136
-        const baseLine = moment().startOf("month");
+        const baseLine = moment().utc().startOf("month");
 
         const id = "users/gabor";
 
@@ -100,7 +100,7 @@ import { delay } from "bluebird";
     });
 
     it("includeTimeSeriesAndMergeWithExistingRangesInCache_Typed", async function () {
-        const baseLine = moment().startOf("month");
+        const baseLine = moment().utc().startOf("month");
 
         const documentId = "users/ayende";
 
@@ -435,7 +435,7 @@ import { delay } from "bluebird";
     });
 
     it("includeTimeSeriesAndUpdateExistingRangeInCache_Typed", async function () {
-        const baseLine = moment().startOf("month");
+        const baseLine = moment().utc().startOf("month");
 
         {
             const session = store.openSession();
@@ -528,7 +528,7 @@ import { delay } from "bluebird";
 
         const total = TimeValue.ofDays(12).value;
 
-        const baseLine = moment().startOf("month").add(-12, "days");
+        const baseLine = moment().utc().startOf("month").add(-12, "days");
 
         {
             const session = store.openSession();
@@ -552,7 +552,7 @@ import { delay } from "bluebird";
             await session.saveChanges();
         }
 
-        await delay(1_200); // wait for rollups
+        await delay(2_000); // wait for rollups
 
         {
             const session = store.openSession();
@@ -591,7 +591,7 @@ import { delay } from "bluebird";
         await store.timeSeries.register(User, StockPrice);
 
         const total = TimeValue.ofDays(12).value;
-        const baseLine = moment().startOf("month").add(-12, "days");
+        const baseLine = moment().utc().startOf("month").add(-12, "days");
 
         {
             const session = store.openSession();
@@ -613,7 +613,7 @@ import { delay } from "bluebird";
             await session.saveChanges();
         }
 
-        await delay(1_200); // wait for rollups
+        await delay(2_000); // wait for rollups
 
         {
             const session = store.openSession();

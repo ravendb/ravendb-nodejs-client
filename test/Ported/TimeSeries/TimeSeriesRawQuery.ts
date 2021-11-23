@@ -20,7 +20,7 @@ describe("TimeSeriesRawQuery", function () {
         await disposeTestDocumentStore(store));
 
     it("canQueryTimeSeriesAggregation_DeclareSyntax_WithOtherFields", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -95,7 +95,7 @@ select out(p) as heartRate, p.name`, RawQueryResult)
     });
 
     it("canQueryTimeSeriesAggregation_DeclareSyntax_MultipleSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const baseLine2 = baseLine.clone().add(-1, "day");
 
         {
@@ -206,7 +206,7 @@ select out(p) as heartRate, p.name`, RawQueryResult)
     });
 
     it("canQueryTimeSeriesAggregation_NoSelectOrGroupBy_MultipleValues", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

@@ -177,10 +177,10 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                         .increment("test");
 
                     s.timeSeriesFor("users/pheobe", HeartRateMeasure)
-                        .append(moment().startOf("day").toDate(), HeartRateMeasure.create(34), "test/things/out");
+                        .append(testContext.utcToday().toDate(), HeartRateMeasure.create(34), "test/things/out");
 
                     s.timeSeriesFor("users/ayende", HeartRateMeasure)
-                        .append(moment().startOf("day").toDate(), HeartRateMeasure.create(55), "test/things/out");
+                        .append(testContext.utcToday().toDate(), HeartRateMeasure.create(55), "test/things/out");
 
                     s.advanced.attachments.store("users/ayende", "test.bin", Buffer.from("hello"));
                     s.advanced.attachments.store("users/pheobe", "test.bin", Buffer.from("hello"));
@@ -260,7 +260,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                     const s = storeB.openSession();
                     assertThat(await s.load("users/pheobe"))
                         .isNull();
-                    assertThat(await s.advanced.revisions.get("users/pheobe", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/pheobe", testContext.utcToday().add(1, "day").toDate()))
                         .isNull();
                     assertThat(await s.countersFor("users/pheobe").get("test"))
                         .isNull();
@@ -273,7 +273,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                         .isNotNull();
                     assertThat(await s.load("users/ayende", User))
                         .isNotNull();
-                    assertThat(await s.advanced.revisions.get("users/ayende", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/ayende", testContext.utcToday().add(1, "day").toDate()))
                         .isNotNull();
                     assertThat(await s.countersFor("users/ayende").get("test"))
                         .isNotNull();
@@ -303,7 +303,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                     assertThat(await s.load("users/ayende", User))
                         .isNotNull();
 
-                    assertThat(await s.advanced.revisions.get("users/ayende", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/ayende", testContext.utcToday().add(1, "day").toDate()))
                         .isNotNull();
 
                     assertThat(await s.countersFor("users/ayende").get("test"))
@@ -353,10 +353,10 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                         .increment("test");
 
                     s.timeSeriesFor("users/pheobe", HeartRateMeasure)
-                        .append(moment().startOf("day").toDate(), HeartRateMeasure.create(34), "test/things/out");
+                        .append(testContext.utcToday().toDate(), HeartRateMeasure.create(34), "test/things/out");
 
                     s.timeSeriesFor("users/ayende", HeartRateMeasure)
-                        .append(moment().startOf("day").toDate(), HeartRateMeasure.create(55), "test/things/out");
+                        .append(testContext.utcToday().toDate(), HeartRateMeasure.create(55), "test/things/out");
 
                     s.advanced.attachments.store("users/ayende", "test.bin", Buffer.from("hello"));
                     s.advanced.attachments.store("users/pheobe", "test.bin", Buffer.from("hello"));
@@ -437,7 +437,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                     const s = storeB.openSession();
                     assertThat(await s.load("users/pheobe", User))
                         .isNull();
-                    assertThat(await s.advanced.revisions.get("users/pheobe", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/pheobe", testContext.utcToday().add(1, "day").toDate()))
                         .isNull();
                     assertThat(await s.countersFor("users/pheobe").get("test"))
                         .isNull();
@@ -451,7 +451,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                         .isNotNull();
                     assertThat(await s.load("users/ayende", User))
                         .isNotNull();
-                    assertThat(await s.advanced.revisions.get("users/ayende", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/ayende", testContext.utcToday().add(1, "day").toDate()))
                         .isNotNull();
                     assertThat(await s.countersFor("users/ayende").get("test"))
                         .isNotNull();
@@ -481,7 +481,7 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
                     assertThat(await s.load("users/ayende", User))
                         .isNotNull();
 
-                    assertThat(await s.advanced.revisions.get("users/ayende", moment().startOf("day").add(1, "day").toDate()))
+                    assertThat(await s.advanced.revisions.get("users/ayende", testContext.utcToday().add(1, "day").toDate()))
                         .isNotNull();
 
                     assertThat(await s.countersFor("users/ayende").get("test"))

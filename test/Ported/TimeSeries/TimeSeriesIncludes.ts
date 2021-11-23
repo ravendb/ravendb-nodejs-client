@@ -18,7 +18,7 @@ describe("TimeSeriesIncludesTest", function () {
         await disposeTestDocumentStore(store));
 
     it("sessionLoadWithIncludeTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -88,7 +88,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("includeTimeSeriesAndMergeWithExistingRangesInCache", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -432,7 +432,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("includeTimeSeriesAndUpdateExistingRangeInCache", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -509,7 +509,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("includeMultipleTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -621,7 +621,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("shouldCacheEmptyTimeSeriesRanges", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -734,7 +734,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("multiLoadWithIncludeTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -814,7 +814,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("includeTimeSeriesAndDocumentsAndCounters", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -909,7 +909,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("queryWithIncludeTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -965,7 +965,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("canLoadAsyncWithIncludeTimeSeries_LastRange_ByCount", async function () {
-        const baseline = moment().startOf("day").add(12, "hours");
+        const baseline = testContext.utcToday().add(12, "hours");
 
         {
             const session = store.openSession();
@@ -1030,7 +1030,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByTime", async function () {
-        const baseline = moment().startOf("day");
+        const baseline = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -1117,7 +1117,7 @@ describe("TimeSeriesIncludesTest", function () {
     });
 
     it("canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByCount", async function () {
-        const baseline = moment().startOf("day").add(3, "hours");
+        const baseline = testContext.utcToday().add(3, "hours");
 
         {
             const session = store.openSession();
@@ -1598,7 +1598,7 @@ describe("TimeSeriesIncludesTest", function () {
 
 async function canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(store: IDocumentStore, byTime: boolean) {
 
-    const baseline = byTime ? moment() : moment().startOf("day");
+    const baseline = byTime ? moment() : testContext.utcToday();
 
     {
         const session = store.openSession();

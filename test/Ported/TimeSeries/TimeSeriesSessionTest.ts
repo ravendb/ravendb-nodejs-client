@@ -16,7 +16,7 @@ describe("TimeSeriesSessionTest", function () {
         await disposeTestDocumentStore(store));
 
     it("canCreateSimpleTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -47,7 +47,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canCreateSimpleTimeSeries2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -72,7 +72,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("timeSeriesShouldBeCaseInsensitiveAndKeepOriginalCasing", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -160,7 +160,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canDeleteTimestamp", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -215,7 +215,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("usingDifferentTags", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -257,7 +257,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("usingDifferentNumberOfValues_SmallToLarge", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -313,7 +313,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("usingDifferentNumberOfValues_LargeToSmall", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -370,7 +370,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canStoreAndReadMultipleTimestamps", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -428,7 +428,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canStoreLargeNumberOfValues", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -467,7 +467,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canStoreValuesOutOfOrder", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -542,7 +542,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canRequestNonExistingTimeSeriesRange", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -574,7 +574,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canGetTimeSeriesNames", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -646,7 +646,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canGetTimeSeriesNames2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -727,7 +727,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("shouldDeleteTimeSeriesUponDocumentDeletion", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const id = "users/ayende";
 
@@ -770,7 +770,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canSkipAndTakeTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -805,7 +805,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("shouldEvictTimeSeriesUponEntityEviction", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -938,7 +938,7 @@ describe("TimeSeriesSessionTest", function () {
     });
 
     it("canDeleteWithoutProvidingFromAndToDates", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const docId = "users/ayende";
 

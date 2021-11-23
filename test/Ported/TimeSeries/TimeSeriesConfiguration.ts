@@ -186,7 +186,7 @@ import {
 
         await store.maintenance.send(new ConfigureTimeSeriesOperation(config));
 
-        const baseLine = moment().startOf("day").subtract(1, "day");
+        const baseLine = testContext.utcToday().subtract(1, "day");
 
         {
             const session = store.openSession();

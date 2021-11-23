@@ -18,7 +18,7 @@ describe("TypedBulkInsert", function () {
         await disposeTestDocumentStore(store));
 
     it("canCreateSimpleTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -62,7 +62,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("canCreateSimpleTimeSeries2", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -101,7 +101,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("canCreateTimeSeriesWithoutPassingName", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -168,7 +168,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("canDeleteTimestamp", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -224,7 +224,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("usingDifferentTags", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -269,7 +269,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("canStoreAndReadMultipleTimestamps", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -426,7 +426,7 @@ describe("TypedBulkInsert", function () {
     });
 
     it("canStoreAndReadMultipleTimeseriesForDifferentDocuments", async function () {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId1 = "users/ayende";
         const documentId2 = "users/grisha";

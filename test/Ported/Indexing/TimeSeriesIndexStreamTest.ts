@@ -17,7 +17,7 @@ describe("TimeSeriesIndexStreamTest", function () {
         await disposeTestDocumentStore(store));
 
     it("basicMapIndex", async () => {
-        const now1 = moment().startOf("day");
+        const now1 = testContext.utcToday();
         const now2 = now1.clone().add(1, "second");
 
         {

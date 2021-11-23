@@ -18,7 +18,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetTimeSeriesWithIncludeTagDocuments", async () => {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -105,7 +105,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetTimeSeriesWithIncludeTagsAndParentDocument", async function () {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -202,7 +202,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetTimeSeriesWithInclude_CacheNotEmpty", async function() {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -317,7 +317,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetTimeSeriesWithInclude_CacheNotEmpty2", async function () {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -445,7 +445,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetMultipleRangesWithIncludes", async function () {
         const tags = [ "watches/fitbit", "watches/apple", "watches/sony" ];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -589,7 +589,7 @@ describe("RavenDB_14164Test", function () {
     it("canGetTimeSeriesWithIncludeTags_WhenNotAllEntriesHaveTags", async function () {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 
@@ -680,7 +680,7 @@ describe("RavenDB_14164Test", function () {
     it("includesShouldAffectTimeSeriesGetCommandEtag", async function () {
         const tags = ["watches/fitbit", "watches/apple", "watches/sony"];
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const documentId = "users/ayende";
 

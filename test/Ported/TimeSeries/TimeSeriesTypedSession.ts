@@ -112,7 +112,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("canCreateSimpleTimeSeries", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -140,7 +140,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("canCreateSimpleTimeSeries2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -170,7 +170,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("canRequestNonExistingTimeSeriesRange", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -256,7 +256,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("canQueryTimeSeriesAggregation_DeclareSyntax_AllDocsQuery", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -318,7 +318,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("canQueryTimeSeriesAggregation_NoSelectOrGroupBy", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -563,7 +563,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
     });
 
     it("usingDifferentNumberOfValues_LargeToSmall", async () => {
-        const baseLine = moment().startOf("day").add(-1, "days");
+        const baseLine = testContext.utcToday().add(-1, "days");
 
         {
             const session = store.openSession();
@@ -660,7 +660,7 @@ import { TypedTimeSeriesRollupEntry } from "../../../src/Documents/Session/TimeS
         await store.maintenance.send(new ConfigureTimeSeriesOperation(config));
         await store.timeSeries.register(User, StockPrice);
 
-        const now = moment().startOf("day");
+        const now = testContext.utcToday();
         const baseline = now.clone().add(-12, "days");
         const total = 60 * 24 * 12;
 

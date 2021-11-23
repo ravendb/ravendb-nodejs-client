@@ -35,7 +35,7 @@ describe("RDBC-501", function () {
 
     it("should properly map typed entries", async function () {
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

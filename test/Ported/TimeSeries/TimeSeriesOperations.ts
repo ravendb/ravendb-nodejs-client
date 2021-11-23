@@ -34,7 +34,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const append1 = new AppendOperation(baseLine.clone().add(1, "second").toDate(), [ 59 ], "watches/fitbit");
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
@@ -67,7 +67,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
         timeSeriesOp.append(new AppendOperation(baseLine.clone().add(1, "second").toDate(), [ 59 ], "watches/fitbit"));
@@ -96,7 +96,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
         timeSeriesOp
@@ -152,7 +152,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         let timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -281,7 +281,7 @@ describe("TimeSeriesOperations", function () {
     });
 
     it("canDeleteLargeRange", async () => {
-        const baseLine = moment().startOf("day").add(-1, "second");
+        const baseLine = testContext.utcToday().add(-1, "second");
 
         {
             const session = store.openSession();
@@ -422,7 +422,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         let timeSeriesOp = new TimeSeriesOperation("Heartrate");
         timeSeriesOp.append(new AppendOperation(baseLine.clone().add(1, "seconds").toDate(), [ 59 ], "watches/fitbit"));
@@ -479,7 +479,7 @@ describe("TimeSeriesOperations", function () {
     });
 
     it("shouldThrowOnAttemptToCreateTimeSeriesOnMissingDocument", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
         timeSeriesOp.append(new AppendOperation(baseLine.clone().add(1, "seconds").toDate(), [ 59 ], "watches/fitbit"));
@@ -504,7 +504,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -597,7 +597,7 @@ describe("TimeSeriesOperations", function () {
 
         // append
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         let timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -769,7 +769,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -804,7 +804,7 @@ describe("TimeSeriesOperations", function () {
                 await session.saveChanges();
             }
 
-            const baseLine = moment().startOf("day");
+            const baseLine = testContext.utcToday();
 
             const timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -841,7 +841,7 @@ describe("TimeSeriesOperations", function () {
             await session.saveChanges();
         }
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
@@ -871,7 +871,7 @@ describe("TimeSeriesOperations", function () {
     it("getTimeSeriesStatistics", async () => {
         const documentId = "users/ayende";
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -923,7 +923,7 @@ describe("TimeSeriesOperations", function () {
     });
 
     it("canDeleteWithoutProvidingFromAndToDates", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         const docId = "users/ayende";
 

@@ -24,7 +24,7 @@ import { ReplicationTestContext } from "../../Utils/ReplicationTestContext";
     });
 
     it("counters_and_force_revisions", async () => {
-        const today = moment().startOf("day");
+        const today = testContext.utcToday();
 
         {
             const storeA = await testContext.getDocumentStore();

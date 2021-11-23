@@ -20,7 +20,7 @@ import { OngoingTaskSubscription } from "../../../src/Documents/Operations/Ongoi
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 
 describe("SubscriptionsBasicTest", function () {
-    const _reasonableWaitTime = 5 * 1000;
+    const _reasonableWaitTime = 60 * 1000;
     this.timeout(5 * _reasonableWaitTime);
 
     let store: IDocumentStore;
@@ -131,7 +131,11 @@ describe("SubscriptionsBasicTest", function () {
         let errReject;
         const errPromise = new Promise((_, reject) => errReject = reject);
         subscription.on("error", err => errReject(err));
-        subscription.on("connectionRetry", err => errReject(err));
+        subscription.on("connectionRetry", err => {
+            if (!err.canReconnect) {
+                return errReject(err);
+            }
+        });
         return errPromise;
     }
 
@@ -183,7 +187,7 @@ describe("SubscriptionsBasicTest", function () {
         }
 
         async function assertResults() {
-            await delay(_reasonableWaitTime);
+            await delay(10_000);
             assert.strictEqual(keys.pop(), "users/3");
             assert.strictEqual(keys.pop(), "users/12");
             assert.strictEqual(keys.pop(), "users/1");
@@ -550,7 +554,8 @@ describe("SubscriptionsBasicTest", function () {
         ]));
     });
 
-    it("should stop pulling docs and close subscription on subscriber error by default", async function() {
+    //RavenDB-15919
+    it.skip("should stop pulling docs and close subscription on subscriber error by default", async function() {
         const id = await store.subscriptions.create(User);
 
         const subscription = store.subscriptions.getSubscriptionWorker({

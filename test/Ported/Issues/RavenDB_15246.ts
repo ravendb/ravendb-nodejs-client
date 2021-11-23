@@ -19,7 +19,7 @@ describe("RavenDB_15426", function () {
         await disposeTestDocumentStore(store));
 
     it("testClientCacheWithPageSize", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -75,7 +75,7 @@ describe("RavenDB_15426", function () {
     });
 
     it("testRanges", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const id = "users/1-A";
 
         {
@@ -207,7 +207,7 @@ describe("RavenDB_15426", function () {
     });
 
     it("testClientCacheWithStart", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -271,7 +271,7 @@ describe("RavenDB_15426", function () {
     });
 
     it("getResultsWithRange", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
         const id = "users/1-A";
 
         {
@@ -352,7 +352,7 @@ describe("RavenDB_15426", function () {
         const tag = "raven";
         const id = "users/1";
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -429,7 +429,7 @@ describe("RavenDB_15426", function () {
         const tag = "raven";
         const id = "users/1";
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

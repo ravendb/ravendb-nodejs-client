@@ -16,7 +16,7 @@ describe("RavenDB_15029", function () {
         await disposeTestDocumentStore(store));
 
     it("sessionRawQueryShouldNotTrackTimeSeriesResultAsDocument", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

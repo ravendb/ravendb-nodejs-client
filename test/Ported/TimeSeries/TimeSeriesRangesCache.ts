@@ -16,7 +16,7 @@ describe("TimeSeriesRangesCacheTest", function () {
         await disposeTestDocumentStore(store));
 
     it("shouldGetTimeSeriesValueFromCache", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -60,7 +60,7 @@ describe("TimeSeriesRangesCacheTest", function () {
     });
 
     it("shouldGetPartialRangeFromCache", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -118,7 +118,7 @@ describe("TimeSeriesRangesCacheTest", function () {
         const start = 5;
         const pageSize = 10;
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -175,7 +175,7 @@ describe("TimeSeriesRangesCacheTest", function () {
     });
 
     it("shouldMergeTimeSeriesRangesInCache", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -433,7 +433,7 @@ describe("TimeSeriesRangesCacheTest", function () {
     });
 
     it("shouldMergeTimeSeriesRangesInCache2", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -741,7 +741,7 @@ describe("TimeSeriesRangesCacheTest", function () {
     });
 
     it("shouldMergeTimeSeriesRangesInCache3", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -918,7 +918,7 @@ describe("TimeSeriesRangesCacheTest", function () {
     });
 
     it("canHandleRangesWithNoValues", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

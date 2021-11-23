@@ -18,7 +18,7 @@ describe("RavenDB_15792Test", function () {
     it("canQueryTimeSeriesWithSpacesInName", async () => {
         const documentId = "users/ayende";
 
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();

@@ -18,7 +18,7 @@ describe("TimeSeriesDocumentQuery", function () {
         await disposeTestDocumentStore(store));
 
     it("canQueryTimeSeriesUsingDocumentQuery", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
@@ -95,7 +95,7 @@ describe("TimeSeriesDocumentQuery", function () {
     });
 
     it("canQueryTimeSeriesRawValuesUsingDocumentQuery", async () => {
-        const baseLine = moment().startOf("day");
+        const baseLine = testContext.utcToday();
 
         {
             const session = store.openSession();
