@@ -31,6 +31,8 @@ import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations
     });
 
     it("seasame_st", async function () {
+        this.timeout(60_000);
+
         const hooper = await testContext.getSecuredDocumentStore();
         try {
             const bert = await testContext.getSecuredDocumentStore();
