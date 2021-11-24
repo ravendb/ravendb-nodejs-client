@@ -115,6 +115,7 @@ class MyIndex extends AbstractJavaScriptIndexCreationTask<Customer> {
 }
 
 
+// tslint:disable-next-line:variable-name
 export const RavenDB_16328_Analyzer = "using System.IO;\n" +
     "using Lucene.Net.Analysis;\n" +
     "using Lucene.Net.Analysis.Standard;\n" +

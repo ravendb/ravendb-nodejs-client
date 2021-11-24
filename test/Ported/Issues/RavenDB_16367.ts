@@ -176,7 +176,7 @@ describe("RavenDB_16367Test", function () {
         const databaseName = store.database + "_LockMode_1";
 
         await store.maintenance.server.send(new CreateDatabaseOperation({
-            databaseName: databaseName
+            databaseName
         }));
 
         await assertLockMode(store, databaseName, "Unlock");

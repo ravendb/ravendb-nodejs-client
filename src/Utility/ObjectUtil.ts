@@ -44,6 +44,7 @@ export class ObjectUtil {
             }
         } else if (TypeUtil.isObject(item)) {
             result = {};
+            // tslint:disable-next-line:forin
             for (const prop in item) {
                 result[prop] = ObjectUtil.deepLiteralClone(item[prop]);
             }

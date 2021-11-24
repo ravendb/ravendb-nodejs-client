@@ -340,7 +340,7 @@ export class SessionTimeSeriesBase {
     }
 
     private _registerIncludes(details: TimeSeriesDetails) {
-        for (let rangeResult of details.values.get(this.name)) {
+        for (const rangeResult of details.values.get(this.name)) {
             this._handleIncludes(rangeResult);
         }
     }

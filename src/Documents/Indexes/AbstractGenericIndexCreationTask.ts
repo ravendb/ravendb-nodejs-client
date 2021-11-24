@@ -89,6 +89,7 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
         this.indexSuggestions.add(field);
     }
 
+    // tslint:disable-next-line:function-name
     protected addAssembly(assembly: AdditionalAssembly) {
         if (!assembly) {
             throwError("InvalidArgumentException", "Assembly cannot be null");

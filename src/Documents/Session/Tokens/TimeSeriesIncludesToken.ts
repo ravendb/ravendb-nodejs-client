@@ -48,11 +48,11 @@ export class TimeSeriesIncludesToken extends QueryToken {
         }
 
         if ("count" in this._range) {
-            TimeSeriesIncludesToken.writeCountRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeCountRangeTo(writer, this._range);
         } else if ("time" in this._range) {
-            TimeSeriesIncludesToken.writeTimeRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeTimeRangeTo(writer, this._range);
         } else if ("from" in this._range && "to" in this._range) {
-            TimeSeriesIncludesToken.writeRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeRangeTo(writer, this._range);
         } else {
             throwError("InvalidArgumentException", "Not supported time range type: " + this._range);
         }
@@ -61,7 +61,7 @@ export class TimeSeriesIncludesToken extends QueryToken {
             .append(")");
     }
 
-    private static writeTimeRangeTo(writer: StringBuilder, range: TimeSeriesTimeRange) {
+    private static _writeTimeRangeTo(writer: StringBuilder, range: TimeSeriesTimeRange) {
         switch (range.type) {
             case "Last":
                 writer
@@ -78,7 +78,7 @@ export class TimeSeriesIncludesToken extends QueryToken {
             .append("')");
     }
 
-    private static writeCountRangeTo(writer: StringBuilder, range: TimeSeriesCountRange) {
+    private static _writeCountRangeTo(writer: StringBuilder, range: TimeSeriesCountRange) {
         switch (range.type) {
             case "Last":
                 writer
@@ -93,7 +93,7 @@ export class TimeSeriesIncludesToken extends QueryToken {
             .append(")");
     }
 
-    private static writeRangeTo(writer: StringBuilder, range: TimeSeriesRange) {
+    private static _writeRangeTo(writer: StringBuilder, range: TimeSeriesRange) {
         if (range.from) {
             writer
                 .append("'")

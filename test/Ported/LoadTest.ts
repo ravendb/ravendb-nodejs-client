@@ -64,7 +64,7 @@ describe("LoadTest - ported", function () {
     it("load_Document_And_Expect_Null_User", async function () {
         {
             const session = store.openSession();
-            let nullId: string;
+            const nullId: string = undefined;
             const user1 = await session.load(nullId, User);
             assertThat(user1)
                 .isNull();
