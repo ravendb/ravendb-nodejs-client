@@ -348,7 +348,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
                 hub = await testContext.getDocumentStore();
 
                 const definitionName = "pull-replication" + hub.database;
-                const timeout = 3_000;
+                const timeout = 10_000;
 
                 await hub.maintenance.forDatabase(hub.database)
                     .send(new PutPullReplicationAsHubOperation(definitionName));
