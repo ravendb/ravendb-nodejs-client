@@ -53,7 +53,7 @@ export class TypeUtil {
     }
 
     public static isDate(value: any): value is Date {
-        return value && value.constructor.name === "Date";
+        return value && value.constructor && value.constructor.name === "Date";
     }
 
     public static isBool(value: any): value is boolean {
