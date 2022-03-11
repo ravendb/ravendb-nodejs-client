@@ -30,6 +30,8 @@ interface Group<TDocument, TKey> {
 }
 
 export class IndexingGroupResults<TDocument> {
+
+    public groupBy<TKey>(selector: KeySelector<TDocument, TKey>): TKey extends void ? never : IndexingReduceResults<TDocument, TKey>;
     public groupBy<TKey>(selector: KeySelector<TDocument, TKey>): IndexingReduceResults<TDocument, TKey> {
         return new IndexingReduceResults<TDocument, TKey>(selector);
     }

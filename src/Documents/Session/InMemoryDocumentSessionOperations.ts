@@ -1568,7 +1568,7 @@ export abstract class InMemoryDocumentSessionOperations
                             result.entities.push(documentInfo.entity);
                         }
 
-                        result.onSuccess.removeDocumentByEntity(documentInfo.entity);
+                        result.onSuccess.removeDocumentById(documentInfo.id);
                     }
 
                     if (!this.useOptimisticConcurrency) {
