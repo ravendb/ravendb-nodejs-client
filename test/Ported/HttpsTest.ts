@@ -241,7 +241,26 @@ describe("HttpsTest", function () {
         } finally {
             securedStore.dispose();
         }
-    })
+    });
+
+    it("throws AuthorizationException when connecting to secured server w/o client certificate", async () => {
+        const storeWoCertificate = new DocumentStore(store.urls, store.database);
+        try {
+            storeWoCertificate.initialize();
+
+            await assertThrows(async () => {
+                const session = storeWoCertificate.openSession();
+                await session.load("users/1");
+            }, err => {
+                assertThat(err.name)
+                    .isEqualTo("AuthorizationException");
+                assertThat(err.message)
+                    .contains("server requires client certificate");
+            })
+        } finally {
+            storeWoCertificate.dispose();
+        }
+    });
 });
 
 async function extractCertificate(certificateRawData: CertificateRawData) {

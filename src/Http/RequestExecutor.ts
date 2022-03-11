@@ -1026,6 +1026,18 @@ export class RequestExecutor implements IDisposable {
                 throw e;
             }
 
+            // node.js fetch doesn't even send request to server is expected protocol is different from actual,
+            // so we need handle this case differently
+            // https://github.com/nodejs/node/blob/d8c4e375f21b8475d3b717d1d1120ad4eabf8f63/lib/_http_client.js#L157
+
+            if (e.code === "ERR_INVALID_PROTOCOL") {
+                if (chosenNode.url.startsWith("https://") && !this.getAuthOptions()?.certificate) {
+                    throwError("AuthorizationException", "This server requires client certificate for authentication, but none was provided by the client.", e);
+                }
+
+                throwError("AuthorizationException", "Invalid protocol", e);
+            }
+
             if (!shouldRetry) {
                 throw e;
             }
