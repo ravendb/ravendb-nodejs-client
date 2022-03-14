@@ -109,7 +109,7 @@ export class LoadStartingWithOperation {
         });
     }
 
-    private _getDocument<T extends object>(entityType: ObjectTypeDescriptor<T>, id: string): T {
+    private _getDocument<T extends object>(entityType: ObjectTypeDescriptor<T>, id: string): T | null {
         if (!id) {
             return null;
         }

@@ -108,7 +108,7 @@ export class GetRevisionOperation {
         return results;
     }
 
-    public getRevision<TEntity extends object>(documentType: DocumentType<TEntity>): TEntity {
+    public getRevision<TEntity extends object>(documentType: DocumentType<TEntity>): TEntity | null {
         if (!this._result) {
             return null;
         }

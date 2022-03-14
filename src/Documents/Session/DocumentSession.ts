@@ -117,13 +117,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public numberOfRequestsInSession: number;
 
     public async load<TEntity extends object = IRavenObject>(
-        id: string): Promise<TEntity>;
+        id: string): Promise<TEntity | null>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
-        options?: LoadOptions<TEntity>): Promise<TEntity>;
+        options?: LoadOptions<TEntity>): Promise<TEntity | null>;
     public async load<TEntity extends object = IRavenObject>(
         id: string,
-        documentType?: DocumentType<TEntity>): Promise<TEntity>;
+        documentType?: DocumentType<TEntity>): Promise<TEntity | null>;
     public async load<TEntity extends object = IRavenObject>(
         ids: string[]): Promise<EntitiesCollectionObject<TEntity>>;
     public async load<TEntity extends object = IRavenObject>(
@@ -138,7 +138,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         idOrIds: string | string[],
         optionsOrDocumentType?:
             DocumentType<TEntity> | LoadOptions<TEntity>)
-        : Promise<TEntity | EntitiesCollectionObject<TEntity>> {
+        : Promise<TEntity | null | EntitiesCollectionObject<TEntity>> {
 
         const isLoadingSingle = !Array.isArray(idOrIds);
         if (isLoadingSingle && StringUtil.isNullOrWhitespace(idOrIds as string)) {

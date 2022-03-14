@@ -24,13 +24,13 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
     /**
      * Loads the specified id.
      */
-    public async load<TResult extends object>(id: string, documentType?: DocumentType<TResult>): Promise<TResult>;
+    public async load<TResult extends object>(id: string, documentType?: DocumentType<TResult>): Promise<TResult | null>;
     /**
      * Loads the specified id.
      */
     public async load<TResult extends object>(
         id: string,
-        documentType?: DocumentType<TResult>): Promise<TResult>;
+        documentType?: DocumentType<TResult>): Promise<TResult | null>;
 
     /**
      * Loads the specified ids.
@@ -44,7 +44,7 @@ export class MultiLoaderWithInclude implements ILoaderWithInclude {
     public async load<TResult extends object>(
         ids: string | string[],
         documentType?: DocumentType<TResult>)
-        : Promise<TResult | EntitiesCollectionObject<TResult>> {
+        : Promise<TResult | null | EntitiesCollectionObject<TResult>> {
 
         let singleResult = false;
         if (TypeUtil.isString(ids)) {

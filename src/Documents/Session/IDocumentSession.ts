@@ -147,17 +147,17 @@ export interface IDocumentSession extends IDisposable {
     /**
      * Loads entity with the specified id.
      */
-    load<TEntity extends object>(id: string): Promise<TEntity>;
+    load<TEntity extends object>(id: string): Promise<TEntity | null>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(id: string, documentType?: DocumentType<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, documentType?: DocumentType<TEntity>): Promise<TEntity | null>;
 
     /**
      * Loads the entity with the specified id.
      */
-    load<TEntity extends object>(id: string, options?: LoadOptions<TEntity>): Promise<TEntity>;
+    load<TEntity extends object>(id: string, options?: LoadOptions<TEntity>): Promise<TEntity | null>;
 
     /**
      * Loads multiple entities with the specified ids.
