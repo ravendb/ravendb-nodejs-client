@@ -61,7 +61,7 @@ export class SessionDocumentCounters extends SessionCountersBase implements ISes
         return ObjectUtil.mapToLiteral(cache.data);
     }
 
-    public async get(counter: string): Promise<number>;
+    public async get(counter: string): Promise<number | null>;
     public async get(counters: string[]): Promise<{ [key: string]: number }>;
     public async get(counters: string | string[]): Promise<any> {
         return Array.isArray(counters)

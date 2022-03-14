@@ -10,15 +10,15 @@ export interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     /**
      * Returns the attachment by the document id and attachment name.
      */
-    get(documentId: string, name: string): Promise<AttachmentResult>;
+    get(documentId: string, name: string): Promise<AttachmentResult | null>;
 
     /**
      * Returns the attachment by the entity and attachment name.
      */
-    get(entity: object, name: string): Promise<AttachmentResult>;
+    get(entity: object, name: string): Promise<AttachmentResult | null>;
 
     /**
      * Returns the revision attachment by the document id and attachment name.
      */
-    getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult>;
+    getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult | null>;
 }

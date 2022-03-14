@@ -25,11 +25,11 @@ export interface ILazyLoaderWithInclude {
      * Loads the specified entity with the specified id.
      */
     load<TResult extends object>(
-        id: string, clazz?: ObjectTypeDescriptor<TResult>): Lazy<TResult>;
+        id: string, clazz?: ObjectTypeDescriptor<TResult>): Lazy<TResult | null>;
 
     /**
      * Loads the specified entity with the specified id.
      */
     load<TResult extends object>(
-        id: string): Lazy<TResult>;
+        id: string): Lazy<TResult | null>;
 }

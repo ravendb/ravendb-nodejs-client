@@ -111,7 +111,7 @@ export class LoadOperation {
         return this;
     }
 
-    public getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>): T {
+    public getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>): T | null {
         if (this._session.noTracking) {
             if (!this._resultsSet && this._ids.length) {
                 throwError("InvalidOperationException", "Cannot execute getDocument before operation execution.");
@@ -133,7 +133,7 @@ export class LoadOperation {
         return this._getDocument(clazz, this._ids[0]);
     }
 
-    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T {
+    private _getDocument<T extends object>(clazz: ObjectTypeDescriptor<T>, id: string): T | null {
         if (!id) {
             return null;
         }

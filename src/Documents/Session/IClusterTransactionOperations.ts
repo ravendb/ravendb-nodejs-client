@@ -4,9 +4,8 @@ import { ILazyClusterTransactionOperations } from "./ILazyClusterTransactionOper
 
 export interface IClusterTransactionOperations extends IClusterTransactionOperationsBase {
     
-    getCompareExchangeValue<T>(key: string): Promise<CompareExchangeValue<T>>;
-    getCompareExchangeValue<T>(key: string, type: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T>>;
-
+    getCompareExchangeValue<T>(key: string): Promise<CompareExchangeValue<T> | null>;
+    getCompareExchangeValue<T>(key: string, type: CompareExchangeResultClass<T>): Promise<CompareExchangeValue<T> | null>;
     getCompareExchangeValues<T>(
         keys: string[]): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     getCompareExchangeValues<T>(
@@ -15,16 +14,16 @@ export interface IClusterTransactionOperations extends IClusterTransactionOperat
         startsWith: string): Promise<{ [key: string]: CompareExchangeValue<T> }>;
     getCompareExchangeValues<T>(
         startsWith: string,
-        type: CompareExchangeResultClass<T>): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+        type: CompareExchangeResultClass<T>): Promise<{ [key: string]: CompareExchangeValue<T> | null }>;
     getCompareExchangeValues<T>(
         startsWith: string,
         type: CompareExchangeResultClass<T>,
-        start: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+        start: number): Promise<{ [key: string]: CompareExchangeValue<T> | null }>;
     getCompareExchangeValues<T>(
         startsWith: string,
         type: CompareExchangeResultClass<T>,
         start: number,
-        pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> }>;
+        pageSize: number): Promise<{ [key: string]: CompareExchangeValue<T> | null }>;
     
     lazily: ILazyClusterTransactionOperations;
 }

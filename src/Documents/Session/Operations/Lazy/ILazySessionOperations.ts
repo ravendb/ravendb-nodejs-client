@@ -33,14 +33,14 @@ export interface ILazySessionOperations {
     /**
      * Loads the specified entity with the specified id.
      */
-    load<TEntity extends object>(id: string): Lazy<TEntity>;
+    load<TEntity extends object>(id: string): Lazy<TEntity | null>;
 
     /**
      * Loads the specified entity with the specified id.
      */
     load<TEntity extends object>(
         id: string,
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity>;
+        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null>;
 
     /**
      * Loads multiple entities that contain common prefix.

@@ -46,6 +46,8 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
     public constructor(documentId: string, name: string, type: AttachmentType, changeVector: string) {
         super();
 
+        this.result = null;
+
         if (StringUtil.isNullOrWhitespace(documentId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null or empty");
         }

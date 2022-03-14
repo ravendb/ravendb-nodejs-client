@@ -30,10 +30,10 @@ export class LazyRevisionOperations implements ILazyRevisionsOperations {
         return this.delegate.addLazyOperation(lazyRevisionOperation);
     }
 
-    public get<TEntity extends object>(id: string, date: Date): Lazy<TEntity>;
-    public get<TEntity extends object>(changeVector: string): Lazy<TEntity>;
+    public get<TEntity extends object>(id: string, date: Date): Lazy<TEntity | null>;
+    public get<TEntity extends object>(changeVector: string): Lazy<TEntity | null>;
     public get<TEntity extends object>(changeVector: string,
-                                             documentType: DocumentType<TEntity>): Lazy<TEntity>;
+                                             documentType: DocumentType<TEntity>): Lazy<TEntity | null>;
     public get<TEntity extends object>(changeVectors: string[])
         : Lazy<RevisionsCollectionObject<TEntity>>;
     public get<TEntity extends object>(changeVectors: string[], documentType: DocumentType<TEntity>)
@@ -41,7 +41,7 @@ export class LazyRevisionOperations implements ILazyRevisionsOperations {
     public get<TEntity extends object>(
         changeVectorOrVectorsOrId: string | string[],
         documentTypeOrDate?: DocumentType<TEntity> | Date)
-        : Lazy<RevisionsCollectionObject<TEntity> | TEntity> {
+        : Lazy<RevisionsCollectionObject<TEntity> | TEntity | null> {
         const documentType = TypeUtil.isDocumentType(documentTypeOrDate)
             ? documentTypeOrDate as DocumentType<TEntity>
             : undefined;
@@ -69,7 +69,7 @@ export class LazyRevisionOperations implements ILazyRevisionsOperations {
 
     }
 
-    private _getByIdAndDate<TEntity extends object>(id: string, date: Date, clazz?: DocumentType<TEntity>): Lazy<TEntity> {
+    private _getByIdAndDate<TEntity extends object>(id: string, date: Date, clazz?: DocumentType<TEntity>): Lazy<TEntity | null> {
         const operation = new GetRevisionOperation(this.delegate, id, date);
         const lazyRevisionOperation = new LazyRevisionOperation<TEntity>(clazz, operation, "Single");
         return this.delegate.addLazyOperation(lazyRevisionOperation);

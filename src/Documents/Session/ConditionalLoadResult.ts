@@ -1,5 +1,5 @@
 
 export interface ConditionalLoadResult<T> {
-    entity: T;
+    entity: T | null;
     changeVector: string;
 }

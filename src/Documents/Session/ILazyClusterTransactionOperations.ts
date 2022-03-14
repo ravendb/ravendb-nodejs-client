@@ -3,12 +3,12 @@ import { CompareExchangeValue } from "../Operations/CompareExchange/CompareExcha
 import { CompareExchangeResultClass } from "../../Types";
 
 export interface ILazyClusterTransactionOperations {
-    getCompareExchangeValue<T>(key: string): Lazy<CompareExchangeValue<T>>;
-    getCompareExchangeValue<T>(key: string, type: CompareExchangeResultClass<T>): Lazy<CompareExchangeValue<T>>;
+    getCompareExchangeValue<T>(key: string): Lazy<CompareExchangeValue<T> | null>;
+    getCompareExchangeValue<T>(key: string, type: CompareExchangeResultClass<T>): Lazy<CompareExchangeValue<T> | null>;
 
     getCompareExchangeValues<T>(
-        keys: string[]): Lazy<{ [key: string]: CompareExchangeValue<T> }>;
+        keys: string[]): Lazy<{ [key: string]: CompareExchangeValue<T> | null }>;
     getCompareExchangeValues<T>(
-        keys: string[], type: CompareExchangeResultClass<T>): Lazy<{ [key: string]: CompareExchangeValue<T> }>;
+        keys: string[], type: CompareExchangeResultClass<T>): Lazy<{ [key: string]: CompareExchangeValue<T> | null }>;
 
 }

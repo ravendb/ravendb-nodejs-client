@@ -11,7 +11,7 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     /**
      * Returns first element if there's any or null otherwise.
      */
-    firstOrNull(): Promise<T>;
+    firstOrNull(): Promise<T | null>;
 
     /**
      * Returns single element or throws if sequence is empty or contains more than one element.
@@ -21,7 +21,7 @@ export interface IDocumentQueryBaseSingle<T extends object> {
     /**
      * Returns single element if there's any or null otherwise.
      */
-    singleOrNull(): Promise<T>;
+    singleOrNull(): Promise<T | null>;
 
     /**
      * Gets the total count of records for this query

@@ -2084,7 +2084,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return entries[0];
     }
 
-    public async firstOrNull(): Promise<T> {
+    public async firstOrNull(): Promise<T | null> {
         const entries = await this._executeQueryOperation(1);
         return entries[0] || null;
     }
@@ -2100,7 +2100,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return entries[0];
     }
 
-    public async singleOrNull(): Promise<T> {
+    public async singleOrNull(): Promise<T | null> {
         const entries = await this._executeQueryOperation(2);
         if (entries.length === 2) {
             throwError("InvalidOperationException",

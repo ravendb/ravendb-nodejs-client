@@ -12,7 +12,7 @@ export interface ISessionDocumentCounters extends ISessionDocumentCountersBase {
    /**
     * Returns the counter by the counter name.
     */
-   get(counter: string): Promise<number>;
+   get(counter: string): Promise<number | null>;
    
    /**
     * Returns the map of counter values by counter names

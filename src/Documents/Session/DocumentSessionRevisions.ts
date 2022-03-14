@@ -57,10 +57,10 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         return operation.getRevisionsMetadataFor();
     }
 
-    public async get<TEntity extends object>(id: string, date: Date): Promise<TEntity>;
-    public async get<TEntity extends object>(changeVector: string): Promise<TEntity>;
+    public async get<TEntity extends object>(id: string, date: Date): Promise<TEntity | null>;
+    public async get<TEntity extends object>(changeVector: string): Promise<TEntity | null>;
     public async get<TEntity extends object>(changeVector: string,
-                                             documentType: DocumentType<TEntity>): Promise<TEntity>;
+                                             documentType: DocumentType<TEntity>): Promise<TEntity | null>;
     public async get<TEntity extends object>(changeVectors: string[])
         : Promise<RevisionsCollectionObject<TEntity>>;
     public async get<TEntity extends object>(changeVectors: string[], documentType: DocumentType<TEntity>)

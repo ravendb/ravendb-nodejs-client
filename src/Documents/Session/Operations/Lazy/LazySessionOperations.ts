@@ -29,12 +29,12 @@ export class LazySessionOperations implements ILazySessionOperations {
         clazz: ObjectTypeDescriptor<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
     public load<TEntity extends object>(
         id: string,
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity>;
+        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null>;
     public load<TEntity extends object>(ids: string[]): Lazy<EntitiesCollectionObject<TEntity>>;
-    public load<TEntity extends object>(id: string): Lazy<TEntity>;
+    public load<TEntity extends object>(id: string): Lazy<TEntity | null>;
     public load<TEntity extends object>(
         idOrIds: string | string[],
-        clazz?: ObjectTypeDescriptor<TEntity>): Lazy<TEntity> | Lazy<EntitiesCollectionObject<TEntity>> {
+        clazz?: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null> | Lazy<EntitiesCollectionObject<TEntity>> {
         const isMultipleIds = Array.isArray(idOrIds);
         if (!isMultipleIds && this._delegate.isLoaded(idOrIds as string)) {
             return new Lazy(() =>

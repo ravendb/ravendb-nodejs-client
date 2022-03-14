@@ -13,14 +13,14 @@ export interface ILoaderWithInclude {
     /**
      * Loads the specified id.
      */
-    load<TResult extends object>(id: string, documentType: DocumentType<TResult>): Promise<TResult>;
+    load<TResult extends object>(id: string, documentType: DocumentType<TResult>): Promise<TResult | null>;
 
     /**
      * Loads the specified id.
      */
     load<TResult extends object>(
         id: string,
-        documentType?: DocumentType<TResult>): Promise<TResult>;
+        documentType?: DocumentType<TResult>): Promise<TResult | null>;
 
     /**
      * Loads the specified ids.
