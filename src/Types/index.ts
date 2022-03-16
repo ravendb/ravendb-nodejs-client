@@ -1,10 +1,10 @@
 import { SuggestionResult } from "../Documents/Queries/Suggestions/SuggestionResult";
 
-export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity> {
+export interface EntitiesCollectionObject<TEntity> extends IRavenObject<TEntity | null> {
     [id: string]: TEntity | null;
 }
 
-export interface RevisionsCollectionObject<TEntity> extends IRavenObject<TEntity> {
+export interface RevisionsCollectionObject<TEntity> extends IRavenObject<TEntity | null> {
     [changeVector: string]: TEntity | null;
 }
 
