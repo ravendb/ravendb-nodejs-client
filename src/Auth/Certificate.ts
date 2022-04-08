@@ -27,11 +27,16 @@ export abstract class Certificate implements ICertificate {
 
         let certificate: ICertificate = null;
 
+        if (!options.certificate) {
+            throwError("InvalidArgumentException", "Certificate cannot be null");
+        }
+
         switch (options.type) {
             case Certificate.PEM:
                 certificate = this.createPem(options.certificate, options.password, options.ca);
                 break;
             case Certificate.PFX:
+
                 certificate = this.createPfx(options.certificate, options.password, options.ca);
                 break;
             default:
