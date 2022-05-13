@@ -4,6 +4,7 @@ import { DetailedReplicationHubAccess } from "../../Documents/Operations/Replica
 export interface TcpConnectionHeaderMessage {
     databaseName: string;
     sourceNodeTag: string;
+    serverId: string;
     operation: OperationTypes;
     operationVersion: number;
     info: string;

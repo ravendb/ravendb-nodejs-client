@@ -22,6 +22,8 @@ export class LoadOperation {
     private _ids: string[];
     private _includes: string[];
     private _countersToInclude: string[];
+    private _revisionsToIncludeByChangeVector: string[];
+    private _revisionsToIncludeByDateTimeBefore: Date;
     private _compareExchangeValuesToInclude: string[];
     private _includeAllCounters: boolean;
     private _timeSeriesToInclude: AbstractTimeSeriesRange[];
@@ -49,7 +51,9 @@ export class LoadOperation {
             metadataOnly: false,
             conventions: this._session.conventions,
             timeSeriesIncludes: this._timeSeriesToInclude,
-            compareExchangeValueIncludes: this._compareExchangeValuesToInclude
+            compareExchangeValueIncludes: this._compareExchangeValuesToInclude,
+            revisionsIncludesByChangeVector: this._revisionsToIncludeByChangeVector,
+            revisionIncludeByDateTimeBefore: this._revisionsToIncludeByDateTimeBefore
         };
 
         if (this._includeAllCounters) {
@@ -81,6 +85,20 @@ export class LoadOperation {
     public withCounters(counters: string[]): LoadOperation {
         if (counters) {
             this._countersToInclude = counters;
+        }
+
+        return this;
+    }
+
+    public withRevisions(revisionsByChangeVector: string[]): LoadOperation;
+    public withRevisions(revisionByDateTimeBefore: Date): LoadOperation;
+    public withRevisions(revisions: string[] | Date): LoadOperation {
+        if (TypeUtil.isArray(revisions)) {
+            this._revisionsToIncludeByChangeVector = revisions;
+        }
+
+        if (TypeUtil.isDate(revisions)) {
+            this._revisionsToIncludeByDateTimeBefore = revisions;
         }
 
         return this;
@@ -214,6 +232,10 @@ export class LoadOperation {
 
         if (this._timeSeriesToInclude) {
             this._session.registerTimeSeries(result.timeSeriesIncludes);
+        }
+
+        if (this._revisionsToIncludeByChangeVector || this._revisionsToIncludeByDateTimeBefore) {
+            this._session.registerRevisionIncludes(result.revisionIncludes);
         }
 
         if (this._compareExchangeValuesToInclude) {

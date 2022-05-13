@@ -79,7 +79,7 @@ import { throwError } from "../../../src/Exceptions";
                         }
 
                         await replication.setupReplication(source, destination);
-                        await waitForConflict(destination, "addresses/1");
+                        await testContext.replication.waitForConflict(destination, "addresses/1");
 
                         {
                             const session = destination.openSession();
@@ -121,26 +121,6 @@ import { throwError } from "../../../src/Exceptions";
                     source.dispose();
                 }
 
-                async function waitForConflict(docStore: IDocumentStore, id: string) {
-                    const sw = Stopwatch.createStarted();
-                    while (sw.elapsed < 10000) {
-                        try {
-                            const session = docStore.openSession();
-                            await session.load(id);
-
-                            await BluebirdPromise.delay(10);
-                        } catch (e) {
-                            if (e.name === "DocumentConflictException") {
-                                return;
-                            }
-
-                            throw e;
-                        }
-                    }
-
-                    throwError("InvalidOperationException",
-                        "Waited for conflict on '" + id + "' but it did not happen");
-                }
             });
         });
     });

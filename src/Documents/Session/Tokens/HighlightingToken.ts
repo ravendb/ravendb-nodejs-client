@@ -26,7 +26,7 @@ export class HighlightingToken extends QueryToken {
 
     public writeTo(writer: StringBuilder): void {
         writer.append("highlight(");
-        this._writeField(writer, this._fieldName);
+        QueryToken.writeField(writer, this._fieldName);
         writer
             .append(",")
             .append(this._fragmentLength)

@@ -239,7 +239,7 @@ export class WhereToken extends QueryToken {
     }
 
     private _writeInnerWhere(writer): void {
-        this._writeField(writer, this.fieldName);
+        QueryToken.writeField(writer, this.fieldName);
 
         switch (this.whereOperator) {
             case "Equals":

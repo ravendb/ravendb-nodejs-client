@@ -31,7 +31,7 @@ export class LazyConditionalLoadOperation<T extends object> implements ILazyOper
         request.url = "/docs";
         request.method = "GET";
         request.query = "?id=" + encodeURIComponent(this._id);
-        request.headers["If-None-Match"] = `"${this._changeVector}"`;
+        request.headers[HEADERS.IF_NONE_MATCH] = `"${this._changeVector}"`;
         return request;
     }
 

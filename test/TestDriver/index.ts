@@ -46,6 +46,17 @@ export abstract class RavenTestDriver {
 
     public static debug: boolean;
 
+    public readonly samples: SamplesTestBase;
+    public readonly indexes: IndexesTestBase;
+    public readonly replication: ReplicationTestBase2;
+
+
+    public constructor() {
+        this.samples = new SamplesTestBase(this);
+        this.indexes = new IndexesTestBase(this);
+        this.replication = new ReplicationTestBase2(this);
+    }
+
     public enableFiddler(): IDisposable {
         RequestExecutor.requestPostProcessor = (req) => {
             req.agent = new proxyAgent.HttpProxyAgent("http://127.0.0.1:8888") as unknown as http.Agent;
@@ -198,24 +209,6 @@ export abstract class RavenTestDriver {
         return Promise.resolve(result);
     }
 
-    public async waitForIndexingErrors(store: IDocumentStore, timeoutInMs: number, ...indexNames: string[]) {
-        const sw = Stopwatch.createStarted();
-
-        while (sw.elapsed < timeoutInMs) {
-            const indexes = await store.maintenance.send(new GetIndexErrorsOperation(indexNames));
-
-            for (const index of indexes) {
-                if (index.errors && index.errors.length) {
-                    return indexes;
-                }
-            }
-
-            await delay(32);
-        }
-
-        throwError("TimeoutException", "Got no index error from more than " + TimeUtil.millisToTimeSpan(timeoutInMs));
-    }
-
     public async waitForDocumentDeletion(store: IDocumentStore, id: string) {
         const sw = Stopwatch.createStarted();
 
@@ -319,6 +312,16 @@ export abstract class RavenTestDriver {
         return store.maintenance.send(operation);
     }
 
+
+}
+
+class SamplesTestBase {
+    private readonly _parent: RavenTestDriver;
+
+    public constructor(parent) {
+        this._parent = parent;
+    }
+
     public async createSimpleData(store: IDocumentStore) {
         {
             const session = store.openSession();
@@ -349,6 +352,7 @@ export abstract class RavenTestDriver {
             await session.saveChanges();
         }
     }
+
 
     public async createDogDataWithoutEdges(store: IDocumentStore) {
         {
@@ -508,5 +512,78 @@ export abstract class RavenTestDriver {
 
             await session.saveChanges();
         }
+    }
+}
+
+
+class ReplicationTestBase2 {
+    private readonly _parent: RavenTestDriver;
+
+    constructor(parent: RavenTestDriver) {
+        this._parent = parent;
+    }
+
+    async waitForConflict(docStore: IDocumentStore, id: string) {
+        const sw = Stopwatch.createStarted();
+        while (sw.elapsed < 10000) {
+            try {
+                const session = docStore.openSession();
+                await session.load(id);
+
+                await BluebirdPromise.delay(10);
+            } catch (e) {
+                if (e.name === "DocumentConflictException") {
+                    return;
+                }
+
+                throw e;
+            }
+        }
+
+        throwError("InvalidOperationException",
+            "Waited for conflict on '" + id + "' but it did not happen");
+    }
+}
+
+class IndexesTestBase {
+    private readonly _parent: RavenTestDriver;
+
+    constructor(parent: RavenTestDriver) {
+        this._parent = parent;
+    }
+
+    public waitForIndexing(store: IDocumentStore): Promise<void>;
+    public waitForIndexing(store: IDocumentStore, database?: string): Promise<void>;
+    public waitForIndexing(store: IDocumentStore, database?: string, timeout?: number): Promise<void>;
+    public waitForIndexing(
+        store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean): Promise<void>;
+    public waitForIndexing(
+        store: IDocumentStore, database?: string, timeout?: number, throwOnIndexErrors?: boolean, nodeTag?: string): Promise<void>;
+    public waitForIndexing(
+        store: IDocumentStore,
+        database?: string,
+        timeout?: number,
+        throwOnIndexErrors: boolean = true,
+        nodeTag?: string): Promise<void> {
+        return this._parent.waitForIndexing(store, database, timeout, throwOnIndexErrors, nodeTag);
+    }
+
+
+    public async waitForIndexingErrors(store: IDocumentStore, timeoutInMs: number, ...indexNames: string[]) {
+        const sw = Stopwatch.createStarted();
+
+        while (sw.elapsed < timeoutInMs) {
+            const indexes = await store.maintenance.send(new GetIndexErrorsOperation(indexNames));
+
+            for (const index of indexes) {
+                if (index.errors && index.errors.length) {
+                    return indexes;
+                }
+            }
+
+            await delay(32);
+        }
+
+        throwError("TimeoutException", "Got no index error from more than " + TimeUtil.millisToTimeSpan(timeoutInMs));
     }
 }

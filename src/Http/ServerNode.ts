@@ -1,5 +1,6 @@
 import { IRavenObject } from "../Types/IRavenObject";
 import { UriUtility } from "../Http/UriUtility";
+import { ClusterTopology } from "./ClusterTopology";
 
 export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";
 
@@ -54,6 +55,34 @@ export class ServerNode {
     public discardServerVersion(): void {
         this._lastServerVersion = null;
         this._lastServerVersionCheck = 0;
+    }
+
+    public static createFrom(topology: ClusterTopology): ServerNode[] {
+        const nodes: ServerNode[] = [];
+
+        if (!topology) {
+            return nodes;
+        }
+
+        Object.keys(topology.members).forEach(node => {
+            const member = topology.members[node];
+
+            nodes.push(new ServerNode({
+                url: member,
+                clusterTag: node
+            }));
+        });
+
+        Object.keys(topology.watchers).forEach(node => {
+            const watcher = topology.watchers[node];
+
+            nodes.push(new ServerNode({
+                url: watcher,
+                clusterTag: node
+            }));
+        });
+
+        return nodes;
     }
 
     public get lastServerVersion() {

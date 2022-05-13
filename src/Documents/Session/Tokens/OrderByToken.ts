@@ -103,7 +103,7 @@ export class OrderByToken extends QueryToken {
             writer
                 .append("custom(")
         }
-        this._writeField(writer, this._fieldName);
+        QueryToken.writeField(writer, this._fieldName);
 
         if (this._sorterName) {
             writer

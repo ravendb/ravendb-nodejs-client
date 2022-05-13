@@ -7,6 +7,7 @@ export class RevisionsCollectionConfiguration extends SetupDocumentBase {
     public minimumRevisionAgeToKeep?: string;
     public disabled: boolean;
     public purgeOnDelete?: boolean;
+    public maximumRevisionsToDeleteUponDocumentUpdate?: number;
 
     public toRemoteFieldNames() {
         return ObjectUtil.transformObjectKeys(this, { defaultTransform: "pascal" });

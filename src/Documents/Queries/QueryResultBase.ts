@@ -20,6 +20,8 @@ export abstract class QueryResultBase<TResult, TInclude> {
 
     public counterIncludes: object;
 
+    public revisionIncludes: any[];
+
     public includedCounterNames: { [key: string]: string[] };
 
     public timeSeriesIncludes: any;

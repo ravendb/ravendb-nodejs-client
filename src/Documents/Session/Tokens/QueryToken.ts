@@ -4,8 +4,8 @@ export abstract class QueryToken {
 
     public abstract writeTo(writer: StringBuilder);
 
-    protected _writeField(writer: StringBuilder, field: string) {
-        const keyWord = QueryToken.RQL_KEYWORDS.has(field);
+    public static writeField(writer: StringBuilder, field: string) {
+        const keyWord = QueryToken.isKeyword(field);
         if (keyWord) {
             writer.append("'");
         }
@@ -14,6 +14,10 @@ export abstract class QueryToken {
         if (keyWord) {
             writer.append("'");
         }
+    }
+
+    public static isKeyword(field: string): boolean {
+        return QueryToken.RQL_KEYWORDS.has(field);
     }
 
     private static RQL_KEYWORDS: Set<string> = new Set([

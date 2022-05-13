@@ -192,6 +192,10 @@ export class QueryOperation {
             if (queryResult.compareExchangeValueIncludes) {
                 this._session.clusterSession.registerCompareExchangeValues(queryResult.compareExchangeValueIncludes);
             }
+
+            if (queryResult.revisionIncludes) {
+                this._session.registerRevisionIncludes(queryResult.revisionIncludes);
+            }
         }
     }
 

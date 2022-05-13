@@ -22,7 +22,7 @@ export class TcpNegotiation {
         let currentRef: number = parameters.version;
         while (true) {
             await this._sendTcpVersionInfo(socket, parameters, currentRef);
-            const version = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl);
+            const version = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl, socket);
 
             log.info("Read response from " + (parameters.sourceNodeTag || parameters.destinationUrl)
                 + " for " + parameters.operation + ", received version is '" + version + "'");

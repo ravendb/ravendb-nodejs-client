@@ -10,7 +10,7 @@ import {
     BeforeConversionToEntityEventArgs,
     AfterConversionToEntityEventArgs,
     FailedRequestEventArgs,
-    TopologyUpdatedEventArgs
+    TopologyUpdatedEventArgs, BeforeRequestEventArgs, SucceedRequestEventArgs
 } from "./Session/SessionEvents";
 import { IDisposable } from "../Types/Contracts";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor";
@@ -18,13 +18,14 @@ import { OperationExecutor } from "./Operations/OperationExecutor";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations";
-import { BulkInsertOperation } from "./BulkInsertOperation";
+import { BulkInsertOperation, BulkInsertOptions } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
+import { IHiLoIdGenerator } from "./Identity/IHiLoIdGenerator";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
@@ -106,6 +107,10 @@ export interface SessionDisposingEventArgs {
 
 export interface DocumentStoreEventEmitter {
 
+    on(eventName: "beforeRequest", eventHandler: (args: BeforeRequestEventArgs) => void): this;
+
+    on(eventName: "succeedRequest", eventHandler: (args: SucceedRequestEventArgs) => void): this;
+
     on(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     on(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
@@ -116,6 +121,10 @@ export interface DocumentStoreEventEmitter {
 
     on(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
 
+    once(eventName: "beforeRequest", eventHandler: (args: BeforeRequestEventArgs) => void): this;
+
+    once(eventName: "succeedRequest", eventHandler: (args: SucceedRequestEventArgs) => void): this;
+
     once(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
     once(eventName: "sessionCreated", eventHandler: (args: SessionCreatedEventArgs) => void): this;
@@ -125,6 +134,10 @@ export interface DocumentStoreEventEmitter {
     once(eventName: "afterDispose", eventHandler: (callback: () => void) => void): this;
 
     once(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): this;
+
+    removeListener(eventName: "beforeRequest", eventHandler: (args: BeforeRequestEventArgs) => void): this;
+
+    removeListener(eventName: "succeedRequest", eventHandler: (args: SucceedRequestEventArgs) => void): this;
 
     removeListener(eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;
 
@@ -227,6 +240,8 @@ export interface IDocumentStore extends IDisposable,
      */
     authOptions: IStoreAuthOptions;
 
+    hiLoIdGenerator: IHiLoIdGenerator;
+
     timeSeries: TimeSeriesOperations;
 
     /**
@@ -239,7 +254,10 @@ export interface IDocumentStore extends IDisposable,
      */
     urls: string[];
 
-    bulkInsert(database?: string): BulkInsertOperation;
+    bulkInsert(): BulkInsertOperation;
+    bulkInsert(database: string): BulkInsertOperation;
+    bulkInsert(database: string, options: BulkInsertOptions): BulkInsertOperation;
+    bulkInsert(options: BulkInsertOptions): BulkInsertOperation;
 
     subscriptions: DocumentSubscriptions;
 
@@ -262,6 +280,12 @@ export interface IDocumentStore extends IDisposable,
 
     addSessionListener(
         eventName: "topologyUpdated", eventHandler: (args: TopologyUpdatedEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "succeedRequest", eventHandler: (args: SucceedRequestEventArgs) => void): this;
+
+    addSessionListener(
+        eventName: "beforeRequest", eventHandler: (args: BeforeRequestEventArgs) => void): this;
 
     addSessionListener(
         eventName: "failedRequest", eventHandler: (args: FailedRequestEventArgs) => void): this;

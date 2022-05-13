@@ -6,6 +6,7 @@ import { HttpCache } from "../../Http/HttpCache";
 import { getRequiredEtagHeader } from "../../Utility/HttpUtil";
 import { ServerNode } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
+import { HEADERS } from "../../Constants";
 
 export class HeadDocumentCommand extends RavenCommand<string> {
 
@@ -34,7 +35,7 @@ export class HeadDocumentCommand extends RavenCommand<string> {
         const headers = this._headers()
             .typeAppJson();
         if (this._changeVector) {
-            headers.with("If-None-Match", this._changeVector);
+            headers.with(HEADERS.IF_NONE_MATCH, this._changeVector);
         }
 
         return {

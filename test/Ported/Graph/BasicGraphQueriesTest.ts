@@ -17,7 +17,7 @@ describe("BasicGraphQueriesTest", function () {
         await disposeTestDocumentStore(store));
 
     it("query_with_no_matches_and_select_should_return_empty_result", async () => {
-        await testContext.createDogDataWithoutEdges(store);
+        await testContext.samples.createDogDataWithoutEdges(store);
 
         {
             const session = store.openSession();
@@ -34,7 +34,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("query_with_no_matches_and_without_select_should_return_empty_result", async () => {
-        await testContext.createDogDataWithoutEdges(store);
+        await testContext.samples.createDogDataWithoutEdges(store);
 
         {
             const session = store.openSession();
@@ -46,7 +46,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("empty_vertex_node_should_work", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -58,7 +58,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("can_flatten_result_for_single_vertex_in_row", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -75,7 +75,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("mutliple_results_in_row_wont_flatten_results", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -92,7 +92,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("can_query_without_collection_identifier", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -113,7 +113,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("can_use_explicit_with_clause", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -131,7 +131,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("can_filter_vertices_with_explicit_with_clause", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();
@@ -150,7 +150,7 @@ describe("BasicGraphQueriesTest", function () {
     });
 
     it("findReferences", async () => {
-        await testContext.createSimpleData(store);
+        await testContext.samples.createSimpleData(store);
 
         {
             const session = store.openSession();
@@ -207,7 +207,7 @@ async function query<T>(documentType: DocumentType,
         mutate?.(store);
 
         if (parameters.waitForIndexing) {
-            await testContext.waitForIndexing(store);
+            await testContext.indexes.waitForIndexing(store);
         }
 
         {

@@ -46,7 +46,18 @@ export class GetRevisionOperation {
     }
 
     public createRequest() {
-        this._session.incrementRequestCount();
+        if (this._command.changeVectors) {
+            return this._session.checkIfAllChangeVectorsAreAlreadyIncluded(this._command.changeVectors) ? null : this._command;
+        }
+
+        if (this._command.changeVector) {
+            return this._session.checkIfAllChangeVectorsAreAlreadyIncluded([this.command.changeVector]) ? null : this._command;
+        }
+
+        if (this.command.before) {
+            return this._session.checkIfRevisionByDateTimeBeforeAlreadyIncluded(this.command.id, this.command.before) ? null : this._command;
+        }
+
         return this._command;
     }
 

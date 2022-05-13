@@ -7,5 +7,6 @@ export interface SubscriptionCreationOptions {
     includes?: (builder: ISubscriptionIncludeBuilder) => void;
     changeVector?: string;
     mentorNode?: string;
+    disabled?: boolean;
     documentType?: DocumentType;
 }

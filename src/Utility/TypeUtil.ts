@@ -66,7 +66,7 @@ export class TypeUtil {
             && (!!value.prototype && !!value.prototype.constructor.name);
     }
 
-    public static isObjectTypeDescriptor(value: any): boolean {
+    public static isObjectTypeDescriptor(value: any): value is ObjectTypeDescriptor {
         return !!value
             && typeof value !== "string"
             && (this.isClass(value) || this.isObjectLiteralTypeDescriptor(value));

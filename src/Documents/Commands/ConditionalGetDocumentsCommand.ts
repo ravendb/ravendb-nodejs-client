@@ -8,6 +8,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
+import { CONSTANTS, HEADERS } from "../../Constants";
 
 export class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetResult> {
 
@@ -31,7 +32,7 @@ export class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetR
             uri,
             method: "GET",
             headers: {
-                "If-None-Match": `"${this._changeVector}"`
+                [HEADERS.IF_NONE_MATCH]: `"${this._changeVector}"`
             }
         }
     }

@@ -46,7 +46,7 @@ describe("RavenDB_16328_AnalyzersTest", function () {
 
             await store.maintenance.send(new ResetIndexOperation(new MyIndex(analyzerName).getIndexName()));
 
-            const errors = await testContext.waitForIndexingErrors(store, 10_000);
+            const errors = await testContext.indexes.waitForIndexingErrors(store, 10_000);
             assertThat(errors)
                 .hasSize(1);
             assertThat(errors[0].errors)

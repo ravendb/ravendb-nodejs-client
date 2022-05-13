@@ -99,4 +99,17 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
 
         return this;
     }
+
+    public includeRevisions(path: string): IQueryIncludeBuilder;
+    public includeRevisions(before: Date): IQueryIncludeBuilder;
+    public includeRevisions(pathOrDate: Date | string): IQueryIncludeBuilder {
+        if (TypeUtil.isString(pathOrDate)) {
+            this._withAlias();
+            this._includeRevisionsByChangeVectors(pathOrDate);
+        } else {
+            this._includeRevisionsBefore(pathOrDate);
+        }
+
+        return this;
+    }
 }

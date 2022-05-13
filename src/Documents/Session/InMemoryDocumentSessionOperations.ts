@@ -143,6 +143,16 @@ export abstract class InMemoryDocumentSessionOperations
 
     public includedDocumentsById: Map<string, DocumentInfo> = CaseInsensitiveKeysMap.create();
 
+    /**
+     * Translate between an CV and its associated entity
+     */
+    public includeRevisionsByChangeVector: Map<String, DocumentInfo> = CaseInsensitiveKeysMap.create();
+
+    /**
+     * Translate between an ID and its associated entity
+     */
+    public includeRevisionsIdByDateTimeBefore: Map<String, Map<number, DocumentInfo>> = CaseInsensitiveKeysMap.create();
+
     public documentsByEntity: DocumentsByEntityHolder = new DocumentsByEntityHolder();
 
     public deletedEntities: DeletedEntitiesHolder = new DeletedEntitiesHolder();
@@ -425,15 +435,30 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
-    public checkIfIdAlreadyIncluded(ids: string[], includes: { [key: string]: ObjectTypeDescriptor }): boolean;
-    public checkIfIdAlreadyIncluded(ids: string[], includes: string[]): boolean;
-    public checkIfIdAlreadyIncluded(
-        ids: string[], includes: string[] | { [key: string]: ObjectTypeDescriptor }): boolean {
-
-        if (!Array.isArray(includes) && typeof includes === "object") {
-            return this.checkIfIdAlreadyIncluded(ids, Object.keys(includes));
+    public checkIfAllChangeVectorsAreAlreadyIncluded(changeVectors: string[]): boolean {
+        if (!this.includeRevisionsByChangeVector) {
+            return false;
         }
 
+        for (const cv of changeVectors) {
+            if (!this.includeRevisionsByChangeVector.has(cv)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public checkIfRevisionByDateTimeBeforeAlreadyIncluded(id: string, dateTime: Date): boolean {
+        if (!this.includeRevisionsIdByDateTimeBefore) {
+            return false;
+        }
+
+        const dictionaryDateTimeToDocument = this.includeRevisionsIdByDateTimeBefore.get(id);
+        return dictionaryDateTimeToDocument && dictionaryDateTimeToDocument.has(dateTime.getTime());
+    }
+
+    public checkIfIdAlreadyIncluded(ids: string[], includes: string[]): boolean {
         for (const id of ids) {
             if (this._knownMissingIds.has(id)) {
                 continue;
@@ -1890,7 +1915,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
         }
 
-        return !!this.deletedEntities.size;
+        return !!this.deletedEntities.size || this.deferredCommands.length > 0;
     }
 
     /**

@@ -1,2 +1,2 @@
 
-export type TcpConnectionStatus = "Ok" | "AuthorizationFailed" | "TcpVersionMismatch";
+export type TcpConnectionStatus = "Ok" | "AuthorizationFailed" | "TcpVersionMismatch" | "InvalidNetworkTopology";

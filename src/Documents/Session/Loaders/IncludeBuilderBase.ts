@@ -22,6 +22,8 @@ export class IncludeBuilderBase {
     public countersToIncludeBySourcePath: CountersByDocId;
     public timeSeriesToIncludeBySourceAlias: Map<string, AbstractTimeSeriesRange[]>;
     public compareExchangeValuesToInclude: Set<string>;
+    public revisionsToIncludeByChangeVector: Set<string>;
+    public revisionsToIncludeByDateTime: Date;
     public includeTimeSeriesTags: boolean;
     public includeTimeSeriesDocument: boolean;
 
@@ -80,6 +82,22 @@ export class IncludeBuilderBase {
         }
 
         this.documentsToInclude.add(path);
+    }
+
+    protected _includeRevisionsBefore(revisionsToIncludeByDateTime: Date): void {
+        this.revisionsToIncludeByDateTime = revisionsToIncludeByDateTime;
+    }
+
+    protected _includeRevisionsByChangeVectors(path: string): void {
+        if (StringUtil.isNullOrWhitespace(path)) {
+            throwError("InvalidArgumentException", "Path cannot be null or whitespace");
+        }
+
+        if (!this.revisionsToIncludeByChangeVector) {
+            this.revisionsToIncludeByChangeVector = new Set<string>();
+        }
+
+        this.revisionsToIncludeByChangeVector.add(path);
     }
 
     protected _includeCounter(path: string, name: string): void {

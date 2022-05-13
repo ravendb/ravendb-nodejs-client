@@ -145,24 +145,13 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         }
 
-        const [socket, chosenUrl] = await TcpUtils.connectWithPriority(tcpInfo, command.result.certificate, this._store.authOptions);
+        const result = await TcpUtils.connectSecuredTcpSocket(tcpInfo, command.result.certificate, this._store.authOptions, "Subscription", this._negotiateProtocolVersionForSubscription);
 
-        this._tcpClient = socket;
+        this._tcpClient = result.socket;
 
-        this._ensureParser();
+        this._ensureParser(result.socket);
 
-        const databaseName = this._store.getEffectiveDatabase(this._dbName);
-
-        const parameters = {
-            database: databaseName,
-            operation: "Subscription",
-            version: SUBSCRIPTION_TCP_VERSION,
-            readResponseAndGetVersionCallback: url => this._readServerResponseAndGetVersion(url),
-            destinationNodeTag: this.currentNodeTag,
-            destinationUrl: chosenUrl
-        } as TcpNegotiateParameters;
-
-        this._supportedFeatures = await TcpNegotiation.negotiateProtocolVersion(this._tcpClient, parameters);
+        this._supportedFeatures = result.supportedFeatures;
 
         if (this._supportedFeatures.protocolVersion <= 0) {
             throwError("InvalidOperationException",
@@ -190,6 +179,23 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
         return this._tcpClient;
     }
+
+    private async _negotiateProtocolVersionForSubscription(chosenUrl: string, tcpInfo: TcpConnectionInfo, socket: Socket): Promise<SupportedFeatures> {
+        const databaseName = this._store.getEffectiveDatabase(this._dbName);
+
+        const parameters = {
+            database: databaseName,
+            operation: "Subscription",
+            version: SUBSCRIPTION_TCP_VERSION,
+            readResponseAndGetVersionCallback: url => this._readServerResponseAndGetVersion(url, socket),
+            destinationNodeTag: this.currentNodeTag,
+            destinationUrl: chosenUrl,
+            destinationServerId: tcpInfo.serverId
+        } as TcpNegotiateParameters;
+
+        return TcpNegotiation.negotiateProtocolVersion(socket, parameters);
+    }
+
 
     private async _legacyTryGetTcpInfo(requestExecutor: RequestExecutor, node?: ServerNode) {
         const tcpCommand = new GetTcpInfoCommand("Subscription/" + this._dbName, this._dbName);
@@ -229,19 +235,19 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         });
     }
 
-    private _ensureParser() {
+    private _ensureParser(socket: Socket) {
         const keysTransformProfile = getTransformJsonKeysProfile(
             this._revisions 
                 ? "SubscriptionRevisionsResponsePayload" 
                 : "SubscriptionResponsePayload", this._store.conventions);
 
         this._parser = stream.pipeline([
-            this._tcpClient,
+            socket,
             new Parser({ jsonStreaming: true, streamValues: false }),
             new TransformKeysJsonStream(keysTransformProfile),
             new StreamValues()
         ], err => {
-            if (err && !this._tcpClient.destroyed) {
+            if (err && !socket.destroyed) {
                 this._emitter.emit("error", err);
             }
         }) as stream.Transform;
@@ -250,7 +256,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     // noinspection JSUnusedLocalSymbols
-    private async _readServerResponseAndGetVersion(url: string): Promise<number> {
+    private async _readServerResponseAndGetVersion(url: string, socket: Socket): Promise<number> {
         const x: any = await this._readNextObject();
         switch (x.status) {
             case "Ok":
@@ -268,6 +274,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 await this._sendDropMessage(x.value);
                 throwError("InvalidOperationException",
                     "Can't connect to database " + this._dbName + " because: " + x.message);
+                break;
+            case "InvalidNetworkTopology":
+                throwError("InvalidNetworkTopologyException", "Failed to connect to url " + url + " because " + x.message);
         }
 
         return x.version;

@@ -23,6 +23,7 @@ import { SubscriptionUpdateOptions } from "./SubscriptionUpdateOptions";
 import { UpdateSubscriptionCommand } from "../Commands/UpdateSubscriptionCommand";
 import { CounterIncludesToken } from "../Session/Tokens/CounterIncludesToken";
 import { TimeSeriesIncludesToken } from "../Session/Tokens/TimeSeriesIncludesToken";
+import { QueryToken } from "../Session/Tokens/QueryToken";
 
 export class DocumentSubscriptions implements IDisposable {
     private readonly _store: DocumentStore;
@@ -152,7 +153,7 @@ export class DocumentSubscriptions implements IDisposable {
                             .append("'");
                     } else {
                         queryBuilder
-                            .append(include);
+                            .append(QueryToken.isKeyword(include) ? "'" + include + "'" : include);
                     }
 
                     numberOfIncludesAdded++;

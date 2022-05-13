@@ -5,6 +5,7 @@ import {
     IDocumentStore,
     PutDocumentCommand,
 } from "../../../src";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 describe("PutDocumentCommand", function () {
 
@@ -43,4 +44,37 @@ describe("PutDocumentCommand", function () {
         assert.strictEqual(loadedUser.age, user.age);
         assert.strictEqual(loadedUser.constructor, User);
     });
+
+
+    it("canPutDocumentUsingCommandWithSurrogatePairs", async () => {
+        const nameWithEmojis = "Marcin \uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00😡😡🤬😀";
+
+        const user = new User();
+        user.name = nameWithEmojis;
+        user.age = 31;
+
+        let node = store.conventions.objectMapper.toObjectLiteral(user);
+
+        const command = new PutDocumentCommand("users/2", null, node);
+        await store.getRequestExecutor().execute(command);
+
+        const result = command.result;
+
+
+        assertThat(result.id)
+            .isEqualTo("users/2");
+        assertThat(result.changeVector)
+            .isNotNull();
+
+        const session = store.openSession();
+        try {
+            const loadedUser = await session.load("users/2", User);
+
+            assertThat(loadedUser.name)
+                .isEqualTo(nameWithEmojis);
+        } finally {
+            session.dispose();
+        }
+    });
+
 });
