@@ -405,6 +405,14 @@ describe("RevisionsTest", function () {
             await session.saveChanges();
         }
 
+        {
+            const session = store.openSession();
+            const revision = session.advanced.lazily.load("users/1", User);
+            const doc = await revision.getValue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(1);
+        }
+
         for (let i = 0; i < 10; i++) {
             const session = store.openSession();
             const user = await session.load(id, Company);
@@ -515,6 +523,20 @@ describe("RevisionsTest", function () {
 
             assertThat(revisionsLazilyValue instanceof User)
                 .isTrue();
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+            assertThat(revisionsLazilyValue.id)
+                .isEqualTo(revisions.id);
+            assertThat(revisionsLazilyValue.name)
+                .isEqualTo(revisions.name);
+        }
+
+        {
+            const session = store.openSession();
+            const revisions = await session.advanced.revisions.get(cv, User);
+            const revisionsLazy = session.advanced.revisions.lazily.get(cv, User);
+            const revisionsLazilyValue = await revisionsLazy.getValue();
+
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(2);
             assertThat(revisionsLazilyValue.id)

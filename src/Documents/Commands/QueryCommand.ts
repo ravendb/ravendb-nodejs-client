@@ -184,6 +184,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             includedCounterNames: json.IncludedCounterNames,
             timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
             compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
+            revisionIncludes: json.RevisionIncludes,
             timeSeriesFields: json.TimeSeriesFields,
             timings: QueryCommand._mapTimingsToLocalObject(json.Timings)
         }

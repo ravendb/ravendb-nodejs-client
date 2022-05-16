@@ -1302,7 +1302,12 @@ export class RequestExecutor implements IDisposable {
 
             const raftRequestString = "raft-request-id=" + raftCommand.getRaftUniqueRequestId();
 
-            builder = new URL(builder.search ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
+            let joinCharacter = builder.search ? "&" : "?";
+            if (!builder.search && req.uri.endsWith("?")) {
+                joinCharacter = "";
+            }
+
+            builder = new URL(builder.toString() + joinCharacter + raftRequestString);
         }
 
         if (this._shouldBroadcast(command)) {

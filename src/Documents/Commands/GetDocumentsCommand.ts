@@ -353,6 +353,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
             timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
             counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
+            revisionIncludes: json.RevisionIncludes,
             nextPageStart: json.NextPageStart
         };
     }

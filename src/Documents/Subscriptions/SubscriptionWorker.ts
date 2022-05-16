@@ -145,7 +145,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             }
         }
 
-        const result = await TcpUtils.connectSecuredTcpSocket(tcpInfo, command.result.certificate, this._store.authOptions, "Subscription", this._negotiateProtocolVersionForSubscription);
+        const result = await TcpUtils.connectSecuredTcpSocket(
+            tcpInfo,
+            command.result.certificate,
+            this._store.authOptions,
+            "Subscription",
+            (chosenUrl, tcpInfo, socket) => this._negotiateProtocolVersionForSubscription(chosenUrl, tcpInfo, socket));
 
         this._tcpClient = result.socket;
 
@@ -257,6 +262,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     // noinspection JSUnusedLocalSymbols
     private async _readServerResponseAndGetVersion(url: string, socket: Socket): Promise<number> {
+        this._ensureParser(socket);
         const x: any = await this._readNextObject();
         switch (x.status) {
             case "Ok":
@@ -309,8 +315,12 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         }
 
         if (connectionStatus.type !== "ConnectionStatus") {
-            throwError("InvalidOperationException",
-                "Server returned illegal type message when expecting connection status, was: " + connectionStatus.type);
+            let message = "Server returned illegal type message when expecting connection status, was:" + connectionStatus.type;
+
+            if (connectionStatus.type == "Error") {
+                message += ". Exception: " + connectionStatus.exception;
+            }
+            throwError("InvalidOperationException", message);
         }
 
         // noinspection FallThroughInSwitchStatementJS
@@ -338,6 +348,16 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     "Subscription with id '" + this._options.subscriptionName
                     + "' cannot be opened, because it does not exist. " + connectionStatus.exception);
             case "Redirect":
+                if (this._options.strategy === "WaitForFree") {
+                    if (connectionStatus.data) {
+                        const registerConnectionDurationInTicks = connectionStatus.data["RegisterConnectionDurationInTicks"];
+                        if (registerConnectionDurationInTicks / 10_000 >= this._options.maxErroneousPeriod) {
+                            // this worker connection Waited For Free for more than MaxErroneousPeriod
+                            this._lastConnectionFailure = null;
+                        }
+                    }
+                }
+
                 const data = connectionStatus.data;
                 const appropriateNode = data.redirectedTag;
                 const currentNode = data.currentTag;

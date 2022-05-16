@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -11,8 +10,6 @@ import { ReplicationTestContext } from "../../Utils/ReplicationTestContext";
 import { Address, User } from "../../Assets/Entities";
 import { QueryCommand } from "../../../src/Documents/Commands/QueryCommand";
 import { tryGetConflict } from "../../../src/Mapping/Json";
-import { Stopwatch } from "../../../src/Utility/Stopwatch";
-import { throwError } from "../../../src/Exceptions";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +

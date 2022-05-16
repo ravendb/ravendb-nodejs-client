@@ -112,6 +112,8 @@ export class MultiTypeHiLoIdGenerator {
         } finally {
             acquiredSem.dispose();
         }
+
+        return value.nextId();
     }
 
     protected _createGeneratorFor(tag: string): HiloIdGenerator {

@@ -27,7 +27,7 @@ export class ClusterWideBatchCommand extends SingleNodeBatchCommand implements I
         let options = super._appendOptions();
 
         if (TypeUtil.isNullOrUndefined(this._disableAtomicDocumentWrites)) {
-            return ;
+            return "";
         }
 
         options

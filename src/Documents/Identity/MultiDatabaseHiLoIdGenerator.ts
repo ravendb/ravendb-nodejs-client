@@ -3,7 +3,6 @@ import { DocumentStore } from "../DocumentStore";
 import { IRavenObject } from "../../Types/IRavenObject";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { IHiLoIdGenerator } from "./IHiLoIdGenerator";
-import { DocumentType } from "../DocumentAbstractions";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { ObjectTypeDescriptor } from "../../Types";
 
@@ -53,7 +52,7 @@ export class MultiDatabaseHiLoIdGenerator implements IHiLoIdGenerator {
         return this._generateNextIdFor(database, collectionName);
     }
 
-    private _generateNextIdFor(database: string, collectionName: string): Promise<number> {
+    private async _generateNextIdFor(database: string, collectionName: string): Promise<number> {
         database = this._store.getEffectiveDatabase(database);
 
         if (!(database in this._generators)) {

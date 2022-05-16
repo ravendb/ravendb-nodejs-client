@@ -650,6 +650,49 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
+    public registerRevisionIncludes(revisionIncludes: any[]) {
+        if (this.noTracking) {
+            return;
+        }
+
+        if (!revisionIncludes) {
+            return;
+        }
+
+        if (!this.includeRevisionsByChangeVector) {
+            this.includeRevisionsByChangeVector = CaseInsensitiveKeysMap.create();
+        }
+
+        if (!this.includeRevisionsIdByDateTimeBefore) {
+            this.includeRevisionsIdByDateTimeBefore = CaseInsensitiveKeysMap.create();
+        }
+
+        for (const obj of revisionIncludes) {
+            if (!obj) {
+                continue;
+            }
+
+            const json = obj;
+            const id = json.Id;
+            const changeVector = json.ChangeVector;
+            const beforeAsText = json.Before;
+            const dateTime = beforeAsText ? DateUtil.utc.parse(beforeAsText) : null;
+            const revision = json.Revision;
+
+            this.includeRevisionsByChangeVector.set(changeVector, DocumentInfo.getNewDocumentInfo(revision));
+
+            if (dateTime && !StringUtil.isNullOrWhitespace(id)) {
+                const map = new Map<number, DocumentInfo>();
+
+                this.includeRevisionsIdByDateTimeBefore.set(id, map);
+
+                const documentInfo = new DocumentInfo();
+                documentInfo.document = revision;
+                map.set(dateTime.getTime(), documentInfo);
+            }
+        }
+    }
+
     public registerMissingIncludes(results: object[], includes: object, includePaths: string[]): void {
         if (this.noTracking) {
             return;

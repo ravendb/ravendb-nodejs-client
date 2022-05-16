@@ -8,6 +8,7 @@ import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
 import { HiloRangeValue } from "./HiloRangeValue";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { Lazy } from "../Lazy";
 
 export class HiloIdGenerator {
     private _store: IDocumentStore;
@@ -20,7 +21,8 @@ export class HiloIdGenerator {
     private _prefix?: string = null;
     private _lastBatchSize: number = 0;
     private _serverTag: string = null;
-    private _generatorLock = semaphore();
+
+    private _nextRangeTask: Lazy<void>;
 
     constructor(tag: string, store: IDocumentStore, dbName: string, identityPartsSeparator: string) {
         this._lastRangeAt = DateUtil.zeroDate();
@@ -44,6 +46,8 @@ export class HiloIdGenerator {
 
     public async nextId(): Promise<number> {
         while (true) {
+            const current = this._nextRangeTask;
+
             // local range is not exhausted yet
             const range = this._range;
 
@@ -52,28 +56,34 @@ export class HiloIdGenerator {
                 return id;
             }
 
-            let acquiredSemContext: SemaphoreAcquisitionContext;
             try {
-                //local range is exhausted , need to get a new range
-                acquiredSemContext = acquireSemaphore(this._generatorLock, {
-                    contextName: `${this.constructor.name}_${this._tag}`
-                });
-
-                await acquiredSemContext.promise;
-
-                const maybeNewRange = this._range;
-                if (maybeNewRange !== range) {
-                    id = maybeNewRange.increment();
-                    if (id <= maybeNewRange.maxId) {
-                        return id;
-                    }
+                // let's try to call the existing task for next range
+                await current.getValue();
+                if (range !== this._range) {
+                    continue;
                 }
+            } catch (e) {
+                // previous task was faulted, we will try to replace it
+            }
 
-                await this._getNextRange();
-            } finally {
-                if (acquiredSemContext) {
-                    acquiredSemContext.dispose();
-                }
+            // local range is exhausted , need to get a new range
+            const maybeNextTask = new Lazy(() => this._getNextRange());
+            let changed = false;
+            if (this._nextRangeTask === current) {
+                changed = true;
+                this._nextRangeTask = maybeNextTask;
+            }
+
+            if (changed) {
+                await maybeNextTask.getValue();
+                continue;
+            }
+
+            try {
+                // failed to replace, let's wait on the previous task
+                await this._nextRangeTask.getValue();
+            } catch (e) {
+                // previous task was faulted, we will try again
             }
         }
     }

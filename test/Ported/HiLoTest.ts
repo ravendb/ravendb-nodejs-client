@@ -3,11 +3,11 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
-    IDocumentStore,
     HiloIdGenerator,
     DocumentStore, MultiDatabaseHiLoIdGenerator,
 } from "../../src";
 import { ArrayUtil } from "../../src/Utility/ArrayUtil";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("HiLo", function () {
 
@@ -20,7 +20,7 @@ describe("HiLo", function () {
         public productName: string;
     }
 
-    let store: IDocumentStore;
+    let store: DocumentStore;
 
     beforeEach(async function () {
         store = await testContext.getDocumentStore();
@@ -245,4 +245,86 @@ describe("HiLo", function () {
             assert.strictEqual(idNumbers[i - 1], i);
         }
     });
+
+    it("generate_HiLo_Ids", async () => {
+        const multiDbHiLo = new MultiDatabaseHiLoIdGenerator(store);
+
+        const usersIds = new Map<number, boolean>();
+        const productsIds = new Map<number, boolean>();
+
+        let count = 10;
+        const tasks: Promise<void>[] = [];
+
+        for (let i = 0; i < count; i++) {
+            tasks.push(new Promise(async resolve => {
+                let id = await multiDbHiLo.generateNextIdFor(null, "Users");
+
+                assertThat(usersIds.has(id))
+                    .isFalse();
+                usersIds.set(id, true);
+
+                id = await multiDbHiLo.generateNextIdFor(null, "Products");
+                assertThat(productsIds.has(id))
+                    .isFalse();
+                productsIds.set(id, true);
+
+                resolve();
+            }));
+        }
+
+        await Promise.all(tasks);
+
+        assertThat(usersIds)
+            .hasSize(count);
+        assertThat(productsIds)
+            .hasSize(count);
+
+        tasks.length = 0;
+
+        const task = async () => {
+            let id = await multiDbHiLo.generateNextIdFor(null, "Users");
+
+            assertThat(usersIds.has(id))
+                .isFalse();
+            usersIds.set(id, true);
+
+            id = await store.hiLoIdGenerator.generateNextIdFor(null, "Products");
+            assertThat(productsIds.has(id))
+                .isFalse();
+            productsIds.set(id, true);
+
+            id = await store.hiLoIdGenerator.generateNextIdFor(null, User);
+            assertThat(usersIds.has(id))
+                .isFalse();
+            usersIds.set(id, true);
+
+            id = await store.hiLoIdGenerator.generateNextIdFor(null, new Product());
+            assertThat(productsIds.has(id))
+                .isFalse();
+            productsIds.set(id, true);
+
+            id = await store.hiLoIdGenerator.generateNextIdFor(null, new User());
+            assertThat(usersIds.has(id))
+                .isFalse();
+            usersIds.set(id, true);
+
+            id = await store.hiLoIdGenerator.generateNextIdFor(null, Product);
+            assertThat(productsIds.has(id))
+                .isFalse();
+            productsIds.set(id, true);
+        }
+
+
+        for (let i = 0; i < count; i++) {
+            tasks.push(task());
+        }
+
+        await Promise.all(tasks);
+
+        assertThat(usersIds)
+            .hasSize(count * 4);
+        assertThat(productsIds)
+            .hasSize(count * 4);
+    });
+
 });

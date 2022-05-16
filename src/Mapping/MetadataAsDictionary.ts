@@ -43,7 +43,7 @@ class MetadataInternal {
     }
 
     private _metadataConvertValue(key, val) {
-        if (!val) {
+        if (val == null) {
             return null;
         }
         

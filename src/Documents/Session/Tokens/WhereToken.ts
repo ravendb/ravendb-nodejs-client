@@ -161,15 +161,15 @@ export class WhereToken extends QueryToken {
     }
 
     public writeTo(writer): void {
-        if (this.options.boost) {
+        if (this.options.boost != null) {
             writer.append("boost(");
         }
 
-        if (this.options.fuzzy) {
+        if (this.options.fuzzy != null) {
             writer.append("fuzzy(");
         }
 
-        if (this.options.proximity) {
+        if (this.options.proximity != null) {
             writer.append("proximity(");
         }
 
@@ -216,21 +216,21 @@ export class WhereToken extends QueryToken {
             writer.append(")");
         }
 
-        if (this.options.proximity) {
+        if (this.options.proximity != null) {
             writer
                 .append(", ")
                 .append(this.options.proximity)
                 .append(")");
         }
 
-        if (this.options.fuzzy) {
+        if (this.options.fuzzy != null) {
             writer
                 .append(", ")
                 .append(this.options.fuzzy)
                 .append(")");
         }
 
-        if (this.options.boost) {
+        if (this.options.boost != null) {
             writer
                 .append(", ")
                 .append(this.options.boost)

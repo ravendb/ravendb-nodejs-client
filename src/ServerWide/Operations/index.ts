@@ -29,6 +29,7 @@ export interface DatabaseTopology {
     databaseTopologyIdBase64: string;
     clusterTransactionIdBase64: string;
     priorityOrder: string[];
+    nodesModifiedAt: string;
 }
 
 export function getAllNodesFromTopology(topology: DatabaseTopology) {

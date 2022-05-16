@@ -826,3 +826,8 @@ export class BulkInsertCommand extends RavenCommand<void> {
     }
 
 }
+
+export interface BulkInsertOptions {
+    useCompression?: boolean;
+    skipOverwriteIfUnchanged?: boolean;
+}
