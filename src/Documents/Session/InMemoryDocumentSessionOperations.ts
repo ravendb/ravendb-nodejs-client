@@ -1645,7 +1645,7 @@ export abstract class InMemoryDocumentSessionOperations
                     const beforeDeleteEventArgs =
                         new SessionBeforeDeleteEventArgs(this, documentInfo.id, documentInfo.entity);
                     this.emit("beforeDelete", beforeDeleteEventArgs);
-                    result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector));
+                    result.sessionCommands.push(new DeleteCommandData(documentInfo.id, changeVector, documentInfo.changeVector));
                 }
 
                 if (!changes) {

@@ -569,12 +569,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public getIndexQuery(): IndexQuery {
-        let serverVersion = null;
+        let serverVersion: string = null;
         if (this._theSession && this._theSession.requestExecutor) {
             serverVersion = this._theSession.requestExecutor.lastServerVersion;
         }
 
-        const compatibilityMode = serverVersion && serverVersion.compare("4.2") < 0;
+        const compatibilityMode = serverVersion && serverVersion.localeCompare("4.2") < 0;
         const query = this.toString(compatibilityMode);
         const indexQuery = this._generateIndexQuery(query);
         this.emit("beforeQueryExecuted", indexQuery);

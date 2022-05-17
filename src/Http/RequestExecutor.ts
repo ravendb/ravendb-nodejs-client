@@ -1133,7 +1133,7 @@ export class RequestExecutor implements IDisposable {
     }
 
     private static _tryGetServerVersion(response: HttpResponse) {
-        return response.headers[HEADERS.SERVER_VERSION];
+        return response.headers.get(HEADERS.SERVER_VERSION);
     }
 
     private _throwFailedToContactAllNodes<TResult>(
