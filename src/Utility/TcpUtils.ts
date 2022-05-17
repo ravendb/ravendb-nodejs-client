@@ -70,7 +70,7 @@ export class TcpUtils {
             for (const url of info.urls) {
                 try {
                     const socket = await this.connect(url, serverCertificate, clientCertificate);
-                    const supportedFeatures = await this.invokeNegotiation(info, operationType, negotiationCallback, url, socket);
+                    const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, url, socket);
                     return new ConnectSecuredTcpSocketResult(url, socket, supportedFeatures);
                 } catch {
                     // ignored
@@ -79,11 +79,11 @@ export class TcpUtils {
         }
 
         const socket = await this.connect(info.url, serverCertificate, clientCertificate);
-        const supportedFeatures = await this.invokeNegotiation(info, operationType, negotiationCallback, info.url, socket);
+        const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, info.url, socket);
         return new ConnectSecuredTcpSocketResult(info.url, socket, supportedFeatures);
     }
 
-    private static invokeNegotiation(info: TcpConnectionInfo, operationType: OperationTypes, negotiationCallback: NegotiationCallback, url: string, socket: Socket) {
+    private static _invokeNegotiation(info: TcpConnectionInfo, operationType: OperationTypes, negotiationCallback: NegotiationCallback, url: string, socket: Socket) {
         switch (operationType) {
             case "Subscription":
                 return negotiationCallback(url, info, socket);

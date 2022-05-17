@@ -53,7 +53,7 @@ describe("PutDocumentCommand", function () {
         user.name = nameWithEmojis;
         user.age = 31;
 
-        let node = store.conventions.objectMapper.toObjectLiteral(user);
+        const node = store.conventions.objectMapper.toObjectLiteral(user);
 
         const command = new PutDocumentCommand("users/2", null, node);
         await store.getRequestExecutor().execute(command);

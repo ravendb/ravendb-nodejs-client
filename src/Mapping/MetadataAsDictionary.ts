@@ -43,6 +43,7 @@ class MetadataInternal {
     }
 
     private _metadataConvertValue(key, val) {
+        // tslint:disable-next-line:triple-equals
         if (val == null) {
             return null;
         }

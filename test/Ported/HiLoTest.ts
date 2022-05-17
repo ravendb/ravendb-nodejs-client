@@ -252,7 +252,7 @@ describe("HiLo", function () {
         const usersIds = new Map<number, boolean>();
         const productsIds = new Map<number, boolean>();
 
-        let count = 10;
+        const count = 10;
         const tasks: Promise<void>[] = [];
 
         for (let i = 0; i < count; i++) {

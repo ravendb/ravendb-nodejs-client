@@ -2381,7 +2381,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             this._revisionsIncludesTokens = [];
         }
 
-        for (let changeVector of revisionsToIncludeByChangeVector) {
+        for (const changeVector of revisionsToIncludeByChangeVector) {
             this._revisionsIncludesTokens.push(RevisionIncludesToken.createForPath(changeVector));
         }
     }

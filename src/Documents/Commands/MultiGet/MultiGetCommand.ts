@@ -238,7 +238,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
             // (include the IP and port of the old node), because of that the client
             // needs to get those docs again from the new node.
 
-            for (let command of this._commands) {
+            for (const command of this._commands) {
                 delete command.headers[HEADERS.IF_NONE_MATCH];
             }
         }

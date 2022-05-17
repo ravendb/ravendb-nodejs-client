@@ -315,7 +315,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         if (connectionStatus.type !== "ConnectionStatus") {
             let message = "Server returned illegal type message when expecting connection status, was:" + connectionStatus.type;
 
-            if (connectionStatus.type == "Error") {
+            if (connectionStatus.type === "Error") {
                 message += ". Exception: " + connectionStatus.exception;
             }
             throwError("InvalidOperationException", message);
