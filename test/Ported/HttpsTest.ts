@@ -274,10 +274,13 @@ async function extractCertificate(certificateRawData: CertificateRawData) {
             const entryText = await readToEnd(entry);
             const lines = entryText.split(/\r?\n/);
             cert = lines.slice(1, lines.length - 2).join("\r\n");
+            break;
         } else {
             entry.autodrain();
         }
     }
+
+    stream.destroy();
 
     return cert;
 }
