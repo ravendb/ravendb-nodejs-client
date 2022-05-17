@@ -28,6 +28,7 @@ import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { TimeSeriesValuesHelper } from "./Session/TimeSeries/TimeSeriesValuesHelper";
 
 export class BulkInsertOperation {
+    private _options: BulkInsertOptions;
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
 
     private readonly _requestExecutor: RequestExecutor;
@@ -45,6 +46,7 @@ export class BulkInsertOperation {
     private readonly _timeSeriesBatchSize: number;
 
     private _concurrentCheck: number = 0;
+    private _isInitialWrite: boolean = true;
 
     private _bulkInsertAborted: Promise<void>;
     private _abortReject: Function;
@@ -53,12 +55,15 @@ export class BulkInsertOperation {
     private _requestBodyStream: stream.PassThrough;
     private _pipelineFinished: Promise<void>;
 
-    public constructor(database: string, store: IDocumentStore) {
+    public constructor(database: string, store: IDocumentStore, options?: BulkInsertOptions) {
         this._conventions = store.conventions;
         if (StringUtil.isNullOrEmpty(database)) {
             this._throwNoDatabase();
         }
         this._requestExecutor = store.getRequestExecutor(database);
+        this._useCompression = options ? options.useCompression : false;
+
+        this._options = options ?? {};
 
         this._timeSeriesBatchSize = this._conventions.bulkInsert.timeSeriesBatchSize;
 
@@ -310,7 +315,7 @@ export class BulkInsertOperation {
 
             this._requestBodyStream = new stream.PassThrough();
             const bulkCommand =
-                new BulkInsertCommand(this._operationId, this._requestBodyStream, this._nodeTag);
+                new BulkInsertCommand(this._operationId, this._requestBodyStream, this._nodeTag, this._options.skipOverwriteIfUnchanged);
             bulkCommand.useCompression = this._useCompression;
 
             const bulkCommandPromise = this._requestExecutor.execute(bulkCommand);
@@ -787,19 +792,25 @@ export class BulkInsertCommand extends RavenCommand<void> {
     }
 
     private readonly _stream: stream.Readable;
+    private _skipOverwriteIfUnchanged: boolean;
     private readonly _id: number;
     public useCompression: boolean;
 
-    public constructor(id: number, stream: stream.Readable, nodeTag: string) {
+    public constructor(id: number, stream: stream.Readable, nodeTag: string, skipOverwriteIfUnchanged: boolean) {
         super();
 
         this._stream = stream;
         this._id = id;
         this._selectedNodeTag = nodeTag;
+        this._skipOverwriteIfUnchanged = skipOverwriteIfUnchanged;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/bulk_insert?id=" + this._id;
+        const uri = node.url
+            + "/databases/" + node.database
+            + "/bulk_insert?id=" + this._id
+            + "&skipOverwriteIfUnchanged=" + (this._skipOverwriteIfUnchanged ? "true" : "false");
+
         const headers = this._headers().typeAppJson().build();
         // TODO: useCompression ? new GzipCompressingEntity(_stream) : _stream);
         return { 
@@ -814,4 +825,9 @@ export class BulkInsertCommand extends RavenCommand<void> {
         return throwError("NotImplementedException", "Not implemented");
     }
 
+}
+
+export interface BulkInsertOptions {
+    useCompression?: boolean;
+    skipOverwriteIfUnchanged?: boolean;
 }

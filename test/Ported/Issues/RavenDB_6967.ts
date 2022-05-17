@@ -73,9 +73,9 @@ describe("RavenDB_6967", function () {
             await session.saveChanges();
         }
 
-        await testContext.waitForIndexingErrors(store, 60_000, "Index1");
-        await testContext.waitForIndexingErrors(store, 60_000, "Index2");
-        await testContext.waitForIndexingErrors(store, 60_000, "Index3");
+        await testContext.indexes.waitForIndexingErrors(store, 60_000, "Index1");
+        await testContext.indexes.waitForIndexingErrors(store, 60_000, "Index2");
+        await testContext.indexes.waitForIndexingErrors(store, 60_000, "Index3");
 
         await store.maintenance.send(new StopIndexingOperation());
 

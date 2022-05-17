@@ -55,6 +55,10 @@ export class SessionInfo {
         this.noCaching = options.noCaching;
     }
 
+    public incrementRequestCount(): void {
+        this._session.incrementRequestCount();
+    }
+
     public setContext(sessionKey: string) {
         if (StringUtil.isNullOrWhitespace(sessionKey)) {
             throwError("InvalidArgumentException", "Session key cannot be null or whitespace.");
@@ -319,6 +323,8 @@ export interface SessionLoadInternalParameters<TResult extends object> {
     includeAllCounters?: boolean;
     timeSeriesIncludes?: AbstractTimeSeriesRange[];
     compareExchangeValueIncludes?: string[];
+    revisionIncludesByChangeVector?: string[];
+    revisionsToIncludeByDateTime?: Date;
 }
 
 export interface IDocumentSessionImpl extends IDocumentSession {

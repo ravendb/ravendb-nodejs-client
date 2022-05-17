@@ -171,7 +171,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
             for (let i = 0; i < responses.length; i++) {
                 const res = responses[i];
                 const command = this._commands[i];
-                this._maybeSetCache(res, command);
+                this._maybeSetCache(res, command, i);
 
                 if (this._cached && res.statusCode === StatusCodes.NotModified) {
                     const clonedResponse = new GetResponse();
@@ -191,8 +191,12 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
         }
     }
 
-    private _maybeSetCache(getResponse: GetResponse, command: GetRequest): void {
+    private _maybeSetCache(getResponse: GetResponse, command: GetRequest, cachedIndex: number): void {
         if (getResponse.statusCode === StatusCodes.NotModified) {
+            // if not modified - update age
+            if (this._cached) {
+                this._cached.values[cachedIndex][0].notModified();
+            }
             return;
         }
 
@@ -220,11 +224,24 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
     }
 
     public closeCache() {
+        //If _cached is not null - it means that the client approached with this multitask request to node and the request failed.
+        //and now client tries to send it to another node.
         if (this._cached) {
             this._cached.dispose();
-        }
 
-        this._cached = null;
+            this._cached = null;
+
+            // The client sends the commands.
+            // Some of which could be saved in cache with a response
+            // that includes the change vector that received from the old fallen node.
+            // The client can't use those responses because their URLs are different
+            // (include the IP and port of the old node), because of that the client
+            // needs to get those docs again from the new node.
+
+            for (const command of this._commands) {
+                delete command.headers[HEADERS.IF_NONE_MATCH];
+            }
+        }
     }
 }
 

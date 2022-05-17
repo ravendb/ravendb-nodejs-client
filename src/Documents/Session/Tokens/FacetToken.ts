@@ -248,7 +248,7 @@ export class FacetAggregationToken extends QueryToken {
         }
 
         writer.append(" as ");
-        this._writeField(writer, this._fieldDisplayName);
+        QueryToken.writeField(writer, this._fieldDisplayName);
     }
 
     public static max(fieldName: string): FacetAggregationToken

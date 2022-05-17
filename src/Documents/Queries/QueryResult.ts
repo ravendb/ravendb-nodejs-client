@@ -24,6 +24,7 @@ export class QueryResult extends GenericQueryResult<object[], object> {
         queryResult.resultEtag = this.resultEtag;
         queryResult.nodeTag = this.nodeTag;
         queryResult.counterIncludes = this.counterIncludes;
+        queryResult.revisionIncludes = this.revisionIncludes;
         queryResult.includedCounterNames = this.includedCounterNames;
         queryResult.timeSeriesIncludes = this.timeSeriesIncludes;
         queryResult.compareExchangeValueIncludes = this.compareExchangeValueIncludes;

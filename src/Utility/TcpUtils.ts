@@ -5,8 +5,9 @@ import { IAuthOptions } from "../Auth/AuthOptions";
 import * as tls from "tls";
 import { Certificate } from "../Auth/Certificate";
 import { PeerCertificate } from "tls";
-import { getError } from "../Exceptions";
+import { getError, throwError } from "../Exceptions";
 import { TcpConnectionInfo } from "../ServerWide/Commands/GetTcpInfoCommand";
+import { OperationTypes, SupportedFeatures } from "../ServerWide/Tcp/TcpConnectionHeaderMessage";
 
 export class TcpUtils {
     public static async connect(
@@ -63,13 +64,14 @@ export class TcpUtils {
         }
     }
 
-    public static async connectWithPriority(info: TcpConnectionInfo, serverCertificate: string,
-                                            clientCertificate: IAuthOptions): Promise<[Socket, string]> {
+    public static async connectSecuredTcpSocket(info: TcpConnectionInfo, serverCertificate: string,
+                                            clientCertificate: IAuthOptions, operationType: OperationTypes, negotiationCallback: NegotiationCallback): Promise<ConnectSecuredTcpSocketResult> {
         if (info.urls) {
             for (const url of info.urls) {
                 try {
                     const socket = await this.connect(url, serverCertificate, clientCertificate);
-                    return [socket, url];
+                    const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, url, socket);
+                    return new ConnectSecuredTcpSocketResult(url, socket, supportedFeatures);
                 } catch {
                     // ignored
                 }
@@ -77,6 +79,31 @@ export class TcpUtils {
         }
 
         const socket = await this.connect(info.url, serverCertificate, clientCertificate);
-        return [socket, info.url];
+        const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, info.url, socket);
+        return new ConnectSecuredTcpSocketResult(info.url, socket, supportedFeatures);
+    }
+
+    private static _invokeNegotiation(info: TcpConnectionInfo, operationType: OperationTypes, negotiationCallback: NegotiationCallback, url: string, socket: Socket) {
+        switch (operationType) {
+            case "Subscription":
+                return negotiationCallback(url, info, socket);
+            default:
+                throwError("NotSupportedException", "Operation type '" + operationType + "' not supported");
+        }
+    }
+}
+
+type NegotiationCallback = (url: string, info: TcpConnectionInfo, socket: Socket) => Promise<SupportedFeatures>;
+
+export class ConnectSecuredTcpSocketResult {
+    url: string;
+    socket: Socket;
+    supportedFeatures: SupportedFeatures;
+
+
+    constructor(url: string, socket: Socket, supportedFeatures: SupportedFeatures) {
+        this.url = url;
+        this.socket = socket;
+        this.supportedFeatures = supportedFeatures;
     }
 }

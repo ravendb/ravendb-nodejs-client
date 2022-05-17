@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import { RavenTestContext, testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -11,8 +10,6 @@ import { ReplicationTestContext } from "../../Utils/ReplicationTestContext";
 import { Address, User } from "../../Assets/Entities";
 import { QueryCommand } from "../../../src/Documents/Commands/QueryCommand";
 import { tryGetConflict } from "../../../src/Mapping/Json";
-import { Stopwatch } from "../../../src/Utility/Stopwatch";
-import { throwError } from "../../../src/Exceptions";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)(
     `${RavenTestContext.isPullRequest ? "[Skipped on PR] " : ""}` +
@@ -79,7 +76,7 @@ import { throwError } from "../../../src/Exceptions";
                         }
 
                         await replication.setupReplication(source, destination);
-                        await waitForConflict(destination, "addresses/1");
+                        await testContext.replication.waitForConflict(destination, "addresses/1");
 
                         {
                             const session = destination.openSession();
@@ -121,26 +118,6 @@ import { throwError } from "../../../src/Exceptions";
                     source.dispose();
                 }
 
-                async function waitForConflict(docStore: IDocumentStore, id: string) {
-                    const sw = Stopwatch.createStarted();
-                    while (sw.elapsed < 10000) {
-                        try {
-                            const session = docStore.openSession();
-                            await session.load(id);
-
-                            await BluebirdPromise.delay(10);
-                        } catch (e) {
-                            if (e.name === "DocumentConflictException") {
-                                return;
-                            }
-
-                            throw e;
-                        }
-                    }
-
-                    throwError("InvalidOperationException",
-                        "Waited for conflict on '" + id + "' but it did not happen");
-                }
             });
         });
     });

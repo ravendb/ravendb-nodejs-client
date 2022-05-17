@@ -87,6 +87,7 @@ import { StringBuilder } from "../../Utility/StringBuilder";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
+import { RevisionIncludesToken } from "./Tokens/RevisionIncludesToken";
 
 /**
  * A query against a Raven index
@@ -568,12 +569,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public getIndexQuery(): IndexQuery {
-        let serverVersion = null;
+        let serverVersion: string = null;
         if (this._theSession && this._theSession.requestExecutor) {
             serverVersion = this._theSession.requestExecutor.lastServerVersion;
         }
 
-        const compatibilityMode = serverVersion && serverVersion.compare("4.2") < 0;
+        const compatibilityMode = serverVersion && serverVersion.localeCompare("4.2") < 0;
         const query = this.toString(compatibilityMode);
         const indexQuery = this._generateIndexQuery(query);
         this.emit("beforeQueryExecuted", indexQuery);
@@ -766,6 +767,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         if (pathOrIncludes.timeSeriesToIncludeBySourceAlias) {
             this._includeTimeSeries(pathOrIncludes.alias, pathOrIncludes.timeSeriesToIncludeBySourceAlias);
+        }
+
+        if (pathOrIncludes.revisionsToIncludeByDateTime) {
+            this._includeRevisionsByDate(pathOrIncludes.revisionsToIncludeByDateTime);
+        }
+
+        if (pathOrIncludes.revisionsToIncludeByChangeVector) {
+            this._includeRevisionsByChangeVector(pathOrIncludes.revisionsToIncludeByChangeVector);
         }
 
         if (pathOrIncludes.compareExchangeValuesToInclude) {
@@ -1502,6 +1511,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             && !this._explanationToken
             && !this._queryTimings
             && !this._counterIncludesTokens
+            && !this._revisionsIncludesTokens
             && !this._timeSeriesIncludesTokens
             && !this._compareExchangeValueIncludesTokens) {
             return;
@@ -1531,6 +1541,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         this._writeIncludeTokens(this._counterIncludesTokens, firstRef, queryText);
         this._writeIncludeTokens(this._timeSeriesIncludesTokens, firstRef, queryText);
+        this._writeIncludeTokens(this._revisionsIncludesTokens, firstRef, queryText);
         this._writeIncludeTokens(this._compareExchangeValueIncludesTokens, firstRef, queryText);
         this._writeIncludeTokens(this._highlightingTokens, firstRef, queryText);
 
@@ -2265,6 +2276,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _compareExchangeValueIncludesTokens: CompareExchangeValueIncludesToken[];
 
+    protected _revisionsIncludesTokens: RevisionIncludesToken[];
+
     protected _includeCounters(
         alias: string, counterToIncludeByDocId: CountersByDocId): void {
         if (!counterToIncludeByDocId || !counterToIncludeByDocId.size) {
@@ -2353,6 +2366,24 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         return fromAlias;
+    }
+
+    private _includeRevisionsByDate(dateTime: Date) {
+        if (!this._revisionsIncludesTokens) {
+            this._revisionsIncludesTokens = [];
+        }
+
+        this._revisionsIncludesTokens.push(RevisionIncludesToken.createForDate(dateTime));
+    }
+
+    private _includeRevisionsByChangeVector(revisionsToIncludeByChangeVector: Set<string>) {
+        if (!this._revisionsIncludesTokens) {
+            this._revisionsIncludesTokens = [];
+        }
+
+        for (const changeVector of revisionsToIncludeByChangeVector) {
+            this._revisionsIncludesTokens.push(RevisionIncludesToken.createForPath(changeVector));
+        }
     }
 
     public get parameterPrefix() {

@@ -53,7 +53,7 @@ class GetReplicationHubAccessCommand extends RavenCommand<DetailedReplicationHub
 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database
-            + "/admin/tasks/pull-replication/hub/access?name=" + encodeURIComponent(this._hubName)
+            + "/admin/tasks/pull-replication/hub/access?name=" + this._urlEncode(this._hubName)
             + "&start=" + this._start
             + "&pageSize=" + this._pageSize;
 

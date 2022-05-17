@@ -202,11 +202,15 @@ export class FailedRequestEventArgs {
     public database: string;
     public url: string;
     public error: Error;
+    public request: HttpRequestParameters;
+    public response: HttpResponse;
 
-    public constructor(database: string, url: string, error: Error) {
+    public constructor(database: string, url: string, error: Error, request: HttpRequestParameters, response: HttpResponse) {
         this.database = database;
         this.url = url;
         this.error = error;
+        this.request = request;
+        this.response = response;
     }
 }
 

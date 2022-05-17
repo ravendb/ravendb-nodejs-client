@@ -43,6 +43,8 @@ export interface GetDocumentsByIdsCommandOptions
     includes?: string[];
     metadataOnly?: boolean;
     timeSeriesIncludes?: AbstractTimeSeriesRange[];
+    revisionsIncludesByChangeVector?: string[];
+    revisionIncludeByDateTimeBefore?: Date;
     compareExchangeValueIncludes?: string[];
 }
 
@@ -61,6 +63,7 @@ export interface GetDocumentsResult {
     includes: IRavenObject;
     results: any[];
     counterIncludes: IRavenObject;
+    revisionIncludes: any[];
     timeSeriesIncludes: IRavenObject;
     compareExchangeValueIncludes: IRavenObject;
     nextPageStart: number;
@@ -77,6 +80,8 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private _includeAllCounters: boolean;
 
     private _timeSeriesIncludes: AbstractTimeSeriesRange[];
+    private _revisionsIncludeByChangeVector: string[];
+    private _revisionsIncludeByDateTime: Date;
     private _compareExchangeValueIncludes: string[];
 
     private readonly _metadataOnly: boolean;
@@ -114,6 +119,8 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._metadataOnly = opts.metadataOnly;
             this._timeSeriesIncludes = opts.timeSeriesIncludes;
             this._compareExchangeValueIncludes = opts.compareExchangeValueIncludes;
+            this._revisionsIncludeByDateTime = opts.revisionIncludeByDateTimeBefore;
+            this._revisionsIncludeByChangeVector = opts.revisionsIncludesByChangeVector;
         } else if (opts.hasOwnProperty("start") && opts.hasOwnProperty("pageSize")) {
             opts = opts as GetDocumentsStartingWithOptions;
             this._start = opts.start;
@@ -222,6 +229,16 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                     throwError("InvalidArgumentException", "Unexpected TimeSeries range: " + tsInclude);
                 }
             }
+        }
+
+        if (this._revisionsIncludeByChangeVector) {
+            for (const changeVector of this._revisionsIncludeByChangeVector) {
+                query += "&revisions=" + this._urlEncode(changeVector);
+            }
+        }
+
+        if (this._revisionsIncludeByDateTime) {
+            query += "&revisionsBefore=" + DateUtil.utc.stringify(this._revisionsIncludeByDateTime);
         }
 
         if (this._compareExchangeValueIncludes) {
@@ -336,6 +353,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
             timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
             counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
+            revisionIncludes: json.RevisionIncludes,
             nextPageStart: json.NextPageStart
         };
     }

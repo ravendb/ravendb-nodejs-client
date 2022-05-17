@@ -1,12 +1,14 @@
 import { AuthorizationInfo, OperationTypes } from "./TcpConnectionHeaderMessage";
+import { Socket } from "net";
 
 export interface TcpNegotiateParameters {
     operation: OperationTypes;
-    authorizeInfo: AuthorizationInfo;
+    authorizeInfo?: AuthorizationInfo;
     version: number;
     database: string;
     sourceNodeTag?: string;
     destinationNodeTag: string;
     destinationUrl: string;
-    readResponseAndGetVersionCallback: (url: string) => Promise<number>;
+    destinationServerId: string;
+    readResponseAndGetVersionCallback: (url: string, socket: Socket) => Promise<number>;
 }

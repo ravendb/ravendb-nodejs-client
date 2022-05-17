@@ -53,6 +53,8 @@ export type RavenErrorType = "RavenException"
     | "DocumentDoesNotExistsException"
     | "NonUniqueObjectException"
     | "ConcurrencyException"
+    | "ClusterTransactionConcurrencyException"
+    | "InvalidNetworkTopologyException"
     | "ArgumentNullException"
     | "ArgumentOutOfRangeException"
     | "DatabaseDoesNotExistException"
@@ -81,6 +83,7 @@ export type RavenErrorType = "RavenException"
     | "SubscriptionDoesNotExistException"
     | "SubscriptionConnectionDownException"
     | "SubscriptionInvalidStateException"
+    | "SubscriptionMessageTypeException"
     | "SubscriptionException"
     | "SubscriberErrorException"
     | "SubscriptionInUseException"
@@ -209,6 +212,10 @@ export class ExceptionDispatcher {
     private static _getConflictError(schema: ExceptionSchema, json: string) {
         if (schema.type.includes("DocumentConflictException")) {
             return getError("DocumentConflictException", schema.message, null, { json });
+        }
+
+        if (schema.type.includes("ClusterTransactionConcurrencyException")) {
+            return getError("ClusterTransactionConcurrencyException", schema.message, null, { json });
         }
 
         return getError("ConcurrencyException", schema.message);

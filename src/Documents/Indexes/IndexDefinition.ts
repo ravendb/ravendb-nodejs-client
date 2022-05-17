@@ -7,16 +7,13 @@ import { AbstractIndexDefinitionBuilder } from "./AbstractIndexDefinitionBuilder
 import { IndexSourceType } from "./IndexSourceType";
 import { AdditionalAssembly } from "./AdditionalAssembly";
 import { IndexDeploymentMode } from "./IndexDeploymentMode";
+import { IndexDefinitionBase } from "./IndexDefinitionBase";
 
 export interface IndexConfiguration {
     [key: string]: string;
 }
 
-export class IndexDefinition {
-
-    public name: string;
-    public priority: IndexPriority;
-    public state: IndexState;
+export class IndexDefinition extends IndexDefinitionBase {
 
     /**
      * Index lock mode:

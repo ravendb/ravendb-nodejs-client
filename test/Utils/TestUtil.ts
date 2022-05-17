@@ -106,7 +106,11 @@ class TestSecuredServiceLocator extends RavenServerLocator {
     }
 
     public getServerCertificatePath() {
-        return path.resolve(process.env[TestSecuredServiceLocator.ENV_SERVER_CERTIFICATE_PATH]);
+        const certPath = process.env[TestSecuredServiceLocator.ENV_SERVER_CERTIFICATE_PATH];
+        if (!certPath) {
+            throwError("InvalidArgumentException", TestSecuredServiceLocator.ENV_SERVER_CERTIFICATE_PATH + " env variable is missing");
+        }
+        return path.resolve(certPath);
     }
 
     public getClientAuthOptions(): IAuthOptions {

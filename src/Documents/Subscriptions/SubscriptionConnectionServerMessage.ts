@@ -15,6 +15,7 @@ export interface SubscriptionRedirectData {
     currentTag: string;
     redirectedTag: string;
     reasons: Record<string, string>;
+    registerConnectionDurationInTicks: number;
 }
 
 export type MessageType = "None"

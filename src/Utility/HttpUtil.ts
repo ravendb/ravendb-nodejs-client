@@ -28,7 +28,9 @@ export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHead
         etagHeaders = null;
     }
 
-    return Array.isArray(etagHeaders) ? etagHeaders[0] : (etagHeaders || null);
+    const singleHeader = Array.isArray(etagHeaders) ? etagHeaders[0] : (etagHeaders || null);
+
+    return singleHeader ? etagHeaderToChangeVector(singleHeader) : null;
 }
 
 export function etagHeaderToChangeVector(responseHeader: string) {

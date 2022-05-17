@@ -90,4 +90,16 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         return this;
     }
 
+    includeRevisions(path: string): IIncludeBuilder;
+    includeRevisions(before: Date): IIncludeBuilder;
+    includeRevisions(pathOrDate: string | Date): IIncludeBuilder {
+        if (TypeUtil.isString(pathOrDate)) {
+            this._withAlias();
+            this._includeRevisionsByChangeVectors(pathOrDate);
+            return this;
+        } else {
+            this._includeRevisionsBefore(pathOrDate);
+            return this;
+        }
+    }
 }

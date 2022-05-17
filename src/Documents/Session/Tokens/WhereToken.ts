@@ -161,15 +161,18 @@ export class WhereToken extends QueryToken {
     }
 
     public writeTo(writer): void {
-        if (this.options.boost) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.boost != null) {
             writer.append("boost(");
         }
 
-        if (this.options.fuzzy) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.fuzzy != null) {
             writer.append("fuzzy(");
         }
 
-        if (this.options.proximity) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.proximity != null) {
             writer.append("proximity(");
         }
 
@@ -216,21 +219,24 @@ export class WhereToken extends QueryToken {
             writer.append(")");
         }
 
-        if (this.options.proximity) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.proximity != null) {
             writer
                 .append(", ")
                 .append(this.options.proximity)
                 .append(")");
         }
 
-        if (this.options.fuzzy) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.fuzzy != null) {
             writer
                 .append(", ")
                 .append(this.options.fuzzy)
                 .append(")");
         }
 
-        if (this.options.boost) {
+        // tslint:disable-next-line:triple-equals
+        if (this.options.boost != null) {
             writer
                 .append(", ")
                 .append(this.options.boost)
@@ -239,7 +245,7 @@ export class WhereToken extends QueryToken {
     }
 
     private _writeInnerWhere(writer): void {
-        this._writeField(writer, this.fieldName);
+        QueryToken.writeField(writer, this.fieldName);
 
         switch (this.whereOperator) {
             case "Equals":

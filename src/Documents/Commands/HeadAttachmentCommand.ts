@@ -7,6 +7,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import { StatusCodes } from "./../../Http/StatusCode";
 import * as stream from "readable-stream";
 import { getRequiredEtagHeader } from "../../Utility/HttpUtil";
+import { HEADERS } from "../../Constants";
 
 export class HeadAttachmentCommand extends RavenCommand<string> {
 
@@ -41,12 +42,14 @@ export class HeadAttachmentCommand extends RavenCommand<string> {
             + "/attachments?id=" + encodeURIComponent(this._documentId)
             + "&name=" + encodeURIComponent(this._name);
 
-        const req = {
+        const req: HttpRequestParameters = {
             method: "HEAD",
             uri
         };
 
-        this._addChangeVectorIfNotNull(this._changeVector, req);
+        if (this._changeVector) {
+            req.headers[HEADERS.IF_NONE_MATCH] = `"${this._changeVector}"`;
+        }
 
         return req;
     }

@@ -59,6 +59,18 @@ export class GetRevisionsCommand extends RavenCommand<IRavenArrayResult> {
         this._conventions = conventions;
     }
 
+    public get id(): string {
+        return this._id;
+    }
+
+    public get before(): Date {
+        return this._before;
+    }
+
+    public get changeVector(): string {
+        return this._changeVector;
+    }
+
     public get changeVectors() {
         return this._changeVectors;
     }

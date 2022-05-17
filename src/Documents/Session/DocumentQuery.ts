@@ -618,6 +618,7 @@ export class DocumentQuery<T extends object>
         query._documentIncludes = new Set(this._documentIncludes);
         query._counterIncludesTokens = this._counterIncludesTokens;
         query._timeSeriesIncludesTokens = this._timeSeriesIncludesTokens;
+        query._revisionsIncludesTokens = this._revisionsIncludesTokens;
         query._compareExchangeValueIncludesTokens = this._compareExchangeValueIncludesTokens;
         query._rootTypes = new Set([this._clazz]);
 

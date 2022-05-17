@@ -8,6 +8,7 @@ export class TcpConnectionInfo {
     public certificate: string;
     public urls: string[];
     public nodeTag: string;
+    public serverId: string;
 }
 
 export class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {

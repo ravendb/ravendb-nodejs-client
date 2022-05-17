@@ -46,7 +46,18 @@ export class GetRevisionOperation {
     }
 
     public createRequest() {
-        this._session.incrementRequestCount();
+        if (this._command.changeVectors) {
+            return this._session.checkIfAllChangeVectorsAreAlreadyIncluded(this._command.changeVectors) ? null : this._command;
+        }
+
+        if (this._command.changeVector) {
+            return this._session.checkIfAllChangeVectorsAreAlreadyIncluded([this.command.changeVector]) ? null : this._command;
+        }
+
+        if (this.command.before) {
+            return this._session.checkIfRevisionByDateTimeBeforeAlreadyIncluded(this.command.id, this.command.before) ? null : this._command;
+        }
+
         return this._command;
     }
 
@@ -110,6 +121,36 @@ export class GetRevisionOperation {
 
     public getRevision<TEntity extends object>(documentType: DocumentType<TEntity>): TEntity | null {
         if (!this._result) {
+
+            let revision: DocumentInfo;
+
+            if (this._command.changeVectors) {
+                for (const changeVector of this._command.changeVectors) {
+                    revision = this._session.includeRevisionsByChangeVector.get(changeVector);
+                    if (revision) {
+                        return this._getRevision(documentType, revision.document);
+                    }
+                }
+            }
+
+            if (this.command.changeVector && this._session.includeRevisionsByChangeVector) {
+                revision = this._session.includeRevisionsByChangeVector.get(this._command.changeVector);
+                if (revision) {
+                    return this._getRevision(documentType, revision.document);
+                }
+            }
+
+            if (this._command.before && this._session.includeRevisionsIdByDateTimeBefore) {
+                const dictionaryDateTimeToDocument = this._session.includeRevisionsIdByDateTimeBefore.get(this._command.id);
+
+                if (dictionaryDateTimeToDocument) {
+                    revision = dictionaryDateTimeToDocument.get(this._command.before.getTime());
+                    if (revision) {
+                        return this._getRevision(documentType, revision.document);
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -120,6 +161,17 @@ export class GetRevisionOperation {
     public getRevisions<TEntity extends object>(
         documentType: DocumentType<TEntity>): RevisionsCollectionObject<TEntity> {
         const results = {} as RevisionsCollectionObject<TEntity>;
+
+        if (!this._result) {
+            for (const changeVector of this._command.changeVectors) {
+                const revision = this._session.includeRevisionsByChangeVector.get(changeVector);
+                if (revision) {
+                    results[changeVector] = this._getRevision(documentType, revision.document);
+                }
+            }
+
+            return results;
+        }
 
         for (let i = 0; i < this._command.changeVectors.length; i++) {
             const changeVector = this._command.changeVectors[i];

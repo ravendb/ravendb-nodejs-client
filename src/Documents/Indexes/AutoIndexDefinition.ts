@@ -1,12 +1,10 @@
 import { IndexPriority, IndexState, IndexType } from "./Enums";
 import { AutoIndexFieldOptions } from "./AutoIndexFieldOptions";
+import { IndexDefinitionBase } from "./IndexDefinitionBase";
 
 
-export interface AutoIndexDefinition {
+export interface AutoIndexDefinition extends IndexDefinitionBase {
     type: IndexType;
-    name: string;
-    priority: IndexPriority;
-    state: IndexState;
     collection: string;
     mapFields: Record<string, AutoIndexFieldOptions>;
     groupByFields: Record<string, AutoIndexFieldOptions>;

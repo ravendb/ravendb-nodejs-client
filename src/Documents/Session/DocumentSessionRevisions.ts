@@ -38,6 +38,12 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         const operation = new GetRevisionOperation(this._session, id, options.start, options.pageSize);
 
         const command = operation.createRequest();
+        if (!command) {
+            return operation.getRevisionsFor(options.documentType);
+        }
+        if (this._sessionInfo) {
+            this._sessionInfo.incrementRequestCount();
+        }
         await this._requestExecutor.execute(command, this._sessionInfo);
         operation.result = command.result;
         return operation.getRevisionsFor(options.documentType);
@@ -52,12 +58,19 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         } as SessionRevisionsMetadataOptions, options || {});
         const operation = new GetRevisionOperation(this._session, id, options.start, options.pageSize, true);
         const command = operation.createRequest();
+        if (!command) {
+            return operation.getRevisionsMetadataFor();
+        }
+        if (this._sessionInfo) {
+            this._sessionInfo.incrementRequestCount();
+        }
         await this._requestExecutor.execute(command, this._sessionInfo);
         operation.result = command.result;
         return operation.getRevisionsMetadataFor();
     }
 
     public async get<TEntity extends object>(id: string, date: Date): Promise<TEntity | null>;
+    public async get<TEntity extends object>(id: string, date: Date, documentType: DocumentType<TEntity>): Promise<TEntity | null>;
     public async get<TEntity extends object>(changeVector: string): Promise<TEntity | null>;
     public async get<TEntity extends object>(changeVector: string,
                                              documentType: DocumentType<TEntity>): Promise<TEntity | null>;
@@ -67,7 +80,8 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         : Promise<RevisionsCollectionObject<TEntity>>;
     public async get<TEntity extends object>(
         changeVectorOrVectorsOrId: string | string[],
-        documentTypeOrDate?: DocumentType<TEntity> | Date)
+        documentTypeOrDate?: DocumentType<TEntity> | Date,
+        documentTypeForDateOverload?: DocumentType<TEntity>)
         : Promise<RevisionsCollectionObject<TEntity> | TEntity> {
 
         const documentType = TypeUtil.isDocumentType(documentTypeOrDate)
@@ -76,7 +90,7 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
 
         if (TypeUtil.isDate(documentTypeOrDate)) {
             return this._getByIdAndDate(
-                changeVectorOrVectorsOrId as string, documentTypeOrDate);
+                changeVectorOrVectorsOrId as string, documentTypeOrDate, documentTypeForDateOverload);
         } else {
             return this._get(changeVectorOrVectorsOrId, documentType);
         }
@@ -86,6 +100,12 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         id: string, date: Date, clazz?: DocumentType<TEntity>) {
         const operation = new GetRevisionOperation(this._session, id, date);
         const command = operation.createRequest();
+        if (!command) {
+            return operation.getRevision(clazz);
+        }
+        if (this._sessionInfo) {
+            this._sessionInfo.incrementRequestCount();
+        }
         await this._requestExecutor.execute(command, this._sessionInfo);
         operation.result = command.result;
         return operation.getRevision(clazz);
@@ -97,6 +117,14 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         const operation = new GetRevisionOperation(this._session, changeVectorOrVectors as any);
 
         const command = operation.createRequest();
+        if (!command) {
+            return TypeUtil.isArray(changeVectorOrVectors)
+                ? operation.getRevisions(documentType)
+                : operation.getRevision(documentType);
+        }
+        if (this._sessionInfo) {
+            this._sessionInfo.incrementRequestCount();
+        }
         await this._requestExecutor.execute(command, this._sessionInfo);
         operation.result = command.result;
         return TypeUtil.isArray(changeVectorOrVectors)
@@ -107,6 +135,9 @@ export class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
     public async getCountFor(id: string): Promise<number> {
         const operation = new GetRevisionsCountOperation(id);
         const command = operation.createRequest();
+        if (this._sessionInfo) {
+            this._sessionInfo.incrementRequestCount();
+        }
         await this._requestExecutor.execute(command, this._sessionInfo);
         return command.result;
     }

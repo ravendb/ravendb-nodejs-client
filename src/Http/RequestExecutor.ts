@@ -291,8 +291,8 @@ export class RequestExecutor implements IDisposable {
         this._emitter.off(event, handler);
     }
 
-    private _onFailedRequestInvoke(url: string, e: Error) {
-        const args = new FailedRequestEventArgs(this._databaseName, url, e);
+    private _onFailedRequestInvoke(url: string, e: Error, req?: HttpRequestParameters, response?: HttpResponse) {
+        const args = new FailedRequestEventArgs(this._databaseName, url, e, req, response);
         this._emitter.emit("failedRequest", args);
     }
 
@@ -960,22 +960,20 @@ export class RequestExecutor implements IDisposable {
             && response.headers
             && response.headers.get(HEADERS.REFRESH_CLIENT_CONFIGURATION);
 
-        if (refreshTopology || refreshClientConfiguration) {
-            const serverNode = new ServerNode({
-                database: this._databaseName,
-                url: chosenNode.url
-            });
+        const tasks: Promise<any>[] = [];
 
-            const updateParameters = new UpdateTopologyParameters(serverNode);
+        if (refreshTopology) {
+            const updateParameters = new UpdateTopologyParameters(chosenNode);
             updateParameters.timeoutInMs = 0;
             updateParameters.debugTag = "refresh-topology-header";
-
-            const topologyTask: Promise<boolean> = refreshTopology ? this.updateTopology(updateParameters) : null;
-            const clientConfiguration: Promise<void> = refreshClientConfiguration ? this._updateClientConfiguration(serverNode) : null;
-
-            await topologyTask;
-            await clientConfiguration;
+            tasks.push(this.updateTopology(updateParameters));
         }
+
+        if (refreshClientConfiguration) {
+            tasks.push(this._updateClientConfiguration(chosenNode));
+        }
+
+        await Promise.all(tasks);
     }
 
     private async _sendRequestToServer<TResult>(chosenNode: ServerNode,
@@ -1094,7 +1092,7 @@ export class RequestExecutor implements IDisposable {
 
     private _setRequestHeaders(sessionInfo: SessionInfo, cachedChangeVector: string, req: HttpRequestParameters) {
         if (cachedChangeVector) {
-            req.headers["If-None-Match"] = `"${cachedChangeVector}"`;
+            req.headers[HEADERS.IF_NONE_MATCH] = `"${cachedChangeVector}"`;
         }
 
         if (!this._disableClientConfigurationUpdates) {
@@ -1135,7 +1133,7 @@ export class RequestExecutor implements IDisposable {
     }
 
     private static _tryGetServerVersion(response: HttpResponse) {
-        return response.headers[HEADERS.SERVER_VERSION];
+        return response.headers.get(HEADERS.SERVER_VERSION);
     }
 
     private _throwFailedToContactAllNodes<TResult>(
@@ -1304,7 +1302,12 @@ export class RequestExecutor implements IDisposable {
 
             const raftRequestString = "raft-request-id=" + raftCommand.getRaftUniqueRequestId();
 
-            builder = new URL(builder.search ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
+            let joinCharacter = builder.search ? "&" : "?";
+            if (!builder.search && req.uri.endsWith("?")) {
+                joinCharacter = "";
+            }
+
+            builder = new URL(builder.toString() + joinCharacter + raftRequestString);
         }
 
         if (this._shouldBroadcast(command)) {
@@ -1495,7 +1498,7 @@ export class RequestExecutor implements IDisposable {
             return false;
         }
 
-        this._onFailedRequestInvoke(url, error);
+        this._onFailedRequestInvoke(url, error, req, response);
 
         await this._executeOnSpecificNode(command, sessionInfo, {
             chosenNode: indexAndNodeAndEtag.currentNode,

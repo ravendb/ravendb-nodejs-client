@@ -25,7 +25,7 @@ import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
 import { IndexCreation } from "../Documents/Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
-import { BulkInsertOperation } from "./BulkInsertOperation";
+import { BulkInsertOperation, BulkInsertOptions } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DocumentSubscriptions } from "./Subscriptions/DocumentSubscriptions";
 import { DocumentStore } from "./DocumentStore";
@@ -37,6 +37,7 @@ import { IDisposable } from "../Types/Contracts";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask";
 import { StringUtil } from "../Utility/StringUtil";
+import { IHiLoIdGenerator } from "./Identity/IHiLoIdGenerator";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -69,6 +70,8 @@ export abstract class DocumentStoreBase
     // TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 
     public abstract identifier: string;
+
+    public abstract hiLoIdGenerator: IHiLoIdGenerator;
 
     public abstract initialize(): IDocumentStore;
 
@@ -153,7 +156,10 @@ export abstract class DocumentStoreBase
 
     private _authOptions: IAuthOptions;
 
-    public abstract bulkInsert(database?: string): BulkInsertOperation;
+    public abstract bulkInsert(): BulkInsertOperation;
+    public abstract bulkInsert(database: string): BulkInsertOperation;
+    public abstract bulkInsert(database: string, options: BulkInsertOptions): BulkInsertOperation;
+    public abstract bulkInsert(options: BulkInsertOptions): BulkInsertOperation;
 
     private readonly _subscriptions: DocumentSubscriptions;
 

@@ -62,7 +62,7 @@ describe("DatabasesTest", function () {
     });
 
     it("canGetInfoAutoIndexInfo", async () => {
-        await testContext.createMoviesData(store);
+        await testContext.samples.createMoviesData(store);
 
         {
             const session = store.openSession();

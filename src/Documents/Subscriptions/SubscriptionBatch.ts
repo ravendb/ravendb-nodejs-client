@@ -59,6 +59,10 @@ export class SubscriptionBatch<T extends object> {
         return this._items ? this._items.length : 0;
     }
 
+    public getNumberOfIncludes() {
+        return this._includes ? this._includes.length : 0;
+    }
+
     public constructor(documentType: DocumentType, revisions: boolean, requestExecutor: RequestExecutor,
                        store: IDocumentStore, dbName: string) {
         this._documentType = documentType;

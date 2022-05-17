@@ -12,13 +12,14 @@ import { IDocumentSession } from "./Session/IDocumentSession";
 import { SessionOptions } from "./Session/SessionOptions";
 import { DocumentSession } from "./Session/DocumentSession";
 import { IAuthOptions } from "../Auth/AuthOptions";
-import { BulkInsertOperation } from "./BulkInsertOperation";
+import { BulkInsertOperation, BulkInsertOptions } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
 import { DatabaseChanges } from "./Changes/DatabaseChanges";
 import { DatabaseSmuggler } from "./Smuggler/DatabaseSmuggler";
 import { DatabaseChangesOptions } from "./Changes/DatabaseChangesOptions";
 import { IDisposable } from "../Types/Contracts";
 import { MultiDatabaseHiLoIdGenerator } from "./Identity/MultiDatabaseHiLoIdGenerator";
+import { TypeUtil } from "../Utility/TypeUtil";
 
 const log = getLogger({ module: "DocumentStore" });
 
@@ -82,6 +83,10 @@ export class DocumentStore extends DocumentStoreBase {
 
     public set identifier(identifier: string) {
         this._identifier = identifier;
+    }
+
+    public get hiLoIdGenerator() {
+        return this._multiDbHiLo;
     }
 
     /**
@@ -420,9 +425,14 @@ export class DocumentStore extends DocumentStoreBase {
 
     public bulkInsert(): BulkInsertOperation;
     public bulkInsert(database: string): BulkInsertOperation;
-    public bulkInsert(database?: string): BulkInsertOperation {
+    public bulkInsert(options: BulkInsertOptions): BulkInsertOperation;
+    public bulkInsert(database: string, options: BulkInsertOptions): BulkInsertOperation;
+    public bulkInsert(databaseOrOptions?: string | BulkInsertOptions, optionalOptions?: BulkInsertOptions): BulkInsertOperation {
         this.assertInitialized();
 
-        return new BulkInsertOperation(this.getEffectiveDatabase(database), this);
+        const database = TypeUtil.isString(databaseOrOptions) ? this.getEffectiveDatabase(databaseOrOptions) : this.getEffectiveDatabase(null);
+        const options: BulkInsertOptions = TypeUtil.isString(databaseOrOptions) ? optionalOptions : databaseOrOptions;
+
+        return new BulkInsertOperation(database, this, options);
     }
 }

@@ -184,6 +184,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                     internalOpts.compareExchangeValueIncludes = [ ...builder.compareExchangeValuesToInclude ];
                 }
 
+                internalOpts.revisionIncludesByChangeVector = builder.revisionsToIncludeByChangeVector ? Array.from(builder.revisionsToIncludeByChangeVector) : null;
+                internalOpts.revisionsToIncludeByDateTime = builder.revisionsToIncludeByDateTime;
+
                 internalOpts.includeAllCounters = builder.isAllCounters;
             } else {
                 internalOpts.includes = options.includes as string[];
@@ -379,6 +382,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             loadOperation.withCounters(opts.counterIncludes);
         }
 
+        loadOperation.withRevisions(opts.revisionIncludesByChangeVector);
+        loadOperation.withRevisions(opts.revisionsToIncludeByDateTime);
         loadOperation.withTimeSeries(opts.timeSeriesIncludes);
         loadOperation.withCompareExchange(opts.compareExchangeValueIncludes);
 

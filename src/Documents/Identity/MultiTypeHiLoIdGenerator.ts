@@ -91,6 +91,31 @@ export class MultiTypeHiLoIdGenerator {
         }
     }
 
+    public async generateNextIdFor(collectionName: string): Promise<number> {
+        let value = this._idGeneratorsByTag[collectionName];
+        if (value) {
+            return value.nextId();
+        }
+
+        const acquiredSem = acquireSemaphore(this._sem);
+        try {
+            await acquiredSem.promise;
+
+            value = this._idGeneratorsByTag[collectionName];
+            if (value) {
+                return value.nextId();
+            }
+
+            value = this._createGeneratorFor(collectionName);
+            this._idGeneratorsByTag[collectionName] = value;
+
+        } finally {
+            acquiredSem.dispose();
+        }
+
+        return value.nextId();
+    }
+
     protected _createGeneratorFor(tag: string): HiloIdGenerator {
         return new HiloIdGenerator(tag, this._store, this._dbName, this._identityPartsSeparator);
     }
