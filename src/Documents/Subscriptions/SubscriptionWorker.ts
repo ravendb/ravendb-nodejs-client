@@ -154,8 +154,6 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
         this._tcpClient = result.socket;
 
-        this._ensureParser(result.socket);
-
         this._supportedFeatures = result.supportedFeatures;
 
         if (this._supportedFeatures.protocolVersion <= 0) {
