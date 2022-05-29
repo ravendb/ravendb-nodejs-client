@@ -330,22 +330,26 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     "Subscription with id '" + this._options.subscriptionName
                     + "' cannot be opened, because it's in use and the connection strategy is "
                     + this._options.strategy);
-            case "Closed":
+                break;
+            case "Closed": {
                 const canReconnect = connectionStatus.data.CanReconnect || false;
                 const subscriptionClosedError = getError("SubscriptionClosedException",
                     "Subscription with id '" + this._options.subscriptionName
                     + "' was closed. " + connectionStatus.exception);
                 (subscriptionClosedError as any).canReconnect = canReconnect;
                 throw subscriptionClosedError;
+            }
             case "Invalid":
                 throwError("SubscriptionInvalidStateException",
                     "Subscription with id '" + this._options.subscriptionName
                     + "' cannot be opened, because it is in invalid state. " + connectionStatus.exception);
+                break;
             case "NotFound":
                 throwError("SubscriptionDoesNotExistException",
                     "Subscription with id '" + this._options.subscriptionName
                     + "' cannot be opened, because it does not exist. " + connectionStatus.exception);
-            case "Redirect":
+                break;
+            case "Redirect": {
                 if (this._options.strategy === "WaitForFree") {
                     if (connectionStatus.data) {
                         const registerConnectionDurationInTicks = connectionStatus.data["RegisterConnectionDurationInTicks"];
@@ -366,8 +370,10 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     + "' cannot be processed by current node '" + currentNode + "', it will be redirected to " + appropriateNode + os.EOL + reasons);
                 (error as any).appropriateNode = appropriateNode;
                 throw error;
+            }
             case "ConcurrencyReconnect":
                 throwError("SubscriptionChangeVectorUpdateConcurrencyException", connectionStatus.message);
+                break;
             default:
                 throwError("InvalidOperationException",
                     "Subscription '" + this._options.subscriptionName

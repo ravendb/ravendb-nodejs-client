@@ -6,7 +6,7 @@ export function parseJsonVerbose(jsonString: string) {
     try {
         return JSON.parse(jsonString);
     } catch (err) {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.log(`Invalid json: '${jsonString}'`);
         throw err;
     }

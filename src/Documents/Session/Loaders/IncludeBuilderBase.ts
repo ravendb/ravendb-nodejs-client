@@ -227,6 +227,7 @@ export class IncludeBuilderBase {
         switch (type) {
             case "None":
                 throwError("InvalidArgumentException", "Time range type cannot be set to 'None' when time is specified.");
+                break;
             case "Last":
                 if (time) {
                     if (time.value <= 0) {
@@ -236,6 +237,7 @@ export class IncludeBuilderBase {
                     return;
                 }
                 throwError("InvalidArgumentException", "Time range type cannot be set to 'Last' when time is not specified.");
+                break;
             default:
                 throwError("NotSupportedException", "Not supported time range type: " + type);
         }
@@ -268,6 +270,7 @@ export class IncludeBuilderBase {
         switch (type) {
             case "None":
                 throwError("InvalidArgumentException", "Time range type cannot be set to 'None' when count is specified.");
+                break;
             case "Last":
                 if (count <= 0) {
                     throwError("InvalidArgumentException", "Count have to be positive.");

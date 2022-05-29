@@ -27,7 +27,7 @@ export class StringUtil {
     public static format(s: string, vars?: object | any, ...varsArray: any[]): string {
         if (TypeUtil.isObject(vars)) {
             return s.replace(
-                /\{([\w\d\-]+)\}/g,
+                /\{([\w\d-]+)\}/g,
                 (match: string, placeholder: string): string =>
                     ((placeholder in vars) ? vars[placeholder] : "").toString()
             );
@@ -49,7 +49,7 @@ export class StringUtil {
             throwError("InvalidOperationException", "Empty name is not valid");
         }
 
-        if (!/^[A-Za-z0-9_\-\.]+$/.test(dbName)) {
+        if (!/^[A-Za-z0-9_\-.]+$/.test(dbName)) {
             throwError("InvalidOperationException", `Database name can only contain only A-Z, a-z, "_", "." or "-"`);
         }
     }
@@ -145,7 +145,7 @@ export class StringUtil {
     private static _escapeStringInternal(builder: StringBuilder, value: string) {
         let escaped = JSON.stringify(value);
 
-        escaped = escaped.replace(/'/g, "\\\'");
+        escaped = escaped.replace(/'/g, "\\'");
 
         builder.append(escaped.substring(1, escaped.length - 1));
     }

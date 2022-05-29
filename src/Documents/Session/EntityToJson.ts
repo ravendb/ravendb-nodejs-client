@@ -148,6 +148,7 @@ export class EntityToJson {
             // Add the document @metadata fields (for RDBC-213)
             const entityMeta = documentInfo.entity[CONSTANTS.Documents.Metadata.KEY];
             for (const metadataItem in entityMeta) {
+                // eslint-disable-next-line no-prototype-builtins
                 if (entityMeta.hasOwnProperty(metadataItem)) {
                     setMetadata = true;
                     metadataNode[metadataItem] = entityMeta[metadataItem];

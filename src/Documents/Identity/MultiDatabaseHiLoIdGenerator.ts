@@ -37,8 +37,8 @@ export class MultiDatabaseHiLoIdGenerator implements IHiLoIdGenerator {
 
     public generateNextIdFor(database: string, collectionName: string): Promise<number>;
     public generateNextIdFor(database: string, documentType: ObjectTypeDescriptor<any>): Promise<number>;
-    public generateNextIdFor(database: string, entity: Object): Promise<number>;
-    public generateNextIdFor(database: string, target: string | ObjectTypeDescriptor | Object): Promise<number> {
+    public generateNextIdFor(database: string, entity: object): Promise<number>;
+    public generateNextIdFor(database: string, target: string | ObjectTypeDescriptor | object): Promise<number> {
         if (TypeUtil.isString(target)) {
             return this._generateNextIdFor(database, target);
         }

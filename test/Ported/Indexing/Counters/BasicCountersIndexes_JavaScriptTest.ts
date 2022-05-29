@@ -281,7 +281,6 @@ class MyCounterIndex extends AbstractRawJavaScriptCountersIndexCreationTask {
 }
 
 
-// tslint:disable-next-line:class-name
 class AverageHeartRate_WithLoad extends AbstractRawJavaScriptCountersIndexCreationTask {
 
     constructor() {
@@ -306,14 +305,12 @@ class AverageHeartRate_WithLoad extends AbstractRawJavaScriptCountersIndexCreati
     }
 }
 
-// tslint:disable-next-line:class-name
 class AverageHeartRate_WithLoadResult {
     public heartBeat: number;
     public city: string;
     public count: number;
 }
 
-// tslint:disable-next-line:class-name
 class MyCounterIndex_AllCounters extends AbstractRawJavaScriptCountersIndexCreationTask {
     public constructor() {
         super();
@@ -364,7 +361,6 @@ class MyMultiMapCounterIndexResult {
     public user: string;
 }
 
-// tslint:disable-next-line:class-name
 class Companies_ByCounterNames extends AbstractRawJavaScriptCountersIndexCreationTask {
     public constructor() {
         super();

@@ -84,6 +84,7 @@ describe("ObjectMapper", function () {
             const result: IRavenObject = mapper.fromObjectLiteral(
                 { bornAt: "1998-05-06T00:00:00.0000000" }, typeInfo);
             assert.ok(result);
+            // eslint-disable-next-line no-prototype-builtins
             assert.ok(result.hasOwnProperty("bornAt"));
 
             const bornAt: Date = result.bornAt;
@@ -119,6 +120,7 @@ describe("ObjectMapper", function () {
             }, typeInfo);
 
             assert.ok(result);
+            // eslint-disable-next-line no-prototype-builtins
             assert.ok(result.hasOwnProperty("dates"));
 
             const dates: Date[] = result.dates;
@@ -175,6 +177,7 @@ describe("ObjectMapper", function () {
                 testObject, typeInfo, new Map([[Movie.name, Movie]]));
 
             assert.ok(result);
+            // eslint-disable-next-line no-prototype-builtins
             assert.ok(result.hasOwnProperty("movies"));
             assert.strictEqual(result.movies.length, 3);
             assert.strictEqual(result.movies[0].name, "Matrix");
@@ -468,7 +471,7 @@ describe("ObjectMapper", function () {
             }
         });
 
-        // tslint:disable-next-line:no-empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         it.skip("can handle map having objects for keys", () => {
 
         });
@@ -547,6 +550,7 @@ describe("ObjectMapper", function () {
             const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback);
 
             assert.ok(testObject !== result);
+            // eslint-disable-next-line no-prototype-builtins
             assert.ok(!result.hasOwnProperty("sayHello"));
             assert.ok(typeInfo.typeName, Person.name);
             assert.deepStrictEqual(typeInfo.nestedTypes, {});

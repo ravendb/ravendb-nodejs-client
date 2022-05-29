@@ -96,7 +96,7 @@ export class TimeValue {
         const str = new StringBuilder();
 
         switch (this._unit) {
-            case "Second":
+            case "Second": {
                 let remainingSeconds = this._value;
 
                 if (remainingSeconds > TimeValue.SECONDS_PER_DAY) {
@@ -114,14 +114,15 @@ export class TimeValue {
                 if (remainingSeconds > 60) {
                     const minutes = remainingSeconds / 60;
                     this._append(str, minutes, "minute");
-                    remainingSeconds -= minutes *  60;
+                    remainingSeconds -= minutes * 60;
                 }
 
                 if (remainingSeconds > 0) {
                     this._append(str, remainingSeconds, "second");
                 }
                 break;
-            case "Month":
+            }
+            case "Month": {
                 if (this._value >= 12) {
                     this._append(str, Math.floor(this._value / 12), "year");
                 }
@@ -129,6 +130,7 @@ export class TimeValue {
                     this._append(str, this._value % 12, "month");
                 }
                 break;
+            }
             default:
                 throwError("InvalidArgumentException", "Not supported unit: " + this._unit);
         }
@@ -188,7 +190,7 @@ export class TimeValue {
         switch (time._unit) {
             case "Second":
                 return [time._value, time._value];
-            case "Month":
+            case "Month": {
                 const years = Math.floor(time._value / 12);
                 let upperBound = years * TimeValue.SECONDS_IN_366_DAYS;
                 let lowerBound = years * TimeValue.SECONDS_IN_365_DAYS;
@@ -199,6 +201,7 @@ export class TimeValue {
                 lowerBound += remainingMonths * TimeValue.SECONDS_IN_28_DAYS;
 
                 return [lowerBound, upperBound];
+            }
             default:
                 throwError("InvalidArgumentException", "Not supported time value unit: " + time._unit);
         }

@@ -64,7 +64,6 @@ describe("StronglyTypedJavaScriptIndexTest", function () {
 
 type Users_CountByNameResult = Pick<User, "firstName" | "lastName"> & { count: number };
 
-// tslint:disable-next-line:class-name
 class Users_CountByName extends AbstractJavaScriptIndexCreationTask<User, Users_CountByNameResult> {
     constructor() {
         super();

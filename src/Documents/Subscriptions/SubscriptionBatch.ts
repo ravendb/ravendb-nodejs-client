@@ -172,7 +172,6 @@ export class SubscriptionBatch<T extends object> {
                 }
 
                 // TODO: check if something's missing here
-                // tslint:disable-next-line:max-line-length
                 // https://github.com/ravendb/ravendb-jvm-client/blob/v4.1/src/main/java/net/ravendb/client/documents/subscriptions/SubscriptionBatch.java#L222
             }
 

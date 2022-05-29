@@ -44,7 +44,6 @@ export class ObjectUtil {
             }
         } else if (TypeUtil.isObject(item)) {
             result = {};
-            // tslint:disable-next-line:forin
             for (const prop in item) {
                 result[prop] = ObjectUtil.deepLiteralClone(item[prop]);
             }
@@ -297,6 +296,7 @@ const DEFAULT_CHANGE_CASE_OPTIONS = {
 function setDefaults(object, defaults) {
     object = object || {};
     for (const i in defaults) {
+        // eslint-disable-next-line no-prototype-builtins
         if (defaults.hasOwnProperty(i) && typeof object[i] === "undefined") {
             object[i] = defaults[i];
         }
@@ -388,6 +388,7 @@ function transformObjectKeys(object, options: InternalObjectChangeCaseOptions, s
 
     const result = {};
     for (const key in object) {
+        // eslint-disable-next-line no-prototype-builtins
         if (object.hasOwnProperty(key)) {
             const value = object[key];
             let newKey = key;
@@ -397,6 +398,7 @@ function transformObjectKeys(object, options: InternalObjectChangeCaseOptions, s
                 newKey = f(key, options.locale);
             }
 
+            // eslint-disable-next-line no-prototype-builtins
             if (result.hasOwnProperty(newKey) && options.throwOnDuplicate) {
                 throw new Error("duplicated key " + newKey);
             }
@@ -411,6 +413,7 @@ function transformObjectKeys(object, options: InternalObjectChangeCaseOptions, s
 
 // reexport all functions exported by `changeCase`
 for (const i in changeCase) {
+    // eslint-disable-next-line no-prototype-builtins
     if (changeCase.hasOwnProperty(i)) {
         ObjectUtil[i] = changeCase[i];
     }

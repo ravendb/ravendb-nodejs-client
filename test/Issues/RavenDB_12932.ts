@@ -32,7 +32,6 @@ describe("RavenDB_12932", function () {
     });
 });
 
-// tslint:disable-next-line:class-name
 class Orders_ProfitByProductAndOrderedAt extends AbstractCsharpIndexCreationTask {
     public constructor(referencesCollectionName: string) {
         super();

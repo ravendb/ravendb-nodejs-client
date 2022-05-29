@@ -84,13 +84,11 @@ class Author {
     public bookIds: string[];
 }
 
-// tslint:disable-next-line:class-name
 class Authors_ByNameAndBooksResult {
     public name: string;
     public books: string[];
 }
 
-// tslint:disable-next-line:class-name
 class Authors_ByNameAndBooks extends AbstractJavaScriptIndexCreationTask<Author, Authors_ByNameAndBooksResult> {
     public constructor() {
         super();

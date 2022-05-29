@@ -6,7 +6,6 @@ import { ObjectUtil } from "../../src/Utility/ObjectUtil";
 describe("ObjectUtil", function () {
 
     it("can ignore some keys when transforming", async () => {
-        // tslint:disable-next-line:max-line-length
         const json = `{"Results":[{"Type":"PUT","@id":"users/1","@collection":"Users","@change-vector":"A:1-2ZYfAzcv8Ee+U/12oFmTJQ","@last-modified":"2018-08-22T06:10:29.8004542"}]}`;
         const o = JSON.parse(json);
         const opts = {
@@ -20,7 +19,6 @@ describe("ObjectUtil", function () {
     });
 
     it("can ignore child nodes for selected keys", () => {
-        // tslint:disable-next-line:max-line-length
         const json = `{"Results":[{"Type":"PUT","@id":"users/1","@collection":"Users","@change-vector":"A:1-2ZYfAzcv8Ee+U/12oFmTJQ","@last-modified":"2018-08-22T06:10:29.8004542"}]}`;
         const o = JSON.parse(json);
         const opts = {

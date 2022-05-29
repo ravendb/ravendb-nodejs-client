@@ -42,7 +42,6 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     /**
      * Register a field to be indexed
      */
-    // tslint:disable-next-line:function-name
     protected index(field: string, indexing: FieldIndexing): void {
         this._indexesStrings[field] = indexing;
     }
@@ -50,14 +49,12 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     /**
      * Register a field to be spatially indexed
      */
-    // tslint:disable-next-line:function-name
     protected spatial(field: string, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
         this._spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
     // TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
-    // tslint:disable-next-line:function-name
     protected storeAllFields(storage: FieldStorage): void {
         this._storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
     }
@@ -65,7 +62,6 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     /**
      * Register a field to be stored
      */
-    // tslint:disable-next-line:function-name
     protected store(field: string, storage: FieldStorage): void {
         this._storesStrings[field] = storage;
     }
@@ -73,7 +69,6 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     /**
      * Register a field to be analyzed
      */
-    // tslint:disable-next-line:function-name
     protected analyze(field: string, analyzer: string): void {
         this._analyzersStrings[field] = analyzer;
     }
@@ -81,12 +76,10 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     /**
      * Register a field to have term vectors
      */
-    // tslint:disable-next-line:function-name
     protected termVector(field: string, termVector: FieldTermVector): void {
         this._termVectorsStrings[field] = termVector;
     }
 
-    // tslint:disable-next-line:function-name
     protected suggestion(field: string): void {
         this._indexSuggestions.add(field);
     }

@@ -70,7 +70,6 @@ describe("HighlightsTest", function () {
         const eventItem = Object.assign(new EventsItem(), {
                 slug: "ravendb-indexes-explained",
                 title: "RavenDB indexes explained",
-                // tslint:disable-next-line:max-line-length
                 content: "Itamar Syn-Hershko: Afraid of Map/Reduce? In this session, core RavenDB developer Itamar Syn-Hershko will walk through the RavenDB indexing process, grok it and much more."
             });
 

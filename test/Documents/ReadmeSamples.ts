@@ -16,7 +16,7 @@ import {
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 let print = console.log;
 print = TypeUtil.NOOP;
 
@@ -80,7 +80,6 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with include()", async () => {
-            // tslint:disable-next-line:no-shadowed-variable
             const session = store.openSession();
             // users/1
             // {
@@ -100,7 +99,6 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with passing includes", async () => {
-            // tslint:disable-next-line:no-shadowed-variable
             const session = store.openSession();
             // users/1
             // {

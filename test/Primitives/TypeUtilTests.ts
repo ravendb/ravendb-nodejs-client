@@ -20,10 +20,10 @@ describe("TypeUtil", function () {
     it("isClass()", async () => {
         assert.ok(TypeUtil.isClass(class Test {}));
 
-        // tslint:disable-next-line:no-empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         assert.ok(!TypeUtil.isClass(function () {}));
-        
-        // tslint:disable-next-line:no-empty
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         assert.ok(!TypeUtil.isClass(() => {}));
         assert.ok(!TypeUtil.isClass(1));
         assert.ok(!TypeUtil.isClass("test"));

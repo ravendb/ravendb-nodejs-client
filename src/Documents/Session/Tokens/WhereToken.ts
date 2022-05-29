@@ -161,17 +161,14 @@ export class WhereToken extends QueryToken {
     }
 
     public writeTo(writer): void {
-        // tslint:disable-next-line:triple-equals
         if (this.options.boost != null) {
             writer.append("boost(");
         }
 
-        // tslint:disable-next-line:triple-equals
         if (this.options.fuzzy != null) {
             writer.append("fuzzy(");
         }
 
-        // tslint:disable-next-line:triple-equals
         if (this.options.proximity != null) {
             writer.append("proximity(");
         }
@@ -219,7 +216,6 @@ export class WhereToken extends QueryToken {
             writer.append(")");
         }
 
-        // tslint:disable-next-line:triple-equals
         if (this.options.proximity != null) {
             writer
                 .append(", ")
@@ -227,7 +223,6 @@ export class WhereToken extends QueryToken {
                 .append(")");
         }
 
-        // tslint:disable-next-line:triple-equals
         if (this.options.fuzzy != null) {
             writer
                 .append(", ")
@@ -235,7 +230,6 @@ export class WhereToken extends QueryToken {
                 .append(")");
         }
 
-        // tslint:disable-next-line:triple-equals
         if (this.options.boost != null) {
             writer
                 .append(", ")
@@ -333,7 +327,6 @@ export class WhereToken extends QueryToken {
                     .append(", ");
                 this.options.whereShape.writeTo(writer);
 
-                // tslint:disable-next-line:max-line-length
                 if (Math.abs(this.options.distanceErrorPct - CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT) > 1e-40) {
                     writer.append(", ");
                     writer.append(this.options.distanceErrorPct);

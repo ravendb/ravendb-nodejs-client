@@ -508,7 +508,6 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
 async function setupPullReplication(remoteName: string, sink: IDocumentStore, ...hub: IDocumentStore[]) {
     const resList: ModifyOngoingTaskResult[] = [];
 
-    // tslint:disable-next-line:prefer-for-of
     for (let i = 0; i < hub.length; i++) {
         const store = hub[i];
 

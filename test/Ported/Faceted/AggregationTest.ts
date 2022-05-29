@@ -8,7 +8,6 @@ import {
     RangeBuilder,
 } from "../../../src";
 
-// tslint:disable-next-line:class-name
 class ItemsOrders_All extends AbstractJavaScriptIndexCreationTask<ItemsOrder, Pick<ItemsOrder, "at" | "items">> {
     public constructor() {
         super();
@@ -21,7 +20,6 @@ class ItemsOrders_All extends AbstractJavaScriptIndexCreationTask<ItemsOrder, Pi
     }
 }
 
-// tslint:disable-next-line:class-name
 class Orders_All extends AbstractJavaScriptIndexCreationTask<Order> {
     public constructor() {
         super();

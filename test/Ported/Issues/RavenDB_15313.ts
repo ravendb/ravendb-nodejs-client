@@ -72,7 +72,7 @@ describe("RavenDB_15313", function () {
                 }
 
                 names[i] = name;
-                const oldVal = dict.get(name) || 0;;
+                const oldVal = dict.get(name) || 0;
                 dict.set(name, oldVal + i);
 
                 cf.increment(name, i);

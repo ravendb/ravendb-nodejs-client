@@ -1,5 +1,6 @@
 import * as assert from "assert";
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export async function assertThrows(func: Function, errAssert?: (err: Error) => void) {
     try {
         await func();

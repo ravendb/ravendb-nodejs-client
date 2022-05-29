@@ -44,6 +44,7 @@ describe("RavenDB_13735", function () {
 
         const sw = Stopwatch.createStarted();
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             if (sw.elapsed > 10_000) {
                 throwError("TimeoutException");

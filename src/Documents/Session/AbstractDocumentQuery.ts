@@ -296,8 +296,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._isProjectInto = isProjectInto || false;
     }
 
-    // tslint:disable:function-name
-
     private _getCurrentWhereTokens(): QueryToken[] {
         if (!this._isInMoreLikeThis) {
             return this._whereTokens;
@@ -2139,8 +2137,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         await this._initSync();
     }
 
-    // tslint:enable:function-name
-
     public async longCount(): Promise<number> {
         this._take(0);
         const queryResult = await this.getQueryResult();
@@ -2160,7 +2156,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return queryResult.totalResults > 0;
     }
 
-    // tslint:disable:function-name
     public _aggregateBy(facet: FacetBase): void {
         for (const token of this._selectTokens) {
             if (token instanceof FacetToken) {
@@ -2327,8 +2322,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public getGraphRawQuery(): QueryToken {
         return this._graphRawQuery;
     }
-
-    // tslint:enable:function-name
 
     public addFromAliasToWhereTokens(fromAlias: string): void {
         if (!fromAlias) {

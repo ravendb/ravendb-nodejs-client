@@ -33,9 +33,9 @@ export function raceToResolution<TResult>(
 export function defer<T>(): IDefer<T> {
     let resolve: (value: T) => void;
     let reject: (error: any) => void;
-    const promise = new BluebirdPromise<T>(function () {
-        resolve = arguments[0];
-        reject = arguments[1];
+    const promise = new BluebirdPromise<T>(function (res, rej) {
+        resolve = res;
+        reject = rej;
     });
     return {
         resolve,

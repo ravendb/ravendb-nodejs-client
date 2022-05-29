@@ -13,6 +13,7 @@ export interface IOperation<TResult> extends IAbstractOperation {
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TResult>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IAwaitableOperation extends IOperation<OperationIdResult> {
 }
 

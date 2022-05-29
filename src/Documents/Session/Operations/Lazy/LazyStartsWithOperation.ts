@@ -41,12 +41,11 @@ export class LazyStartsWithOperation<T extends object> implements ILazyOperation
         const request = new GetRequest();
         request.url = "/docs";
         request.query =
-            // tslint:disable-next-line:max-line-length
             `?startsWith=${enc(this._idPrefix)}&matches=${enc(this._matches) || ""}&exclude=${enc(this._exclude) || ""}&start=${this._start}&pageSize=${this._pageSize}&startAfter=${enc(this._startAfter)}`;
         return request;
     }
 
-    private _result: Object;
+    private _result: object;
     private _queryResult: QueryResult;
     private _requiresRetry: boolean;
 

@@ -41,7 +41,6 @@ export const CONSTANTS = {
             REVISION_COUNTERS: "@counters-snapshot",
             REVISION_TIME_SERIES: "@timeseries-snapshot",
             IGNORE_CASE_TRANSFORM_REGEX:
-            // tslint:disable-next-line:max-line-length
                 /^@metadata(\.(@collection|@projection|@id|@conflict|@flags|Raven-Node-Type|@index-score|@last-modified|@change-vector|@expires|@nested-object-types(\.\w+)?))?$/
         },
 

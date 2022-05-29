@@ -45,7 +45,6 @@ describe("SpatialTest", function () {
             this.map(MyDocument, doc => {
                 const results: MyProjection[] = [];
 
-                // tslint:disable-next-line:prefer-for-of
                 for (let i = 0; i < doc.items.length; i++) {
                     const item = doc.items[i];
                     const lat = item.latitude || 0;

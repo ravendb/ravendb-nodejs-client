@@ -49,7 +49,6 @@ export abstract class AggregationQueryBase {
 
     protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;
 
-    // tslint:disable-next-line:function-name
     public abstract emit(evtName: "afterQueryExecuted", queryResult: QueryResult);
 
     private _processResults(queryResult: QueryResult): FacetResultObject {

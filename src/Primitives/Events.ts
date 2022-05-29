@@ -17,6 +17,7 @@ export interface TypedEventEmitter<TEvents> extends EventEmitter {
 
     getMaxListeners(): number;
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     listeners(event: string | keyof TEvents | symbol): Function[];
 
     emit(event: string | keyof TEvents | symbol, ...args: any[]): boolean;
@@ -28,6 +29,7 @@ export interface TypedEventEmitter<TEvents> extends EventEmitter {
 
     prependOnceListener(event: string | keyof TEvents | symbol, listener: (...args: any[]) => void): this;
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     rawListeners(event: string | keyof TEvents | symbol): Function[];
 
     eventNames(): (string | symbol)[];

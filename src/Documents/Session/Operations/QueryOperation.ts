@@ -273,7 +273,6 @@ export class QueryOperation {
 
         const raw: T = conventions.objectMapper.fromObjectLiteral(document);
 
-        // tslint:disable-next-line:new-parens
         const result = projType ? new (Function.prototype.bind.apply(projType)) : {};
 
         const mapper = conventions.objectMapper;
@@ -289,7 +288,6 @@ export class QueryOperation {
                     : fieldsToFetch.projections;
 
                 const nestedTypes = raw[NESTED_OBJECT_TYPES_PROJECTION_FIELD];
-                // tslint:disable-next-line:prefer-for-of
                 for (let i = 0; i < keys.length; i++) {
                     const key = keys[i];
 

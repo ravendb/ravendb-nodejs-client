@@ -84,7 +84,6 @@ describe("FirstClassPatchTest", function () {
                 assert.fail("it should have thrown");
             } catch (err) {
                 assert.strictEqual(err.message, 
-                    // tslint:disable-next-line:max-line-length
                     "Cannot perform save because document users/1-A has been modified by the session and is also taking part in deferred PATCH command");
                 assert.strictEqual(err.name, "InvalidOperationException");
             }

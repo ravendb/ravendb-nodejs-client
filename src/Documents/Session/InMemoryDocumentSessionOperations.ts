@@ -146,12 +146,12 @@ export abstract class InMemoryDocumentSessionOperations
     /**
      * Translate between an CV and its associated entity
      */
-    public includeRevisionsByChangeVector: Map<String, DocumentInfo> = CaseInsensitiveKeysMap.create();
+    public includeRevisionsByChangeVector: Map<string, DocumentInfo> = CaseInsensitiveKeysMap.create();
 
     /**
      * Translate between an ID and its associated entity
      */
-    public includeRevisionsIdByDateTimeBefore: Map<String, Map<number, DocumentInfo>> = CaseInsensitiveKeysMap.create();
+    public includeRevisionsIdByDateTimeBefore: Map<string, Map<number, DocumentInfo>> = CaseInsensitiveKeysMap.create();
 
     public documentsByEntity: DocumentsByEntityHolder = new DocumentsByEntityHolder();
 
@@ -424,13 +424,11 @@ export abstract class InMemoryDocumentSessionOperations
     public incrementRequestCount(): void {
         if (++this._numberOfRequests > this.maxNumberOfRequestsPerSession) {
             throwError("InvalidOperationException",
-                // tslint:disable:max-line-length
                 `The maximum number of requests (${this.maxNumberOfRequestsPerSession}) allowed for this session has been reached.` +
                 "Raven limits the number of remote calls that a session is allowed to make as an early warning system. Sessions are expected to be short lived, and " +
                 "Raven provides facilities like load(string[] keys) to load multiple documents at once and batch saves (call SaveChanges() only once)." +
                 "You can increase the limit by setting DocumentConvention.MaxNumberOfRequestsPerSession or MaxNumberOfRequestsPerSession, but it is" +
                 "advisable that you'll look into reducing the number of remote calls first, since that will speed up your application significantly and result in a" +
-                // tslint:enable:max-line-length
                 "more responsive application.");
         }
     }
@@ -2190,6 +2188,7 @@ export class DocumentsByEntityHolder implements Iterable<DocumentsByEntityEnumer
     }
 
     [Symbol.iterator](): Iterator<DocumentsByEntityEnumeratorResult> {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         const generator = function* () {
             const firstIterator = self._documentsByEntity.entries();
@@ -2222,11 +2221,10 @@ export class DocumentsByEntityHolder implements Iterable<DocumentsByEntityEnumer
 
     public prepareEntitiesPuts(): IDisposable {
         this._prepareEntitiesPuts = true;
-        const self = this;
 
         return {
             dispose(): void {
-                self._prepareEntitiesPuts = false;
+                this._prepareEntitiesPuts = false;
             }
         }
     }
@@ -2301,6 +2299,7 @@ export class DeletedEntitiesHolder implements Iterable<DeletedEntitiesEnumerator
     }
 
     [Symbol.iterator](): Iterator<DeletedEntitiesEnumeratorResult> {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         const generator = function* () {
             const deletedIterator = self._deletedEntities.values();
@@ -2331,11 +2330,10 @@ export class DeletedEntitiesHolder implements Iterable<DeletedEntitiesEnumerator
 
     public prepareEntitiesDeletes(): IDisposable {
         this._prepareEntitiesDeletes = true;
-        const self = this;
 
         return {
             dispose(): void {
-                self._prepareEntitiesDeletes = false;
+                this._prepareEntitiesDeletes = false;
             }
         }
     }

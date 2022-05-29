@@ -112,7 +112,7 @@ import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParame
                                 "marker", d => true, 10_000);
                         }
 
-                        const usedUrls: String[] = [];
+                        const usedUrls: string[] = [];
 
                         for (let i = 0; i < 3; i++) {
                             const session = leaderStore.openSession();

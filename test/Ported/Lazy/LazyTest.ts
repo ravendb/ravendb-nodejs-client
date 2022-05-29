@@ -121,11 +121,10 @@ describe("LazyTest", function () {
 
         {
             const session = store.openSession();
-            let user: User;
             const lazy: Lazy<User> = session.advanced.lazily.load<User>("users/1");
 
             await session.advanced.eagerly.executeAllPendingLazyOperations();
-            user = await lazy.getValue();
+            const user = await lazy.getValue();
             assert.ok(user);
         }
     });

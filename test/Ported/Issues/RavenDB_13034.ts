@@ -45,7 +45,6 @@ describe("RavenDB_13034", function () {
 
             u2.age++;
 
-            // tslint:disable-next-line:variable-name
             const u2_2 = await s2.load<User>("users/1-A", User);
             assertThat(u2)
                 .isEqualTo(u2_2);
@@ -60,7 +59,6 @@ describe("RavenDB_13034", function () {
             assertThat(s2.advanced.numberOfRequests)
                 .isEqualTo(2);
 
-            // tslint:disable-next-line:variable-name
             const u2_3 = await s2.load<User>("users/1-A", User);
             assertThat(u2)
                 .isEqualTo(u2_3);

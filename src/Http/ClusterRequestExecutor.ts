@@ -162,7 +162,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
     }
 
     public dispose(): void {
-        // tslint:disable-next-line:no-empty
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         this._clusterTopologySemaphore.take(() => {
         });
         super.dispose();

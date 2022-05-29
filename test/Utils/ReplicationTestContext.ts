@@ -97,7 +97,6 @@ export class ReplicationTestContext {
         return null;
     }
 
-    // tslint:disable-next-line:function-name
     protected static async getPromotableCount(store: IDocumentStore, databaseName: string): Promise<number> {
         const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
         if (!res) {
@@ -107,7 +106,6 @@ export class ReplicationTestContext {
         return res.topology.promotables.length;
     }
 
-    // tslint:disable-next-line:function-name
     protected static async getRehabCount(store: IDocumentStore, databaseName: string): Promise<number> {
         const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
         if (!res) {
@@ -117,7 +115,6 @@ export class ReplicationTestContext {
         return res.topology.rehabs.length;
     }
 
-    // tslint:disable-next-line:function-name
     protected static async getMembersCount(store: IDocumentStore, databaseName: string): Promise<number> {
         const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
         if (!res) {
@@ -127,7 +124,6 @@ export class ReplicationTestContext {
         return res.topology.members.length;
     }
 
-    // tslint:disable-next-line:function-name
     protected static async getDeletionCount(store: IDocumentStore, databaseName: string): Promise<number> {
         const res = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
         if (!res) {

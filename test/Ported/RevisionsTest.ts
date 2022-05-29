@@ -9,9 +9,7 @@ import {
     RevisionsConfiguration
 } from "../../src";
 import { User } from "../Assets/Entities";
-// tslint:disable:max-line-length
 import { ConfigureRevisionsOperationResult } from "../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
-// tslint:enable:max-line-length
 import { GetRevisionsBinEntryCommand } from "../../src/Documents/Commands/GetRevisionsBinEntryCommand";
 import { Company } from "../Assets/Orders";
 import { assertThat, assertThrows } from "../Utils/AssertExtensions";

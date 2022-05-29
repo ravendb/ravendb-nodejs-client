@@ -86,7 +86,6 @@ class Animal {
     public name: string;
 }
 
-// tslint:disable-next-line:class-name
 class Animal_Index extends AbstractJavaScriptIndexCreationTask<Animal, Pick<Animal, "name" | "type">> {
     public constructor() {
         super();

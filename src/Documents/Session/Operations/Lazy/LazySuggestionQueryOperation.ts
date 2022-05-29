@@ -11,6 +11,7 @@ import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSession
 
 export class LazySuggestionQueryOperation implements ILazyOperation {
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     private _result: Object;
     private _queryResult: QueryResult;
     private _requiresRetry: boolean;

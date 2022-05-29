@@ -18,7 +18,6 @@ export class AbstractCsharpMultiMapIndexCreationTask extends AbstractGenericInde
     }
 
     // since this class is meant to be extended by the user, we don't follow protected name convention here
-    // tslint:disable-next-line:function-name
     protected addMap(map: string) {
         if (!map) {
             throwError("InvalidArgumentException", "Map cannot be null.");

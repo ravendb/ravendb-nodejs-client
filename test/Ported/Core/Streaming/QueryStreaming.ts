@@ -168,6 +168,7 @@ describe("query streaming", function () {
             
             assert.strictEqual(items.length, 100);
             
+            // eslint-disable-next-line no-inner-declarations
             function assertStats(stats) {
                 assert.ok(stats);
                 assert.strictEqual(stats.indexName, "Users/ByName");
@@ -282,7 +283,6 @@ describe("query streaming", function () {
     });
 });
 
-// tslint:disable-next-line:class-name
 class Users_ByName extends AbstractCsharpIndexCreationTask {
     public constructor() {
         super();

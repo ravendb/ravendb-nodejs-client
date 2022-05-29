@@ -27,7 +27,7 @@ describe("RDBC-404", function () {
             store2.initialize();
             try {
                 store.dispose();
-            // tslint:disable-next-line: no-empty
+                // eslint-disable-next-line no-empty
             } catch {}
 
             const dbs = await store2.maintenance.server.send(new GetDatabaseNamesOperation(0, 10));

@@ -36,7 +36,7 @@ export class IncludesUtil {
         for (let i = 0; i < include.length; i++) {
             const ch = include.charAt(i);
             if (!(StringUtil.isLetter(ch) || StringUtil.isDigit(ch)) && ch !== "_" && ch !== ".") {
-                escapedIncludeSetter(include.replace(/'/g, "\'"));
+                escapedIncludeSetter(include.replace(/'/g, "\\'"));
                 return true;
             }
         }

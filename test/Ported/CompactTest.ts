@@ -18,7 +18,7 @@ describe("CompactTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     it("can compact database", async () => {
         const session = store.openSession();
         const user1 = Object.assign(new User(), { lastName: "user1" });

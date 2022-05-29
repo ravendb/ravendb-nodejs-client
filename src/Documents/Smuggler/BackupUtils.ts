@@ -4,7 +4,7 @@ import * as path from "path";
 import * as fs from "fs";
 
 export class BackupUtils {
-    // noinspection JSUnusedLocalSymbols
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     private constructor() {
     }
 
