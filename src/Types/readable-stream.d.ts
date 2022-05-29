@@ -287,7 +287,6 @@ declare module "readable-stream" {
         export class PassThrough extends Transform {
         }
 
-        // tslint:disable:max-line-length
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T, callback?: (err: NodeJS.ErrnoException) => void): T;
         export function pipeline<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: T, callback?: (err: NodeJS.ErrnoException) => void): T;
@@ -307,7 +306,6 @@ declare module "readable-stream" {
         }
 
         export function finished(stream: pipeable.Stream, callback: (err?: Error) => void);
-        // tslint:enable:max-line-length
     }
 
     export = pipeable;

@@ -292,7 +292,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
         radiusUnits: SpatialUnits,
         distanceErrorPct: number): TSelf;
 
-    // tslint:disable-next-line:max-line-length
     // TBD TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 
     /**
@@ -319,7 +318,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
         distanceErrorPct: number): TSelf;
 
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**
@@ -333,7 +331,6 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
         field: DynamicSpatialField,
         clause: (spatialCriteriaFactory: SpatialCriteriaFactory) => SpatialCriteria): IDocumentQuery<T>;
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;

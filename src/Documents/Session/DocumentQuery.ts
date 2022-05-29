@@ -98,6 +98,7 @@ export class DocumentQuery<T extends object>
         super(documentType, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, fromAlias, isProjectInto);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public selectFields<TProjection extends Object>(
         property: string): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
@@ -255,7 +256,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
 
     // TBD void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
@@ -283,7 +283,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
 
     public intersect(): IDocumentQuery<T> {
@@ -296,7 +295,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
 
     public containsAll(fieldName: Field<T>, values): IDocumentQuery<T> {
@@ -304,7 +302,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
 
     public statistics(stats: (stats: QueryStatistics) => void): IDocumentQuery<T> {
@@ -386,14 +383,10 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
     public whereIn(fieldName: Field<T>, values: any[]): IDocumentQuery<T>;
@@ -436,7 +429,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
 
     public whereGreaterThanOrEqual(fieldName: Field<T>, value: any): IDocumentQuery<T>;
@@ -460,12 +452,9 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
 
     // TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(
@@ -477,7 +466,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern)
 
     public whereRegex(fieldName: Field<T>, pattern: string): IDocumentQuery<T> {
@@ -685,11 +673,9 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable:max-line-length
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings)
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings)
     //TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-    // tslint:enable:max-line-length
 
     public spatial(
         fieldName: Field<T>,
@@ -705,9 +691,7 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
     /**
@@ -748,7 +732,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
 
     public relatesToShape(
@@ -806,7 +789,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // tslint:disable:max-line-length
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
@@ -815,7 +797,6 @@ export class DocumentQuery<T extends object>
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
     // TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
-    // tslint:enable:max-line-length
 
     public moreLikeThis(
         builder: (moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void): IDocumentQuery<T>;

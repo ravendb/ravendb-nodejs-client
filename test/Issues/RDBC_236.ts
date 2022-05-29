@@ -13,7 +13,6 @@ import { StringUtil } from "../../src/Utility/StringUtil";
 const LOCAL_TIMEZONE_OFFSET = -(new Date(2018, 7, 1).getTimezoneOffset()); 
 const LOCAL_TIMEZONE_OFFSET_HOURS = LOCAL_TIMEZONE_OFFSET / 60;
 const LOCAL_TIMEZONE_STRING =
-    // tslint:disable-next-line:max-line-length
     `${LOCAL_TIMEZONE_OFFSET >= 0 ? "+" : "-"}${StringUtil.leftPad(LOCAL_TIMEZONE_OFFSET_HOURS.toString(), 2, "0")}:00`;
 
 describe("DateUtil", function () {

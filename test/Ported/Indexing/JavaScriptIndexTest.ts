@@ -709,7 +709,6 @@ class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask<Fano
 
         this.map(Fanout, f => {
             const result: FanoutByNumbersWithReduceResult[] = [];
-            // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < f.numbers.length; i++) {
                 result.push({
                     foo: f.foo,

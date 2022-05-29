@@ -61,9 +61,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     highlight(parameters: HighlightingParameters, hightlightingsCallback: ValueCallback<Highlightings>): TSelf; 
 
-    // tslint:disable-next-line:max-line-length
     // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings);
-    // tslint:disable-next-line:max-line-length
     // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings);
 
     /**

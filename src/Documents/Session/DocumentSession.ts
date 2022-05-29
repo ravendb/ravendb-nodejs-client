@@ -702,7 +702,6 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     protected _processQueryParameters<T extends object>(
         opts: AdvancedDocumentQueryOptions<T>, conventions: DocumentConventions) {
-        // tslint:disable-next-line:prefer-const
         let { collection } = opts;
         const { indexName } = opts;
         const isIndex = !!indexName;

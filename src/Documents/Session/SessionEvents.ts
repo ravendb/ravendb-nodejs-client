@@ -45,7 +45,7 @@ export class SessionBeforeStoreEventArgs {
 
     private readonly _session: InMemoryDocumentSessionOperations;
     private readonly _documentId: string;
-    private readonly _entity: Object;
+    private readonly _entity: object;
 
     public constructor(
         session: InMemoryDocumentSessionOperations, documentId: string, entity: object) {
@@ -62,7 +62,7 @@ export class SessionBeforeStoreEventArgs {
         return this._documentId;
     }
 
-    public getEntity(): Object {
+    public getEntity(): object {
         return this._entity;
     }
 

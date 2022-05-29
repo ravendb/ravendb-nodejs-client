@@ -14,7 +14,6 @@ export class StringBuilder {
     }
 
     public append(v: any) {
-        // tslint:disable-next-line:triple-equals
         if (v != null) {
             this.s.push(v);
         }
@@ -25,7 +24,6 @@ export class StringBuilder {
     public appendLine(v: any) {
         this.s.push(this.newline);
 
-        // tslint:disable-next-line:triple-equals
         if (v != null) {
             this.s.push(v);
         }

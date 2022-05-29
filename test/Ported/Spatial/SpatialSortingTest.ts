@@ -39,7 +39,6 @@ describe("SpatialSortingTest", function () {
     //shop/1:0.12KM, shop/2:0.03KM, shop/3 0.11KM from (34.042618,  44.419575)
     const filteredExpectedOrder = ["shops/2-A", "shops/3-A", "shops/1-A"];
 
-    // tslint:disable-next-line:no-shadowed-variable
     async function createData(store: IDocumentStore) {
         const indexDefinition = new IndexDefinition();
         indexDefinition.name = "eventsByLatLng";

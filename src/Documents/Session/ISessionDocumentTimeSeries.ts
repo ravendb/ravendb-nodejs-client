@@ -6,7 +6,6 @@ import { ISessionDocumentAppendTimeSeriesBase } from "./ISessionDocumentAppendTi
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
 import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder";
 
-// tslint:disable-next-line:no-unused-expression
 export interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSeriesBase, ISessionDocumentDeleteTimeSeriesBase {
     /**
      * Return all time series values

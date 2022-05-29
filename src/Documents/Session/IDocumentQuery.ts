@@ -76,6 +76,7 @@ export interface IDocumentQuery<T extends object>
      * Selects the specified fields directly from the index if the are stored.
      * If the field is not stored in index, value will come from document directly.
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     selectFields<TProjection extends Object>(property: string): IDocumentQuery<TProjection>;
 
     /**

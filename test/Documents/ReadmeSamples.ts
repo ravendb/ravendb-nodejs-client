@@ -80,7 +80,6 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with include()", async () => {
-            // tslint:disable-next-line:no-shadowed-variable
             const session = store.openSession();
             // users/1
             // {
@@ -100,7 +99,6 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with passing includes", async () => {
-            // tslint:disable-next-line:no-shadowed-variable
             const session = store.openSession();
             // users/1
             // {

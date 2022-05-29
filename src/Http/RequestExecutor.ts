@@ -1351,13 +1351,12 @@ export class RequestExecutor implements IDisposable {
                     + `, ${req.method || "GET"} ${req.uri}` + os.EOL + msg);
                 break;
             }
-            case StatusCodes.Gone:
+            case StatusCodes.Gone: {
                 // request not relevant for the chosen node - the database has been moved to a different one
                 if (!shouldRetry) {
                     return false;
                 }
 
-                // tslint:disable-next-line:triple-equals
                 if (nodeIndex != null) {
                     this._nodeSelector.onFailedRequest(nodeIndex);
                 }
@@ -1400,6 +1399,7 @@ export class RequestExecutor implements IDisposable {
                     shouldRetry: false
                 });
                 return true;
+            }
             case StatusCodes.GatewayTimeout:
             case StatusCodes.RequestTimeout:
             case StatusCodes.BadGateway:

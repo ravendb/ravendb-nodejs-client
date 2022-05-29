@@ -430,11 +430,12 @@ export class DatabaseChanges implements IDatabaseChanges {
                 }
                 
                 switch (type) {
-                    case "Error":
+                    case "Error": {
                         const exceptionAsString = message.Exception;
                         this._notifyAboutError(exceptionAsString);
                         break;
-                    case "Confirm":
+                    }
+                    case "Confirm": {
                         const commandId = message.CommandId;
                         const confirmationResolver = this._confirmations.get(commandId);
                         if (confirmationResolver) {
@@ -442,9 +443,10 @@ export class DatabaseChanges implements IDatabaseChanges {
                             this._confirmations.delete(commandId);
                         }
                         break;
-                    default:
+                    }
+                    default: {
                         const value = message.Value;
-                        let transformedValue = ObjectUtil.transformObjectKeys(value, { defaultTransform: "camel" });
+                        let transformedValue = ObjectUtil.transformObjectKeys(value, {defaultTransform: "camel"});
                         if (type === "TimeSeriesChange") {
                             const dateUtil = this._conventions.dateUtil;
 
@@ -459,6 +461,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                         }
                         this._notifySubscribers(type, transformedValue, Array.from(this._counters.values()));
                         break;
+                    }
                 }
             }
         } catch (err) {
@@ -484,7 +487,7 @@ export class DatabaseChanges implements IDatabaseChanges {
             case "OperationStatusChange":
                 states.forEach(state => state.send("Operation", value));
                 break;
-            case "TopologyChange":
+            case "TopologyChange": {
                 const topologyChange = value as TopologyChange;
                 const requestExecutor = this._requestExecutor;
                 if (requestExecutor) {
@@ -502,6 +505,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                     requestExecutor.updateTopology(updateParameters);
                 }
                 break;
+            }
             default:
                 throwError("NotSupportedException");
         }

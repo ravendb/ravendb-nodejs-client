@@ -73,7 +73,6 @@ describe("Json module", () => {
         });
 
         it("parses JSON with keys starting with @", () => {
-            // tslint:disable-next-line:max-line-length
             const jsonString = `{"Results":[{"Name":"Marcin","Age":30,"@metadata":{"@change-vector":"A:1-raDVjL7QqEC3EBoL2rpHYA","@id":"users/1","@last-modified":"2018-04-20T13:58:37.2156934Z"}}],"Includes":{}}`;
             const result = JSON.parse(jsonString, camelCaseReviver);
             assert.ok(result.results[0]["@metadata"]);

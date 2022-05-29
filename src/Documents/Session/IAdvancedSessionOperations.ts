@@ -101,8 +101,6 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     addOrIncrement<TEntity extends object, UValue>(id: string, entity: TEntity, pathToObject: string, valToAdd: UValue): void;
 
-    // tslint:enable:max-line-length
-
     /**
      *  Returns the results of a query directly into stream
      */

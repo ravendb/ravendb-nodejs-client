@@ -48,7 +48,7 @@ export class CompareExchangeSessionValue {
     public getValue<T>(clazz: CompareExchangeResultClass<T>, conventions: DocumentConventions): CompareExchangeValue<T> {
         switch (this._state) {
             case "None":
-            case "Created":
+            case "Created": {
                 if (this._value instanceof CompareExchangeValue) {
                     return this._value;
                 }
@@ -71,6 +71,7 @@ export class CompareExchangeSessionValue {
                 this._value = value;
 
                 return value;
+            }
             case "Missing":
             case "Deleted":
                 return null;
@@ -116,7 +117,7 @@ export class CompareExchangeSessionValue {
     public getCommand(conventions: DocumentConventions): ICommandData {
         switch (this._state) {
             case "None":
-            case "Created":
+            case "Created": {
                 if (!this._value) {
                     return null;
                 }
@@ -149,6 +150,7 @@ export class CompareExchangeSessionValue {
                 }
 
                 return new PutCompareExchangeCommandData(newValue.key, entityToInsert, newValue.index);
+            }
             case "Deleted":
                 return new DeleteCompareExchangeCommandData(this._key, this._index);
             case "Missing":

@@ -85,7 +85,6 @@ export class SessionInfo {
             hash.write(sessionKey);
             hash.write(this._loadBalancerContextSeed);
             const buffer = Buffer.from(hash.getHash());
-            // tslint:disable-next-line:no-bitwise
             this._sessionId = (buffer[0] << 16) + (buffer[1] << 8) + buffer[2];
         }
     }

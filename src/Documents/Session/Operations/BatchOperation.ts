@@ -314,7 +314,7 @@ export class BatchOperation {
 
         switch (status) {
             case "Created":
-            case "Patched":
+            case "Patched": {
                 const document = batchResult["modifiedDocument"];
                 if (!document) {
                     return;
@@ -347,6 +347,7 @@ export class BatchOperation {
                 }
 
                 break;
+            }
        }
     }
 

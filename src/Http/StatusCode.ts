@@ -22,7 +22,6 @@ export type StatusCode = 200
     | 504;
 
 export class StatusCodes {
-    // tslint:disable:variable-name
     public static readonly Ok: StatusCode = 200;
     public static readonly Created: StatusCode = 201;
     public static readonly Accepted: StatusCode = 202;
@@ -45,5 +44,4 @@ export class StatusCodes {
     public static readonly ServiceUnavailable: StatusCode = 503;
     public static readonly GatewayTimeout: StatusCode = 504;
     public static readonly Gone: StatusCode = 410;
-    // tslint:enable:variable-name
 }

@@ -217,7 +217,6 @@ describe("bulk insert", function () {
         assert.ok(obj["id"]);
     });
 
-    // tslint:disable-next-line:max-line-length
     it("can handle custom entity naming conventions + object literals when findCollectionNameForObjectLiteral is specified", async () => {
         const store2 = new DocumentStore(store.urls, store.database);
         store2.conventions.entityFieldNameConvention = "camel";
