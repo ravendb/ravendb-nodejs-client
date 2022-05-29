@@ -647,13 +647,14 @@ describe("SubscriptionsBasicTest", function () {
         assert.ok(await docs.poll(_reasonableWaitTime));
         assert.ok(await docs.poll(_reasonableWaitTime));
 
-        await store.subscriptions.dropConnection(id);
-
-        await new Promise<void>( resolve => {
+        // eslint-disable-next-line no-async-promise-executor
+        await new Promise<void>( async resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriptionClosedException");
                 resolve();
             });
+
+            await store.subscriptions.dropConnection(id);
         });
 
         {
