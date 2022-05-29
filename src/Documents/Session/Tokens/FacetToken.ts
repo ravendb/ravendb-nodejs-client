@@ -41,9 +41,12 @@ export class FacetToken extends QueryToken {
             throwError("InvalidArgumentException", "FacetToken options cannot be null.");
         }
 
+        // eslint-disable-next-line no-prototype-builtins
         if (opts.hasOwnProperty("facetSetupDocumentId" as keyof FacetTokenSetupDocumentIdOptions)) {
             this._facetSetupDocumentId = (opts as FacetTokenSetupDocumentIdOptions).facetSetupDocumentId;
+            // eslint-disable-next-line no-prototype-builtins
         } else if (opts.hasOwnProperty("aggregateByFieldName" as keyof FacetTokenAggregateByFieldNameOptions)
+            // eslint-disable-next-line no-prototype-builtins
             || opts.hasOwnProperty("alias" as keyof FacetTokenAggregateByFieldNameOptions)) {
             this._aggregateByFieldName =
                 (opts as FacetTokenAggregateByFieldNameOptions).aggregateByFieldName;

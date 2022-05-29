@@ -14,7 +14,7 @@ export class MultiGetOperation {
             this._session.requestExecutor, this._session.conventions, requests);
     }
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public setResult(result: object): void {
     }
 }

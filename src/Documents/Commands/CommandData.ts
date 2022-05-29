@@ -81,7 +81,7 @@ export class DeleteCommandData implements ICommandData {
         session.emit("beforeDelete", new SessionBeforeDeleteEventArgs(session, this.id, null));
     }
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     protected _serializeExtraFields(resultingObject: object) {}
 }
 

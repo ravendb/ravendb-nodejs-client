@@ -52,6 +52,7 @@ describe("RavenDB-8761", function () {
         {
             const session = store.openSession();
 
+            // eslint-disable-next-line no-inner-declarations
             function assertQueryResults(products: any[]) {
                 assert.strictEqual(products.length, 2);
 
@@ -89,6 +90,7 @@ describe("RavenDB-8761", function () {
         {
             const session = store.openSession();
 
+            // eslint-disable-next-line no-inner-declarations
             function assertQueryResults(products: any[]) {
                 assert.strictEqual(products.length, 3);
 
@@ -153,6 +155,7 @@ describe("RavenDB-8761", function () {
         {
             const session = store.openSession();
 
+            // eslint-disable-next-line no-inner-declarations
             function assertQueryResults(products: any[]) {
                 assert.strictEqual(products.length, 2);
 
@@ -187,6 +190,7 @@ describe("RavenDB-8761", function () {
         {
             const session = store.openSession();
 
+            // eslint-disable-next-line no-inner-declarations
             function assertQueryResults(products: any[]) {
                 assert.strictEqual(products.length, 2);
 
@@ -248,6 +252,7 @@ describe("RavenDB-8761", function () {
 
             assertQueryResults(productCounts2);
 
+            // eslint-disable-next-line no-inner-declarations
             function assertQueryResults(products: any[]) {
 
                 assert.strictEqual(products.length, 2);

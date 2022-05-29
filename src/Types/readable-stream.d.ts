@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 declare module "readable-stream";
 
 declare module "readable-stream" {

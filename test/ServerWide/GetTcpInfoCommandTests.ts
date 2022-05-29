@@ -23,6 +23,7 @@ describe("GetTcpInfoCommand", function () {
         const result = command.result;
 
         assert.ok(result);
+        // eslint-disable-next-line no-prototype-builtins
         assert.ok(result.hasOwnProperty("certificate"));
         assert.ok(!result.certificate);
         assert.ok(result.url);

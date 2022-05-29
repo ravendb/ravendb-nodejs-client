@@ -67,6 +67,7 @@ export abstract class PropsBasedObjectLiteralDescriptor<T extends object>
 
     private _hasProperties(obj: object): boolean {
         return this.properties.reduce((result, property) => {
+            // eslint-disable-next-line no-prototype-builtins
             return result && obj.hasOwnProperty(property);
         }, true);
     }

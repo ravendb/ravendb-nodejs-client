@@ -23,7 +23,7 @@ export type RavenCommandResponseType = "Empty" | "Object" | "Raw";
 
 export type ResponseDisposeHandling = "Automatic" | "Manually";
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IRavenResponse extends IRavenObject {
 }
 
@@ -258,7 +258,7 @@ export abstract class RavenCommand<TResult> {
         throwError("InvalidOperationException", "Response is invalid: " + cause.message, cause);
     }
 
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public onResponseFailure(response: HttpResponse): void {
     }
 

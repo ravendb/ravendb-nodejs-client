@@ -20,6 +20,7 @@ export class TcpNegotiation {
             + " operation with " + parameters.destinationNodeTag || parameters.destinationUrl);
 
         let currentRef: number = parameters.version;
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             await this._sendTcpVersionInfo(socket, parameters, currentRef);
             const version = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl, socket);

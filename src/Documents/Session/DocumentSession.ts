@@ -549,8 +549,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = metadata["@id"];
         }
 
-        let patchRequest: PatchRequest;
-        patchRequest = new PatchRequest();
+        const patchRequest = new PatchRequest();
         patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
         const valKey = "val_" + this._valsCount;
         patchRequest.values = {};
@@ -579,11 +578,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = metadata["@id"];
         }
 
-        let patchRequest: PatchRequest;
         const scriptArray = new JavaScriptArray(this._customCount++, path);
         arrayAdder(scriptArray);
 
-        patchRequest = new PatchRequest();
+        const patchRequest = new PatchRequest();
         patchRequest.script = scriptArray.script;
         patchRequest.values = scriptArray.parameters;
 
@@ -705,7 +703,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     protected _processQueryParameters<T extends object>(
         opts: AdvancedDocumentQueryOptions<T>, conventions: DocumentConventions) {
         // tslint:disable-next-line:prefer-const
-        let { indexName, collection } = opts;
+        let { collection } = opts;
+        const { indexName } = opts;
         const isIndex = !!indexName;
         const isCollection = !!collection;
 
@@ -825,12 +824,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             }
 
             for (let i = 0; i < this._pendingLazyOperations.length; i++) {
-                let totalTime: number;
-                let tempReqTime: string;
                 const response = responses[i];
-                tempReqTime = response.headers[HEADERS.REQUEST_TIME];
+                const tempReqTime = response.headers[HEADERS.REQUEST_TIME];
                 response.elapsed = sw.elapsed;
-                totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
+                const totalTime = tempReqTime ? parseInt(tempReqTime, 10) : 0;
                 const timeItem = {
                     url: requests[i].urlAndQuery,
                     duration: totalTime

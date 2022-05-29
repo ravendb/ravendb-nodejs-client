@@ -29,7 +29,7 @@ export class CollectResultStream<TResult = object> extends stream.Writable {
         this._resolver = { resolve, reject };
     });
 
-    private _resolver: { resolve: Function, reject: Function };
+    private _resolver: { resolve: (result: any) => void, reject: (error?: any) => void };
 
     get promise(): Promise<TResult> {
         return this._resultPromise as Promise<TResult>;

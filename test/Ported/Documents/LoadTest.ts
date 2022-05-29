@@ -27,7 +27,6 @@ describe("Load test", function () {
         await disposeTestDocumentStore(store));
 
     it("can load with includes", async () => {
-        let barId: string;
         const session = store.openSession();
         let foo = Object.assign(new Foo(), { name: "Beginning" });
         await session.store(foo);
@@ -36,7 +35,7 @@ describe("Load test", function () {
         const bar = Object.assign(new Bar(), { name: "End", fooId });
         await session.store(bar);
 
-        barId = session.advanced.getDocumentId(bar);
+        const barId = session.advanced.getDocumentId(bar);
         await session.saveChanges();
 
         const newSession = store.openSession();

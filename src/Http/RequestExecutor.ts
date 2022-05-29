@@ -120,14 +120,13 @@ export class NodeStatus implements IDisposable {
     }
 
     public startTimer(): void {
-        const that = this;
-        this._timer = new Timer(function timerActionNodeStatusCallback() {
-            if (that.requestExecutor.disposed) {
-                that.dispose();
+        this._timer = new Timer(() => {
+            if (this.requestExecutor.disposed) {
+                this.dispose();
                 return;
             }
 
-            return that._nodeStatusCallback(that);
+            return this._nodeStatusCallback(this);
         }, this._timerPeriodInMs);
     }
 
@@ -816,6 +815,7 @@ export class RequestExecutor implements IDisposable {
         this._log.info("Initialize update topology timer.");
 
         const minInMs = 60 * 1000;
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const that = this;
         this._updateTopologyTimer =
             new Timer(function timerActionUpdateTopology() {
@@ -882,8 +882,6 @@ export class RequestExecutor implements IDisposable {
         const attemptNum = command.numberOfAttempts;
         this._emitter.emit("beforeRequest", new BeforeRequestEventArgs(this._databaseName, url, req, attemptNum));
 
-        let bodyStream: stream.Readable;
-
         const responseAndStream = await this._sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, req, url, controller);
 
         if (!responseAndStream) {
@@ -892,7 +890,7 @@ export class RequestExecutor implements IDisposable {
 
 
         const response = responseAndStream.response;
-        bodyStream = responseAndStream.bodyStream;
+        const bodyStream = responseAndStream.bodyStream;
         const refreshTask = this._refreshIfNeeded(chosenNode, response);
 
         command.statusCode = response.status;
@@ -1346,12 +1344,13 @@ export class RequestExecutor implements IDisposable {
                 }
                 return true;
 
-            case StatusCodes.Forbidden:
+            case StatusCodes.Forbidden: {
                 const msg = await readBody();
                 throwError("AuthorizationException",
                     `Forbidden access to ${chosenNode.database}@${chosenNode.url}`
                     + `, ${req.method || "GET"} ${req.uri}` + os.EOL + msg);
                 break;
+            }
             case StatusCodes.Gone:
                 // request not relevant for the chosen node - the database has been moved to a different one
                 if (!shouldRetry) {
@@ -1410,7 +1409,7 @@ export class RequestExecutor implements IDisposable {
             case StatusCodes.Conflict:
                 RequestExecutor._handleConflict(response, await readBody());
                 break;
-            case StatusCodes.TooEarly:
+            case StatusCodes.TooEarly: {
                 if (!shouldRetry) {
                     return false;
                 }
@@ -1438,6 +1437,7 @@ export class RequestExecutor implements IDisposable {
                 }
 
                 return true;
+            }
             default:
                 command.onResponseFailure(response);
                 ExceptionDispatcher.throwException(response, await readBody());

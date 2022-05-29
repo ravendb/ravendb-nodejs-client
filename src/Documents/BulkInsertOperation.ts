@@ -49,7 +49,7 @@ export class BulkInsertOperation {
     private _isInitialWrite: boolean = true;
 
     private _bulkInsertAborted: Promise<void>;
-    private _abortReject: Function;
+    private _abortReject: (error: Error) => void;
     private _aborted: boolean;
     private _currentWriter: stream.Readable;
     private _requestBodyStream: stream.PassThrough;

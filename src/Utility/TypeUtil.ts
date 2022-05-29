@@ -5,8 +5,10 @@ export class TypeUtil {
     public static readonly MAX_INT32 = 2147483647;
     public static readonly MIN_INT32 = -2147483648;
 
-    // tslint:disable-next-line:no-empty
-    public static NOOP: (...args: any[]) => any = () => {};
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    public static NOOP: (...args: any[]) => any = () => {
+        // empty by design
+    };
 
     public static ASYNC_NOOP: (...args: any[]) => Promise<any> = () => Promise.resolve(undefined);
 
@@ -48,6 +50,7 @@ export class TypeUtil {
             && !this.isArray(value);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public static isFunction(value: any): value is Function {
         return typeof(value) === "function";
     }

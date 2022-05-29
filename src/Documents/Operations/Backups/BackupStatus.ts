@@ -20,23 +20,23 @@ export interface LocalBackup extends BackupStatus {
     tempFolderUsed: boolean;
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UploadToAzure extends CloudUploadStatus {
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UpdateToGoogleCloud extends CloudUploadStatus {
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UploadToFtp extends CloudUploadStatus {
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UploadToGlacier extends CloudUploadStatus {
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface UploadToS3 extends CloudUploadStatus {
 }
 

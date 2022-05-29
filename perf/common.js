@@ -1,4 +1,4 @@
-// tslint:disable-next-line:no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-var-requires,no-undef
 const settings = require("./settings.json");
 
 async function bench(name, attempts, run, opts) {
@@ -33,4 +33,5 @@ async function bench(name, attempts, run, opts) {
     }
 }
 
+// eslint-disable-next-line no-undef
 module.exports = { settings, bench };

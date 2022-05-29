@@ -307,6 +307,18 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
      */
     relatesToShape(fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): TSelf;
 
+    /**
+     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
+     * have a relation rel with the given shapeWkt will be returned
+     */
+    relatesToShape(
+        fieldName: Field<T>,
+        shapeWkt: string,
+        relation: SpatialRelation,
+        units: SpatialUnits,
+        distanceErrorPct: number): TSelf;
+
+
     // tslint:disable-next-line:max-line-length
     // TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
@@ -326,14 +338,4 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
 
     moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
 
-    /**
-     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWkt will be returned
-     */
-    relatesToShape(
-        fieldName: Field<T>,
-        shapeWkt: string, 
-        relation: SpatialRelation, 
-        units: SpatialUnits, 
-        distanceErrorPct: number): TSelf;
 }

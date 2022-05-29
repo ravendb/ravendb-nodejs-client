@@ -16,7 +16,7 @@ import {
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 
-// tslint:disable-next-line:no-console
+// eslint-disable-next-line no-console
 let print = console.log;
 print = TypeUtil.NOOP;
 

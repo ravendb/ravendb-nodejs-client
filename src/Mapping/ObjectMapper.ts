@@ -138,7 +138,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             return null;
         }
         
-        // tslint:disable-next-line:prefer-const
+        // eslint-disable-next-line prefer-const
         let [field, ...fieldsPathTail] = objPath;
 
         const isFieldArray = field.endsWith("[]");
@@ -162,6 +162,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         let fieldVal = parent[field];
+        // eslint-disable-next-line no-prototype-builtins
         if (!parent.hasOwnProperty(field)) {
             if (isFieldArray || isFieldSet || isFieldMap) {
                 fieldVal = parent;

@@ -24,7 +24,7 @@
       "win32": "tsc && tsc -p tsconfig.test.json && copy test\\Assets\\* .test\\test\\Assets && mocha --inspect-brk .test\\test",
       "linux": "tsc && tsc -p tsconfig.test.json && cp test/Assets/* .test/test/Assets && mocha --inspect-brk .test/test"
     },
-    "lint": "tslint src/**/*.ts && tslint test/**/*.ts",
+    "lint": "eslint {src,test}/**/*.ts",
     "check-exports": "node ./scripts/reportMissingTopLevelExports.js",
     "check-imports": "node scripts/clearGlobalExports.js && tsc -p tsconfig.imports-check.json",
     "coverage": "tsc -p tsconfig.test.json && copy test\\Assets\\* .test\\test\\Assets && nyc --exclude=.test/test/** --reporter=html --reporter=text mocha .test\\test"
@@ -63,7 +63,10 @@
     "@types/unzipper": "^0.10.5",
     "@types/util.promisify": "^1.0.4",
     "@types/ws": "^7.4.7",
+    "@typescript-eslint/eslint-plugin": "^5.26.0",
+    "@typescript-eslint/parser": "^5.26.0",
     "cross-os": "^1.3.0",
+    "eslint": "^8.16.0",
     "glob": "^7.2.3",
     "http-proxy-agent": "^5.0.0",
     "lodash.orderby": "^4.6.0",
@@ -74,9 +77,6 @@
     "sinon": "^13.0.2",
     "source-map-support": "^0.5.21",
     "ts-node": "^10.7.0",
-    "tslint": "^6.1.3",
-    "tslint-eslint-rules": "^5.4.0",
-    "tslint-microsoft-contrib": "^6.2.0",
     "typescript": "^4.0.5",
     "unzipper": "^0.10.11"
   },

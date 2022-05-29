@@ -1,7 +1,3 @@
-// tslint:disable-next-line:no-var-requires
-// const why = require("why-is-node-running");
-// setTimeout(why, 30000);
-
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
@@ -40,12 +36,12 @@ const log = getLogger({ module: "TestDriver" });
 
 function logOnUncaughtAndUnhandled() {
     process.on("unhandledRejection", (...args) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.log(...args);
     });
 
     process.on("uncaughtException", (...args) => {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.log(...args);
     });
 }
@@ -227,7 +223,6 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
     private static _killGlobalServerProcess(secured: boolean): void {
         let p: ChildProcess;
-        // tslint:disable-next-line:prefer-const
         let store;
         if (secured) {
             p = this._globalSecuredServerProcess;
@@ -306,13 +301,11 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         const databaseName = database + "_" + (++RavenTestContext._index);
         log.info(`getDocumentStore for db ${ database }.`);
 
-        let documentStore: IDocumentStore;
-
         if (!RavenTestContext._getGlobalServer(secured)) {
             await this._runServer(secured);
         }
 
-        documentStore = RavenTestContext._getGlobalServer(secured);
+        const documentStore = RavenTestContext._getGlobalServer(secured);
         const databaseRecord: DatabaseRecord = { databaseName };
 
         if (this._customizeDbRecord) {
@@ -753,15 +746,16 @@ setupRavenDbTestContext();
 
 export let clusterTestContext: ClusterTestContext;
 
-// tslint:disable:no-console
 function checkAgent(agentName: string, agent: http.Agent) {
     const reqKeys = Object.keys(agent.requests);
     if (reqKeys.length) {
+        // eslint-disable-next-line no-console
         console.log(`${agentName} dangling requests: ${reqKeys}`);
     }
 
     const sockKeys = Object.keys(agent.sockets);
     if (sockKeys.length) {
+        // eslint-disable-next-line no-console
         console.log(`${agentName} dangling sockets: ${sockKeys}`);
     }
 }
@@ -774,6 +768,7 @@ function setupRavenDbTestContext() {
 
     afterEach(function () {
         if (this.currentTest && this.currentTest.state === "failed") {
+            // eslint-disable-next-line no-console
             console.error(VError.fullStack(this.currentTest.err));
         }
     });
@@ -789,7 +784,6 @@ function setupRavenDbTestContext() {
 
     return testContext;
 }
-// tslint:enable:no-console
 
 export async function storeNewDoc(
     session: IDocumentSession, data: object, id: string, clazz: any) {

@@ -7,12 +7,12 @@ export interface IAuthOptions {
     ca?: string | Buffer;
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IStoreAuthOptions extends IAuthOptions {
 
 }
 
-// tslint:disable-next-line:no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IRequestAuthOptions extends IAuthOptions {
 
 }

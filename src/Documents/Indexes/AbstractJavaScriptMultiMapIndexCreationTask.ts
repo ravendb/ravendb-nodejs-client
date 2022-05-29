@@ -39,7 +39,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
 
         const escapedCollection = new StringBuilder();
         StringUtil.escapeString(escapedCollection, collection);
-        this._maps.push(`map(\'${escapedCollection.toString()}\', ${definition})`);
+        this._maps.push(`map('${escapedCollection.toString()}', ${definition})`);
     }
 
     /**
@@ -50,6 +50,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
         this._reduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-types
     public addSource(name: string, source: Function): void {
         this.additionalSources ??= {};
 

@@ -45,6 +45,7 @@ export class HiloIdGenerator {
     }
 
     public async nextId(): Promise<number> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const current = this._nextRangeTask;
 

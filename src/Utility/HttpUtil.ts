@@ -22,8 +22,6 @@ export function getEtagHeader(responseOrHeaders: HttpResponse | IncomingHttpHead
         etagHeaders = (responseOrHeaders as HttpResponse).headers.get(HEADERS.ETAG);
     } else if (HEADERS.ETAG in responseOrHeaders) {
         etagHeaders = (responseOrHeaders as IncomingHttpHeaders)[HEADERS.ETAG];
-    } else if ("headers" in responseOrHeaders) {
-        etagHeaders = responseOrHeaders["headers"][HEADERS.ETAG];
     } else {
         etagHeaders = null;
     }

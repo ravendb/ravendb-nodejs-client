@@ -121,7 +121,7 @@ export abstract class RavenTestDriver {
 
             // timeout if url won't show up after 5s
             return result
-                // tslint:disable-next-line:no-console
+                // eslint-disable-next-line no-console
                 .tap(url => console.log("DEBUG: RavenDB server URL", url))
                 .timeout(5000)
                 .catch((err) => {
@@ -251,6 +251,7 @@ export abstract class RavenTestDriver {
                 }
             }
             await delay(16);
+            // eslint-disable-next-line no-constant-condition
         } while (true);
     }
 
@@ -280,11 +281,12 @@ export abstract class RavenTestDriver {
             if (await session.load("Debug/Done")) {
                 break;
             }
+            // eslint-disable-next-line no-constant-condition
         } while (true);
     }
 
     protected _openBrowser(url: string): void {
-        // tslint:disable-next-line:no-console
+        // eslint-disable-next-line no-console
         console.log(url);
 
         if (os.platform() === "win32") {

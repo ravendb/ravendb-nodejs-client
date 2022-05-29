@@ -268,7 +268,7 @@ describe("bulk insert", function () {
 describe("BulkInsertOperation._typeCheckStoreArgs() properly parses arguments", () => {
 
     const typeCheckStoreArgs = BulkInsertOperation["_typeCheckStoreArgs"];
-    // tslint:disable-next-line:no-empty
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     const expectedCallback = () => {
     };
     const expectedId = "id";

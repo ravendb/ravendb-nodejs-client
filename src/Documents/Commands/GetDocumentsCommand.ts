@@ -101,6 +101,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
         this._conventions = opts.conventions;
 
+        // eslint-disable-next-line no-prototype-builtins
         if (opts.hasOwnProperty("id")) {
             opts = opts as GetDocumentsByIdCommandOptions;
             if (!opts.id) {
@@ -109,6 +110,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._id = opts.id;
             this._includes = opts.includes;
             this._metadataOnly = opts.metadataOnly;
+            // eslint-disable-next-line no-prototype-builtins
         } else if (opts.hasOwnProperty("ids")) {
             opts = opts as GetDocumentsByIdsCommandOptions;
             if (!opts.ids || opts.ids.length === 0) {
@@ -121,11 +123,13 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             this._compareExchangeValueIncludes = opts.compareExchangeValueIncludes;
             this._revisionsIncludeByDateTime = opts.revisionIncludeByDateTimeBefore;
             this._revisionsIncludeByChangeVector = opts.revisionsIncludesByChangeVector;
+            // eslint-disable-next-line no-prototype-builtins
         } else if (opts.hasOwnProperty("start") && opts.hasOwnProperty("pageSize")) {
             opts = opts as GetDocumentsStartingWithOptions;
             this._start = opts.start;
             this._pageSize = opts.pageSize;
 
+            // eslint-disable-next-line no-prototype-builtins
             if (opts.hasOwnProperty("startsWith")) {
                 if (!opts.startsWith) {
                     throwError("InvalidArgumentException", "startWith cannot be null");
@@ -138,10 +142,12 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
+        // eslint-disable-next-line no-prototype-builtins
         if (opts.hasOwnProperty("includeAllCounters" as keyof GetDocumentsCommandCounterOptions)) {
             this._includeAllCounters = opts.includeAllCounters;
         }
 
+        // eslint-disable-next-line no-prototype-builtins
         if (opts.hasOwnProperty("counterIncludes" as keyof GetDocumentsCommandCounterOptions)) {
             const counters = opts.counterIncludes as string[];
             if (!counters) {
