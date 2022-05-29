@@ -4,7 +4,6 @@ declare module "readable-stream";
 declare module "readable-stream" {
     import * as events from "events";
 
-    // tslint:disable-next-line:class-name
     class pipeable extends events.EventEmitter {
         public pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     }
@@ -28,7 +27,6 @@ declare module "readable-stream" {
 
             constructor(opts?: ReadableOptions);
 
-            // tslint:disable-next-line:function-name
             public _read(size: number): void;
 
             public read(size?: number): any;
@@ -49,7 +47,6 @@ declare module "readable-stream" {
 
             public push(chunk: any, encoding?: string): boolean;
 
-            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
 
             public destroy(error?: Error): void;
@@ -112,9 +109,7 @@ declare module "readable-stream" {
             public removeListener(event: "readable", listener: () => void): this;
             public removeListener(event: "error", listener: (err: Error) => void): this;
 
-            // tslint:disable:function-name
             public [Symbol.asyncIterator](): AsyncIterableIterator<Buffer | string>;
-            // tslint:enable:function-name
         }
 
         export interface WritableOptions {
@@ -134,16 +129,12 @@ declare module "readable-stream" {
 
             constructor(opts?: WritableOptions);
 
-            // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
 
-            // tslint:disable-next-line:function-name
             public _writev?(chunks: { chunk: any, encoding: string }[], callback: (err?: Error) => void): void;
 
-            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
 
-            // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
 
             public write(chunk: any, cb?: Function): boolean;
@@ -242,16 +233,12 @@ declare module "readable-stream" {
 
             constructor(opts?: DuplexOptions);
 
-            // tslint:disable-next-line:function-name
             public _write(chunk: any, encoding: string, callback: (err?: Error) => void): void;
 
-            // tslint:disable-next-line:function-name
             public _writev?(chunks: { chunk: any, encoding: string }[], callback: (err?: Error) => void): void;
 
-            // tslint:disable-next-line:function-name
             public _destroy(err: Error, callback: Function): void;
 
-            // tslint:disable-next-line:function-name
             public _final(callback: Function): void;
 
             public write(chunk: any, cb?: Function): boolean;
@@ -278,7 +265,6 @@ declare module "readable-stream" {
         export class Transform extends Duplex {
             constructor(opts?: TransformOptions);
 
-            // tslint:disable-next-line:function-name
             public _transform(chunk: any, encoding: string, callback: TransformCallback): void;
 
             public destroy(error?: Error): void;
@@ -295,14 +281,12 @@ declare module "readable-stream" {
         export function pipeline(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: (NodeJS.ReadWriteStream | NodeJS.WritableStream | ((err: NodeJS.ErrnoException) => void))[]): NodeJS.WritableStream;
 
         export namespace pipeline {
-            // tslint:disable:function-name
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: T): Promise<void>;
             export function __promisify__<T extends NodeJS.WritableStream>(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream, stream3: NodeJS.ReadWriteStream, stream4: NodeJS.ReadWriteStream, stream5: T): Promise<void>;
             export function __promisify__(streams: (NodeJS.ReadableStream | NodeJS.WritableStream | NodeJS.ReadWriteStream)[]): Promise<void>;
             export function __promisify__(stream1: NodeJS.ReadableStream, stream2: NodeJS.ReadWriteStream | NodeJS.WritableStream, ...streams: (NodeJS.ReadWriteStream | NodeJS.WritableStream)[]): Promise<void>;
-            // tslint:enable:function-name
         }
 
         export function finished(stream: pipeable.Stream, callback: (err?: Error) => void);

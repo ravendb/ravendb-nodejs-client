@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-undef
 module.exports = {
     "env": {
         "browser": true,
@@ -20,7 +21,5 @@ module.exports = {
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/no-unused-vars": "off",
         "no-console": "warn",
-        "no-fallthrough": "off", //TODO:
-        "no-async-promise-executor": "off", //TODO:
     }
 }

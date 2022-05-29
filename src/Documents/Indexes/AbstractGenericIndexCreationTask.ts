@@ -40,7 +40,6 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     /**
      * Register a field to be indexed
      */
-    // tslint:disable-next-line:function-name
     protected index(field: FieldOrAllFields<TField>, indexing: FieldIndexing): void {
         this.indexesStrings[field] = indexing;
     }
@@ -48,14 +47,12 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     /**
      * Register a field to be spatially indexed
      */
-    // tslint:disable-next-line:function-name
     protected spatial(field: FieldOrAllFields<TField>, indexing: (spatialOptsFactory: SpatialOptionsFactory) => SpatialOptions): void {
         this.spatialOptionsStrings[field] = indexing(new SpatialOptionsFactory());
     }
 
     // TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
-    // tslint:disable-next-line:function-name
     protected storeAllFields(storage: FieldStorage): void {
         this.storesStrings[CONSTANTS.Documents.Indexing.Fields.ALL_FIELDS] = storage;
     }
@@ -63,7 +60,6 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     /**
      * Register a field to be stored
      */
-    // tslint:disable-next-line:function-name
     protected store(field: TField, storage: FieldStorage): void {
         this.storesStrings[field] = storage;
     }
@@ -71,7 +67,6 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     /**
      * Register a field to be analyzed
      */
-    // tslint:disable-next-line:function-name
     protected analyze(field: FieldOrAllFields<TField>, analyzer: string): void {
         this.analyzersStrings[field] = analyzer;
     }
@@ -79,17 +74,14 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     /**
      * Register a field to have term vectors
      */
-    // tslint:disable-next-line:function-name
     protected termVector(field: FieldOrAllFields<TField>, termVector: FieldTermVector): void {
         this.termVectorsStrings[field] = termVector;
     }
 
-    // tslint:disable-next-line:function-name
     protected suggestion(field: FieldOrAllFields<TField>): void {
         this.indexSuggestions.add(field);
     }
 
-    // tslint:disable-next-line:function-name
     protected addAssembly(assembly: AdditionalAssembly) {
         if (!assembly) {
             throwError("InvalidArgumentException", "Assembly cannot be null");

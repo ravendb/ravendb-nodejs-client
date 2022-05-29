@@ -570,7 +570,6 @@ describe("RavenDB_12748", function () {
 });
 
 
-// tslint:disable-next-line:class-name
 class Orders_All extends AbstractJavaScriptIndexCreationTask<Order> {
     public constructor() {
         super();

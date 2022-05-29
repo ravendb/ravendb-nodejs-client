@@ -1019,7 +1019,6 @@ class Fanout {
     public numbers: number[];
 }
 
-// tslint:disable-next-line:class-name
 class Users_ByAddress extends AbstractJavaScriptIndexCreationTask<User, Pick<User, "address">> {
     public constructor() {
         super();

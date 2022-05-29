@@ -12,7 +12,6 @@ import { assertThat } from "../Utils/AssertExtensions";
 describe("HiLo", function () {
 
     class HiloDoc {
-        // tslint:disable-next-line:variable-name
         public Max: number;
     }
 
@@ -256,7 +255,7 @@ describe("HiLo", function () {
         const tasks: Promise<void>[] = [];
 
         for (let i = 0; i < count; i++) {
-            tasks.push(new Promise(async resolve => {
+            const func = async () => {
                 let id = await multiDbHiLo.generateNextIdFor(null, "Users");
 
                 assertThat(usersIds.has(id))
@@ -267,9 +266,8 @@ describe("HiLo", function () {
                 assertThat(productsIds.has(id))
                     .isFalse();
                 productsIds.set(id, true);
-
-                resolve();
-            }));
+            };
+            tasks.push(func());
         }
 
         await Promise.all(tasks);

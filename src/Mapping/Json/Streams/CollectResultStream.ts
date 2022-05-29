@@ -54,7 +54,6 @@ export class CollectResultStream<TResult = object> extends stream.Writable {
         };
     }
 
-    // tslint:disable-next-line:function-name
     public _write(chunk, enc, callback) {
         this._result = this._reduceResults(this._result, chunk, this._resultIndex);
         this._resultIndex++;

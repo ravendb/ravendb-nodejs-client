@@ -271,7 +271,6 @@ describe("BasicTimeSeriesIndexes_JavaScript", function () {
     });
 });
 
-// tslint:disable-next-line:class-name
 class MyTsIndex_AllTimeSeries extends AbstractRawJavaScriptTimeSeriesIndexCreationTask {
     public constructor() {
         super();
@@ -286,7 +285,6 @@ class MyTsIndex_AllTimeSeries extends AbstractRawJavaScriptTimeSeriesIndexCreati
     }
 }
 
-// tslint:disable-next-line:class-name
 class MyTsIndex_Load extends AbstractRawJavaScriptTimeSeriesIndexCreationTask {
     public constructor() {
         super();
@@ -302,7 +300,6 @@ class MyTsIndex_Load extends AbstractRawJavaScriptTimeSeriesIndexCreationTask {
     }
 }
 
-// tslint:disable-next-line:class-name
 class AverageHeartRateDaily_ByDateAndCityResult {
     public heartBeat: number;
     public date: string;
@@ -310,7 +307,6 @@ class AverageHeartRateDaily_ByDateAndCityResult {
     public count: number;
 }
 
-// tslint:disable-next-line:class-name
 class AverageHeartRateDaily_ByDateAndCity extends AbstractRawJavaScriptTimeSeriesIndexCreationTask {
     public constructor() {
         super();
@@ -370,7 +366,6 @@ class MyMultiMapTsIndex extends AbstractRawJavaScriptTimeSeriesIndexCreationTask
     }
 }
 
-// tslint:disable-next-line:class-name
 class Companies_ByTimeSeriesNames extends AbstractRawJavaScriptIndexCreationTask {
     public constructor() {
         super();

@@ -647,13 +647,13 @@ describe("SubscriptionsBasicTest", function () {
         assert.ok(await docs.poll(_reasonableWaitTime));
         assert.ok(await docs.poll(_reasonableWaitTime));
 
-        await new Promise<void>(async resolve => {
+        await store.subscriptions.dropConnection(id);
+
+        await new Promise<void>( resolve => {
             subscription.on("error", error => {
                 assert.strictEqual(error.name, "SubscriptionClosedException");
                 resolve();
             });
-
-            await store.subscriptions.dropConnection(id);
         });
 
         {

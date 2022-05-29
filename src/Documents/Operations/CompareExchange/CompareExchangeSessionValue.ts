@@ -109,6 +109,7 @@ export class CompareExchangeSessionValue {
                 return;
             case "Created":
                 throwError("InvalidOperationException", "The compare exchange value with key '" + this._key + "' was already stored.");
+                break;
             case "Deleted":
                 throwError("InvalidOperationException", "The compare exchange value with key '" + this._key + "' was already deleted.");
         }

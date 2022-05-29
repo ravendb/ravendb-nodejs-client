@@ -274,6 +274,7 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     private _send(command: string, value: string, values: string[]): Promise<void> {
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise<void>((async (resolve, reject) => {
             let currentCommandId: number;
 

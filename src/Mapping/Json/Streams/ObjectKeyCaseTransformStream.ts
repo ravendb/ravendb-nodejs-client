@@ -43,7 +43,6 @@ export class ObjectKeyCaseTransformStream extends stream.Transform {
         this._handleKeyValue = _opts.handleKeyValue;
     }
 
-    // tslint:disable-next-line:function-name
     public _transform(chunk: any, enc: string, callback) {
         let entry = this._handleKeyValue ? chunk["value"] : chunk;
         const key = chunk["key"];

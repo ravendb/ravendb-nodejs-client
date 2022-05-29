@@ -354,7 +354,6 @@ describe("Indexes from client", function () {
     });
 });
 
-// tslint:disable:class-name
 export class Posts_ByTitleAndDesc extends AbstractJavaScriptIndexCreationTask<Post, Pick<Post, "title" | "desc">> {
 
     constructor() {
@@ -393,4 +392,3 @@ export class Users_ByName extends AbstractJavaScriptIndexCreationTask<User, Pick
         this.store("name", "Yes");
     }
 }
-// tslint:enable:class-name

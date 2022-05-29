@@ -283,7 +283,6 @@ describe("query streaming", function () {
     });
 });
 
-// tslint:disable-next-line:class-name
 class Users_ByName extends AbstractCsharpIndexCreationTask {
     public constructor() {
         super();
