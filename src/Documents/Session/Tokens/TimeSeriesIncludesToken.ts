@@ -48,11 +48,11 @@ export class TimeSeriesIncludesToken extends QueryToken {
         }
 
         if ("count" in this._range) {
-            TimeSeriesIncludesToken._writeCountRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeCountRangeTo(writer, this._range as TimeSeriesCountRange);
         } else if ("time" in this._range) {
-            TimeSeriesIncludesToken._writeTimeRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeTimeRangeTo(writer, this._range as TimeSeriesTimeRange);
         } else if ("from" in this._range && "to" in this._range) {
-            TimeSeriesIncludesToken._writeRangeTo(writer, this._range);
+            TimeSeriesIncludesToken._writeRangeTo(writer, this._range as TimeSeriesRange);
         } else {
             throwError("InvalidArgumentException", "Not supported time range type: " + this._range);
         }

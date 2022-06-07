@@ -64,7 +64,7 @@ import { assertThat } from "../../Utils/AssertExtensions";
 
                     let key: string;
 
-                    await new Promise((resolve, reject) => {
+                    await new Promise<void>((resolve, reject) => {
                         subscription.on("error", reject);
                         subscription.on("batch", (batch, callback) => {
                             key = batch.items[0].id;
