@@ -1,7 +1,5 @@
 import {
-    DisableIndexOperation,
-    GetIndexStatisticsOperation,
-    IDocumentStore
+    IDocumentStore, StopIndexOperation
 } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
@@ -23,15 +21,6 @@ describe("RavenDB_15497", function () {
         const index = new Index();
         await index.execute(store);
 
-        await store.maintenance.send(new DisableIndexOperation(index.getIndexName()));
-
-        const indexStats = await store.maintenance.send(new GetIndexStatisticsOperation(index.getIndexName()));
-
-        assertThat(indexStats.state)
-            .isEqualTo("Disabled");
-        assertThat(indexStats.status)
-            .isEqualTo("Disabled");
-
         {
             const session = store.openSession();
             const user = new User();
@@ -46,6 +35,10 @@ describe("RavenDB_15497", function () {
 
             await session.saveChanges();
         }
+
+        await testContext.waitForIndexing(store);
+
+        await store.maintenance.send(new StopIndexOperation(index.getIndexName()));
 
         {
             const session = store.openSession();
@@ -65,7 +58,7 @@ describe("RavenDB_15497", function () {
                 assertThat(e.message)
                     .contains("System.TimeoutException");
                 assertThat(e.message)
-                    .contains("could not verify that 1 indexes has caught up with the changes as of etag");
+                    .contains("could not verify that");
             });
         }
     });
