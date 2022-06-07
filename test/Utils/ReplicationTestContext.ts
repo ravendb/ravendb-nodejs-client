@@ -7,7 +7,7 @@ import {
     ModifyOngoingTaskResult,
     IMaintenanceOperation,
     OngoingTaskType,
-    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation, GetDatabaseRecordOperation
+    DeleteOngoingTaskOperation, UpdateExternalReplicationOperation, GetDatabaseRecordOperation, PullReplicationAsSink
 } from "../../src";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { DocumentType } from "../../src";
@@ -63,7 +63,7 @@ export class ReplicationTestContext {
         let op: IMaintenanceOperation<ModifyOngoingTaskResult>;
 
         if ("hubDefinitionName" in watcher) {
-            op = new UpdatePullReplicationAsSinkOperation(watcher);
+            op = new UpdatePullReplicationAsSinkOperation(watcher as PullReplicationAsSink);
         } else {
             op = new UpdateExternalReplicationOperation(watcher);
         }

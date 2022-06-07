@@ -33,7 +33,7 @@ describe("RavenDB_16975Test", function () {
 
         const sub = store.subscriptions.getSubscriptionWorker<User>(id);
         try {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 sub.on("error", reject);
                 sub.on("batch", async (batch, callback) => {
 

@@ -31,7 +31,7 @@ describe("RavenDB_16262Test", function () {
 
         const sub = store.subscriptions.getSubscriptionWorker<Product>(name);
         try {
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 sub.on("error", reject);
                 sub.on("batch", async (batch, callback) => {
                     assertThat(batch.items.length)
