@@ -1,4 +1,4 @@
-import * as FilterBase from "stream-json/filters/FilterBase";
+import FilterBase = require("stream-json/filters/FilterBase");
 import { ObjectUtil, CasingConvention } from "../../../Utility/ObjectUtil";
 import { throwError } from "../../../Exceptions";
 

@@ -54,7 +54,6 @@
   "author": "Hibernating Rhinos",
   "license": "MIT",
   "devDependencies": {
-    "@types/bluebird": "^3.5.36",
     "@types/md5": "^2.3.2",
     "@types/mocha": "^9.1.1",
     "@types/pluralize": "0.0.29",
@@ -62,7 +61,6 @@
     "@types/sinon": "^10.0.11",
     "@types/unzipper": "^0.10.5",
     "@types/util.promisify": "^1.0.4",
-    "@types/ws": "^7.4.7",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/parser": "^5.26.0",
     "cross-os": "^1.3.0",
@@ -81,12 +79,15 @@
     "unzipper": "^0.10.11"
   },
   "dependencies": {
+    "@types/bluebird": "^3.5.36",
+    "@types/node": "^18.0.0",
     "@types/node-fetch": "^2.6.1",
     "@types/qs": "^6.9.7",
     "@types/semaphore": "^1.1.0",
     "@types/stream-json": "^1.7.2",
     "@types/uuid": "^8.3.4",
     "@types/verror": "^1.10.5",
+    "@types/ws": "^7.4.7",
     "abort-controller": "^3.0.0",
     "bluebird": "^3.7.2",
     "change-case": "^3.1.0",
