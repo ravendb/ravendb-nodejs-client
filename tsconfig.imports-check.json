@@ -3,8 +3,7 @@
 
   "include": [
     "./src/**/*",
-    "./src/Types/global.d.ts",
-    "./src/Types/readable-stream.d.ts"
+    "./src/Types/global.d.ts"
   ],
   "exclude": [
     "node_modules",
