@@ -3,7 +3,6 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
-    DocumentStore,
 } from "../../src";
 
 describe("Issue #315", function () {
@@ -30,6 +29,7 @@ describe("Issue #315", function () {
         {
             const session = store.openSession();
             const item = await session.load("items/1");
+            assert.ok(item);
             assert.strictEqual(item['str'], str);
         }
 
