@@ -34,8 +34,8 @@ describe("Issue #315", function () {
         }
 
         {
-            var session = store.openSession();
-            var item = (await session.advanced.rawQuery("from @all_docs").all())[0];
+            const session = store.openSession();
+            const item = (await session.advanced.rawQuery("from @all_docs").all())[0];
             assert.strictEqual(item['str'], str);
         }
     });
