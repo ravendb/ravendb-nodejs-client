@@ -54,9 +54,9 @@ describe("RavenDB_15497", function () {
 
             await assertThrows(() => session.saveChanges(), e => {
                 assertThat(e.name)
-                    .isEqualTo("TimeoutException");
+                    .isEqualTo("RavenTimeoutException");
                 assertThat(e.message)
-                    .contains("System.TimeoutException");
+                    .contains("RavenTimeoutException");
                 assertThat(e.message)
                     .contains("could not verify that");
             });

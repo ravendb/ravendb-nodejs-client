@@ -172,19 +172,27 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
                 streams.push(...opts.jsonAsync.filters);
             }
         } else if (opts.jsonSync) {
-            const jsonChunks = [];
+            const bytesChunks = [];
             const parseJsonSyncTransform = new stream.Transform({
                 readableObjectMode: true,
                 transform(chunk, enc, callback) {
-                    jsonChunks.push(chunk.toString("utf8"));
+                    bytesChunks.push(chunk);
                     callback();
                 },
                 flush(callback) {
+                    let str = null;
                     try {
-                        callback(null, JSON.parse(jsonChunks.join("")));
+                        str = Buffer.concat(bytesChunks).toString('utf-8');
+                    } catch(err){
+                        callback(
+                            getError("InvalidDataException", `Failed to concat / decode server response`, err));
+                        return;
+                    }
+                    try {
+                        callback(null, JSON.parse(str));
                     } catch (err) {
                         callback(
-                            getError("InvalidOperationException", `Error parsing response: '${jsonChunks.join("")}'.`, err));
+                            getError("InvalidOperationException", `Error parsing response: '${str}'.`, err));
                     }
                 }
             });
