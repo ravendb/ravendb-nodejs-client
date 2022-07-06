@@ -24,9 +24,9 @@ describe("LogsConfigurationTest", function () {
         let logsConfig = await store.maintenance.server.send(getOperation);
 
         assertThat(logsConfig.currentMode)
-            .isEqualTo("Operations");
+            .isEqualTo("None");
         assertThat(logsConfig.mode)
-            .isEqualTo("Operations");
+            .isEqualTo("None");
 
         // now try to set mode to operations and info
 
@@ -46,7 +46,7 @@ describe("LogsConfigurationTest", function () {
             assertThat(logsConfig.currentMode)
                 .isEqualTo("Information");
             assertThat(logsConfig.mode)
-                .isEqualTo("Operations");
+                .isEqualTo("None");
         } finally {
             // try to clean up
 
