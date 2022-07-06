@@ -54,7 +54,7 @@ describe("RavenDB_15497", function () {
 
             await assertThrows(() => session.saveChanges(), e => {
                 assertThat(e.name)
-                    .isEqualTo("TimeoutException");
+                    .isEqualTo("RavenTimeoutException");
                 assertThat(e.message)
                     .contains("System.TimeoutException");
                 assertThat(e.message)
