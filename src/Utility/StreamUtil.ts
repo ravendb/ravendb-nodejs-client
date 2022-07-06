@@ -33,7 +33,7 @@ export async function readToEnd(readable: stream.Readable | stream.Stream): Prom
     readable.on("data", chunk => chunks.push(chunk));
 
     await finishedAsync(readable);
-    return chunks.join("");
+    return Buffer.concat(chunks).toString('utf-8');
 }
 
 export function bufferToReadable(b: Buffer) {
