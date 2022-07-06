@@ -180,7 +180,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
                     callback();
                 },
                 flush(callback) {
-                    var str = null;
+                    let str = null;
                     try {
                         str = Buffer.concat(bytesChunks).toString('utf-8');
                     } catch(err){

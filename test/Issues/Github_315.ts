@@ -19,17 +19,17 @@ describe("Issue #315", function () {
 
     it("can use complex multi byte characters on load", async () => {
 
-        var str = '🐛'.repeat(50_000);
+        const str = '🐛'.repeat(50_000);
         {
-            var session = store.openSession();
-            var doc = {'str': str};
+            const session = store.openSession();
+            const doc = {'str': str};
             await session.store(doc, "items/1");
             await session.saveChanges();
         }
 
         {
-            var session = store.openSession();
-            var item = await session.load("items/1");
+            const session = store.openSession();
+            const item = await session.load("items/1");
             assert.strictEqual(item['str'], str);
         }
 
