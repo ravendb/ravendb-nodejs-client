@@ -24,7 +24,7 @@ export class SpatialCriteriaFactory {
         relation: SpatialRelation, 
         units?: SpatialUnits, 
         distErrorPercent?: number): SpatialCriteria {
-        if (!distErrorPercent) {
+        if (TypeUtil.isNullOrUndefined(distErrorPercent)) {
             distErrorPercent = CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
         }
 
@@ -40,7 +40,7 @@ export class SpatialCriteriaFactory {
             units = null;
         }
 
-        distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
+        distErrorPercent = distErrorPercent ?? CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
         return { units, distErrorPercent };
     }
 
@@ -118,7 +118,7 @@ export class SpatialCriteriaFactory {
         longitude: number,
         radiusUnits: SpatialUnits = null,
         distErrorPercent?: number): SpatialCriteria {
-        distErrorPercent = distErrorPercent || CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
+        distErrorPercent = distErrorPercent ?? CONSTANTS.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT;
         return new CircleCriteria(radius, latitude, longitude, radiusUnits, "Within", distErrorPercent);
     }
 }
