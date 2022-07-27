@@ -18,6 +18,7 @@ describe('Hash calculator tests', () => {
         const obj = {
             boolean: true,
             function: () => {
+                // eslint-disable-next-line no-console
                 console.log('No-op')
             },
             number: 4,
