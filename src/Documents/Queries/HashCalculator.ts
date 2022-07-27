@@ -33,7 +33,7 @@ export class HashCalculator {
         this._buffers.push(typeSignatures[typeof o] || typeSignatures.undefined);
 
         if (typeof o === "number") {
-            this._buffers.push(Buffer.from([o]));
+            this._buffers.push(Buffer.from(String(o)));
         } else if (typeof o === "string") {
             this._buffers.push(Buffer.from(o));
         } else if (typeof o === "boolean") {
