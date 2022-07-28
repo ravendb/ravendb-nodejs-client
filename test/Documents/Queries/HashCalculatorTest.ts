@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import { HashCalculator } from "../../../src/Documents/Queries/HashCalculator";
-import { TypesAwareObjectMapper } from "../../../src/Mapping/ObjectMapper";
+import { TypesAwareObjectMapper } from "../../../src";
 
 const mockObjectMapper = {
     toObjectLiteral: obj => obj.toString()
