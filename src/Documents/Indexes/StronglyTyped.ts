@@ -1,11 +1,18 @@
 import { FieldIndexing, FieldStorage, FieldTermVector } from "./Enums";
 import { MetadataObject } from "../Session/MetadataObject";
+import { IndexFieldOptions } from "./IndexFieldOptions";
 
 export type IndexingMapDefinition<TInput, TOutput> = (document: TInput) => TOutput | TOutput[];
 
 export type IndexingReduceDefinition<TItem> = (result: IndexingGroupResults<TItem>) => IndexingMapReduceFormatter<TItem>;
 
 type KeySelector<TDocument, TKey> = (document: TDocument) => TKey;
+
+export interface CreateFieldOptions {
+    storage?: boolean;
+    indexing?: FieldIndexing;
+    termVector?: FieldTermVector;
+}
 
 export interface IndexingMapUtils {
     load<T = any>(documentId: string, collection: string): T;
@@ -14,6 +21,7 @@ export interface IndexingMapUtils {
     id(document: any): string;
     createSpatialField(wkt: string): SpatialField;
     createSpatialField(lat: number, lng: number): SpatialField;
+    createField(name: string, value: any, options: CreateFieldOptions): void;
 }
 
 export class StubMapUtils<T> implements IndexingMapUtils {
@@ -22,6 +30,7 @@ export class StubMapUtils<T> implements IndexingMapUtils {
     getMetadata: (document: any) => MetadataObject;
     id: (document: any) => string;
     createSpatialField: (wktOrLat: string | number, lng?: number) => void;
+    createField: (name: string, value: any, options?: CreateFieldOptions) => void;
 }
 
 interface Group<TDocument, TKey> {
