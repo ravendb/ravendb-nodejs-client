@@ -1,6 +1,7 @@
 import { FieldIndexing, FieldStorage, FieldTermVector } from "./Enums";
 import { MetadataObject } from "../Session/MetadataObject";
-import { IndexFieldOptions } from "./IndexFieldOptions";
+import { AttachmentName, IAttachmentObject } from "../Attachments";
+import { CapitalizeType } from "../../Types";
 
 export type IndexingMapDefinition<TInput, TOutput> = (document: TInput) => TOutput | TOutput[];
 
@@ -22,6 +23,8 @@ export interface IndexingMapUtils {
     createSpatialField(wkt: string): SpatialField;
     createSpatialField(lat: number, lng: number): SpatialField;
     createField(name: string, value: any, options: CreateFieldOptions): void;
+    attachmentsFor(document: any): CapitalizeType<AttachmentName>[];
+    loadAttachment(document: any, attachmentName: string): IAttachmentObject;
 }
 
 export class StubMapUtils<T> implements IndexingMapUtils {
@@ -31,6 +34,8 @@ export class StubMapUtils<T> implements IndexingMapUtils {
     id: (document: any) => string;
     createSpatialField: (wktOrLat: string | number, lng?: number) => void;
     createField: (name: string, value: any, options?: CreateFieldOptions) => void;
+    attachmentsFor: (document: any) => CapitalizeType<AttachmentName>[];
+    loadAttachment: (document: any, attachmentName: string) => IAttachmentObject;
 }
 
 interface Group<TDocument, TKey> {

@@ -73,10 +73,12 @@ export abstract class PropsBasedObjectLiteralDescriptor<T extends object>
     }
 }
 
+export type CapitalizeType<T> = { [K in keyof T & string as `${Capitalize<K>}`]: T[K] };
+
 export type Field<T> = keyof T & string | string;
 
 export type ServerResponse<T> = T extends Date|string ? T : {
     [K in keyof T]: T[K] extends Date
-        ? string 
+        ? string
         : ServerResponse<T[K]>;
 }

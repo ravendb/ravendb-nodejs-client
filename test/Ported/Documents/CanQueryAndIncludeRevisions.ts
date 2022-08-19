@@ -280,6 +280,7 @@ describe("CanQueryAndIncludeRevisionsTest", function () {
             changeVector = metadatas[0]["@change-vector"];
             await session.advanced.patch(id, "changeVector", changeVector);
             await session.advanced.patch(id, "changeVectors", [changeVector]);
+            await session.saveChanges();
         }
 
         const dateTime = new Date();
