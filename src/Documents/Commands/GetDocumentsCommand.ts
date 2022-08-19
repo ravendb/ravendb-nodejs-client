@@ -244,7 +244,7 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
 
         if (this._revisionsIncludeByDateTime) {
-            query += "&revisionsBefore=" + DateUtil.utc.stringify(this._revisionsIncludeByDateTime);
+            query += "&revisionsBefore=" + this._urlEncode(DateUtil.utc.stringify(this._revisionsIncludeByDateTime));
         }
 
         if (this._compareExchangeValueIncludes) {
