@@ -46,7 +46,9 @@ export function getError(
 }
 
 export type RavenErrorType = "RavenException"
+    | "RavenTimeoutException"
     | "NotSupportedException"
+    | "IndexCompactionInProgressException"
     | "InvalidOperationException"
     | "InvalidArgumentException"
     | "ErrorResponseException"
@@ -176,8 +178,8 @@ export class ExceptionDispatcher {
             return getError("ConcurrencyException", schema.error, inner);
         }
 
-        const error = 
-            schema.error + os.EOL 
+        const error =
+            schema.error + os.EOL
             + "The server at " + schema.url + " responded with status code: " + code;
 
         const determinedType = this._getType(typeAsString) as RavenErrorType;
@@ -200,6 +202,8 @@ export class ExceptionDispatcher {
                 const determinedType = this._getType(schema.type) as RavenErrorType;
                 errorToThrow = getError(determinedType || "RavenException", schema.error);
             }
+
+            ExceptionDispatcher._fillException(errorToThrow, schema);
         } catch (errThrowing) {
             errorToThrow = getError("RavenException", errThrowing.message, errThrowing);
         } finally {
@@ -207,6 +211,12 @@ export class ExceptionDispatcher {
         }
 
         throw errorToThrow;
+    }
+
+    private static _fillException(exception: Error, json: any) {
+        if (exception.name === "RavenTimeoutException") {
+            (exception as any).failImmediately = !!json.FailImmediately;
+        }
     }
 
     private static _getConflictError(schema: ExceptionSchema, json: string) {

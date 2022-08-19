@@ -240,8 +240,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
 
     private _ensureParser(socket: Socket) {
         const keysTransformProfile = getTransformJsonKeysProfile(
-            this._revisions 
-                ? "SubscriptionRevisionsResponsePayload" 
+            this._revisions
+                ? "SubscriptionRevisionsResponsePayload"
                 : "SubscriptionResponsePayload", this._store.conventions);
 
         this._parser = stream.pipeline([
@@ -438,7 +438,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                     }
 
                     const lastReceivedChangeVector = batch.initialize(incomingBatch);
-                    notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch) 
+                    notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch)
                         .catch((err) => {
                             this._logger.error(err, "Subscription " + this._options.subscriptionName
                                 + ". Subscriber threw an exception on document batch");
@@ -580,9 +580,9 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 return data.value;
             }
         }
-        
+
         return new Promise<void>((resolve, reject) => {
-            stream.once("readable", readableListener); 
+            stream.once("readable", readableListener);
             stream.once("error", errorHandler);
             stream.once("end", endHandler);
 
@@ -592,7 +592,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                 resolve();
             }
 
-            function errorHandler(err) { 
+            function errorHandler(err) {
                 stream.removeListener("readable", readableListener);
                 stream.removeListener("end", endHandler);
                 reject(err);
@@ -646,7 +646,8 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
                         const curTopology = reqEx.getTopologyNodes();
                         const nextNodeIndex = (this._forcedTopologyUpdateAttempts++) % curTopology.length;
                         try {
-                            this._redirectNode = curTopology[nextNodeIndex];
+                            const indexAndNode = await reqEx.getRequestedNode(curTopology[nextNodeIndex].clusterTag, true);
+                            this._redirectNode = indexAndNode.currentNode;
 
                             this._logger.info("Subscription " + this._options.subscriptionName + ". Will modify redirect node from null to " + this._redirectNode.clusterTag);
                         } catch (e) {
@@ -759,7 +760,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     public on(event: "connectionRetry",
               handler: (error?: Error) => void);
     public on(event: EventTypes,
-              handler: 
+              handler:
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((error: Error) => void)) {
         this._emitter.on(event, handler);

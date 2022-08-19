@@ -139,6 +139,8 @@ describe("HttpsTest", function () {
                 .isNotNull();
             assertThat(certificateDefinitions.find(x => x.name === "cert2").notAfter instanceof Date)
                 .isTrue();
+            assertThat(certificateDefinitions.find(x => x.name === "cert2").notBefore instanceof Date)
+                .isTrue();
             assertThat(certificateDefinitions.find(x => x.name === "cert3"))
                 .isNotNull();
 
@@ -167,6 +169,8 @@ describe("HttpsTest", function () {
             assertThat(certificateMetadata.securityClearance)
                 .isEqualTo("ValidUser");
             assertThat(certificateMetadata.notAfter instanceof Date)
+                .isTrue();
+            assertThat(certificateMetadata.notBefore instanceof Date)
                 .isTrue();
 
             const certificatesMetadata = await store.maintenance.server.send(

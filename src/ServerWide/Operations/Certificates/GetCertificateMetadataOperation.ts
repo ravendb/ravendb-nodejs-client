@@ -65,11 +65,12 @@ class GetCertificateMetadataCommand extends RavenCommand<CertificateMetadata> {
         const dateUtil = this._conventions.dateUtil;
 
         const resultsMapped: CertificateMetadata[] = response.results.map(cert => {
-            const { notAfter } = cert;
+            const { notAfter, notBefore } = cert;
 
             return {
                 ...cert,
-                notAfter: dateUtil.parse(notAfter)
+                notAfter: dateUtil.parse(notAfter),
+                notBefore: dateUtil.parse(notBefore)
             }
         })
 
