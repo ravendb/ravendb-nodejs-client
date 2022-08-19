@@ -15,12 +15,22 @@ class NodeSelectorState {
     public fastestRecords: number[];
     public fastest: number;
     public speedTestMode = 1;
+    public unlikelyEveryoneFaultedChoiceIndex: number;
 
     constructor(topology: Topology) {
         this.topology = topology;
         this.nodes = topology.nodes;
         this.failures = ArrayUtil.range(topology.nodes.length, () => 0);
         this.fastestRecords = ArrayUtil.range(topology.nodes.length, () => 0);
+        this.unlikelyEveryoneFaultedChoiceIndex = 0;
+    }
+
+    public getNodeWhenEveryoneMarkedAsFaulted(): CurrentIndexAndNode {
+        const index = this.unlikelyEveryoneFaultedChoiceIndex;
+        this.unlikelyEveryoneFaultedChoiceIndex = (this.unlikelyEveryoneFaultedChoiceIndex + 1) % this.nodes.length;
+
+
+        return new CurrentIndexAndNode(index, this.nodes[index]);
     }
 }
 
@@ -91,18 +101,11 @@ export class NodeSelector {
 
     public getRequestedNode(nodeTag: string): CurrentIndexAndNode {
         const state = this._state;
-
-        const stateFailures = state.failures;
         const serverNodes = state.nodes;
-        const len = Math.min(serverNodes.length, stateFailures.length);
 
-        for (let i = 0; i < len; i++) {
+        for (let i = 0; i < serverNodes.length; i++) {
             if (serverNodes[i].clusterTag === nodeTag) {
-                if (stateFailures[i] === 0 && !StringUtil.isNullOrEmpty(serverNodes[i].url)) {
-                    return new CurrentIndexAndNode(i, serverNodes[i]);
-                }
-
-                throwError("RequestedNodeUnavailableException", "Requested node " + nodeTag + " currently unavailable, please try again later.");
+                return new CurrentIndexAndNode(i, serverNodes[i]);
             }
         }
 
@@ -111,6 +114,10 @@ export class NodeSelector {
         }
 
         throwError("RequestedNodeUnavailableException", "Could not find requested node " + nodeTag);
+    }
+
+    public nodeIsAvailable(index: number) {
+        return this._state.failures[index] === 0;
     }
 
     public getPreferredNode(): CurrentIndexAndNode {
@@ -124,7 +131,7 @@ export class NodeSelector {
         const len = Math.min(serverNodes.length, stateFailures.length);
 
         for (let i = 0; i < len; i++) {
-            if (stateFailures[i] === 0 && serverNodes[i].url) {
+            if (stateFailures[i] === 0) {
                 return new CurrentIndexAndNode(i, serverNodes[i]);
             }
         }
@@ -144,13 +151,13 @@ export class NodeSelector {
     }
 
     private static _unlikelyEveryoneFaultedChoice(state: NodeSelectorState): CurrentIndexAndNode {
-        // if there are all marked as failed, we'll chose the first
+        // if there are all marked as failed, we'll choose the next (the one in CurrentNodeIndex)
         // one so the user will get an error (or recover :-) );
         if (state.nodes.length === 0) {
             throwError("DatabaseDoesNotExistException", "There are no nodes in the topology at all.");
         }
 
-        return new CurrentIndexAndNode(0, state.nodes[0]);
+        return state.getNodeWhenEveryoneMarkedAsFaulted();
     }
 
     public getFastestNode(): CurrentIndexAndNode {

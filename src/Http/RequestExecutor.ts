@@ -403,7 +403,7 @@ export class RequestExecutor implements IDisposable {
 
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
-        
+
         return executor;
     }
 
@@ -1464,7 +1464,11 @@ export class RequestExecutor implements IDisposable {
             command.failedNodes = new Map();
         }
 
-        command.failedNodes.set(chosenNode, RequestExecutor._readExceptionFromServer(req, response, body, error));
+        const exception = RequestExecutor._readExceptionFromServer(req, response, body, error);
+        if (exception.name === "RavenTimeoutException" && (exception as any).failImmediately) {
+            throw exception;
+        }
+        command.failedNodes.set(chosenNode, exception);
 
         if (nodeIndex === null) {
             return false;
@@ -1817,10 +1821,16 @@ export class RequestExecutor implements IDisposable {
         this._disposeAllFailedNodesTimers();
     }
 
-    public async getRequestedNode(nodeTag: string): Promise<CurrentIndexAndNode> {
+    public async getRequestedNode(nodeTag: string, throwIfContainsFailures = false): Promise<CurrentIndexAndNode> {
         await this._ensureNodeSelector();
 
-        return this._nodeSelector.getRequestedNode(nodeTag);
+        const currentIndexAndNode = this._nodeSelector.getRequestedNode(nodeTag);
+
+        if (throwIfContainsFailures && !this._nodeSelector.nodeIsAvailable(currentIndexAndNode.currentIndex)) {
+            throwError("RequestedNodeUnavailableException", "Requested node " + nodeTag + " currently unavailable, please try again later.");
+        }
+
+        return currentIndexAndNode;
     }
 
     public async getPreferredNode(): Promise<CurrentIndexAndNode> {

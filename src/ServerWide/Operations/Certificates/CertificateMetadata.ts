@@ -6,6 +6,7 @@ export interface CertificateMetadata {
     securityClearance: SecurityClearance;
     thumbprint: string;
     notAfter: Date;
+    notBefore: Date;
     permissions?: Record<string, DatabaseAccess>;
     collectionSecondaryKeys?: string[];
     collectionPrimaryKey?: string;
