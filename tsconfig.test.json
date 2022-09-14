@@ -1,7 +1,7 @@
 {
   "version": "2.9.2",
   "compilerOptions": {
-    "target": "es6",
+    "target": "ES2020",
     "module": "commonjs",
     "allowJs": true,
     "moduleResolution": "node",
@@ -10,7 +10,7 @@
     "inlineSourceMap": true,
     "pretty": true,
     "outDir": ".test",
-    "lib": [ "es2018" ],
+    "lib": [ "ES2020" ],
     "allowSyntheticDefaultImports": true,
     "typeRoots": [
       "node_modules/@types",
