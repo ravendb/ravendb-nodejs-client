@@ -7,12 +7,7 @@ import { StartingWithOptions } from "../IDocumentSession";
 import { StreamCommand } from "../../Commands/StreamCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StreamResultResponse } from "../../Commands/StreamResultResponse";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { ignore } from "stream-json/filters/Ignore";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
-import { getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
-import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
-import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
+import { getDocumentResultsAsObjects, getDocumentStatsPipeline } from "../../../Mapping/Json/Streams/Pipelines";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 
 export class StreamOperation {
@@ -90,15 +85,9 @@ export class StreamOperation {
         }
 
         const result = getDocumentResultsAsObjects(this._session.conventions).stream(response.stream);
-        
+
         if (this._isQueryStream) {
-            RavenCommandResponsePipeline.create()
-                .parseJsonAsync([
-                    ignore({ filter: /^Results|Includes$/ }),
-                    new TransformKeysJsonStream(getTransformJsonKeysProfile("CommandResponsePayload")),
-                    streamValues()
-                ])
-                .stream(response.stream)
+            getDocumentStatsPipeline(this._session.conventions)
                 .on("error", err => result.emit("error", err))
                 .on("data", data => {
                     const statsResult =

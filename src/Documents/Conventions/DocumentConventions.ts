@@ -101,15 +101,25 @@ export class DocumentConventions {
 
     private readonly _bulkInsert: BulkInsertConventions;
 
+    private _useJsonlStreaming = false;
+
     public get bulkInsert() {
         return this._bulkInsert;
+    }
+
+    public get useJsonlStreaming() {
+        return this._useJsonlStreaming;
+    }
+
+    public set useJsonlStreaming(value) {
+        this._useJsonlStreaming = value;
     }
 
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";
         this._identityProperty = CONSTANTS.Documents.Metadata.ID_PROPERTY;
-        
+
         this._findJsType = (id: string, doc: object) => {
             const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
             if (metadata) {
@@ -435,7 +445,7 @@ export class DocumentConventions {
     public set storeDatesWithTimezoneInfo(value) {
         this._assertNotFrozen();
         this._dateUtilOpts.withTimezone = true;
-    } 
+    }
 
     /**
      * If set to 'true' then it will throw an exception when any query is performed (in session)
