@@ -34,7 +34,8 @@ import { OngoingTaskSqlEtlDetails } from "../../../../../src/Documents/Operation
 
         const transformation = {
             applyToAllDocuments: true,
-            name: "Script #1"
+            name: "Script #1",
+            script: "loadToOrders(this);"
         } as Transformation;
 
         const table1 = {
@@ -187,6 +188,7 @@ import { OngoingTaskSqlEtlDetails } from "../../../../../src/Documents/Operation
         const transformation = {
             applyToAllDocuments: true,
             name: "Script Q&A",
+            script: "loadToOrders(this);"
         } as Transformation;
 
         const table1 = {
