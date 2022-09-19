@@ -1,10 +1,10 @@
 name: tests/node
- 
+
 on:
   push:
-    branches: [ v5.2 ]
+    branches: [ v5.4 ]
   pull_request:
-    branches: [ v5.2 ]
+    branches: [ v5.4 ]
   schedule:
     - cron: '0 10 * * 6'
 
@@ -21,16 +21,16 @@ jobs:
       RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
       RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
-    
+
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x, 18.x]
-        serverVersion: ["5.2", "5.3"]
+        node-version: [14.x, 16.x, 18.x]
+        serverVersion: ["5.4"]
       fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
-      
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
@@ -49,24 +49,24 @@ jobs:
     - run: openssl pkcs12 -passout pass:"" -export -out certs/server.pfx -inkey certs/localhost.key -in certs/localhost.crt
     - run: sudo cp certs/ca.crt /usr/local/share/ca-certificates/ca.crt
     - run: sudo update-ca-certificates
-    
+
     - name: Extract RavenDB Server
       run: tar xjf RavenDB.tar.bz2
 
     - run: npm install
-      
+
     - name: Run Linter
       run: npm run lint
-    
+
     - name: Check exports
       run: npm run check-exports
-      
+
     - name: Run Tests
       run: npm run test
-    
+
     - name: Build
       run: npm run build
-    
+
     - name: Check imports
       run: node -e "require('./dist').DocumentStore"
 
