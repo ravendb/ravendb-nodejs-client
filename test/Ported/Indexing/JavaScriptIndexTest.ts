@@ -17,7 +17,7 @@ describe("JavaScriptIndexTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     async function storeBrendan(store) {
@@ -194,8 +194,8 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
-            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
@@ -208,6 +208,10 @@ describe("JavaScriptIndexTest", function () {
 
     it("canUseJavaScriptIndexWithLoadDocument", async () => {
         return canUseJavaScriptIndexWithLoadInternal(UsersWithProductsByName);
+    });
+
+    it("canUseJavaScriptIndexWithNoTrackingLoadDocument", async () => {
+        return canUseJavaScriptIndexWithLoadInternal(UsersWithProductsByNameWithNoTracking);
     });
 
     it("canUseJavaScriptIndexWithExternalLoadDocument", async () => {
@@ -254,8 +258,8 @@ describe("JavaScriptIndexTest", function () {
 
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);   
-            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);   
+            await storeNewDoc(session, { name: "Brendan Eich" }, "users/1", User);
+            await storeNewDoc(session, { name: "Shampoo", available: true }, "products/1", Product);
             await session.saveChanges();
 
             await testContext.waitForIndexing(store);
@@ -425,8 +429,8 @@ describe("JavaScriptIndexTest", function () {
         await store.executeIndex(index);
         {
             const session = store.openSession();
-            await storeNewDoc(session, { name: "Beverages" }, "categories/1-A", Category);   
-            await storeNewDoc(session, { name: "Seafood" }, "categories/2-A", Category);   
+            await storeNewDoc(session, { name: "Beverages" }, "categories/1-A", Category);
+            await storeNewDoc(session, { name: "Seafood" }, "categories/2-A", Category);
             await session.store(Product2.create("categories/1-A", "Lakkalikööri", 13));
             await session.store(Product2.create("categories/1-A", "Original Frankfurter", 16));
             await session.store(Product2.create("categories/2-A", "Röd Kaviar", 18));
@@ -799,6 +803,22 @@ class UsersWithProductsByName extends AbstractJavaScriptIndexCreationTask<User, 
                 name: u.name,
                 count: 1,
                 product: load(u.product, "Products").name
+            }
+        });
+    }
+}
+
+class UsersWithProductsByNameWithNoTracking extends AbstractJavaScriptIndexCreationTask<User, { name: string, count: number, product: string }> {
+    public constructor() {
+        super();
+
+        const { noTracking } = this.mapUtils();
+
+        this.map(User, u => {
+            return {
+                name: u.name,
+                count: 1,
+                product: noTracking.load(u.product, "Products").name
             }
         });
     }
