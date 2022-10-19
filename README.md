@@ -15,7 +15,7 @@ npm install --save ravendb
 
 ## Documentation
 
-Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/4.1/nodejs/client-api/what-is-a-document-store) page.
+Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store) page.
 
 ## Getting started
 
