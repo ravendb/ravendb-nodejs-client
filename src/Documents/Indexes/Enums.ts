@@ -98,3 +98,13 @@ export type GroupByArrayBehavior =
 export type AutoSpatialMethodType =
     "Point"
     | "Wkt";
+
+/**
+ * Represents enum mapping in index definition
+ * ex. Role.Admin -> "admin"
+ *     (sourceCode)  (actualValue)
+ */
+export interface EnumMapping {
+    sourceCode: string;
+    actualValue: string | number;
+}
