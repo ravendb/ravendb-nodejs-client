@@ -49,6 +49,47 @@ describe("Readme query samples", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
+    describe("asyncCallType", async () => {
+        
+        it("async and await", async () => {
+            const user = { id: null, name: 'John' };
+            await session.store(user, 'users/1-A');
+            await session.saveChanges();
+            assert.strictEqual(user.id, 'users/1-A');
+
+            const userEntity: User = await session.load('users/1-A');
+            userEntity.name = 'Mark';
+            await session.saveChanges();
+
+            const userEntity2: User = await session.load('users/1-A');
+            assert.strictEqual(user.name, 'Mark');
+        });
+    });
+    
+    describe("thenCallType", () => {
+        
+        it("then and callbacks", () => {
+            session.store({ id: null, name: 'John' }, 'users/1-A')
+                .then(() => {
+                    return session.saveChanges();
+                });
+            
+            session.load('users/1-A')
+                .then((user: User) => {
+                    user.name = 'Mark';
+                })
+                .then(() => {
+                    return session.saveChanges();
+                })
+                .then(() => {
+                    return session.load('users/1-A');
+                })
+                .then((user: User) => {
+                    assert.strictEqual(user.name, 'Mark');
+                });
+        });
+    });
+    
     describe("with data set with includes", function () {
 
         beforeEach(async function () {
@@ -80,17 +121,18 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with include()", async () => {
-            const session = store.openSession();
             // users/1
             // {
             //      "name": "John",
             //      "kids": ["users/2", "users/3"]
             // }
+            
+            const session = store.openSession();
             const user1 = await session
                 .include("kids")
                 .load("users/1");
-            // Document users/1 is going to be pulled along 
-            // with docs referenced in "kids" field within a single request
+                // Document users/1 and all docs referenced in "kids"
+                // will be fetched from the server in a single request.
 
             const user2 = await session.load("users/2"); // this won't call server again
             assert.ok(user1);
@@ -99,25 +141,55 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with passing includes", async () => {
-            const session = store.openSession();
             // users/1
             // {
             //      "name": "John",
             //      "kids": ["users/2", "users/3"]
             // }
-
+            
+            const session = store.openSession();
             const user1 = await session
                 .load("users/1", { includes: [ "kids" ] } as LoadOptions<any>);
+                // Document users/1 and all docs referenced in "kids"
+                // will be fetched from the server in a single request.
 
             const user2 = await session.load("users/2"); // this won't call server again
-            // Document users/1 is going to be pulled along 
-            // with docs referenced in "kids" field within a single request
-
             assert.ok(user1);
             assert.ok(user2);
             assert.strictEqual(session.advanced.numberOfRequests, 1);
         });
+    });
 
+    describe("update documents", async () => {
+        it("update document", async () => {
+            let product = {
+                id: null,
+                title: 'iPhone X',
+                price: 999.99,
+                currency: 'USD',
+                storage: 64,
+                manufacturer: 'Apple',
+                in_stock: true,
+                last_update: new Date('2017-10-01T00:00:00')
+            };
+            
+            const docId = "products/1-A";
+
+            await session.store(product, docId);
+            assert.strictEqual(product.id, docId);
+            
+            await session.saveChanges();
+            assert.strictEqual(product.id, docId);
+
+            product = await session.load(docId);
+            product.in_stock = false;
+            product.storage = 42;
+            await session.saveChanges();
+
+            product = await session.load(docId);
+            assert.strictEqual(product.in_stock, false);
+            assert.strictEqual(product.storage, 42);
+        });
     });
 
     describe("attachments", () => {

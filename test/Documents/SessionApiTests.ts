@@ -25,7 +25,7 @@ describe("Session API dev experience tests", function () {
 
         beforeEach(() => {
             session = store.openSession();
-            user = Object.assign(new User(), { name: "Jon" });
+            user = Object.assign(new User(), { name: "John" });
         });
 
         it("id and opts", async () => {
@@ -52,7 +52,7 @@ describe("Session API dev experience tests", function () {
 
         beforeEach(async () => {
             session = store.openSession();
-            user = Object.assign(new User(), { name: "Jon" });
+            user = Object.assign(new User(), { name: "John" });
             await session.store(user);
         });
 
@@ -68,7 +68,7 @@ describe("Session API dev experience tests", function () {
 
         beforeEach(async () => {
             session = store.openSession();
-            user = Object.assign(new User(), { name: "Jon" });
+            user = Object.assign(new User(), { name: "John" });
             await session.store(user);
             await session.saveChanges();
 

@@ -1,4 +1,4 @@
-# RavenDB Client for Node.js
+# Node.js client for RavenDB NoSQL Database
 
 [![NPM](https://nodei.co/npm/ravendb.png?compact=true)](https://nodei.co/npm/ravendb/)
 
@@ -19,7 +19,7 @@ Please find the official documentation on [RavenDB Documentation](https://ravend
 
 ## Getting started
 
-1. Require `DocumentStore` class from package
+1. Require the `DocumentStore` class from the ravendb package
 ```javascript
 const { DocumentStore } = require('ravendb');
 ```
@@ -27,38 +27,46 @@ or (using ES6 / Typescript imports)
 ```javascript
 import { DocumentStore } from 'ravendb';
 ```
-2. Initialize document store (you should have one DocumentStore instance per application)
+
+2. Initialize the document store (you should have a single DocumentStore instance per application)
 ```javascript
 const store = new DocumentStore('http://live-test.ravendb.net', 'databaseName');
 store.initialize();
 ```
+
 3. Open a session
 ```javascript
 const session = store.openSession();
 ```
-4. Call `saveChanges()` once you're done:
+
+4. Call `saveChanges()` when you're done
 ```javascript
 session
- .load('users/1-A')
+ .load('users/1-A') // Load document
  .then((user) => {
-   user.password = PBKDF2('new password');
+   user.password = PBKDF2('new password'); // Update data 
  })
- .then(() => session.saveChanges())
+ .then(() => session.saveChanges()) // Save changes
  .then(() => {
-    // data is persisted
-    // you can proceed e.g. finish web request
+     // Data is now persisted
+     // You can proceed e.g. finish web request
   });
 ```
 
 ## Supported asynchronous call types
-1. async / await 
+
+Most methods on the session object are asynchronous and return a Promise.  
+Either use `async & await` or `.then()` with callback functions.
+
+1. async / await
 ```javascript
 const session = store.openSession();
 let user = await session.load('users/1-A');
 user.password = PBKDF2('new password');
 await session.saveChanges();
 ```
-2. Promises
+
+2. .then & callback functions
 ```javascript
 session.load('Users/1-A')
     .then((user) => {
@@ -70,11 +78,17 @@ session.load('Users/1-A')
     });
 ```
 
+>##### Related tests:
+> <small>[async and await](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L54)</small>  
+> <small>[then and callbacks](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L71)</small>
+
 ## CRUD example
 
-### Storing documents
+### Store documents
+
 ```javascript
 let product = {
+    id: null,
     title: 'iPhone X',
     price: 999.99,
     currency: 'USD',
@@ -84,37 +98,58 @@ let product = {
     last_update: new Date('2017-10-01T00:00:00')
 };
 
-await session.store(product, 'products/');
-console.log(product.id); // Products/1-A
+await session.store(product, 'products/1-A');
+console.log(product.id); // products/1-A
 await session.saveChanges();
 ```
 
-### Loading documents
+>##### Related tests:
+> <small>[store()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/SessionApiTests.ts#L21)</small>  
+> <small>[ID generation - session.store()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/IdGeneration.ts#L9)</small>  
+> <small>[store document with @metadata](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_213.ts#L16)</small>  
+> <small>[storing docs with same ID in same session should throw](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TrackEntityTest.ts#L62)</small>
+
+### Load documents
+
 ```javascript
 const product = await session.load('products/1-A');
-console.log(product.title);    // iPhone X
-console.log(product.id);       // Products/1-A
+console.log(product.title); // iPhone X
+console.log(product.id);    // products/1-A
 ```
-### Loading documents with includes
+
+> ##### Related tests:
+> <small>[load()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/SessionApiTests.ts#L64)</small>
+
+### Load documents with include
+
 ```javascript
-const session = store.openSession();
 // users/1
 // {
 //      "name": "John",
 //      "kids": ["users/2", "users/3"]
 // }
+
+const session = store.openSession();
 const user1 = await session
     .include("kids")
     .load("users/1");
-// Document users/1 is going to be pulled along 
-// with docs referenced in "kids" field within a single request
+    // Document users/1 and all docs referenced in "kids"
+    // will be fetched from the server in a single request.
 
 const user2 = await session.load("users/2"); // this won't call server again
+
 assert.ok(user1);
 assert.ok(user2);
 assert.equal(session.advanced.numberOfRequests, 1);
 ```
-### Updating documents
+
+>##### Related tests:
+> <small>[can load with includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Documents/LoadTest.ts#L29)</small>  
+> <small>[loading data with include](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L123)</small>  
+> <small>[loading data with passing includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L143)</small>
+
+### Update documents
+
 ```javascript
 let product = await session.load('products/1-A');
 product.in_stock = false;
@@ -122,11 +157,16 @@ product.last_update = new Date();
 await session.saveChanges();
 // ...
 product = await session.load('products/1-A');
-console.log(product.in_stock);      // false
-console.log(product.last_update);   // 2018-06-05T13:52:31.633Z
+console.log(product.in_stock);    // false
+console.log(product.last_update); // the current date
 ```
 
-### Deleting documents
+>##### Related tests:
+> <small>[update document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L164)</small>  
+> <small>[update document metadata](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_213.ts#L35)</small>
+
+### Delete documents
+
 1. Using entity
 ```javascript
 let product = await session.load('products/1-A');
@@ -134,7 +174,7 @@ await session.delete(product);
 await session.saveChanges();
 
 product = await session.load('products/1-A');
-console.log(product); // undefined
+console.log(product); // null
 ```
 
 2. Using document ID
@@ -142,7 +182,15 @@ console.log(product); // undefined
 await session.delete('products/1-A');
 ```
 
-## Querying documents
+>##### Related tests:
+> <small>[delete doc by entity](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/DeleteTest.ts#L20)</small>  
+> <small>[delete doc by ID](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/DeleteTest.ts#L38)</small>  
+> <small>[onBeforeDelete is called before delete by ID](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_15492.ts#L16)</small>  
+> <small>[cannot delete untracked entity](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TrackEntityTest.ts#L20)</small>  
+> <small>[loading deleted doc returns null](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TrackEntityTest.ts#L32)</small>
+
+## Query documents
+
 1. Use `query()` session method:
 
 By collection:
@@ -288,7 +336,7 @@ await session.query({ collection: "users" })
 // RQL
 // from users where age > 29
 await session.query({ collection: "users" })
-    .whereGreaterThan("age", 29);
+    .whereGreaterThan("age", 29)
     .all();  
 // [ User {
 //   name: 'John',
@@ -304,7 +352,7 @@ Checks if the field exists.
 // RQL
 // from users where exists("age")
 await session.query({ collection: "users" })
-    .whereExists("kids");
+    .whereExists("kids")
     .all();  
 // [ User {
 //   name: 'John',
@@ -319,7 +367,7 @@ await session.query({ collection: "users" })
 // RQL
 // from users where kids in ('Mara')
 await session.query({ collection: "users" })
-    .containsAll("kids", ["Mara", "Dmitri"]);
+    .containsAll("kids", ["Mara", "Dmitri"])
     .all();  
 // [ User {
 //   name: 'John',
@@ -335,7 +383,7 @@ Performs full-text search.
 // RQL
 // from users where search(kids, 'Mara')
 await session.query({ collection: "users" })
-    .search("kids", "Mara Dmitri");
+    .search("kids", "Mara Dmitri")
     .all();  
 // [ User {
 //   name: 'John',
@@ -355,7 +403,7 @@ await session.query({ collection: "users" })
     .openSubclause()
         .whereEquals("age", 25)
         .whereNotEquals("name", "Thomas")
-    .closeSubclause();
+    .closeSubclause()
     .all();  
 // [ User {
 //     name: 'John',
@@ -440,6 +488,7 @@ await session.query({ collection: "users" })
 //     kids: [ 'Dmitri', 'Mara' ],
 //     id: 'users/1-A' } ]
 ```
+
 #### take()
 Limits the number of result entries to `count`.
 ```javascript
@@ -517,7 +566,7 @@ const doc = new User({ name: "John" });
 await session.store(doc);
 
 // get read stream or buffer to store
-const fileStream = fs.createReadStream("../photo.png"));
+const fileStream = fs.createReadStream("../photo.png");
 
 // store attachment using entity
 session.advanced.attachments.store(doc, "photo.png", fileStream, "image/png");
@@ -529,7 +578,6 @@ await session.saveChanges();
 ```
 
 #### Get attachments
-
 ```javascript
 const attachment = await session.advanced.attachments.get(documentId, "photo.png")
 // attachment.details contains information about the attachment:
@@ -549,17 +597,15 @@ attachment.data
 ```
 
 #### Check if attachment exists
-
 ```javascript
-await session.advanced.attachments.exists(doc.id, "photo.png"));
+await session.advanced.attachments.exists(doc.id, "photo.png");
 // true
 
-await session.advanced.attachments.exists(doc.id, "not_there.avi"));
+await session.advanced.attachments.exists(doc.id, "not_there.avi");
 // false
 ```
 
 #### Get attachment names
-
 ```javascript
 // use a loaded entity to determine attachments' names
 await session.advanced.attachments.getNames(doc);
@@ -572,7 +618,6 @@ await session.advanced.attachments.getNames(doc);
 ### TimeSeries
 
 #### Store time series
-
 ```javascript
 // create document with time series
 const session = store.openSession();
@@ -583,14 +628,12 @@ await session.saveChanges();
 ```
 
 #### Get time series for document
-
 ```javascript
 // load time series by document by given name
 const session = store.openSession();
 const tsf = session.timeSeriesFor("users/1", "heartbeat");
 const heartbeats = await tsf.get();
 ```
-
 
 ### Bulk Insert
 
@@ -615,6 +658,7 @@ await bulkInsert.finish();
 ```
 
 ### Changes API
+
 Listen for database changes e.g. document changes.
 
 ```javascript
@@ -641,7 +685,6 @@ docsChanges.on("error", err => {
 // ...
 // dispose changes instance once you're done
 changes.dispose();
-
 ```
 
 ### Streaming
@@ -685,10 +728,10 @@ queryStream.once("stats", stats => {
 queryStream.on("error", err => {
     // handle errors
 });
-
 ```
 
 ### Revisions
+
 NOTE: Please make sure revisions are enabled before trying one of the below.
 
 ```javascript
@@ -722,6 +765,7 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 ```
 
 ### Suggestions
+
 ```javascript
 // users collection
 // [ User {
@@ -754,6 +798,7 @@ const suggestionQueryResult = await session.query(User, UsersIndex)
 ```
 
 ### Advanced patching
+
 ```javascript
 session.advanced.increment("users/1", "age", 1);
 // increments *age* field by 1
@@ -763,7 +808,9 @@ session.advanced.patch("users/1", "underAge", false);
 
 await session.saveChanges();
 ```
+
 ### Subscriptions
+
 ```javascript
 // create a subscription
 const subscriptionName = await store.subscriptions.create({
@@ -813,7 +860,7 @@ subscription.on("batch", (batch, callback) => {
 
 ## Using object literals for entities
 
-In order to comfortably use object literals as entities set the function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`. 
+In order to comfortably use object literals as entities set the function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`.
 
 ```javascript
 const store = new DocumentStore(urls, database);
@@ -864,6 +911,7 @@ console.log(product instanceof Product);         // true
 console.log(product.id.includes('products/'));   // true
 await session.saveChanges();
 ```
+
 3. When loading document, you can use `session.load()`. Pass class constructor as a second argument:
 ```javascript
 let product = await session.load('products/1-A', Product);
@@ -898,7 +946,8 @@ products.forEach((product) => {
 ```
 
 ## Usage with TypeScript
-TypeScript typings are embedded into the package (see `types` property in `package.json`). 
+
+TypeScript typings are embedded into the package (see `types` property in `package.json`).
 
 ```typescript
 
@@ -1009,6 +1058,7 @@ npm run build
 ```
 
 ## Running tests
+
 ```bash
 # To run the suite one needs to set the following environment variables:
 # 
