@@ -68,13 +68,14 @@ describe("Readme query samples", function () {
     
     describe("thenCallType", () => {
         
-        it("then and callbacks", () => {
+        it("then and callbacks", (done) => {
             session.store({ id: null, name: 'John' }, 'users/1-A')
                 .then(() => {
                     return session.saveChanges();
-                });
-            
-            session.load('users/1-A')
+                })
+                .then(() => {
+                    return session.load('users/1-A')
+                })
                 .then((user: User) => {
                     user.name = 'Mark';
                 })
@@ -86,6 +87,9 @@ describe("Readme query samples", function () {
                 })
                 .then((user: User) => {
                     assert.strictEqual(user.name, 'Mark');
+                })
+                .then(() => {
+                    done();
                 });
         });
     });
@@ -318,62 +322,85 @@ describe("Readme query samples", function () {
         it("projections single field", async () => {
             query = session.query({ collection: "users" })
                 .selectFields("name");
+            
             results = await query.all();
+            assert.strictEqual(results[0], "John");
         });
 
         it("projections multiple fields", async () => {
             query = session.query({ collection: "users" })
                 .selectFields(["name", "age"]);
+            
             results = await query.all();
+            
+            const keys = Object.keys(results[2]);
+            assert.strictEqual(results[2][keys[0]], "Thomas");
+            assert.strictEqual(results[2][keys[1]], 25);
         });
 
         it("distinct", async () => {
             query = session.query({ collection: "users" })
                 .selectFields("age")
                 .distinct();
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("where equals", async () => {
             query = session.query({ collection: "users" })
                 .whereEquals("age", 30);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where in", async () => {
             query = session.query({ collection: "users" })
                 .whereIn("name", ["John", "Thomas"]);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("where between", async () => {
             query = session.query({ collection: "users" })
                 .whereBetween("registeredAt", new Date(2016, 0, 1), new Date(2017, 0, 1));
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where greater than", async () => {
             query = session.query({ collection: "users" })
                 .whereGreaterThan("age", 29);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where exists", async () => {
             query = session.query({ collection: "users" })
                 .whereExists("kids");
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where contains any", async () => {
             query = session.query({ collection: "users" })
                 .containsAny("kids", ["Mara"]);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("search()", async () => {
             query = session.query({ collection: "users" })
                 .search("kids", "Mara John");
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("subclause", async () => {
@@ -384,14 +411,18 @@ describe("Readme query samples", function () {
                 .whereEquals("age", 25)
                 .whereNotEquals("name", "Thomas")
                 .closeSubclause();
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("not()", async () => {
             query = await session.query({ collection: "users" })
                 .not()
                 .whereEquals("age", 25);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("orElse", async () => {
@@ -399,7 +430,19 @@ describe("Readme query samples", function () {
                 .whereExists("kids")
                 .orElse()
                 .whereLessThan("age", 30);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 3);
+        });
+
+        it("set default operator", async () => {
+            query = await session.query({collection: "users"})
+                .usingDefaultOperator("OR") // override the default 'AND' operator
+                .whereExists("kids")
+                .whereLessThan("age", 29)
+            
+            results = await query.all();            
+            assert.strictEqual(results.length, 3);
         });
 
         it("orderBy()", async () => {
@@ -407,6 +450,19 @@ describe("Readme query samples", function () {
                 .orderBy("age");
 
             results = await query.all();
+            
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].age, 25);
+        });
+
+        it("orderByDesc()", async () => {
+            query = await session.query({ collection: "users" })
+                .orderByDescending("age");
+
+            results = await query.all();
+
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].age, 30);
         });
 
         it("take()", async () => {
@@ -415,6 +471,7 @@ describe("Readme query samples", function () {
                 .take(2);
 
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("skip()", async () => {
@@ -424,6 +481,7 @@ describe("Readme query samples", function () {
                 .skip(1);
 
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("can get stats", async () => {
@@ -432,6 +490,7 @@ describe("Readme query samples", function () {
                 .whereGreaterThan("age", 29)
                 .statistics(s => stats = s);
             results = await query.all();
+            
             assert.ok(stats);
             assert.strictEqual(stats.totalResults, 1);
             assert.strictEqual(stats.skippedResults, 0);

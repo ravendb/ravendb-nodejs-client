@@ -830,6 +830,29 @@ describe("QueryTest", function () {
         const queryResult = await lazyQuery.getValue();
         assert.strictEqual(queryResult, 3);
     });
+
+    it("query count", async () => {
+        const session = store.openSession();
+
+        const user1 = new User();
+        user1.name = "John";
+
+        const user2 = new User();
+        user2.name = "Jane";
+
+        const user3 = new User();
+        user3.name = "Tarzan";
+
+        await session.store(user1, "users/1");
+        await session.store(user2, "users/2");
+        await session.store(user3, "users/3");
+        await session.saveChanges();
+
+        const queryCount = await session.query<User>({ collection: "Users" })
+            .count();
+
+        assert.strictEqual(queryCount, 3);
+    });
 });
 
 export class Dog {
@@ -909,7 +932,6 @@ class ReduceResult {
     public name: string;
     public age: number;
 }
-
 
 class Article {
     public title: string;

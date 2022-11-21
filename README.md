@@ -145,8 +145,8 @@ assert.equal(session.advanced.numberOfRequests, 1);
 
 >##### Related tests:
 > <small>[can load with includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Documents/LoadTest.ts#L29)</small>  
-> <small>[loading data with include](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L123)</small>  
-> <small>[loading data with passing includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L143)</small>
+> <small>[loading data with include](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L127)</small>  
+> <small>[loading data with passing includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L147)</small>
 
 ### Update documents
 
@@ -162,7 +162,7 @@ console.log(product.last_update); // the current date
 ```
 
 >##### Related tests:
-> <small>[update document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L164)</small>  
+> <small>[update document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L168)</small>  
 > <small>[update document metadata](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_213.ts#L35)</small>
 
 ### Delete documents
@@ -191,91 +191,120 @@ await session.delete('products/1-A');
 
 ## Query documents
 
-1. Use `query()` session method:
-
-By collection:
+1. Use `query()` session method:  
+Query by collection:  
 ```javascript
 const query = session.query({ collection: 'products' });
 ```
-
-By index name:
+Query by index name:  
 ```javascript
 const query = session.query({ indexName: 'productsByCategory' });
 ```
-
-By index:
+Query by index:  
 ```javascript
 const query = session.query(Product, Product_ByName);
 ```
-
-Using entity type:
+Query by entity type:  
 ```javascript
 import { User } from "./models";
 const query = session.query(User);
 ```
 
-2. Build up the query - apply conditions, set ordering etc. Query supports chaining calls:
+2. Build up the query - apply search conditions, set ordering, etc.  
+   Query supports chaining calls:
 ```javascript
 query
-  .waitForNonStaleResults()
-  .usingDefaultOperator('AND')  
-  .whereEquals('manufacturer', 'Apple')
-  .whereEquals('in_stock', true)
-  .whereBetween('last_update', new Date('2017-10-01T00:00:00'), new Date())
-  .orderBy('price');
+    .waitForNonStaleResults()
+    .usingDefaultOperator('AND')
+    .whereEquals('manufacturer', 'Apple')
+    .whereEquals('in_stock', true)
+    .whereBetween('last_update', new Date('2022-11-01T00:00:00'), new Date())
+    .orderBy('price');
 ```
 
-3. Finally, you may get query results:
+3. Execute the query to get results:
 ```javascript
-const results = await query.all();
+const results = await query.all(); // get all results
 // ...
-const firstOne = await query.first(); // gets first result
+const firstResult = await query.first(); // gets first result
 // ...
-const single = await query.single();  // gets single result
+const single = await query.single();  // gets single result 
 ```
 
-### DocumentQuery methods overview
+### Query methods overview
 
 #### selectFields() - projections using a single field
 ```javascript
-
 // RQL
 // from users select name
+
+// Query
 const userNames = await session.query({ collection: "users" })
     .selectFields("name")
-    .all(); 
+    .all();
+
+// Sample results
 // John,Stefanie,Thomas
 ```
+
+>##### Related tests:
+> <small>[projections single field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L322)</small>  
+> <small>[query single property](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L231)</small>  
+> <small>[retrieve camel case with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/CustomKeyCaseConventionsTests.ts#L288)</small>  
+> <small>[can_project_id_field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_14811.ts#L58)</small>  
 
 #### selectFields() - projections using multiple fields
 ```javascript
 // RQL
 // from users select name, age
+
+// Query
 await session.query({ collection: "users" })
     .selectFields([ "name", "age" ])
     .all();
-// [ { name: 'John', age: 30, id: 'users/1-A' },
-//   { name: 'Stefanie', age: 25, id: 'users/2-A' },
-//   { name: 'Thomas', age: 25, id: 'users/3-A' } ]
+
+// Sample results
+// [ { name: 'John', age: 30 },
+//   { name: 'Stefanie', age: 25 },
+//   { name: 'Thomas', age: 25 } ]
 ```
+
+>##### Related tests:
+> <small>[projections multiple fields](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L328)</small>  
+> <small>[query with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L318)</small>  
+> <small>[retrieve camel case with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/CustomKeyCaseConventionsTests.ts#L288)</small>  
+> <small>[can_project_id_field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_14811.ts#L58)</small>  
 
 #### distinct()
 ```javascript
 // RQL
 // from users select distinct age
+
+// Query
 await session.query({ collection: "users" })
     .selectFields("age")
     .distinct()
-    .all(); // [ 25, 30 ]
+    .all();
+
+// Sample results
+// [ 30, 25 ]
 ```
+
+>##### Related tests:
+> <small>[distinct](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L334)</small>  
+> <small>[query distinct](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L350)</small>
 
 #### whereEquals() / whereNotEquals()
 ```javascript
 // RQL
 // from users where age = 30 
+
+// Query
 await session.query({ collection: "users" })
     .whereEquals("age", 30)
-    .all();  
+    .all();
+
+// Saple results
 // [ User {
 //    name: 'John',
 //    age: 30,
@@ -283,13 +312,21 @@ await session.query({ collection: "users" })
 //    registeredAt: 2017-11-10T23:00:00.000Z } ]
 ```
 
+>##### Related tests:
+> <small>[where equals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L341)</small>  
+> <small>[where not equals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>
+
 #### whereIn()
 ```javascript
 // RQL
 // from users where name in ("John", "Thomas")
+
+// Query
 await session.query({ collection: "users" })
     .whereIn("name", ["John", "Thomas"])
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //     name: 'John',
 //     age: 30,
@@ -303,13 +340,22 @@ await session.query({ collection: "users" })
 //     id: 'users/3-A' } ]
 ```
 
+>##### Related tests:
+> <small>[where in]()(https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L347)</small>  
+> <small>[query with where in](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L256)</small>
+
+
 #### whereStartsWith() / whereEndsWith()
 ```javascript
 // RQL
 // from users where startsWith(name, 'J')
+
+// Query
 await session.query({ collection: "users" })
     .whereStartsWith("name", "J")
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //    name: 'John',
 //    age: 30,
@@ -317,13 +363,20 @@ await session.query({ collection: "users" })
 //    registeredAt: 2017-11-10T23:00:00.000Z } ]
 ```
 
+>##### Related tests:
+> <small>[query with where clause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L148)</small>
+
 #### whereBetween()
 ```javascript
 // RQL
 // from users where registeredAt between '2016-01-01' and '2017-01-01'
+
+// Query
 await session.query({ collection: "users" })
     .whereBetween("registeredAt", new Date(2016, 0, 1), new Date(2017, 0, 1))
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //     name: 'Thomas',
 //     age: 25,
@@ -331,13 +384,21 @@ await session.query({ collection: "users" })
 //     id: 'users/3-A' } ]
 ```
 
+>##### Related tests:
+> <small>[where between](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L353)</small>  
+> <small>[query with where between](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L265)</small>
+
 #### whereGreaterThan() / whereGreaterThanOrEqual() / whereLessThan() / whereLessThanOrEqual()
 ```javascript
 // RQL
 // from users where age > 29
+
+// Query
 await session.query({ collection: "users" })
     .whereGreaterThan("age", 29)
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //   name: 'John',
 //   age: 30,
@@ -345,15 +406,26 @@ await session.query({ collection: "users" })
 //   kids: [...],
 //   id: 'users/1-A' } ]
 ```
+
+>##### Related tests:
+> <small>[where greater than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L359)</small>  
+> <small>[query with where less than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L275)</small>  
+> <small>[query with where less than or equal](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L285)</small>  
+> <small>[query with where greater than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L294)</small>  
+> <small>[query with where greater than or equal](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L304)</small>  
 
 #### whereExists()
 Checks if the field exists.
 ```javascript
 // RQL
 // from users where exists("age")
+
+// Query
 await session.query({ collection: "users" })
     .whereExists("kids")
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //   name: 'John',
 //   age: 30,
@@ -362,13 +434,21 @@ await session.query({ collection: "users" })
 //   id: 'users/1-A' } ]
 ```
 
+>##### Related tests:
+> <small>[where exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L365)</small>  
+> <small>[query where exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L503)</small>
+
 #### containsAny() / containsAll()
 ```javascript
 // RQL
 // from users where kids in ('Mara')
+
+// Query
 await session.query({ collection: "users" })
     .containsAll("kids", ["Mara", "Dmitri"])
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //   name: 'John',
 //   age: 30,
@@ -377,14 +457,22 @@ await session.query({ collection: "users" })
 //   id: 'users/1-A' } ]
 ```
 
+>##### Related tests:
+> <small>[where contains any](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L371)</small>  
+> <small>[queries with contains](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/ContainsTest.ts#L19)</small>
+
 #### search()
-Performs full-text search.
+Perform full-text search.
 ```javascript
 // RQL
 // from users where search(kids, 'Mara')
+
+// Query
 await session.query({ collection: "users" })
     .search("kids", "Mara Dmitri")
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //   name: 'John',
 //   age: 30,
@@ -392,11 +480,18 @@ await session.query({ collection: "users" })
 //   kids: ["Dmitri", "Mara"]
 //   id: 'users/1-A' } ]
 ```
+
+>##### Related tests:
+> <small>[search()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L377)</small>  
+> <small>[query search with or](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L362)</small>  
+> <small>[query_CreateClausesForQueryDynamicallyWithOnBeforeQueryEvent](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L30)</small>  
 
 #### openSubclause() / closeSubclause()
 ```javascript
 // RQL
-// from users where exists(kids) or (age = $p0 and name != $p1)
+// from users where exists(kids) or (age = 25 and name != Thomas)
+
+// Query
 await session.query({ collection: "users" })
     .whereExists("kids")
     .orElse()
@@ -404,7 +499,9 @@ await session.query({ collection: "users" })
         .whereEquals("age", 25)
         .whereNotEquals("name", "Thomas")
     .closeSubclause()
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //     name: 'John',
 //     age: 30,
@@ -418,14 +515,22 @@ await session.query({ collection: "users" })
 //     id: 'users/2-A' } ]
 ```
 
+>##### Related tests:
+> <small>[subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L384)</small>  
+> <small>[working with subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_5669.ts#L40)</small>
+
 #### not()
 ```javascript
 // RQL
 // from users where age != 25
+
+// Query
 await session.query({ collection: "users" })
     .not()
     .whereEquals("age", 25)
-    .all();  
+    .all();
+
+// Sample results
 // [ User {
 //   name: 'John',
 //   age: 30,
@@ -434,15 +539,23 @@ await session.query({ collection: "users" })
 //   id: 'users/1-A' } ]
 ```
 
-#### andAlso() / orElse()
+>##### Related tests:
+> <small>[not()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L395)</small>  
+> <small>[query where not](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>
+
+#### orElse() / andAlso()
 ```javascript
 // RQL
-// from users where age != 25
+// from users where exists(kids) or age < 30
+
+// Query
 await session.query({ collection: "users" })
     .whereExists("kids")
     .orElse()
     .whereLessThan("age", 30)
-    .all();  
+    .all();
+
+// Sample results
 //  [ User {
 //     name: 'John',
 //     age: 30,
@@ -461,16 +574,59 @@ await session.query({ collection: "users" })
 //     id: 'users/2-A' } ]
 ```
 
-#### usingDefaultOperator()
-Sets default operator (which will be used if no `andAlso()` / `orElse()` was called. Just after query instantiation, `OR` is used as default operator. Default operator can be changed only adding any conditions.
+>##### Related tests:
+> <small>[orElse](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L402)</small>  
+> <small>[working with subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_5669.ts#L40)</small>
 
-#### orderBy() / randomOrdering()
+#### usingDefaultOperator()
+If neither `andAlso()` nor `orElse()` is called then the default operator between the query filtering conditions will be `AND` .  
+You can override that with `usingDefaultOperator` which must be called before any other where conditions.
+```javascript
+// RQL
+// from users where exists(kids) or age < 29
+
+// Query
+await session.query({ collection: "users" })
+    .usingDefaultOperator("OR") // override the default 'AND' operator
+    .whereExists("kids")
+    .whereLessThan("age", 29)
+    .all();
+
+// Sample results
+//  [ User {
+//     name: 'John',
+//     age: 30,
+//     registeredAt: 2017-11-10T23:00:00.000Z,
+//     kids: [ 'Dmitri', 'Mara' ],
+//     id: 'users/1-A' },
+//   User {
+//     name: 'Thomas',
+//     age: 25,
+//     registeredAt: 2016-04-24T22:00:00.000Z,
+//     id: 'users/3-A' },
+//   User {
+//     name: 'Stefanie',
+//     age: 25,
+//     registeredAt: 2015-07-29T22:00:00.000Z,
+//     id: 'users/2-A' } ]
+```
+
+>##### Related tests:
+> <small>[set default operator](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L409)</small>  
+> <small>[AND is used when default operator is not set](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_649.ts#L36)</small>  
+> <small>[set default operator to OR](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_649.ts#L45)</small>  
+
+#### orderBy() / orderByDesc() / orderByScore() / randomOrdering()
 ```javascript
 // RQL
 // from users order by age
+
+// Query
 await session.query({ collection: "users" })
-    .orderBy("age") // .randomOrdering()
+    .orderBy("age")
     .all();
+
+// Sample results
 // [ User {
 //     name: 'Stefanie',
 //     age: 25,
@@ -489,15 +645,26 @@ await session.query({ collection: "users" })
 //     id: 'users/1-A' } ]
 ```
 
+>##### Related tests:
+> <small>[orderBy()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L419)</small>  
+> <small>[orderByDesc()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L429)</small>  
+> <small>[query random order](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>  
+> <small>[order by AlphaNumeric](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L548)</small>  
+> <small>[query with boost - order by score](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L517)</small>
+
 #### take()
-Limits the number of result entries to `count`.
+Limit the number of query results.
 ```javascript
 // RQL
 // from users order by age
+
+// Query
 await session.query({ collection: "users" })
     .orderBy("age") 
-    .take(2)
+    .take(2) // only the first 2 entries will be returned
     .all();
+
+// Sample results
 // [ User {
 //     name: 'Stefanie',
 //     age: 25,
@@ -510,16 +677,25 @@ await session.query({ collection: "users" })
 //     id: 'users/3-A' } ]
 ```
 
+>##### Related tests:
+> <small>[take()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L439)</small>  
+> <small>[query skip take](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L385)</small>  
+> <small>[canUseOffsetWithCollectionQuery](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_17551.ts#L17)</small>
+
 #### skip()
-Skips first `count` results.
+Skip a specified number of results from the start.
 ```javascript
 // RQL
 // from users order by age
+
+// Query
 await session.query({ collection: "users" })
     .orderBy("age") 
-    .take(1)
-    .skip(1)
+    .take(1) // return only 1 result
+    .skip(1) // skip the first result, return the second result
     .all();
+
+// Sample results
 // [ User {
 //     name: 'Thomas',
 //     age: 25,
@@ -527,14 +703,22 @@ await session.query({ collection: "users" })
 //     id: 'users/3-A' } ]
 ```
 
+>##### Related tests:
+> <small>[skip()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L449)</small>  
+> <small>[query skip take](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L385)</small>  
+> <small>[canUseOffsetWithCollectionQuery](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_17551.ts#L17)</small>  
+
 #### Getting query statistics
-To obtain query statistics use `statistics()` method.
+Use the `statistics()` method to obtain query statistics.  
 ```javascript
+// Query
 let stats: QueryStatistics;
 const results = await session.query({ collection: "users" })
     .whereGreaterThan("age", 29)
     .statistics(s => stats = s)
     .all();
+
+// Sample results
 // QueryStatistics {
 //   isStale: false,
 //   durationInMs: 744,
@@ -547,14 +731,21 @@ const results = await session.query({ collection: "users" })
 //   resultEtag: 8426908718162809000 }
 ```
 
+>##### Related tests:
+> <small>[can get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L458)</small>  
+
 #### all() / first() / single() / count()
 `all()` - returns all results
 
-`first()` - first result
+`first()` - first result only
 
 `single()` - first result, throws error if there's more entries
 
-`count()` - returns the count of the results (not affected by `take()`)
+`count()` - returns the number of entries in the results (not affected by `take()`)
+
+>##### Related tests:
+> <small>[query first and single](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L467)</small>  
+> <small>[query count](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L834)</small>
 
 ### Attachments
 
