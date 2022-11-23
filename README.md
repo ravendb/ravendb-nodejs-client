@@ -753,25 +753,34 @@ const results = await session.query({ collection: "users" })
 ```javascript
 const doc = new User({ name: "John" });
 
-// track entity
+// Store a dcoument, the entity will be tracked.
 await session.store(doc);
 
-// get read stream or buffer to store
+// Get read stream or buffer to store
 const fileStream = fs.createReadStream("../photo.png");
 
-// store attachment using entity
+// Store attachment using entity
 session.advanced.attachments.store(doc, "photo.png", fileStream, "image/png");
 
-// OR using document ID
+// OR store attachment using document ID
 session.advanced.attachments.store(doc.id, "photo.png", fileStream, "image/png");
 
+// Persist all changes
 await session.saveChanges();
 ```
 
+>##### Related tests:
+> <small>[store attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L200)</small>  
+> <small>[can put attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L26)</small>  
+> <small>[checkIfHasChangesIsTrueAfterAddingAttachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_16985.ts#L17)</small>  
+> <small>[store many attachments and docs with bulk insert](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/BulkInsertAttachmentsTest.ts#L105)</small>
+
 #### Get attachments
 ```javascript
+// Get an attachment
 const attachment = await session.advanced.attachments.get(documentId, "photo.png")
-// attachment.details contains information about the attachment:
+
+// Attachment.details contains information about the attachment:
 //     { 
 //       name: 'photo.png',
 //       documentId: 'users/1-A',
@@ -781,11 +790,15 @@ const attachment = await session.advanced.attachments.get(documentId, "photo.png
 //       size: 4579 
 //     }
 
-// attachment.data is a Readable https://nodejs.org/api/stream.html#stream_class_stream_readable
+// Attachment.data is a Readable. See https://nodejs.org/api/stream.html#class-streamreadable
 attachment.data
     .pipe(fs.createWriteStream("photo.png"))
     .on("finish", () => next());
 ```
+
+>##### Related tests:
+> <small>[get attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L237)</small>  
+> <small>[can get & delete attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L133)</small>
 
 #### Check if attachment exists
 ```javascript
@@ -796,16 +809,25 @@ await session.advanced.attachments.exists(doc.id, "not_there.avi");
 // false
 ```
 
+>##### Related tests:
+> <small>[attachment exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L255)</small>  
+> <small>[attachment exists 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L316)</small>
+
 #### Get attachment names
 ```javascript
-// use a loaded entity to determine attachments' names
+// Use a loaded entity to determine attachments' names
 await session.advanced.attachments.getNames(doc);
+
+// Sample results:
 // [ { name: 'photo.png',
 //     hash: 'MvUEcrFHSVDts5ZQv2bQ3r9RwtynqnyJzIbNYzu1ZXk=',
 //     contentType: 'image/png',
 //     size: 4579 } ]
 ```
-
+>##### Related tests:
+> <small>[get attachments names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L263)</small>  
+> <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
+> 
 ### TimeSeries
 
 #### Store time series

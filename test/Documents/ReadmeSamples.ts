@@ -215,6 +215,8 @@ describe("Readme query samples", function () {
         describe("having attachment", () => {
 
             let doc;
+            const attachmentPath = path.join(__dirname, "../Assets/tubes.png");
+            const attachmentName = "tubes.png";
 
             beforeEach(async () => {
 
@@ -226,21 +228,22 @@ describe("Readme query samples", function () {
                 await session.store(doc);
 
                 // open and store attachment
-                const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
-                session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+                const fileStream = fs.createReadStream(attachmentPath);
+                session.advanced.attachments.store(doc, attachmentName, fileStream, "image/png");
 
                 await session.saveChanges();
                 fileStream.close();
             });
 
             it("get attachment", (done) => {
-                session.advanced.attachments.get(doc.id, "tubes.png")
+                session.advanced.attachments.get(doc.id, attachmentName)
                     .then(attachment => {
                         print(attachment.details);
-
+                        assert.strictEqual(attachment.details.name, attachmentName)
+                        
                         // attachment.data is a Readable
                         attachment.data
-                            .pipe(fs.createWriteStream(".test/tubes.png"))
+                            .pipe(fs.createWriteStream("test/tubes.png"))
                             .on("error", done)
                             .on("finish", () => {
                                 attachment.dispose();
@@ -250,18 +253,21 @@ describe("Readme query samples", function () {
             });
 
             it("attachment exists", async () => {
-                print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
-                print(await session.advanced.attachments.exists(doc.id, "x.png"));
+                let attachmentExists = await session.advanced.attachments.exists(doc.id, attachmentName);
+                assert.strictEqual(attachmentExists, true);
+                
+                attachmentExists = await session.advanced.attachments.exists(doc.id, "x.png");
+                assert.strictEqual(attachmentExists, false);
             });
 
             it("get attachments names", async () => {
                 {
                     const session2 = store.openSession();
                     const entity = await session2.load(doc.id);
-                    print(await session2.advanced.attachments.getNames(entity));
+                    const names = await session2.advanced.attachments.getNames(entity);
+                    assert.strictEqual(names[0].name, attachmentName)
                 }
             });
-
         });
     });
 
