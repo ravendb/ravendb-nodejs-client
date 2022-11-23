@@ -825,40 +825,65 @@ await session.advanced.attachments.getNames(doc);
 //     size: 4579 } ]
 ```
 >##### Related tests:
-> <small>[get attachments names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L263)</small>  
+> <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L263)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
 > 
 ### TimeSeries
 
-#### Store time series
+#### Store time series 
 ```javascript
-// create document with time series
 const session = store.openSession();
+
+// Create a document with time series
 await session.store({ name: "John" }, "users/1");
 const tsf = session.timeSeriesFor("users/1", "heartbeat");
+
+// Append a new time series entry
 tsf.append(new Date(), 120);
+
 await session.saveChanges();
 ```
 
+>##### Related tests:
+> <small>[can use time series](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L682)</small>  
+> <small>[canCreateSimpleTimeSeries](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L18)</small>  
+> <small>[usingDifferentTags](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L217)</small>  
+> <small>[canStoreAndReadMultipleTimestamps](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L372)</small>  
+> <small>[canStoreLargeNumberOfValues](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L430)</small>  
+> <small>[shouldDeleteTimeSeriesUponDocumentDeletion](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L729)</small>
+
 #### Get time series for document
 ```javascript
-// load time series by document by given name
 const session = store.openSession();
+
+// Get time series for document by time series name
 const tsf = session.timeSeriesFor("users/1", "heartbeat");
+
+// Get all time series entries
 const heartbeats = await tsf.get();
 ```
+
+>##### Related tests:
+> <small>[canCreateSimpleTimeSeries](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L18)</small>  
+> <small>[canStoreLargeNumberOfValues](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L430)</small>  
+> <small>[canRequestNonExistingTimeSeriesRange](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L544)</small>  
+> <small>[canGetTimeSeriesNames2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L648)</small>  
+> <small>[canSkipAndTakeTimeSeries](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L772)</small>
+
 
 ### Bulk Insert
 
 ```javascript
-// create bulk insert instance using DocumentStore instance
+// Create a bulk insert instance from the DocumentStore
 const bulkInsert = store.bulkInsert();
 
-// insert your documents
+// Store multiple documents
 for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
     const user = new User({ name });
     await bulkInsert.store(user);
 }
+
+// Sample documents stored:
 // User { name: 'Anna', id: 'users/1-A' }
 // User { name: 'Maria', id: 'users/2-A' }
 // User { name: 'Miguel', id: 'users/3-A' }
@@ -866,23 +891,34 @@ for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"])
 // User { name: 'Dayanara', id: 'users/5-A' }
 // User { name: 'Aleida', id: 'users/6-A' }
 
-// flush data and finish
+// Persist the data - call finish
 await bulkInsert.finish();
 ```
+
+>##### Related tests:
+> <small>[bulk insert example](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L274)</small>  
+> <small>[simple bulk insert should work](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L23)</small>  
+> <small>[bulk insert can be aborted](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L95)</small>  
+> <small>[can modify metadata with bulk insert](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L136)</small>  
 
 ### Changes API
 
 Listen for database changes e.g. document changes.
 
 ```javascript
+// Subscribe to change notifications
 const changes = store.changes();
+
+// Subscribe for all documents, or for specific collection (or other database items)
 const docsChanges = changes.forAllDocuments();
 
+// Handle changes events 
 docsChanges.on("data", change => {
-// { type: 'Put',
-//   id: 'users/1-A',
-//   collectionName: 'Users',
-//   changeVector: 'A:2-QCawZTDbuEa4HUBORhsWYA' }
+    // A sample change data recieved:
+    // { type: 'Put',
+    //   id: 'users/1-A',
+    //   collectionName: 'Users',
+    //   changeVector: 'A:2-QCawZTDbuEa4HUBORhsWYA' }
 });
 
 docsChanges.on("error", err => {
@@ -896,46 +932,71 @@ docsChanges.on("error", err => {
 }
 
 // ...
-// dispose changes instance once you're done
+// Dispose the changes instance when you're done
 changes.dispose();
 ```
 
+>##### Related tests:
+> <small>[listen to changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L305)</small>  
+> <small>[can obtain single document changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L25)</small>  
+> <small>[can obtain all documents changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L93)</small>  
+> <small>[can obtain notification about documents starting with](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L255)</small>  
+> <small>[can obtain notification about documents in collection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L312)</small>  
+
 ### Streaming
 
-#### Stream documents with ID prefix
+#### Stream documents by ID prefix
 ```javascript
+// Filter streamed results by passing an ID prefix
+// The stream() method returns a Node.js ReadableStream
 const userStream = await session.advanced.stream("users/");
-// stream() method returns a Readable 
 
+// Handle stream events with callback functions
 userStream.on("data", user => {
-    // User { name: 'Anna', id: 'users/1-A' }
+    // Get only documents with ID that starts with 'users/' 
+    // i.e.: User { name: 'John', id: 'users/1-A' }
 });
+
 userStream.on("error", err => {
     // handle errors
 })
 ```
 
-#### Stream query results
+>##### Related tests:
+> <small>[can stream users by prefix](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L524)</small>  
+> <small>[can stream documents starting with](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/DocumentStreaming.ts#L39)</small>  
+
+#### Stream documents by query 
 ```javascript
-// create a query
+// Define a query
 const query = session.query({ collection: "users" }).whereGreaterThan("age", 29);
 
-let stats;
-// stream() returns a Readable 
-// get query stats passing a stats callback to stream() method
-const queryStream = await session.advanced.stream(query, _ => stats = _);
+let streamQueryStats;
+// Call stream() to execute the query, it returns a Node.js ReadableStream.
+// Can get query stats by passing a stats callback to stream() method
+const queryStream = await session.advanced.stream(query, _ => streamQueryStats = _);
 
+// Handle stream events with callback functions
 queryStream.on("data", user => {
-    // User { name: 'Anna', id: 'users/1-A' }
+    // Only documents matching the query are received
+    // These entities are Not tracked by the session
 });
 
-// get stats using an event listener
-queryStream.once("stats", stats => {
-// { resultEtag: 7464021133404493000,
-//   isStale: false,
-//   indexName: 'Auto/users/Byage',
-//   totalResults: 1,
-//   indexTimestamp: 2018-10-01T09:04:07.145Z }
+// Can get query stats by using an event listener
+queryStream.once("stats", queryStats => {
+    // Sample stats:
+    // { resultEtag: 7464021133404493000,
+    //   isStale: false,
+    //   indexName: 'Auto/users/Byage',
+    //   totalResults: 1,
+    //   indexTimestamp: 2018-10-01T09:04:07.145Z }
+});
+
+// Stream emits an 'end' event when there is no more data to read
+queryStream.on("end", () => {
+   // Get info from 'streamQueryStats', the stats object
+   const totalResults = streamQueryStats.totalResults;
+   const indexUsed = streamQueryStats.indexName;
 });
 
 queryStream.on("error", err => {
@@ -943,39 +1004,54 @@ queryStream.on("error", err => {
 });
 ```
 
+>##### Related tests:
+> <small>[can stream query and get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L545)</small>  
+> <small>[can stream query results](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L76)</small>  
+> <small>[can stream query results with query statistics](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L140)</small>  
+> <small>[can stream raw query results](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L192)</small>  
+
 ### Revisions
 
-NOTE: Please make sure revisions are enabled before trying one of the below.
+NOTE: Please make sure revisions are enabled before trying the below.
 
 ```javascript
 const session = store.openSession();
 const user = {
     name: "Marcin",
     age: 30,
-    pet: "users/4"
+    pet: "Cat"
 };
 
+// Store a document
 await session.store(user, "users/1");
 await session.saveChanges();
 
-// modify the document to create a new revision
+// Modify the document to create a new revision
 user.name = "Roman";
 user.age = 40;
 await session.saveChanges();
 
-// get revisions
+// Get revisions
 const revisions = await session.advanced.revisions.getFor("users/1");
+
+// Sample results:
 // [ { name: 'Roman',
 //     age: 40,
-//     pet: 'users/4',
+//     pet: 'Cat',
 //     '@metadata': [Object],
 //     id: 'users/1' },
 //   { name: 'Marcin',
 //     age: 30,
-//     pet: 'users/4',
+//     pet: 'Cat',
 //     '@metadata': [Object],
 //     id: 'users/1' } ]
 ```
+
+>##### Related tests:
+> <small>[can get revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L667)</small>  
+> <small>[canGetRevisionsByDate](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_11770.ts#L21)</small>  
+> <small>[can handle revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L35)</small>  
+> <small>[canGetRevisionsByChangeVectors](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L149)</small>  
 
 ### Suggestions
 
@@ -1007,6 +1083,8 @@ const session = store.openSession();
 const suggestionQueryResult = await session.query(User, UsersIndex)
     .suggestUsing(x => x.byField("name", "Jon"))
     .execute();
+
+// Sample results:
 // { name: { name: 'name', suggestions: [ 'john' ] } }
 ```
 

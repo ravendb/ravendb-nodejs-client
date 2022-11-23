@@ -165,6 +165,7 @@ describe("Readme query samples", function () {
     });
 
     describe("update documents", async () => {
+        
         it("update document", async () => {
             let product = {
                 id: null,
@@ -197,6 +198,7 @@ describe("Readme query samples", function () {
     });
 
     describe("attachments", () => {
+        
         it("store attachment", async () => {
             const doc = new User({
                 name: "John"
@@ -260,7 +262,7 @@ describe("Readme query samples", function () {
                 assert.strictEqual(attachmentExists, false);
             });
 
-            it("get attachments names", async () => {
+            it("get attachment names", async () => {
                 {
                     const session2 = store.openSession();
                     const entity = await session2.load(doc.id);
@@ -272,7 +274,8 @@ describe("Readme query samples", function () {
     });
 
     describe("bulk insert", async () => {
-        it("example", async () => {
+        
+        it("bulk insert example", async () => {
             // create bulk insert instance using DocumentStore instance
             const bulkInsert = store.bulkInsert();
 
@@ -285,14 +288,24 @@ describe("Readme query samples", function () {
 
             // flush data and finish
             await bulkInsert.finish();
+
+            {
+                session = store.openSession();
+                const userEntity: User = await session.load('users/2-A');
+                assert.strictEqual(userEntity.name, "Maria");
+                
+                const users = await session.query({ collection: 'users'}).all();
+                assert.strictEqual(users.length, 6);
+            }
         });
     });
 
     describe("changes", () => {
 
-        it("example", async () => {
+        it("listen to changes", async () => {
             const changes = store.changes();
             const docsChanges = changes.forDocumentsInCollection("users");
+            
             docsChanges.on("data", change => {
                 print(change);
                 changes.dispose();
@@ -308,7 +321,6 @@ describe("Readme query samples", function () {
                 resolve();
             }, 300));
         });
-
     });
 
     describe("with user data set", function () {
@@ -509,7 +521,7 @@ describe("Readme query samples", function () {
             assert.ok(stats.indexTimestamp instanceof Date);
         });
 
-        it("can stream users", async () => {
+        it("can stream users by prefix", async () => {
             const result: any = [];
 
             const userStream = await session.advanced.stream<User>("users/");
@@ -624,25 +636,21 @@ describe("Readme query samples", function () {
 
             await testDone;
         });
-
     });
 
     it("can use advanced.patch", async () => {
         store.conventions.findCollectionNameForObjectLiteral = () => "users";
-
         {
             const session = store.openSession();
             await session.store({ name: "Matilda", age: 17, underAge: true }, "users/1");
             await session.saveChanges();
         }
-
         {
             const session = store.openSession();
             session.advanced.increment("users/1", "age", 1);
             session.advanced.patch("users/1", "underAge", false);
             await session.saveChanges();
         }
-
         {
             const session = store.openSession();
             const loaded: any = await session.load("users/1");
@@ -663,7 +671,7 @@ describe("Readme query samples", function () {
             const user = {
                 name: "Marcin",
                 age: 30,
-                pet: "users/4"
+                pet: "Cat"
             };
 
             await session.store(user, "users/1");
@@ -676,10 +684,10 @@ describe("Readme query samples", function () {
             const revisions = await session.advanced.revisions.getFor("users/1");
             assert.strictEqual(revisions.length, 2);
         });
-
     });
 
     describe("can use time series", function () {
+        
         it("basic", async () => {
             {
                 const session = store.openSession();
@@ -688,7 +696,6 @@ describe("Readme query samples", function () {
                 tsf.append(new Date(), 120);
                 await session.saveChanges();
             }
-
             {
                 const session = store.openSession();
                 const tsf = session.timeSeriesFor("users/1", "heartbeat");
@@ -726,5 +733,4 @@ describe("Readme query samples", function () {
         await newSession.saveChanges();
         return users;
     }
-
 });
