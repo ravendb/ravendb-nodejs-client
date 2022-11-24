@@ -79,8 +79,8 @@ session.load('Users/1-A')
 ```
 
 >##### Related tests:
-> <small>[async and await](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L54)</small>  
-> <small>[then and callbacks](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L71)</small>
+> <small>[async and await](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L55)</small>  
+> <small>[then and callbacks](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L72)</small>
 
 ## CRUD example
 
@@ -145,8 +145,8 @@ assert.equal(session.advanced.numberOfRequests, 1);
 
 >##### Related tests:
 > <small>[can load with includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Documents/LoadTest.ts#L29)</small>  
-> <small>[loading data with include](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L127)</small>  
-> <small>[loading data with passing includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L147)</small>
+> <small>[loading data with include](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L128)</small>  
+> <small>[loading data with passing includes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L148)</small>
 
 ### Update documents
 
@@ -162,7 +162,7 @@ console.log(product.last_update); // the current date
 ```
 
 >##### Related tests:
-> <small>[update document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L168)</small>  
+> <small>[update document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L170)</small>  
 > <small>[update document metadata](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_213.ts#L35)</small>
 
 ### Delete documents
@@ -248,7 +248,7 @@ const userNames = await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[projections single field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L322)</small>  
+> <small>[projections single field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L341)</small>  
 > <small>[query single property](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L231)</small>  
 > <small>[retrieve camel case with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/CustomKeyCaseConventionsTests.ts#L288)</small>  
 > <small>[can_project_id_field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_14811.ts#L58)</small>  
@@ -270,7 +270,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[projections multiple fields](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L328)</small>  
+> <small>[projections multiple fields](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L349)</small>  
 > <small>[query with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L318)</small>  
 > <small>[retrieve camel case with projection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/CustomKeyCaseConventionsTests.ts#L288)</small>  
 > <small>[can_project_id_field](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_14811.ts#L58)</small>  
@@ -291,7 +291,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[distinct](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L334)</small>  
+> <small>[distinct](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L360)</small>  
 > <small>[query distinct](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L350)</small>
 
 #### whereEquals() / whereNotEquals()
@@ -313,7 +313,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where equals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L341)</small>  
+> <small>[where equals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L369)</small>  
 > <small>[where not equals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>
 
 #### whereIn()
@@ -341,7 +341,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where in]()(https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L347)</small>  
+> <small>[where in]()(https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L377)</small>  
 > <small>[query with where in](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L256)</small>
 
 
@@ -385,7 +385,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where between](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L353)</small>  
+> <small>[where between](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L385)</small>  
 > <small>[query with where between](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L265)</small>
 
 #### whereGreaterThan() / whereGreaterThanOrEqual() / whereLessThan() / whereLessThanOrEqual()
@@ -408,7 +408,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where greater than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L359)</small>  
+> <small>[where greater than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L393)</small>  
 > <small>[query with where less than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L275)</small>  
 > <small>[query with where less than or equal](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L285)</small>  
 > <small>[query with where greater than](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L294)</small>  
@@ -435,7 +435,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L365)</small>  
+> <small>[where exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L401)</small>  
 > <small>[query where exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L503)</small>
 
 #### containsAny() / containsAll()
@@ -458,7 +458,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where contains any](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L371)</small>  
+> <small>[where contains any](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L409)</small>  
 > <small>[queries with contains](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/ContainsTest.ts#L19)</small>
 
 #### search()
@@ -482,7 +482,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[search()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L377)</small>  
+> <small>[search()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L417)</small>  
 > <small>[query search with or](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L362)</small>  
 > <small>[query_CreateClausesForQueryDynamicallyWithOnBeforeQueryEvent](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L30)</small>  
 
@@ -516,7 +516,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L384)</small>  
+> <small>[subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L425)</small>  
 > <small>[working with subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_5669.ts#L40)</small>
 
 #### not()
@@ -540,7 +540,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[not()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L395)</small>  
+> <small>[not()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L438)</small>  
 > <small>[query where not](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>
 
 #### orElse() / andAlso()
@@ -575,7 +575,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[orElse](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L402)</small>  
+> <small>[orElse](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L447)</small>  
 > <small>[working with subclause](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_5669.ts#L40)</small>
 
 #### usingDefaultOperator()
@@ -612,7 +612,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[set default operator](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L409)</small>  
+> <small>[set default operator](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L457)</small>  
 > <small>[AND is used when default operator is not set](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_649.ts#L36)</small>  
 > <small>[set default operator to OR](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RDBC_649.ts#L45)</small>  
 
@@ -646,8 +646,8 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[orderBy()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L419)</small>  
-> <small>[orderByDesc()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L429)</small>  
+> <small>[orderBy()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L467)</small>  
+> <small>[orderByDesc()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L477)</small>  
 > <small>[query random order](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L451)</small>  
 > <small>[order by AlphaNumeric](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L548)</small>  
 > <small>[query with boost - order by score](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L517)</small>
@@ -678,7 +678,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[take()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L439)</small>  
+> <small>[take()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L487)</small>  
 > <small>[query skip take](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L385)</small>  
 > <small>[canUseOffsetWithCollectionQuery](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_17551.ts#L17)</small>
 
@@ -704,7 +704,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[skip()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L449)</small>  
+> <small>[skip()](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L496)</small>  
 > <small>[query skip take](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L385)</small>  
 > <small>[canUseOffsetWithCollectionQuery](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_17551.ts#L17)</small>  
 
@@ -732,7 +732,7 @@ const results = await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[can get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L458)</small>  
+> <small>[can get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L506)</small>  
 
 #### all() / first() / single() / count()
 `all()` - returns all results
@@ -770,7 +770,7 @@ await session.saveChanges();
 ```
 
 >##### Related tests:
-> <small>[store attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L200)</small>  
+> <small>[store attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L203)</small>  
 > <small>[can put attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L26)</small>  
 > <small>[checkIfHasChangesIsTrueAfterAddingAttachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_16985.ts#L17)</small>  
 > <small>[store many attachments and docs with bulk insert](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/BulkInsertAttachmentsTest.ts#L105)</small>
@@ -797,7 +797,7 @@ attachment.data
 ```
 
 >##### Related tests:
-> <small>[get attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L237)</small>  
+> <small>[get attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L241)</small>  
 > <small>[can get & delete attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L133)</small>
 
 #### Check if attachment exists
@@ -810,7 +810,7 @@ await session.advanced.attachments.exists(doc.id, "not_there.avi");
 ```
 
 >##### Related tests:
-> <small>[attachment exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L255)</small>  
+> <small>[attachment exists](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L258)</small>  
 > <small>[attachment exists 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L316)</small>
 
 #### Get attachment names
@@ -825,7 +825,7 @@ await session.advanced.attachments.getNames(doc);
 //     size: 4579 } ]
 ```
 >##### Related tests:
-> <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L263)</small>  
+> <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L266)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
 > 
 ### TimeSeries
@@ -845,7 +845,7 @@ await session.saveChanges();
 ```
 
 >##### Related tests:
-> <small>[can use time series](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L682)</small>  
+> <small>[can use time series](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L759)</small>  
 > <small>[canCreateSimpleTimeSeries](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L18)</small>  
 > <small>[usingDifferentTags](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L217)</small>  
 > <small>[canStoreAndReadMultipleTimestamps](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L372)</small>  
@@ -896,7 +896,7 @@ await bulkInsert.finish();
 ```
 
 >##### Related tests:
-> <small>[bulk insert example](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L274)</small>  
+> <small>[bulk insert example](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L279)</small>  
 > <small>[simple bulk insert should work](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L23)</small>  
 > <small>[bulk insert can be aborted](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L95)</small>  
 > <small>[can modify metadata with bulk insert](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L136)</small>  
@@ -937,7 +937,7 @@ changes.dispose();
 ```
 
 >##### Related tests:
-> <small>[listen to changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L305)</small>  
+> <small>[listen to changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L306)</small>  
 > <small>[can obtain single document changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L25)</small>  
 > <small>[can obtain all documents changes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L93)</small>  
 > <small>[can obtain notification about documents starting with](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L255)</small>  
@@ -963,7 +963,7 @@ userStream.on("error", err => {
 ```
 
 >##### Related tests:
-> <small>[can stream users by prefix](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L524)</small>  
+> <small>[can stream users by prefix](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L525)</small>  
 > <small>[can stream documents starting with](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/DocumentStreaming.ts#L39)</small>  
 
 #### Stream documents by query 
@@ -1005,7 +1005,7 @@ queryStream.on("error", err => {
 ```
 
 >##### Related tests:
-> <small>[can stream query and get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L545)</small>  
+> <small>[can stream query and get stats](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L546)</small>  
 > <small>[can stream query results](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L76)</small>  
 > <small>[can stream query results with query statistics](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L140)</small>  
 > <small>[can stream raw query results](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L192)</small>  
@@ -1048,7 +1048,7 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 ```
 
 >##### Related tests:
-> <small>[can get revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L667)</small>  
+> <small>[can get revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L737)</small>  
 > <small>[canGetRevisionsByDate](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_11770.ts#L21)</small>  
 > <small>[can handle revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L35)</small>  
 > <small>[canGetRevisionsByChangeVectors](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L149)</small>  
@@ -1106,7 +1106,7 @@ const suggestedNameTerms = await session.query(User, UsersIndex)
 ```
 
 >##### Related tests:
-> <small>[can suggest](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L667)</small>  
+> <small>[can suggest](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L581)</small>  
 > <small>[canChainSuggestions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L19)</small>  
 > <small>[canUseAliasInSuggestions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L42)</small>  
 > <small>[canUseSuggestionsWithAutoIndex](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L60)</small>  
@@ -1127,7 +1127,7 @@ await session.saveChanges();
 ```
 
 >##### Related tests:
-> <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L642)</small>  
+> <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L708)</small>  
 > <small>[can patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L18)</small>  
 > <small>[can patch complex](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L93)</small>  
 > <small>[can add to array](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L162)</small>  
@@ -1191,12 +1191,12 @@ subscriptionWorker.on("error", err => {
    // handle errors
 });
 
-// Subscrition events types: 
+// Subscription event types: 
 'batch', 'error', 'end', 'unexpectedSubscriptionError', 'afterAcknowledgment', 'connectionRetry'
 ```
 
 >##### Related tests:
-> <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L606)</small>  
+> <small>[can subscribe](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L607)</small>  
 > <small>[should stream all documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L143)</small>
 > <small>[should send all new and modified docs](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L202)</small>
 > <small>[should respect max doc count in batch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L263)</small>
@@ -1233,7 +1233,7 @@ await session.saveChanges();
 ```
 
 >##### Related tests:
-> <small>[using object literals for entities](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L645)</small>  
+> <small>[using object literals for entities](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L644)</small>  
 > <small>[using object literals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/SessionApiTests.ts#L108)</small>  
 > <small>[handle custom entity naming conventions + object literals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L220)</small>  
 
