@@ -14,7 +14,7 @@ import DocumentStore, {
     LoadOptions,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
-import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";;
+import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
 import {CONSTANTS} from "../../src/Constants";
 
 // eslint-disable-next-line no-console

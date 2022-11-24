@@ -1358,9 +1358,10 @@ store.initialize();
 })();
 ```
 
-## Working with secured server
+## Working with a secure server
 
-1. Fill auth options object. Pass contents of the pem/pfx certificate, specify its type and (optionally) a passphrase:
+1. Fill auth options object.  
+   Pass the contents of the pem/pfx certificate, specify its type, and (optionally) a passphrase:
 ```javascript
 const {DocumentStore, Certificate} = require('ravendb');
 
@@ -1380,7 +1381,7 @@ let authOptions = {
 };
 ``` 
 
-PFX certificates content should be passed as `Buffer` object:
+PFX certificates content should be passed as a `Buffer` object:
 
 ```javascript
 const {DocumentStore} = require('ravendb');
@@ -1412,15 +1413,15 @@ npm run build
 ## Running tests
 
 ```bash
-# To run the suite one needs to set the following environment variables:
+# To run the suite, set the following environment variables:
 # 
-# - the location of RavenDB server binary:
+# - Location of RavenDB server binary:
 # RAVENDB_TEST_SERVER_PATH="C:\\work\\test\\Server\\Raven.Server.exe" 
 #
-# - certificate path for tests requiring secure server
+# - Certificate path for tests requiring a secure server:
 # RAVENDB_TEST_SERVER_CERTIFICATE_PATH="C:\\work\\test\\cluster.server.certificate.pfx"
 #
-# - certificate hostname 
+# - Certificate hostname: 
 # RAVENDB_TEST_SERVER_HOSTNAME="a.nodejstest.development.run"
 #
 npm test 
