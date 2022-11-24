@@ -5,7 +5,7 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as util from "util";
 
-import {
+import DocumentStore, {
     IDocumentStore,
     IDocumentQuery,
     IDocumentSession,
@@ -14,13 +14,14 @@ import {
     LoadOptions,
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
-import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";;
+import {CONSTANTS} from "../../src/Constants";
 
 // eslint-disable-next-line no-console
 let print = console.log;
 print = TypeUtil.NOOP;
 
-describe("Readme query samples", function () {
+describe("Readme samples", function () {
 
     let store: IDocumentStore;
     let session: IDocumentSession;
@@ -598,12 +599,12 @@ describe("Readme query samples", function () {
                 const suggestionQueryResult = await session.query(User, UsersIndex)
                     .suggestUsing(x => x.byField("name", "Jon"))
                     .execute();
+                
                 assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
             }
         });
 
         it("can subscribe", async () => {
-
             // create a subscription
             const subscriptionName = await store.subscriptions.create({
                 query: "from users where age >= 30"
@@ -622,8 +623,10 @@ describe("Readme query samples", function () {
                 try {
                     // do batch processing
                     print(batch.items);
+                    assert.strictEqual(batch.items[0].id, "users/1-A");
 
-                    // call the callback, once you're done
+                    // call the callback once you're done
+                    // An acknowledgement will be sent to the server, so that server can send next batch
                     callback();
                 } catch (err) {
                     // if processing fails for a particular batch
@@ -638,26 +641,93 @@ describe("Readme query samples", function () {
         });
     });
 
-    it("can use advanced.patch", async () => {
-        store.conventions.findCollectionNameForObjectLiteral = () => "users";
-        {
-            const session = store.openSession();
-            await session.store({ name: "Matilda", age: 17, underAge: true }, "users/1");
-            await session.saveChanges();
-        }
-        {
-            const session = store.openSession();
-            session.advanced.increment("users/1", "age", 1);
-            session.advanced.patch("users/1", "underAge", false);
-            await session.saveChanges();
-        }
-        {
-            const session = store.openSession();
-            const loaded: any = await session.load("users/1");
-            assert.strictEqual(loaded.underAge, false);
-            assert.strictEqual(loaded.age, 18);
-            assert.strictEqual(loaded.name, "Matilda");
-        }
+    describe("using object literals for entities", function() {
+        let docStore: IDocumentStore;
+        
+        beforeEach(async function () {
+            docStore = new DocumentStore(store.urls, store.database);
+        });
+
+        afterEach(async () =>
+            await disposeTestDocumentStore(docStore));
+
+        it("document will be in the collection set in the conventions", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = () => "Books";
+            docStore.initialize();
+            {
+                const session = docStore.openSession();
+                await session.store({ name: "The Hobbit", author: "Tolkien", genre: "Fantasy" }, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                assert.strictEqual(book["@metadata"]["@collection"], "Books");
+            }
+        });
+
+        it("document will be in the collection specified by content", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = (e: any) => e.collection;
+            docStore.initialize();
+
+            const book = {
+                collection: "Books", 
+                name: "The Hobbit",
+                author: "Tolkien",
+                genre: "Fantasy"
+            };
+            
+            {
+                const session = docStore.openSession();
+                await session.store(book, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                
+                const metadata = session.advanced.getMetadataFor(book);
+                assert.strictEqual(metadata[CONSTANTS.Documents.Metadata.COLLECTION], "Books");
+            }
+        });
+
+        it("document will be in empty collection when conventions not set", async () => {
+            docStore.initialize();
+            {
+                const session = docStore.openSession();
+                await session.store({ name: "The Hobbit", author: "Tolkien", genre: "Fantasy" }, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                assert.strictEqual(book["@metadata"]["@collection"], undefined);
+            }
+        });
+
+        it("can use advanced.patch", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = () => "users";
+            docStore.initialize();
+            
+            {
+                const session = docStore.openSession();
+                await session.store({name: "Matilda", age: 17, underAge: true}, "users/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                session.advanced.increment("users/1", "age", 1);
+                session.advanced.patch("users/1", "underAge", false);
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const loaded: any = await session.load("users/1");
+                assert.strictEqual(loaded.underAge, false);
+                assert.strictEqual(loaded.age, 18);
+                assert.strictEqual(loaded.name, "Matilda");
+            }
+        });
     });
 
     describe("with revisions set up", function() {

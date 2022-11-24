@@ -1055,16 +1055,28 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 
 ### Suggestions
 
-```javascript
-// users collection
-// [ User {
-//     name: 'John',
-//     age: 30,
-//     registeredAt: 2017-11-10T23:00:00.000Z,
-//     kids: [Array],
-//     id: 'users/1-A' },
+Suggest options for similar/misspelled terms
 
-// and a static index like:
+```javascript
+// Some documents in users collection with misspelled name term
+// [ User {
+//     name: 'Johne',
+//     age: 30,
+//     ...
+//     id: 'users/1-A' },
+//   User {
+//     name: 'Johm',
+//     age: 31,
+//     ...
+//     id: 'users/2-A' },
+//   User {
+//     name: 'Jon',
+//     age: 32,
+//     ...
+//     id: 'users/3-A' },
+// ]
+
+// Static index definition
 class UsersIndex extends AbstractJavaScriptIndexCreationTask {
     constructor() {
         super();
@@ -1073,52 +1085,78 @@ class UsersIndex extends AbstractJavaScriptIndexCreationTask {
                 name: doc.name
             }
         });
-        this.suggestion("name");
+        
+        // Enable the suggestion feature on index-field 'name'
+        this.suggestion("name"); 
     }
 }
 
 // ...
-
 const session = store.openSession();
-const suggestionQueryResult = await session.query(User, UsersIndex)
-    .suggestUsing(x => x.byField("name", "Jon"))
+
+// Query for similar terms to 'John'
+// Note: the term 'John' itself will Not be part of the results
+
+const suggestedNameTerms = await session.query(User, UsersIndex)
+    .suggestUsing(x => x.byField("name", "John")) 
     .execute();
 
 // Sample results:
-// { name: { name: 'name', suggestions: [ 'john' ] } }
+// { name: { name: 'name', suggestions: [ 'johne', 'johm', 'jon' ] } }
 ```
+
+>##### Related tests:
+> <small>[can suggest](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L667)</small>  
+> <small>[canChainSuggestions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L19)</small>  
+> <small>[canUseAliasInSuggestions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L42)</small>  
+> <small>[canUseSuggestionsWithAutoIndex](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Issues/RavenDB_9584.ts#L60)</small>  
+> <small>[can suggest using linq](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Suggestions/SuggestionsTest.ts#L39)</small>  
+> <small>[can suggest using multiple words](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Suggestions/SuggestionsTest.ts#L78)</small>  
+> <small>[can get suggestions with options](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Suggestions/SuggestionsTest.ts#L125)</small>  
 
 ### Advanced patching
 
 ```javascript
+// Increment 'age' field by 1
 session.advanced.increment("users/1", "age", 1);
-// increments *age* field by 1
 
+// Set 'underAge' field to false
 session.advanced.patch("users/1", "underAge", false);
-// sets *underAge* field to *false*
 
 await session.saveChanges();
 ```
 
+>##### Related tests:
+> <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L642)</small>  
+> <small>[can patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L18)</small>  
+> <small>[can patch complex](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L93)</small>  
+> <small>[can add to array](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L162)</small>  
+> <small>[can increment](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/FirstClassPatchTest.ts#L268)</small>  
+> <small>[patchWillUpdateTrackedDocumentAfterSaveChanges](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Issues/RavenDB_11552.ts#L27)</small>  
+> <small>[can patch single document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/PatchTest.ts#L24)</small>  
+> <small>[can patch multiple documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/PatchTest.ts#L71)</small>  
+
 ### Subscriptions
 
 ```javascript
-// create a subscription
+// Create a subscription task on the server
+// Documents that match the query will be send to the client worker upon opening a connection
+
 const subscriptionName = await store.subscriptions.create({
     query: "from users where age >= 30"
 });
 
-// get subscription worker for your subscription
-const subscription = store.subscriptions.getSubscriptionWorker({ subscriptionName });
+// Open a connection
+// Create a subscription worker that will consume document batches sent from the server
+// Documents are sent from the last document that was processed for this subscription
 
-subscription.on("error", err => {
-    // handle errors
-});
+const subscriptionWorker = store.subscriptions.getSubscriptionWorker({ subscriptionName });
 
-subscription.on("batch", (batch, callback) => {
+// Worker handles incoming batches
+subscriptionWorker.on("batch", (batch, callback) => {
     try {
-        // do batch processing on batch.items
-        // batch.items:
+        // Process the incoming batch items
+        // Sample batch.items:
         // [ Item {
         //     changeVector: 'A:2-r6nkF5nZtUKhcPEk6/LL+Q',
         //     id: 'users/1-A',
@@ -1139,109 +1177,133 @@ subscription.on("batch", (batch, callback) => {
         //     exceptionMessage: undefined } ]
         // ...
 
-        // call the callback, once you're done
+        // Call the callback once you're done
+        // The worker will send an acknowledgement to the server, so that server can send next batch
         callback();
+        
     } catch(err) {
-        // if processing fails for a particular batch
-        // pass the error to the callback
+        // If processing fails for a particular batch then pass the error to the callback
         callback(err);
     }
 });
+
+subscriptionWorker.on("error", err => {
+   // handle errors
+});
+
+// Subscrition events types: 
+'batch', 'error', 'end', 'unexpectedSubscriptionError', 'afterAcknowledgment', 'connectionRetry'
 ```
+
+>##### Related tests:
+> <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L606)</small>  
+> <small>[should stream all documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L143)</small>
+> <small>[should send all new and modified docs](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L202)</small>
+> <small>[should respect max doc count in batch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L263)</small>
+> <small>[can disable subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L345)</small>
+> <small>[can delete subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L52)</small>
 
 ## Using object literals for entities
 
-In order to comfortably use object literals as entities set the function getting collection name based on the content of the object - `store.conventions.findCollectionNameForObjectLiteral()`.
+To comfortably use object literals as entities,  
+configure the collection name that will be used in the store conventions.  
+
+This must be done *before* calling `initialize()` on the DocumentStore instance,  
+else, your entities will be created in the *@empty* collection.
 
 ```javascript
 const store = new DocumentStore(urls, database);
+
+// Configure the collection name that will be used
 store.conventions.findCollectionNameForObjectLiteral = entity => entity["collection"];
 // ...
 store.initialize();
+
+// Sample object literal
+const user = {
+   collection: "Users",
+   name: "John"
+};
+
+session = store.openSession();
+await session.store(user);
+await session.saveChanges();
+
+// The document will be stored in the 'Users' collection
 ```
 
-This needs to be done *before* an `initialize()` call on `DocumentStore` instance. If you fail to do so, your entites will land up in *@empty* collection having an *UUID* for an ID. E.g.
+>##### Related tests:
+> <small>[using object literals for entities](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L645)</small>  
+> <small>[using object literals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/SessionApiTests.ts#L108)</small>  
+> <small>[handle custom entity naming conventions + object literals](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L220)</small>  
 
 ## Using classes for entities
 
 1. Define your model as class. Attributes should be just public properties:
 ```javascript
 export class Product {
-  constructor(
-    id = null,
-    title = '',
-    price = 0,
-    currency = 'USD',
-    storage = 0,
-    manufacturer = '',
-    in_stock = false,
-    last_update = null
-  ) {
-    Object.assign(this, {
-      title,
-      price,
-      currency,
-      storage,
-      manufacturer,
-      in_stock,
-      last_update: last_update || new Date()
-    });
-  }
+    constructor(
+        id = null,
+        title = '',
+        price = 0,
+        currency = 'USD',
+        storage = 0,
+        manufacturer = '',
+        in_stock = false,
+        last_update = null
+    ) {
+        Object.assign(this, {
+            title,
+            price,
+            currency,
+            storage,
+            manufacturer,
+            in_stock,
+            last_update: last_update || new Date()
+        });
+      }
 }
 ```
 
-2. To store a document pass its instance to `store()`. Collection name will be detected automatically using entity's class name.
+2. To store a document pass its instance to `store()`.  
+   The collection name will automatically be detected from the entity's class name.  
 ```javascript
-import { Product } from "./models";
+import { Product } from "./models"; 
 
 let product = new Product(
   null, 'iPhone X', 999.99, 'USD', 64, 'Apple', true, new Date('2017-10-01T00:00:00'));
 
 product = await session.store(product);
-console.log(product instanceof Product);         // true
-console.log(product.id.includes('products/'));   // true
+console.log(product instanceof Product);       // true
+console.log(product.id.includes('products/')); // true
 await session.saveChanges();
 ```
 
-3. When loading document, you can use `session.load()`. Pass class constructor as a second argument:
+3. Loading a document  
 ```javascript
-let product = await session.load('products/1-A', Product);
-console.log(product instanceof Product);    // true
-console.log(product.id);                    // Products/1-A
+const product = await session.load('products/1-A');
+console.log(product instanceof Product); // true
+console.log(product.id);                 // products/1-A
 ```
 
-*NOTE: To limit passing class constructors around, register the type in document store's conventions like so:*
+4. Querying for documents  
 ```javascript
-import { Product } from "./models";
-const store = new DocumentStore(url, dbName);
-store.conventions.registerEntityType(Product);
-
-// ...
-
-let product = await session.load('products/1-A');
-console.log(product instanceof Product);    // true
-console.log(product.id);                    // Products/1-A
-```
-
-4. When querying documents, you pass class constructor as `documentType` option of `session.query({ ... })`:
-```javascript
-let products = await session.query({
-  collection: 'products',
-  documentType: Product // you can drop this if type has been registered in conventions using store.conventions.registerEntityType()
-}).all();
+const products = await session.query({  collection: 'products' }).all();
 
 products.forEach((product) => {
-  console.log(product instanceof Product); // true
-  console.log(product.id.includes('Products/')); // true
+  console.log(product instanceof Product);       // true
+  console.log(product.id.includes('products/')); // true
 });
-```
+```  
+
+>##### Related tests:
+> <small>[using classes](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/SessionApiTests.ts#L173)</small>  
 
 ## Usage with TypeScript
 
 TypeScript typings are embedded into the package (see `types` property in `package.json`).
 
 ```typescript
-
 // file models/product.ts
 
 export class Product {
@@ -1262,7 +1324,6 @@ import {Product} from "models/product";
 import {DocumentStore, IDocumentStore, IDocumentSession, IDocumentQuery, DocumentConstructor, QueryOperators} from 'ravendb';
 
 const store: IDocumentStore = new DocumentStore('url', 'database name');
-store.conventions.registerEntityType(Product);
 let session: IDocumentSession;
 
 store.initialize();
@@ -1274,12 +1335,12 @@ store.initialize();
 
   await session.store<Product>(product);
   await session.saveChanges();
-  console.log(product instanceof Product); // true
+  console.log(product instanceof Product);       // true
   console.log(product.id.includes('products/')); // true
 
   product = await session.load<Product>('products/1-A');
   console.log(product instanceof Product); // true
-  console.log(product.id); // products/1-A
+  console.log(product.id);                 // products/1-A
 
   let products: Product[] = await session
     .query<Product>({ collection: 'Products' })
@@ -1291,7 +1352,7 @@ store.initialize();
     .all();
 
   products.forEach((product: Product): void => {
-    console.log(product instanceof Product); // true
+    console.log(product instanceof Product);       // true
     console.log(product.id.includes('products/')); // true
   });
 })();

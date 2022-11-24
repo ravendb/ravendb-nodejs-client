@@ -15,7 +15,7 @@ describe("SuggestionsTest", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("can suggest with exact match", async () => {
+    it("field from query is not part of suggestion results", async () => {
         await setup();
 
         {
@@ -122,7 +122,7 @@ describe("SuggestionsTest", function () {
         }
     });
 
-    it("can get suggestions", async () => {
+    it("can get suggestions with options", async () => {
         await new Users_ByName().execute(store);
 
         {
