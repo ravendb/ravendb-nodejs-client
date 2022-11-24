@@ -309,7 +309,7 @@ describe("ChangesTest", function () {
         }
     });
 
-    it("can obtain notification about documents starting with", async () => {
+    it("can obtain notification about documents in collection", async () => {
         const changesList = new AsyncQueue<DocumentChange>();
 
         const changes = store.changes();
