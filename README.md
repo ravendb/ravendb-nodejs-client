@@ -192,6 +192,7 @@ await session.delete('products/1-A');
 ## Query documents
 
 1. Use `query()` session method:  
+
 Query by collection:  
 ```javascript
 const query = session.query({ collection: 'products' });
@@ -244,7 +245,7 @@ const userNames = await session.query({ collection: "users" })
     .all();
 
 // Sample results
-// John,Stefanie,Thomas
+// John, Stefanie, Thomas
 ```
 
 >##### Related tests:
@@ -341,7 +342,7 @@ await session.query({ collection: "users" })
 ```
 
 >##### Related tests:
-> <small>[where in]()(https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L377)</small>  
+> <small>[where in](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L377)</small>  
 > <small>[query with where in](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L256)</small>
 
 
@@ -747,7 +748,7 @@ const results = await session.query({ collection: "users" })
 > <small>[query first and single](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L467)</small>  
 > <small>[query count](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/QueryTest.ts#L834)</small>
 
-### Attachments
+## Attachments
 
 #### Store attachments
 ```javascript
@@ -828,7 +829,7 @@ await session.advanced.attachments.getNames(doc);
 > <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L266)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
 > 
-### TimeSeries
+## TimeSeries
 
 #### Store time series 
 ```javascript
@@ -870,8 +871,7 @@ const heartbeats = await tsf.get();
 > <small>[canGetTimeSeriesNames2](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L648)</small>  
 > <small>[canSkipAndTakeTimeSeries](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/TimeSeries/TimeSeriesSessionTest.ts#L772)</small>
 
-
-### Bulk Insert
+## Bulk Insert
 
 ```javascript
 // Create a bulk insert instance from the DocumentStore
@@ -901,7 +901,7 @@ await bulkInsert.finish();
 > <small>[bulk insert can be aborted](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L95)</small>  
 > <small>[can modify metadata with bulk insert](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/BulkInsert/BulkInsertsTest.ts#L136)</small>  
 
-### Changes API
+## Changes API
 
 Listen for database changes e.g. document changes.
 
@@ -943,7 +943,7 @@ changes.dispose();
 > <small>[can obtain notification about documents starting with](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L255)</small>  
 > <small>[can obtain notification about documents in collection](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Server/Documents/Notifications/ChangesTest.ts#L312)</small>  
 
-### Streaming
+## Streaming
 
 #### Stream documents by ID prefix
 ```javascript
@@ -1010,7 +1010,7 @@ queryStream.on("error", err => {
 > <small>[can stream query results with query statistics](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L140)</small>  
 > <small>[can stream raw query results](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Core/Streaming/QueryStreaming.ts#L192)</small>  
 
-### Revisions
+## Revisions
 
 NOTE: Please make sure revisions are enabled before trying the below.
 
@@ -1053,7 +1053,7 @@ const revisions = await session.advanced.revisions.getFor("users/1");
 > <small>[can handle revisions](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L35)</small>  
 > <small>[canGetRevisionsByChangeVectors](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/RevisionsTest.ts#L149)</small>  
 
-### Suggestions
+## Suggestions
 
 Suggest options for similar/misspelled terms
 
@@ -1114,7 +1114,7 @@ const suggestedNameTerms = await session.query(User, UsersIndex)
 > <small>[can suggest using multiple words](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Suggestions/SuggestionsTest.ts#L78)</small>  
 > <small>[can get suggestions with options](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Suggestions/SuggestionsTest.ts#L125)</small>  
 
-### Advanced patching
+## Advanced patching
 
 ```javascript
 // Increment 'age' field by 1
@@ -1136,7 +1136,7 @@ await session.saveChanges();
 > <small>[can patch single document](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/PatchTest.ts#L24)</small>  
 > <small>[can patch multiple documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/PatchTest.ts#L71)</small>  
 
-### Subscriptions
+## Subscriptions
 
 ```javascript
 // Create a subscription task on the server
@@ -1197,11 +1197,11 @@ subscriptionWorker.on("error", err => {
 
 >##### Related tests:
 > <small>[can subscribe](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Documents/ReadmeSamples.ts#L607)</small>  
-> <small>[should stream all documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L143)</small>
-> <small>[should send all new and modified docs](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L202)</small>
-> <small>[should respect max doc count in batch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L263)</small>
-> <small>[can disable subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L345)</small>
-> <small>[can delete subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L52)</small>
+> <small>[should stream all documents](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L143)</small>  
+> <small>[should send all new and modified docs](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L202)</small>  
+> <small>[should respect max doc count in batch](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L263)</small>  
+> <small>[can disable subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L345)</small>  
+> <small>[can delete subscription](https://github.com/ravendb/ravendb-nodejs-client/blob/1ba6c71a9c49bc5be17a4bed2c6b8d363d7c52bf/test/Ported/Subscriptions/SubscriptionsBasicTest.ts#L52)</small>  
 
 ## Using object literals for entities
 
@@ -1305,7 +1305,6 @@ TypeScript typings are embedded into the package (see `types` property in `packa
 
 ```typescript
 // file models/product.ts
-
 export class Product {
   constructor(
     public id: string = null,
