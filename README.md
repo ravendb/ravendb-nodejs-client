@@ -15,7 +15,27 @@ npm install --save ravendb
 
 ## Documentation
 
-Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store) page.
+* This readme provides short examples for the following:  
+   [Getting started](https://github.com/ravendb/ravendb-nodejs-client#getting-started),  
+   [Asynchronous call types](https://github.com/ravendb/ravendb-nodejs-client#supported-asynchronous-call-types),  
+   [Crud example](https://github.com/ravendb/ravendb-nodejs-client#crud-example),  
+   [Query documents](https://github.com/ravendb/ravendb-nodejs-client#query-documents),  
+   [Attachments](https://github.com/ravendb/ravendb-nodejs-client#attachments),  
+   [Time series](https://github.com/ravendb/ravendb-nodejs-client#timeseries),  
+   [Bulk insert](https://github.com/ravendb/ravendb-nodejs-client#bulk-insert),  
+   [Changes API](https://github.com/ravendb/ravendb-nodejs-client#changes-api),  
+   [Streaming](https://github.com/ravendb/ravendb-nodejs-client#streaming),  
+   [Revisions](https://github.com/ravendb/ravendb-nodejs-client#revisions),  
+   [Suggestions](https://github.com/ravendb/ravendb-nodejs-client#suggestions),  
+   [Patching](https://github.com/ravendb/ravendb-nodejs-client#advanced-patching),  
+   [Subscriptions](https://github.com/ravendb/ravendb-nodejs-client#subscriptions),  
+   [Using object literals](https://github.com/ravendb/ravendb-nodejs-client#using-object-literals-for-entities),  
+   [Using classes](https://github.com/ravendb/ravendb-nodejs-client#using-classes-for-entities),  
+   [Typescript usage](https://github.com/ravendb/ravendb-nodejs-client#usage-with-typescript),  
+   [Working with secure server](https://github.com/ravendb/ravendb-nodejs-client#working-with-a-secure-server),  
+   [Building & running tests](https://github.com/ravendb/ravendb-nodejs-client#building)  
+
+* For more information go to the online [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store).
 
 ## Getting started
 
