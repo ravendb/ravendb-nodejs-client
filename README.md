@@ -15,7 +15,27 @@ npm install --save ravendb
 
 ## Documentation
 
-Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store) page.
+* This readme provides short examples for the following:  
+   [Getting started](#getting-started),  
+   [Asynchronous call types](#supported-asynchronous-call-types),  
+   [Crud example](#crud-example),  
+   [Query documents](#query-documents),  
+   [Attachments](#attachments),  
+   [Time series](#timeseries),  
+   [Bulk insert](#bulk-insert),  
+   [Changes API](#changes-api),  
+   [Streaming](#streaming),  
+   [Revisions](#revisions),  
+   [Suggestions](#suggestions),  
+   [Patching](#advanced-patching),  
+   [Subscriptions](#subscriptions),  
+   [Using object literals](#using-object-literals-for-entities),  
+   [Using classes](#using-classes-for-entities),  
+   [Typescript usage](#usage-with-typescript),  
+   [Working with secure server](#working-with-a-secure-server),  
+   [Building & running tests](#building)  
+
+* For more information go to the online [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store).
 
 ## Getting started
 
