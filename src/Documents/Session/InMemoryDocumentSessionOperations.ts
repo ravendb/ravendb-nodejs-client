@@ -1773,9 +1773,18 @@ export abstract class InMemoryDocumentSessionOperations
                 dirty = true;
             }
 
-            for (const prop of Object.keys(documentInfo.metadataInstance)) {
+            const metadataKeysToCheck = Object.keys(documentInfo.metadataInstance);
+
+            const ravenNodeTypeKey = CONSTANTS.Documents.Metadata.RAVEN_JS_TYPE;
+            if (metadataKeysToCheck.includes(ravenNodeTypeKey) && TypeUtil.isNullOrUndefined(documentInfo.metadataInstance[ravenNodeTypeKey]))
+            {
+                metadataKeysToCheck.splice(metadataKeysToCheck.indexOf("Raven-Node-Type"), 1);
+                documentInfo.metadata[ravenNodeTypeKey] = documentInfo.metadataInstance[ravenNodeTypeKey];
+            }
+
+            for (const prop of metadataKeysToCheck) {
                 const propValue = documentInfo.metadataInstance[prop];
-                if (!propValue ||
+                if (TypeUtil.isNullOrUndefined(propValue) ||
                     (typeof propValue["isDirty"] === "function"
                         && (propValue as IMetadataDictionary).isDirty())) {
                     dirty = true;
