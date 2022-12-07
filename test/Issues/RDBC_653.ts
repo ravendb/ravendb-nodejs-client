@@ -91,4 +91,8 @@ describe("RDBC-653", function () {
     it("custom metadata wont be updated spuriously on falsy value 3", async () => {
         await checkMetadataUpdates("myMetadata", "");
     })
+
+    it("custom metadata wont be updated spuriously", async () => {
+        await checkMetadataUpdates("myMetadata", 47546921371);
+    })
 })
