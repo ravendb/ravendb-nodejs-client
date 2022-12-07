@@ -1,4 +1,4 @@
-import {ClusterTestContext, disposeTestDocumentStore} from "../Utils/TestUtil";
+import {ClusterTestContext, disposeTestDocumentStore, RavenTestContext} from "../Utils/TestUtil";
 import * as assert from "assert";
 import {assertThat} from "../Utils/AssertExtensions";
 import {
@@ -8,7 +8,7 @@ import {
     IDocumentStore
 } from "../../src";
 
-describe("RDBC-658", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RDBC-658", function () {
 
     let store: IDocumentStore;
     let testContext: ClusterTestContext;
