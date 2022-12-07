@@ -11,11 +11,11 @@ import { RaftIdGenerator } from "../../Utility/RaftIdGenerator";
 
 export class AddDatabaseNodeOperation implements IServerOperation<DatabasePutResult> {
     private readonly _databaseName: string;
-    private readonly _nodeTag: string;
+    private readonly _node: string;
 
     public constructor(databaseName: string, node?: string) {
         this._databaseName = databaseName;
-        this._nodeTag = node;
+        this._node = node;
     }
 
     public get resultType(): OperationResultType {
@@ -23,15 +23,15 @@ export class AddDatabaseNodeOperation implements IServerOperation<DatabasePutRes
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<DatabasePutResult> {
-        return new AddDatabaseNodeCommand(this._databaseName, this._nodeTag);
+        return new AddDatabaseNodeCommand(this._databaseName, this._node);
     }
 }
 
 class AddDatabaseNodeCommand extends RavenCommand<DatabasePutResult> implements IRaftCommand {
     private readonly _databaseName: string;
-    private readonly _nodeTag: string;
+    private readonly _node: string;
 
-    public constructor(databaseName: string, nodeTag: string) {
+    public constructor(databaseName: string, node: string) {
         super();
 
         if (!databaseName) {
@@ -39,14 +39,14 @@ class AddDatabaseNodeCommand extends RavenCommand<DatabasePutResult> implements 
         }
 
         this._databaseName = databaseName;
-        this._nodeTag = nodeTag;
+        this._node = node;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/admin/databases/node?name=" + this._databaseName;
 
-        if (this._nodeTag) {
-           uri += "&node=" + this._nodeTag;
+        if (this._node) {
+           uri += "&node=" + this._node;
         }
 
         return {
