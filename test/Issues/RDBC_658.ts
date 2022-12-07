@@ -1,4 +1,4 @@
-import { ClusterTestContext} from "../Utils/TestUtil";
+import {ClusterTestContext, disposeTestDocumentStore} from "../Utils/TestUtil";
 import * as assert from "assert";
 import {assertThat} from "../Utils/AssertExtensions";
 import {
@@ -8,7 +8,7 @@ import {
     IDocumentStore
 } from "../../src";
 
-describe("RDBC-649", function () {
+describe("RDBC-658", function () {
 
     let store: IDocumentStore;
     let testContext: ClusterTestContext;
@@ -18,13 +18,12 @@ describe("RDBC-649", function () {
 
     describe("Add database node", function () {
 
-        const dbName = "testDB";
-
         it("Add random database node", async () => {
             try {
                 testContext = new ClusterTestContext();
                 const cluster = await testContext.createRaftCluster(3);
                 
+                const dbName = testContext.getDatabaseName();
                 store = new DocumentStore(cluster.getInitialLeader().url, dbName);
                 store.initialize();
 
@@ -44,7 +43,7 @@ describe("RDBC-649", function () {
                 assert.strictEqual(databaseNodes.length, 2);
                 assert.notStrictEqual(databaseNodes[0], databaseNodes[1]);
             } finally {
-                store.dispose();
+                await disposeTestDocumentStore(store);
             }
         });
 
@@ -53,6 +52,7 @@ describe("RDBC-649", function () {
                 testContext = new ClusterTestContext();
                 const cluster = await testContext.createRaftCluster(3);
                 
+                const dbName = testContext.getDatabaseName();
                 store = new DocumentStore(cluster.getInitialLeader().url, dbName);
                 store.initialize();
 
@@ -75,7 +75,7 @@ describe("RDBC-649", function () {
                 assertThat(databaseNodes).contains(databaseNodes[0]);
                 assertThat(databaseNodes).contains(databaseNodes[1]);
             } finally {
-                store.dispose();
+                await disposeTestDocumentStore(store);
             }
         });
     });
