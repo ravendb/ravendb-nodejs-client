@@ -19,10 +19,8 @@ import {
     describe("Add database node", function () {
 
         it("Add random database node", async () => {
+            const cluster = await testContext.createRaftCluster(3);
             try {
-                testContext = new ClusterTestContext();
-                const cluster = await testContext.createRaftCluster(3);
-                
                 const dbName = testContext.getDatabaseName();
                 store = new DocumentStore(cluster.getInitialLeader().url, dbName);
                 store.initialize();
@@ -44,14 +42,13 @@ import {
                 assert.notStrictEqual(databaseNodes[0], databaseNodes[1]);
             } finally {
                 await disposeTestDocumentStore(store);
+                cluster.dispose();
             }
         });
 
         it("Add specific databases node", async () => {
+            const cluster = await testContext.createRaftCluster(3);
             try {
-                testContext = new ClusterTestContext();
-                const cluster = await testContext.createRaftCluster(3);
-                
                 const dbName = testContext.getDatabaseName();
                 store = new DocumentStore(cluster.getInitialLeader().url, dbName);
                 store.initialize();
@@ -76,6 +73,7 @@ import {
                 assertThat(databaseNodes).contains(databaseNodes[1]);
             } finally {
                 await disposeTestDocumentStore(store);
+                cluster.dispose();
             }
         });
     });
