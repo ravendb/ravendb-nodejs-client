@@ -63,7 +63,7 @@ export class TypeUtil {
         return value === true || value === false;
     }
 
-    public static isClass(value: any): boolean {
+    public static isClass(value: any): value is ClassConstructor {
         return this.isFunction(value) && ("name" in value) && value.name !== ""
             && ("Object" !== value.name)
             && (!!value.prototype && !!value.prototype.constructor.name);
