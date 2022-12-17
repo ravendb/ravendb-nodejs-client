@@ -425,8 +425,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         if (Array.isArray(obj)) {
-            const newObjPathPrefix = `${objPathPrefix}[]`;
-            return obj.map(x => this._makeObjectLiteral(x, newObjPathPrefix, typeInfoCallback, knownTypes));
+            return obj.map((x, index) => this._makeObjectLiteral(x, `${objPathPrefix}.${index}`, typeInfoCallback, knownTypes));
         }
 
         if (TypeUtil.isObject(obj)) {
