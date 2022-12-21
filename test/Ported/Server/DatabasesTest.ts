@@ -51,13 +51,13 @@ describe("DatabasesTest", function () {
             .isFalse();
     });
 
-    it("canAddNode", async () => {
+    it("Cannot add node if single node cluster - database is on all nodes", async () => {
         await assertThrows(async () => {
             // we assert this by throwing - we are running single node cluster
             await store.maintenance.server.send(new AddDatabaseNodeOperation(store.database));
         }, err => {
             assertThat(err.message)
-                .contains("Can't add node");
+                .contains("already exists on all the nodes of the cluster");
         });
     });
 
