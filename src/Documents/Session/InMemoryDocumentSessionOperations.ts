@@ -1775,13 +1775,12 @@ export abstract class InMemoryDocumentSessionOperations
 
             for (const prop of Object.keys(documentInfo.metadataInstance)) {
                 const propValue = documentInfo.metadataInstance[prop];
-                if (!propValue ||
-                    (typeof propValue["isDirty"] === "function"
+                if (propValue && (typeof propValue["isDirty"] === "function"
                         && (propValue as IMetadataDictionary).isDirty())) {
                     dirty = true;
                 }
 
-                documentInfo.metadata[prop] = ObjectUtil.deepJsonClone(documentInfo.metadataInstance[prop]);
+                documentInfo.metadata[prop] = ObjectUtil.deepJsonClone(propValue);
             }
         }
 
