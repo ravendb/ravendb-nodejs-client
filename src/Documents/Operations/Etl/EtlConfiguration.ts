@@ -15,7 +15,7 @@ export class EtlConfiguration<T extends ConnectionString> {
         return {
             TaskId: this.taskId,
             Name: this.name,
-            MentorName: this.mentorNode,
+            MentorNode: this.mentorNode,
             ConnectionStringName: this.connectionStringName,
             Transforms: this.transforms.map(x => serializeTransformation(x)),
             Disabled: this.disabled,
