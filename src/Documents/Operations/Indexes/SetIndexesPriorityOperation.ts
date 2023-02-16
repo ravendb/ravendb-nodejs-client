@@ -13,7 +13,7 @@ export class SetIndexesPriorityOperation implements IMaintenanceOperation<void> 
 
     private readonly _parameters: SetIndexesPriorityOperationParameters;
 
-    public constructor(indexName: string, mode: IndexPriority);
+    public constructor(indexName: string, priority: IndexPriority);
     public constructor(parameters: SetIndexesPriorityOperationParameters);
     public constructor(paramsOrIndexName: string | SetIndexesPriorityOperationParameters, priority?: IndexPriority) {
         if (TypeUtil.isString(paramsOrIndexName)) {
