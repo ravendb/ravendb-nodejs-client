@@ -66,14 +66,14 @@ import { assertThat } from "../../Utils/AssertExtensions";
                 assertThat(s3Ctx)
                     .isNotEqualTo(s2Ctx);
 
-                const s4Ctx = -1;
+                let s4Ctx = -1;
 
                 {
                     const s4 = store.openSession();
                     s4.advanced.sessionInfo.setContext("monkey");
 
                     const sessionInfo = s4.advanced.sessionInfo;
-                    s3Ctx = sessionInfo.getSessionId();
+                    s4Ctx = sessionInfo.getSessionId();
                 }
 
                 assertThat(s4Ctx)

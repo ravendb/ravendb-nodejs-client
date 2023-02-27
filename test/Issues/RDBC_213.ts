@@ -15,7 +15,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
     it("session.store() saves metadata using entity '@metadata' field", async () => {
         const session = store.openSession();
-        const expiresAt = new Date(2019, 11, 12);
+        const expiresAt = new Date(2023, 11, 12);
         const expiringDocument = {
             "name": "test",
             "expires": expiresAt.toISOString(),
@@ -35,7 +35,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
     it("session.store() saves metadata using entity '@metadata' field when updating existing document", async () => {
         // Create document with metadata
         const session1 = store.openSession();
-        const expiresAt = new Date(2019, 11, 12);
+        const expiresAt = new Date(2023, 11, 12);
         const expiringDocument = {
             "name": "test",
             "@metadata": {
@@ -50,7 +50,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
         const loadedDocument = await session2.load(expiringDocument["id"]);
         const metadata = session2.advanced.getMetadataFor(loadedDocument);
 
-        const expiresAtNewTime = new Date(2020, 11, 12).toISOString();
+        const expiresAtNewTime = new Date(2024, 11, 12).toISOString();
         metadata["@expires"] = expiresAtNewTime;
         const customDataValue = "customDataValue";
         metadata["customData"] = customDataValue;
@@ -67,7 +67,7 @@ describe("[RDBC-213] Metadata is not saved", function () {
 
     it("metadata is stored using session.advanced.getMetadataFor() and session.saveChanges()", async function () {
         const session = store.openSession();
-        const expiresAt = new Date(2019, 11, 12);
+        const expiresAt = new Date(2023, 11, 12);
         const expiringDocument = {
             name: "test",
             expires: expiresAt.toISOString()

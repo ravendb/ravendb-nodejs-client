@@ -45,7 +45,7 @@ class AddDatabaseNodeCommand extends RavenCommand<DatabasePutResult> implements 
     createRequest(node: ServerNode): HttpRequestParameters {
         let uri = node.url + "/admin/databases/node?name=" + this._databaseName;
 
-        if (node) {
+        if (this._node) {
            uri += "&node=" + this._node;
         }
 
