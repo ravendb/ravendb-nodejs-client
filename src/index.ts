@@ -362,6 +362,7 @@ export * from "./Documents/Indexes/Analysis/AnalyzerDefinition";
 export * from "./Documents/Indexes/AbstractCsharpIndexCreationTask";
 export * from "./Documents/Indexes/AbstractCsharpMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+export * from "./Documents/Indexes/BaseJavaScriptIndexCreationTask";
 export * from "./Documents/Indexes/AbstractJavaScriptMultiMapIndexCreationTask";
 export * from "./Documents/Indexes/AbstractRawJavaScriptIndexCreationTask";
 export * from "./Documents/Indexes/AutoIndexDefinition";

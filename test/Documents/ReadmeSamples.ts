@@ -5,7 +5,7 @@ import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as util from "util";
 
-import {
+import DocumentStore, {
     IDocumentStore,
     IDocumentQuery,
     IDocumentSession,
@@ -15,12 +15,13 @@ import {
 } from "../../src";
 import { TypeUtil } from "../../src/Utility/TypeUtil";
 import { AbstractJavaScriptIndexCreationTask } from "../../src/Documents/Indexes/AbstractJavaScriptIndexCreationTask";
+import {CONSTANTS} from "../../src/Constants";
 
 // eslint-disable-next-line no-console
 let print = console.log;
 print = TypeUtil.NOOP;
 
-describe("Readme query samples", function () {
+describe("Readme samples", function () {
 
     let store: IDocumentStore;
     let session: IDocumentSession;
@@ -49,6 +50,51 @@ describe("Readme query samples", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
+    describe("asyncCallType", async () => {
+        
+        it("async and await", async () => {
+            const user = { id: null, name: 'John' };
+            await session.store(user, 'users/1-A');
+            await session.saveChanges();
+            assert.strictEqual(user.id, 'users/1-A');
+
+            const userEntity: User = await session.load('users/1-A');
+            userEntity.name = 'Mark';
+            await session.saveChanges();
+
+            const userEntity2: User = await session.load('users/1-A');
+            assert.strictEqual(user.name, 'Mark');
+        });
+    });
+    
+    describe("thenCallType", () => {
+        
+        it("then and callbacks", (done) => {
+            session.store({ id: null, name: 'John' }, 'users/1-A')
+                .then(() => {
+                    return session.saveChanges();
+                })
+                .then(() => {
+                    return session.load('users/1-A')
+                })
+                .then((user: User) => {
+                    user.name = 'Mark';
+                })
+                .then(() => {
+                    return session.saveChanges();
+                })
+                .then(() => {
+                    return session.load('users/1-A');
+                })
+                .then((user: User) => {
+                    assert.strictEqual(user.name, 'Mark');
+                })
+                .then(() => {
+                    done();
+                });
+        });
+    });
+    
     describe("with data set with includes", function () {
 
         beforeEach(async function () {
@@ -80,17 +126,18 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with include()", async () => {
-            const session = store.openSession();
             // users/1
             // {
             //      "name": "John",
             //      "kids": ["users/2", "users/3"]
             // }
+            
+            const session = store.openSession();
             const user1 = await session
                 .include("kids")
                 .load("users/1");
-            // Document users/1 is going to be pulled along 
-            // with docs referenced in "kids" field within a single request
+                // Document users/1 and all docs referenced in "kids"
+                // will be fetched from the server in a single request.
 
             const user2 = await session.load("users/2"); // this won't call server again
             assert.ok(user1);
@@ -99,28 +146,60 @@ describe("Readme query samples", function () {
         });
 
         it("loading data with passing includes", async () => {
-            const session = store.openSession();
             // users/1
             // {
             //      "name": "John",
             //      "kids": ["users/2", "users/3"]
             // }
-
+            
+            const session = store.openSession();
             const user1 = await session
                 .load("users/1", { includes: [ "kids" ] } as LoadOptions<any>);
+                // Document users/1 and all docs referenced in "kids"
+                // will be fetched from the server in a single request.
 
             const user2 = await session.load("users/2"); // this won't call server again
-            // Document users/1 is going to be pulled along 
-            // with docs referenced in "kids" field within a single request
-
             assert.ok(user1);
             assert.ok(user2);
             assert.strictEqual(session.advanced.numberOfRequests, 1);
         });
+    });
 
+    describe("update documents", async () => {
+        
+        it("update document", async () => {
+            let product = {
+                id: null,
+                title: 'iPhone X',
+                price: 999.99,
+                currency: 'USD',
+                storage: 64,
+                manufacturer: 'Apple',
+                in_stock: true,
+                last_update: new Date('2017-10-01T00:00:00')
+            };
+            
+            const docId = "products/1-A";
+
+            await session.store(product, docId);
+            assert.strictEqual(product.id, docId);
+            
+            await session.saveChanges();
+            assert.strictEqual(product.id, docId);
+
+            product = await session.load(docId);
+            product.in_stock = false;
+            product.storage = 42;
+            await session.saveChanges();
+
+            product = await session.load(docId);
+            assert.strictEqual(product.in_stock, false);
+            assert.strictEqual(product.storage, 42);
+        });
     });
 
     describe("attachments", () => {
+        
         it("store attachment", async () => {
             const doc = new User({
                 name: "John"
@@ -139,6 +218,8 @@ describe("Readme query samples", function () {
         describe("having attachment", () => {
 
             let doc;
+            const attachmentPath = path.join(__dirname, "../Assets/tubes.png");
+            const attachmentName = "tubes.png";
 
             beforeEach(async () => {
 
@@ -150,21 +231,22 @@ describe("Readme query samples", function () {
                 await session.store(doc);
 
                 // open and store attachment
-                const fileStream = fs.createReadStream(path.join(__dirname, "../Assets/tubes.png"));
-                session.advanced.attachments.store(doc, "tubes.png", fileStream, "image/png");
+                const fileStream = fs.createReadStream(attachmentPath);
+                session.advanced.attachments.store(doc, attachmentName, fileStream, "image/png");
 
                 await session.saveChanges();
                 fileStream.close();
             });
 
             it("get attachment", (done) => {
-                session.advanced.attachments.get(doc.id, "tubes.png")
+                session.advanced.attachments.get(doc.id, attachmentName)
                     .then(attachment => {
                         print(attachment.details);
-
+                        assert.strictEqual(attachment.details.name, attachmentName)
+                        
                         // attachment.data is a Readable
                         attachment.data
-                            .pipe(fs.createWriteStream(".test/tubes.png"))
+                            .pipe(fs.createWriteStream("test/tubes.png"))
                             .on("error", done)
                             .on("finish", () => {
                                 attachment.dispose();
@@ -174,23 +256,27 @@ describe("Readme query samples", function () {
             });
 
             it("attachment exists", async () => {
-                print(await session.advanced.attachments.exists(doc.id, "tubes.png"));
-                print(await session.advanced.attachments.exists(doc.id, "x.png"));
+                let attachmentExists = await session.advanced.attachments.exists(doc.id, attachmentName);
+                assert.strictEqual(attachmentExists, true);
+                
+                attachmentExists = await session.advanced.attachments.exists(doc.id, "x.png");
+                assert.strictEqual(attachmentExists, false);
             });
 
-            it("get attachments names", async () => {
+            it("get attachment names", async () => {
                 {
                     const session2 = store.openSession();
                     const entity = await session2.load(doc.id);
-                    print(await session2.advanced.attachments.getNames(entity));
+                    const names = await session2.advanced.attachments.getNames(entity);
+                    assert.strictEqual(names[0].name, attachmentName)
                 }
             });
-
         });
     });
 
     describe("bulk insert", async () => {
-        it("example", async () => {
+        
+        it("bulk insert example", async () => {
             // create bulk insert instance using DocumentStore instance
             const bulkInsert = store.bulkInsert();
 
@@ -203,14 +289,24 @@ describe("Readme query samples", function () {
 
             // flush data and finish
             await bulkInsert.finish();
+
+            {
+                session = store.openSession();
+                const userEntity: User = await session.load('users/2-A');
+                assert.strictEqual(userEntity.name, "Maria");
+                
+                const users = await session.query({ collection: 'users'}).all();
+                assert.strictEqual(users.length, 6);
+            }
         });
     });
 
     describe("changes", () => {
 
-        it("example", async () => {
+        it("listen to changes", async () => {
             const changes = store.changes();
             const docsChanges = changes.forDocumentsInCollection("users");
+            
             docsChanges.on("data", change => {
                 print(change);
                 changes.dispose();
@@ -226,7 +322,6 @@ describe("Readme query samples", function () {
                 resolve();
             }, 300));
         });
-
     });
 
     describe("with user data set", function () {
@@ -246,62 +341,85 @@ describe("Readme query samples", function () {
         it("projections single field", async () => {
             query = session.query({ collection: "users" })
                 .selectFields("name");
+            
             results = await query.all();
+            assert.strictEqual(results[0], "John");
         });
 
         it("projections multiple fields", async () => {
             query = session.query({ collection: "users" })
                 .selectFields(["name", "age"]);
+            
             results = await query.all();
+            
+            const keys = Object.keys(results[2]);
+            assert.strictEqual(results[2][keys[0]], "Thomas");
+            assert.strictEqual(results[2][keys[1]], 25);
         });
 
         it("distinct", async () => {
             query = session.query({ collection: "users" })
                 .selectFields("age")
                 .distinct();
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("where equals", async () => {
             query = session.query({ collection: "users" })
                 .whereEquals("age", 30);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where in", async () => {
             query = session.query({ collection: "users" })
                 .whereIn("name", ["John", "Thomas"]);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("where between", async () => {
             query = session.query({ collection: "users" })
                 .whereBetween("registeredAt", new Date(2016, 0, 1), new Date(2017, 0, 1));
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where greater than", async () => {
             query = session.query({ collection: "users" })
                 .whereGreaterThan("age", 29);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where exists", async () => {
             query = session.query({ collection: "users" })
                 .whereExists("kids");
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("where contains any", async () => {
             query = session.query({ collection: "users" })
                 .containsAny("kids", ["Mara"]);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("search()", async () => {
             query = session.query({ collection: "users" })
                 .search("kids", "Mara John");
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("subclause", async () => {
@@ -312,14 +430,18 @@ describe("Readme query samples", function () {
                 .whereEquals("age", 25)
                 .whereNotEquals("name", "Thomas")
                 .closeSubclause();
+            
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("not()", async () => {
             query = await session.query({ collection: "users" })
                 .not()
                 .whereEquals("age", 25);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("orElse", async () => {
@@ -327,7 +449,19 @@ describe("Readme query samples", function () {
                 .whereExists("kids")
                 .orElse()
                 .whereLessThan("age", 30);
+            
             results = await query.all();
+            assert.strictEqual(results.length, 3);
+        });
+
+        it("set default operator", async () => {
+            query = await session.query({collection: "users"})
+                .usingDefaultOperator("OR") // override the default 'AND' operator
+                .whereExists("kids")
+                .whereLessThan("age", 29)
+            
+            results = await query.all();            
+            assert.strictEqual(results.length, 3);
         });
 
         it("orderBy()", async () => {
@@ -335,6 +469,19 @@ describe("Readme query samples", function () {
                 .orderBy("age");
 
             results = await query.all();
+            
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].age, 25);
+        });
+
+        it("orderByDesc()", async () => {
+            query = await session.query({ collection: "users" })
+                .orderByDescending("age");
+
+            results = await query.all();
+
+            assert.strictEqual(results.length, 3);
+            assert.strictEqual(results[0].age, 30);
         });
 
         it("take()", async () => {
@@ -343,6 +490,7 @@ describe("Readme query samples", function () {
                 .take(2);
 
             results = await query.all();
+            assert.strictEqual(results.length, 2);
         });
 
         it("skip()", async () => {
@@ -352,6 +500,7 @@ describe("Readme query samples", function () {
                 .skip(1);
 
             results = await query.all();
+            assert.strictEqual(results.length, 1);
         });
 
         it("can get stats", async () => {
@@ -360,6 +509,7 @@ describe("Readme query samples", function () {
                 .whereGreaterThan("age", 29)
                 .statistics(s => stats = s);
             results = await query.all();
+            
             assert.ok(stats);
             assert.strictEqual(stats.totalResults, 1);
             assert.strictEqual(stats.skippedResults, 0);
@@ -372,7 +522,7 @@ describe("Readme query samples", function () {
             assert.ok(stats.indexTimestamp instanceof Date);
         });
 
-        it("can stream users", async () => {
+        it("can stream users by prefix", async () => {
             const result: any = [];
 
             const userStream = await session.advanced.stream<User>("users/");
@@ -449,12 +599,12 @@ describe("Readme query samples", function () {
                 const suggestionQueryResult = await session.query(User, UsersIndex)
                     .suggestUsing(x => x.byField("name", "Jon"))
                     .execute();
+                
                 assert.strictEqual(suggestionQueryResult.name.suggestions.length, 1);
             }
         });
 
         it("can subscribe", async () => {
-
             // create a subscription
             const subscriptionName = await store.subscriptions.create({
                 query: "from users where age >= 30"
@@ -473,8 +623,10 @@ describe("Readme query samples", function () {
                 try {
                     // do batch processing
                     print(batch.items);
+                    assert.strictEqual(batch.items[0].id, "users/1-A");
 
-                    // call the callback, once you're done
+                    // call the callback once you're done
+                    // An acknowledgement will be sent to the server, so that server can send next batch
                     callback();
                 } catch (err) {
                     // if processing fails for a particular batch
@@ -487,32 +639,95 @@ describe("Readme query samples", function () {
 
             await testDone;
         });
-
     });
 
-    it("can use advanced.patch", async () => {
-        store.conventions.findCollectionNameForObjectLiteral = () => "users";
+    describe("using object literals for entities", function() {
+        let docStore: IDocumentStore;
+        
+        beforeEach(async function () {
+            docStore = new DocumentStore(store.urls, store.database);
+        });
 
-        {
-            const session = store.openSession();
-            await session.store({ name: "Matilda", age: 17, underAge: true }, "users/1");
-            await session.saveChanges();
-        }
+        afterEach(async () =>
+            await disposeTestDocumentStore(docStore));
 
-        {
-            const session = store.openSession();
-            session.advanced.increment("users/1", "age", 1);
-            session.advanced.patch("users/1", "underAge", false);
-            await session.saveChanges();
-        }
+        it("document will be in the collection set in the conventions", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = () => "Books";
+            docStore.initialize();
+            {
+                const session = docStore.openSession();
+                await session.store({ name: "The Hobbit", author: "Tolkien", genre: "Fantasy" }, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                assert.strictEqual(book["@metadata"]["@collection"], "Books");
+            }
+        });
 
-        {
-            const session = store.openSession();
-            const loaded: any = await session.load("users/1");
-            assert.strictEqual(loaded.underAge, false);
-            assert.strictEqual(loaded.age, 18);
-            assert.strictEqual(loaded.name, "Matilda");
-        }
+        it("document will be in the collection specified by content", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = (e: any) => e.collection;
+            docStore.initialize();
+
+            const book = {
+                collection: "Books", 
+                name: "The Hobbit",
+                author: "Tolkien",
+                genre: "Fantasy"
+            };
+            
+            {
+                const session = docStore.openSession();
+                await session.store(book, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                
+                const metadata = session.advanced.getMetadataFor(book);
+                assert.strictEqual(metadata[CONSTANTS.Documents.Metadata.COLLECTION], "Books");
+            }
+        });
+
+        it("document will be in empty collection when conventions not set", async () => {
+            docStore.initialize();
+            {
+                const session = docStore.openSession();
+                await session.store({ name: "The Hobbit", author: "Tolkien", genre: "Fantasy" }, "books/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const book = await session.load("books/1");
+                assert.strictEqual(book["@metadata"]["@collection"], undefined);
+            }
+        });
+
+        it("can use advanced.patch", async () => {
+            docStore.conventions.findCollectionNameForObjectLiteral = () => "users";
+            docStore.initialize();
+            
+            {
+                const session = docStore.openSession();
+                await session.store({name: "Matilda", age: 17, underAge: true}, "users/1");
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                session.advanced.increment("users/1", "age", 1);
+                session.advanced.patch("users/1", "underAge", false);
+                await session.saveChanges();
+            }
+            {
+                const session = docStore.openSession();
+                const loaded: any = await session.load("users/1");
+                assert.strictEqual(loaded.underAge, false);
+                assert.strictEqual(loaded.age, 18);
+                assert.strictEqual(loaded.name, "Matilda");
+            }
+        });
     });
 
     describe("with revisions set up", function() {
@@ -526,7 +741,7 @@ describe("Readme query samples", function () {
             const user = {
                 name: "Marcin",
                 age: 30,
-                pet: "users/4"
+                pet: "Cat"
             };
 
             await session.store(user, "users/1");
@@ -539,10 +754,10 @@ describe("Readme query samples", function () {
             const revisions = await session.advanced.revisions.getFor("users/1");
             assert.strictEqual(revisions.length, 2);
         });
-
     });
 
     describe("can use time series", function () {
+        
         it("basic", async () => {
             {
                 const session = store.openSession();
@@ -551,7 +766,6 @@ describe("Readme query samples", function () {
                 tsf.append(new Date(), 120);
                 await session.saveChanges();
             }
-
             {
                 const session = store.openSession();
                 const tsf = session.timeSeriesFor("users/1", "heartbeat");
@@ -589,5 +803,4 @@ describe("Readme query samples", function () {
         await newSession.saveChanges();
         return users;
     }
-
 });

@@ -404,7 +404,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _usingDefaultOperator(operator): void {
-        if (!this._whereTokens || !this._whereTokens.length) {
+        if (!this._whereTokens || !!this._whereTokens.length) {
             throwError("InvalidOperationException",
                 "Default operator can only be set before any where clause is added.");
         }

@@ -988,13 +988,10 @@ export class RequestExecutor implements IDisposable {
             const timeout = command.timeout || this._defaultTimeout;
 
             if (!TypeUtil.isNullOrUndefined(timeout)) {
-
                 const cancelTask = setTimeout(() => abortController.abort(), timeout);
 
                 try {
-                    const response = await this._send(chosenNode, command, sessionInfo, request);
-                    clearTimeout(cancelTask);
-                    return response;
+                    return await this._send(chosenNode, command, sessionInfo, request);
                 } catch (error) {
                     if (error.name === "AbortError") {
                         const timeoutException = getError("TimeoutException", "The request for " + request.uri + " failed with timeout after " + TimeUtil.millisToTimeSpan(timeout), error);
@@ -1013,6 +1010,8 @@ export class RequestExecutor implements IDisposable {
                         return null;
                     }
                     throw error;
+                } finally {
+                    clearTimeout(cancelTask);
                 }
             } else {
                 return await this._send(chosenNode, command, sessionInfo, request);

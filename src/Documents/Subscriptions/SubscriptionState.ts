@@ -4,7 +4,7 @@ export interface SubscriptionState {
     changeVectorForNextBatchStartingPoint: string;
     subscriptionId: number;
     subscriptionName: string;
-    mentorName: string;
+    mentorNode: string;
     nodeTag: string;
     lastBatchAckTime: string;
     lastClientConnectionTime: string;

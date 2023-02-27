@@ -6,15 +6,15 @@ import {
     IndexingReduceDefinition, StubMapUtils
 } from "./StronglyTyped";
 import { DocumentType } from "../DocumentAbstractions";
-import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { StringBuilder } from "../../Utility/StringBuilder";
+import { BaseJavaScriptIndexCreationTask } from "./BaseJavaScriptIndexCreationTask";
 
 export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends object = any>
-    extends AbstractGenericIndexCreationTask<keyof TMapResult & string> {
+    extends BaseJavaScriptIndexCreationTask<keyof TMapResult & string> {
 
     private _maps: string[] = [];
     private _reduce: string;
@@ -39,7 +39,8 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
 
         const escapedCollection = new StringBuilder();
         StringUtil.escapeString(escapedCollection, collection);
-        this._maps.push(`map('${escapedCollection.toString()}', ${definition})`);
+        const rawMap = `map('${escapedCollection.toString()}', ${definition})`;
+        this._maps.push(this.postProcessDefinition(rawMap, "map"));
     }
 
     /**
@@ -47,7 +48,8 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
      * @param mapReduce Reduce definition
      */
     public reduce(mapReduce: IndexingReduceDefinition<TMapResult>) {
-        this._reduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
+        const rawReduce = mapReduce(new IndexingGroupResults<TMapResult>()).format();
+        this._reduce = this.postProcessDefinition(rawReduce, "reduce");
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-types

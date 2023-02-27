@@ -25,6 +25,8 @@ import {
     GetIndexErrorsOperation,
     GetIndexStatisticsOperation,
     AbstractCsharpIndexCreationTask,
+    SetIndexesLockOperationParameters,
+    SetIndexesPriorityOperationParameters,
 } from "../../../src";
 import { UsersIndex, UsersInvalidIndex, UsersIndexWithPascalCasedFields } from "../../Assets/Indexes";
 import { TypeUtil } from "../../../src/Utility/TypeUtil";
@@ -155,7 +157,7 @@ describe("Index operations", function () {
 
     });
 
-    it("can set index lock mode", async () => {
+    it("can set index lock mode - single index", async () => {
         const indexDef = usersIndex.createIndexDefinition();
         await store.maintenance.send(new PutIndexesOperation(indexDef));
         await store.maintenance.send(new SetIndexesLockOperation(indexDef.name, "LockedError"));
@@ -163,14 +165,56 @@ describe("Index operations", function () {
         const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
         assert.strictEqual(newIndexDef.lockMode, "LockedError");
     });
+    
+    it("can set index lock mode - multiple indexes", async () => {
+        const indexDef1 = usersIndex.createIndexDefinition();
+        const indexDef2 = usersIndexWithPascalCasedFields.createIndexDefinition();
+        
+        await store.maintenance.send(new PutIndexesOperation(indexDef1));
+        await store.maintenance.send(new PutIndexesOperation(indexDef2));
+        
+        const params: SetIndexesLockOperationParameters = {
+            indexNames: [indexDef1.name, indexDef2.name],
+            mode: "LockedIgnore"
+        }
+        
+        await store.maintenance.send(new SetIndexesLockOperation(params));
+        
+        const newIndexDef1 = await store.maintenance.send(new GetIndexOperation(indexDef1.name));
+        const newIndexDef2 = await store.maintenance.send(new GetIndexOperation(indexDef2.name));
+        
+        assert.strictEqual(newIndexDef1.lockMode, "LockedIgnore");
+        assert.strictEqual(newIndexDef2.lockMode, "LockedIgnore");
+    });
 
-    it("can set index priority", async () => {
+    it("can set index priority - single index", async () => {
         const indexDef = usersIndex.createIndexDefinition();
         await store.maintenance.send(new PutIndexesOperation(indexDef));
         await store.maintenance.send(new SetIndexesPriorityOperation(indexDef.name, "High"));
 
         const newIndexDef = await store.maintenance.send(new GetIndexOperation(indexDef.name));
         assert.strictEqual(newIndexDef.priority, "High");
+    });
+
+    it("can set index priority - multiple indexes", async () => {
+        const indexDef1 = usersIndex.createIndexDefinition();
+        const indexDef2 = usersIndexWithPascalCasedFields.createIndexDefinition();
+
+        await store.maintenance.send(new PutIndexesOperation(indexDef1));
+        await store.maintenance.send(new PutIndexesOperation(indexDef2));
+
+        const params: SetIndexesPriorityOperationParameters = {
+            indexNames: [indexDef1.name, indexDef2.name],
+            priority: "High"
+        }
+
+        await store.maintenance.send(new SetIndexesPriorityOperation(params));
+
+        const newIndexDef1 = await store.maintenance.send(new GetIndexOperation(indexDef1.name));
+        const newIndexDef2 = await store.maintenance.send(new GetIndexOperation(indexDef2.name));
+
+        assert.strictEqual(newIndexDef1.priority, "High");
+        assert.strictEqual(newIndexDef2.priority, "High");
     });
 
     it("can list errors", async () => {
