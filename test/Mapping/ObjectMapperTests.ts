@@ -134,6 +134,36 @@ describe("ObjectMapper", function () {
                 assert.strictEqual(d.getMonth(), 4);
             }
         });
+        
+        it("can handle polymorphic arrays", () => {
+            class Comedy extends Movie {}
+            
+            const typeInfo = {
+                nestedTypes: {
+                    "movies.0": "Movie",
+                    "movies.1": "Comedy"
+                }
+            };
+
+            const result: IRavenObject = mapper.fromObjectLiteral({
+                movies: [
+                    {
+                        name: "Matrix",
+                        releasedAt: "1999-06-06T00:00:00.0000000"
+                    },
+                    {
+                        name: "Airplane",
+                        releasedAt: "1998-07-07T00:00:00.0000000"
+                    },
+                ]
+            }, typeInfo, new Map([[Movie.name, Movie], [Comedy.name, Comedy]]));
+
+            assert.ok(result);
+            // eslint-disable-next-line no-prototype-builtins
+            assert.ok(result.hasOwnProperty("movies"));
+            assert.ok(result.movies[0] instanceof Movie);
+            assert.ok(result.movies[1] instanceof Comedy);
+        });
 
         it("can handle top-level ctor", () => {
             const typeInfo = {
@@ -536,7 +566,29 @@ describe("ObjectMapper", function () {
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
-                    "dates[]": "date"
+                    "dates.0": "date",
+                    "dates.1": "date"
+                }
+            };
+            assert.deepStrictEqual(typeInfo, expectedTypeInfo);
+            assert.strictEqual(typeof result.dates[0], "string");
+            assert.strictEqual(result.dates[0], "2012-11-01T00:00:00.0000000");
+            assert.strictEqual(result.dates.length, 2);
+        });
+        
+        it("should store the type of every array member in order to support polymorphism", () => {
+            const testObject = {
+                dates: [
+                    new Date(2012, 10, 1),
+                    new Date(2013, 2, 1)
+                ]
+            };
+            const result: any = mapper.toObjectLiteral(testObject, typeInfoCallback);
+            const expectedTypeInfo = {
+                typeName: null,
+                nestedTypes: {
+                    "dates.0": "date",
+                    "dates.1": "date"
                 }
             };
             assert.deepStrictEqual(typeInfo, expectedTypeInfo);
@@ -571,8 +623,10 @@ describe("ObjectMapper", function () {
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
-                    "movies[]": Movie.name,
-                    "movies[].releasedAt": "date"
+                    "movies.0": Movie.name,
+                    "movies.0.releasedAt": "date",
+                    "movies.1": Movie.name,
+                    "movies.1.releasedAt": "date"
                 }
             };
 
@@ -601,7 +655,8 @@ describe("ObjectMapper", function () {
                 nestedTypes: {
                     "me": "Person",
                     "me.bornAt": "date",
-                    "people[]": "Person"
+                    "people.0": "Person",
+                    "people.1": "Person"
                 }
             };
             assert.deepStrictEqual(typeInfo, expectedTypeInfo);
@@ -653,7 +708,7 @@ describe("ObjectMapper", function () {
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
-                    "animals[]": animalType.name
+                    "animals.0": animalType.name
                 }
             };
 
@@ -731,8 +786,16 @@ describe("ObjectMapper", function () {
             const expectedTypeInfo = {
                 typeName: null,
                 nestedTypes: {
-                    "characters[][]": "Person",
-                    "characters[][].lastActedAt": "date"
+                    "characters.0.0": "Person",
+                    "characters.0.0.lastActedAt": "date",
+                    "characters.0.1": "Person",
+                    "characters.0.1.lastActedAt": "date",
+                    "characters.1.0": "Person",
+                    "characters.1.0.lastActedAt": "date",
+                    "characters.1.1": "Person",
+                    "characters.1.1.lastActedAt": "date",
+                    "characters.1.2": "Person",
+                    "characters.1.2.lastActedAt": "date",
                 }
             };
 
