@@ -78,16 +78,16 @@ describe("bulk insert", function () {
         } catch (error) {
             assert.strictEqual(error.name, "BulkInsertAbortedException", error.message);
             const bulkInsertCanceled = /TaskCanceledException/i.test(error.message);
-            const bulkInsertNotRegisteredYet = 
+            const bulkInsertNotRegisteredYet =
                 /Unable to kill bulk insert operation, because it was not found on the server./i.test(error.message);
-            const bulkInsertSuccessfullyKilled = 
+            const bulkInsertSuccessfullyKilled =
                 /Bulk insert was aborted by the user./i.test(error.message);
 
             // this one's racy, so it's one or the other
             assert.ok(
-                bulkInsertCanceled 
-                || bulkInsertNotRegisteredYet 
-                || bulkInsertSuccessfullyKilled, 
+                bulkInsertCanceled
+                || bulkInsertNotRegisteredYet
+                || bulkInsertSuccessfullyKilled,
                 "Unexpected error message:" + error.message);
         }
     });
@@ -107,16 +107,16 @@ describe("bulk insert", function () {
         } catch (error) {
             assert.strictEqual(error.name, "BulkInsertAbortedException", error.message);
             const bulkInsertCanceled = /TaskCanceledException/i.test(error.message);
-            const bulkInsertNotRegisteredYet = 
+            const bulkInsertNotRegisteredYet =
                 /Unable to kill bulk insert operation, because it was not found on the server./i.test(error.message);
-            const bulkInsertSuccessfullyKilled = 
+            const bulkInsertSuccessfullyKilled =
                 /Bulk insert was aborted by the user./i.test(error.message);
 
             // this one's racy, so it's one or the other
             assert.ok(
-                bulkInsertCanceled 
-                || bulkInsertNotRegisteredYet 
-                || bulkInsertSuccessfullyKilled, 
+                bulkInsertCanceled
+                || bulkInsertNotRegisteredYet
+                || bulkInsertSuccessfullyKilled,
                 "Unexpected error message:" + error.message);
         }
     });
@@ -202,9 +202,11 @@ describe("bulk insert", function () {
             assert.ok(metadata["@id"], entity["id"]);
             const nestedObjectTypes = metadata[CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES];
             assert.ok(nestedObjectTypes);
-            assert.strictEqual(Object.keys(nestedObjectTypes).length, 2);
-            assert.strictEqual(nestedObjectTypes["items[]"], BulkTestItem.name);
-            assert.strictEqual(nestedObjectTypes["items[].created"], "date");
+            assert.strictEqual(Object.keys(nestedObjectTypes).length, 6);
+            for (let i = 0; i < 3; i++) {
+                assert.strictEqual(nestedObjectTypes["items." + i], BulkTestItem.name);
+                assert.strictEqual(nestedObjectTypes["items." + i + ".created"], "date");
+            }
         }
     });
 
