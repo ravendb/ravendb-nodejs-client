@@ -1,7 +1,7 @@
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as assert from "assert";
 import DocumentStore, {
-    IDocumentStore,
+    IDocumentStore, PatchCommandData, PatchRequest,
 } from "../../src";
 import { assertThat } from "../Utils/AssertExtensions";
 
@@ -390,5 +390,34 @@ describe("With custom key case conventions set", function () {
             assert.strictEqual(loaded.Name, stored.name);
             assert.strictEqual(loaded.Equipment[0].Name, stored.equipment[0].name);
         }
+    });
+
+    it("returns correct modified document after patch", async () => {
+        class PascalDoc {
+            public SIPCall: string
+        }
+
+        {
+            const session = regularStore.openSession();
+            const pascalDoc = new PascalDoc();
+            pascalDoc.SIPCall = "RavenDB";
+
+            await session.store(pascalDoc, "pascal/1");
+            await session.saveChanges();
+        }
+        let modifiedDocument
+        regularStore.addSessionListener("afterSaveChanges", event => {
+            modifiedDocument = event.entity
+        });
+
+        const session = regularStore.openSession();
+        await session.load("pascal/1");
+
+        const patchRequest = PatchRequest.forScript("this.SIPCall = \"Patched\"");
+        session.advanced.defer(new PatchCommandData("pascal/1", null, patchRequest))
+        await session.saveChanges();
+
+        assert.strictEqual(modifiedDocument.SIPCall, "Patched")
+        assert.ok(!("sipCall" in modifiedDocument));
     });
 });
