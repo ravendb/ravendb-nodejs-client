@@ -444,12 +444,13 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                         nestedTypeInfoKey = ObjectUtil[this._conventions.remoteEntityFieldNameConvention](key);
                     }
 
+                    let innerSkipTypes = skipTypes
                     if (!skipTypes) {
-                        skipTypes = key === CONSTANTS.Documents.Metadata.KEY;
+                        innerSkipTypes = key === CONSTANTS.Documents.Metadata.KEY;
                     }
 
                     const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
-                    result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes, skipTypes);
+                    result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes, innerSkipTypes);
                     return result;
                 }, {});
         }
