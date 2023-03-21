@@ -24,7 +24,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12.x, 14.x, 16.x, 18.x]
+        node-version: [14.x, 16.x, 18.x]
         serverVersion: ["5.2", "5.4"]
       fail-fast: false
 
