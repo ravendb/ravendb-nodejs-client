@@ -33,13 +33,12 @@ import { validateUri } from "../Utility/UriUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
 import { closeHttpResponse } from "../Utility/HttpUtil";
 import { PromiseStatusTracker } from "../Utility/PromiseUtil";
-import * as http from "http";
-import * as https from "https";
+import type * as http from "http";
+import type * as https from "https";
 import { IBroadcast } from "./IBroadcast";
 import { StringUtil } from "../Utility/StringUtil";
 import { IRaftCommand } from "./IRaftCommand";
 import AbortController from "abort-controller";
-import { URL } from "url";
 import { EventEmitter } from "events";
 import {
     BeforeRequestEventArgs,
@@ -142,7 +141,11 @@ export class NodeStatus implements IDisposable {
 export class RequestExecutor implements IDisposable {
     private _emitter = new EventEmitter();
 
-    private static readonly GLOBAL_APPLICATION_IDENTIFIER = uuidv4().toString();
+    /*
+      we don't initialize this here due to issue with cloudflare
+      see: https://github.com/cloudflare/miniflare/issues/292
+     */
+    private static GLOBAL_APPLICATION_IDENTIFIER: string = null;
 
     private static readonly INITIAL_TOPOLOGY_ETAG = -2;
 
@@ -183,9 +186,11 @@ export class RequestExecutor implements IDisposable {
 
     private _httpAgent: http.Agent;
 
-    private static readonly KEEP_ALIVE_HTTP_AGENT = new http.Agent({
-        keepAlive: true
-    });
+    /*
+      we don't initialize this here due to issue with cloudflare
+      see: https://github.com/cloudflare/miniflare/issues/292
+    */
+    private static KEEP_ALIVE_HTTP_AGENT: http.Agent = null;
 
     private static readonly HTTPS_AGENT_CACHE = new Map<string, https.Agent>();
 
@@ -330,6 +335,10 @@ export class RequestExecutor implements IDisposable {
     }
 
     public getHttpAgent(): http.Agent {
+        if (this.conventions.customFetch) {
+            return null;
+        }
+
         if (this._httpAgent) {
             return this._httpAgent;
         }
@@ -344,6 +353,9 @@ export class RequestExecutor implements IDisposable {
             if (RequestExecutor.HTTPS_AGENT_CACHE.has(cacheKey)) {
                 return RequestExecutor.HTTPS_AGENT_CACHE.get(cacheKey);
             } else {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
+                const https = require("https");
+
                 const agent = new https.Agent({
                     keepAlive: true,
                     ...agentOptions
@@ -353,7 +365,19 @@ export class RequestExecutor implements IDisposable {
                 return agent;
             }
         } else {
+            RequestExecutor.assertKeepAliveAgent();
             return RequestExecutor.KEEP_ALIVE_HTTP_AGENT;
+        }
+    }
+
+    private static assertKeepAliveAgent() {
+        if (!RequestExecutor.KEEP_ALIVE_HTTP_AGENT) {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const http = require("http");
+
+            RequestExecutor.KEEP_ALIVE_HTTP_AGENT = new http.Agent({
+                keepAlive: true
+            });
         }
     }
 
@@ -399,12 +423,23 @@ export class RequestExecutor implements IDisposable {
         opts?: IRequestExecutorOptions): RequestExecutor {
         const { authOptions, documentConventions } = opts || {} as IRequestExecutorOptions;
         const executor = new RequestExecutor(database, authOptions, documentConventions);
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, this.GLOBAL_APPLICATION_IDENTIFIER);
+
+        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, RequestExecutor.getGlobalApplicationIdentifier());
 
         // this is just to get rid of unhandled rejection, we're handling it later on
         executor._firstTopologyUpdatePromise.catch(TypeUtil.NOOP);
 
         return executor;
+    }
+
+    private static getGlobalApplicationIdentifier() {
+        // due to cloudflare constraints we can't init GLOBAL_APPLICATION_IDENTIFIER in static
+
+        if (!this.GLOBAL_APPLICATION_IDENTIFIER) {
+            this.GLOBAL_APPLICATION_IDENTIFIER = uuidv4();
+        }
+
+        return this.GLOBAL_APPLICATION_IDENTIFIER;
     }
 
     public static createForSingleNodeWithConfigurationUpdates(
@@ -1282,6 +1317,10 @@ export class RequestExecutor implements IDisposable {
 
         if (!request) {
             return null;
+        }
+
+        if (this.conventions.customFetch) {
+            request.fetcher = this.conventions.customFetch;
         }
 
         const req = Object.assign(request, this._defaultRequestOptions);
