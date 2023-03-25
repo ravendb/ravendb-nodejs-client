@@ -1820,7 +1820,7 @@ export class RequestExecutor implements IDisposable {
         const exceptionSchema = {
             url: req.uri.toString(),
             message: e.message,
-            error: `An exception occurred while contacting ${ req.uri } . ${ os.EOL + e.stack }`,
+            error: `An exception occurred while contacting ${ req.uri }: ${ e.message } . ${ os.EOL + e.stack }`,
             type: e.name
         };
 
