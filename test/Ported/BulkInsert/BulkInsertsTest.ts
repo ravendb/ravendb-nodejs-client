@@ -249,7 +249,7 @@ describe("bulk insert", function () {
         {
             // use case transformless store to verify doc
             const session = store.openSession();
-            const loaded = await session.load(camelCasedObj["id"]);
+            const loaded = await session.load<any>(camelCasedObj["id"]);
             assert.ok(loaded);
             assert.ok("Name" in loaded);
             assert.strictEqual(loaded["Name"], camelCasedObj.name);
