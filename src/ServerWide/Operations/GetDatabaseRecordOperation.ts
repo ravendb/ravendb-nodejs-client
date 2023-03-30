@@ -51,7 +51,7 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
-            this._throwInvalidResponse();
+            return null;
         }
 
         let body: string = null;
