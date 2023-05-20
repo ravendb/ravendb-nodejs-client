@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import * as assert from "assert";
 import {
     testContext,
@@ -29,6 +28,7 @@ import { DeleteIndexOperation } from "../../../src/Documents/Operations/Indexes/
 import { QueryStatistics } from "../../../src/Documents/Session/QueryStatistics";
 import { MoreLikeThisOptions } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
 import { IndexCreation } from "../../../src/Documents/Indexes/IndexCreation";
+import { delay } from "../../../src/Utility/PromiseUtil";
 
 describe("Indexes from client", function () {
 
@@ -84,7 +84,7 @@ describe("Indexes from client", function () {
 
         const indexName = new UsersIndex().getIndexName();
 
-        await BluebirdPromise.delay(2000);
+        await delay(2000);
 
         await store.maintenance.send(new ResetIndexOperation(indexName));
         await testContext.waitForIndexing(store);
@@ -283,7 +283,7 @@ describe("Indexes from client", function () {
         }
 
         {
-            // make queries to create auto indexes 
+            // make queries to create auto indexes
             const session = store.openSession();
             let stats: QueryStatistics;
             let users = await session.query(User)
