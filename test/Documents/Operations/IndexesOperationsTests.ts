@@ -234,6 +234,11 @@ describe("Index operations", function () {
             return errors[0].errors.length;
         }, 1);
 
+        await testContext.waitForValue(async () => {
+            const errors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));
+            return errors[0].errors.length;
+        }, 1);
+
         const indexErrors = await store.maintenance.send(new GetIndexErrorsOperation());
         const perIndexErrors = await store.maintenance.send(new GetIndexErrorsOperation([indexDef.name]));
 
