@@ -1,4 +1,3 @@
-import * as BluebirdPromise from "bluebird";
 import { GetOperationStateCommand } from "./GetOperationStateOperation";
 import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand";
 import { throwError } from "../../Exceptions";
@@ -6,6 +5,7 @@ import { OperationExceptionResult } from "./OperationAbstractions";
 import { ExceptionDispatcher } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RequestExecutor } from "../../Http/RequestExecutor";
+import { delay } from "../../Utility/PromiseUtil";
 
 type OperationStatus = "Completed" | "Canceled" | "Faulted";
 
@@ -47,7 +47,7 @@ export class OperationCompletionAwaiter {
 
     public waitForCompletion(): Promise<void> {
         const operationStatusPolling = () => {
-            return BluebirdPromise.resolve()
+            return Promise.resolve()
                 .then(() => this._fetchOperationStatus())
                 .then((operationStatusResult) => {
                     const operationStatus = operationStatusResult.status as OperationStatus;
@@ -65,7 +65,7 @@ export class OperationCompletionAwaiter {
                         }
                     }
 
-                    return BluebirdPromise.delay(500)
+                    return delay(500)
                         .then(() => operationStatusPolling());
                 });
         };
