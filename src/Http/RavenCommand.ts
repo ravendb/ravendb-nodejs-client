@@ -16,6 +16,7 @@ import * as http from "http";
 import { ObjectTypeDescriptor } from "../Types";
 import { ReadableWebToNodeStream } from "../Utility/ReadableWebToNodeStream";
 import { LengthUnawareFormData } from "../Utility/LengthUnawareFormData";
+import { Stream } from "readable-stream";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -141,7 +142,11 @@ export abstract class RavenCommand<TResult> {
         const fetchFn = fetcher ?? fetch; // support for custom fetcher
         const response = await fetchFn(uri, optionsToUse);
 
-        const effectiveStream: stream.Readable = fetcher ? new ReadableWebToNodeStream(response.body) : response.body;
+        const effectiveStream: stream.Readable =
+            fetcher && response.body
+                ? new ReadableWebToNodeStream(response.body)
+                : (response.body ?? new Stream());
+
         effectiveStream
             .pipe(passthrough);
 
@@ -226,9 +231,9 @@ export abstract class RavenCommand<TResult> {
                 `Error processing command ${this.constructor.name} response: ${err.stack}`, err);
         } finally {
             closeHttpResponse(response);
-            // response.destroy(); 
+            // response.destroy();
             // since we're calling same hosts and port a lot, we might not want to destroy sockets explicitly
-            // they're going to get back to Agent's pool and reused 
+            // they're going to get back to Agent's pool and reused
         }
 
         return "Automatic";
@@ -254,9 +259,9 @@ export abstract class RavenCommand<TResult> {
     }
 
     protected _reviveResultTypes<TResponse extends object>(
-        raw: object, 
-        conventions: DocumentConventions, 
-        typeInfo?: TypeInfo, 
+        raw: object,
+        conventions: DocumentConventions,
+        typeInfo?: TypeInfo,
         knownTypes?: Map<string, ObjectTypeDescriptor>) {
         return conventions.objectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
     }
