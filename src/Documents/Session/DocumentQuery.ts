@@ -148,13 +148,14 @@ export class DocumentQuery<T extends object>
             propertiesOrQueryData.isProjectInto = true;
             const queryData = propertiesOrQueryData as QueryData;
 
-            // add nested object types to result so we can properly read types
+            // add nested object types to result, so we can properly read types
             if (!queryData.isCustomFunction) {
                 queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
                 queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
             }
 
-            queryData.projectionBehavior = projectionBehavior;
+            // we don't assign here projection behavior as it comes from override which already holds proper behavior from QueryData
+            // queryData.projectionBehavior = projectionBehavior;
 
             return this.createDocumentQueryInternal(projectionType, queryData);
         }
@@ -211,10 +212,10 @@ export class DocumentQuery<T extends object>
     public includeExplanations(
         explanationsCallback: ValueCallback<Explanations>): IDocumentQuery<T>;
     public includeExplanations(
-        options: ExplanationOptions, 
+        options: ExplanationOptions,
         explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T>;
     public includeExplanations(
-        optionsOrExplanationsCallback: ExplanationOptions | ValueCallback<Explanations>, 
+        optionsOrExplanationsCallback: ExplanationOptions | ValueCallback<Explanations>,
         explanationsCallback?: ValueCallback<Explanations>): IDocumentQuery<T> {
         if (arguments.length === 1) {
             return this.includeExplanations(
@@ -223,7 +224,7 @@ export class DocumentQuery<T extends object>
 
         this._includeExplanations(
             optionsOrExplanationsCallback as ExplanationOptions, explanationsCallback);
-            
+
         return this;
     }
 
@@ -667,7 +668,7 @@ export class DocumentQuery<T extends object>
     }
 
     public highlight(
-        parameters: HighlightingParameters, 
+        parameters: HighlightingParameters,
         hightlightingsCallback: ValueCallback<Highlightings>): IDocumentQuery<T> {
         this._highlight(parameters, hightlightingsCallback);
         return this;
@@ -740,8 +741,8 @@ export class DocumentQuery<T extends object>
         fieldName: Field<T>, shapeWkt: string, relation: SpatialRelation, distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
         fieldName: Field<T>,
-        shapeWkt: string, 
-        relation: SpatialRelation, 
+        shapeWkt: string,
+        relation: SpatialRelation,
         units: SpatialUnits,
         distanceErrorPct: number): IDocumentQuery<T>;
     public relatesToShape(
@@ -750,7 +751,7 @@ export class DocumentQuery<T extends object>
         relation: SpatialRelation,
         distanceErrorPctOrUnits?: SpatialUnits | number,
         distanceErrorPct?: number): IDocumentQuery<T> {
-        
+
         let units;
         if (TypeUtil.isNullOrUndefined(distanceErrorPct)) {
             if (TypeUtil.isString(distanceErrorPctOrUnits)) {
