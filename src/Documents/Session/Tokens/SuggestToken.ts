@@ -21,7 +21,7 @@ export class SuggestToken extends QueryToken {
         }
 
         this._fieldName = fieldName;
-        this._alias = alias.includes(" ") ? `"${alias}"` : alias;
+        this._alias = !!alias && alias.includes(" ") ? `"${alias}"` : alias;
         this._termParameterName = termParameterName;
         this._optionsParameterName = optionsParameterName;
     }
