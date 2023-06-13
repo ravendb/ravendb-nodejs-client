@@ -1,6 +1,7 @@
 import { QueryToken } from "./QueryToken";
 import { throwError } from "../../../Exceptions";
 import { StringUtil } from "../../../Utility/StringUtil";
+import { QueryFieldUtil } from "../../Queries/QueryFieldUtil";
 
 export class SuggestToken extends QueryToken {
 
@@ -21,13 +22,13 @@ export class SuggestToken extends QueryToken {
         }
 
         this._fieldName = fieldName;
-        this._alias = !!alias && alias.includes(" ") ? `"${alias}"` : alias;
+        this._alias = alias;
         this._termParameterName = termParameterName;
         this._optionsParameterName = optionsParameterName;
     }
 
     public static create(fieldName: string, alias: string, termParameterName: string, optionsParameterName: string) {
-        return new SuggestToken(fieldName, alias, termParameterName, optionsParameterName);
+        return new SuggestToken(fieldName, QueryFieldUtil.escapeIfNecessary(alias), termParameterName, optionsParameterName);
     }
 
     public get fieldName() {
