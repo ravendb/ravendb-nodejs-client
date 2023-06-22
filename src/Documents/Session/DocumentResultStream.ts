@@ -9,6 +9,4 @@ export interface DocumentStreamResultEvents<TEntity extends object> {
     end: void;
 }
 
-export interface DocumentResultStream<T extends object>
-    extends TypedEventEmitter<DocumentStreamResultEvents<T>>, NodeJS.ReadableStream {
-}
+export type DocumentResultStream<T extends object> = NodeJS.ReadableStream;
