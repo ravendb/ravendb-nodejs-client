@@ -16,7 +16,7 @@ class SemaphoreAcquisition implements SemaphoreAcquisitionContext {
 
     private _acquired: boolean;
     private _disposed: boolean = false;
-    private _timeout?: AsyncTimeout; 
+    private _timeout?: AsyncTimeout;
 
     private _sem: semaphore.Semaphore;
     private _promise: Promise<void>;
@@ -32,11 +32,11 @@ class SemaphoreAcquisition implements SemaphoreAcquisitionContext {
     public constructor(sem: semaphore.Semaphore, semOpts?: AcquireSemaphoreOptions) {
         const contextName = semOpts ? semOpts.contextName : "";
 
-        if (semOpts && semOpts.timeout) {
+        if (semOpts && semOpts.timeout != null) {
             const timedOutOpName = contextName ? `WAIT_FOR_SEM_${contextName}` : null;
             this._timeout = new AsyncTimeout(semOpts.timeout, timedOutOpName);
         }
-        
+
         this._acquired = false;
         this._sem = sem;
 
@@ -67,9 +67,9 @@ class SemaphoreAcquisition implements SemaphoreAcquisitionContext {
         let resultPromise = semAcquired;
 
         if (this._timeout) {
-            resultPromise = Promise.race([ 
-                semAcquired, 
-                this._timeout.promise 
+            resultPromise = Promise.race([
+                semAcquired,
+                this._timeout.promise
             ])
             .then(() => this._timeout.cancel());
         }
