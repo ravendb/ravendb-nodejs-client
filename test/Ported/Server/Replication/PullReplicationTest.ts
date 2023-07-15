@@ -238,7 +238,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
                     const pull: PullReplicationAsSink = {
                         database: hub2.database,
                         connectionStringName: "ConnectionString2-" + sink.database,
-                        hubDefinitionName: definitionName2,
+                        hubName: definitionName2,
                         taskId: pullTasks[0].taskId,
                         mode: "HubToSink"
                     };
@@ -366,7 +366,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil";
                 const pull: PullReplicationAsSink = {
                     database: hub.database,
                     connectionStringName: "ConnectionString-" + sink.database,
-                    hubDefinitionName: definitionName,
+                    hubName: definitionName,
                     disabled: true,
                     taskId: pullTasks[0].taskId,
                     mode: "HubToSink"
@@ -514,7 +514,7 @@ async function setupPullReplication(remoteName: string, sink: IDocumentStore, ..
         const pull: PullReplicationAsSink = {
             database: store.database,
             connectionStringName: "ConnectionString-" + store.database,
-            hubDefinitionName: remoteName,
+            hubName: remoteName,
             mode: "HubToSink"
         };
 
