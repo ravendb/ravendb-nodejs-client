@@ -62,7 +62,7 @@ export class ReplicationTestContext {
 
         let op: IMaintenanceOperation<ModifyOngoingTaskResult>;
 
-        if ("hubDefinitionName" in watcher) {
+        if ("hubName" in watcher) {
             op = new UpdatePullReplicationAsSinkOperation(watcher as PullReplicationAsSink);
         } else {
             op = new UpdateExternalReplicationOperation(watcher);

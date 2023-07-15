@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../Utils/TestUtil";
 
 import {
     ConfigureRevisionsOperation,
@@ -21,7 +21,7 @@ import { RevisionsResult } from "../../src/Documents/Operations/Revisions/Revisi
 import { delay } from "../../src/Utility/PromiseUtil";
 
 
-describe("RevisionsTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("RevisionsTest", function () {
 
     let store: IDocumentStore;
 

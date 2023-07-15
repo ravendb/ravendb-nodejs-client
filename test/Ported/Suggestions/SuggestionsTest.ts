@@ -1,10 +1,10 @@
 import * as assert from "assert";
 
 import { IDocumentStore, IndexDefinition, IndexFieldOptions, PutIndexesOperation, SuggestionOptions } from "../../../src";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { Users_ByName } from "../Indexing/IndexesFromClientTest";
 
-describe("SuggestionsTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("SuggestionsTest", function () {
 
     let store: IDocumentStore;
 

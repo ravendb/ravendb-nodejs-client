@@ -1,11 +1,11 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { DocumentType } from "../../../src/Documents/DocumentAbstractions";
 import { CreateSampleDataOperation } from "../../Utils/CreateSampleDataOperation";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { Movie } from "../../Assets/Graph";
 
-describe("BasicGraphQueriesTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("BasicGraphQueriesTest", function () {
 
     let store: IDocumentStore;
 

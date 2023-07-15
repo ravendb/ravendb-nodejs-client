@@ -12,7 +12,7 @@ on:
       ravendb_version:
         description: 'RavenDB Version'
         required: true
-        type: string    
+        type: string
 
 jobs:
   build:
@@ -27,6 +27,7 @@ jobs:
       RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
       RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+      RAVENDB_SERVER_VERSION: ${{ matrix.serverVersion }}
 
     strategy:
       matrix:
