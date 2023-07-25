@@ -43,7 +43,6 @@ export * from "./ServerWide/Operations/Configuration/GetServerWideBackupConfigur
 export * from "./ServerWide/Operations/SetDatabaseDynamicDistributionOperation";
 export * from "./ServerWide/Operations/UpdateUnusedDatabasesOperation";
 
-
 // SERVERWIDE OPERATIONS
 export * from "./ServerWide/Operations";
 export * from "./ServerWide/Operations/DeleteDatabasesOperation";
@@ -69,7 +68,6 @@ export * from "./ServerWide/Operations/Configuration/ServerWideBackupConfigurati
 export * from "./ServerWide/Operations/Configuration/DatabaseSettings";
 export * from "./ServerWide/Operations/Configuration/GetDatabaseSettingsOperation";
 export * from "./ServerWide/Operations/Configuration/PutDatabaseSettingsOperation";
-
 
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
@@ -332,8 +330,6 @@ export * from "./Documents/Operations/Backups/RestoreFromGoogleCloudConfiguratio
 export * from "./Documents/Operations/Backups/RestoreFromS3Configuration";
 export * from "./Documents/Operations/Backups/RestoreType";
 export * from "./Documents/Operations/Backups/RetentionPolicy";
-
-
 
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation";
@@ -648,9 +644,7 @@ export * from "./Documents/Attachments";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation";
 export * from "./Documents/Operations/Attachments/AttachmentRequest";
 
-
 // ANALYZERS
-
 export * from "./Documents/Operations/Analyzers/DeleteAnalyzerOperation";
 export * from "./Documents/Operations/Analyzers/PutAnalyzersOperation";
 
@@ -689,7 +683,6 @@ export * from "./Documents/Smuggler/IDatabaseSmugglerImportOptions";
 export * from "./Documents/Smuggler/DatabaseSmugglerOptions";
 export * from "./Documents/Smuggler/IDatabaseSmugglerOptions";
 
-
 // Certificates
 export * from "./ServerWide/Operations/Certificates/CertificateDefinition";
 export * from "./ServerWide/Operations/Certificates/CertificateRawData";
@@ -718,11 +711,13 @@ export * from "./ServerWide/Operations/OngoingTasks/ServerWideExternalReplicatio
 export * from "./ServerWide/Operations/Sorters/DeleteServerWideSorterOperation";
 export * from "./ServerWide/Operations/Sorters/PutServerWideSortersOperation";
 
-
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";
 export { Mapping } from "./Mapping";
 import * as Json from "./Mapping/Json";
+
+// CONSTANTS
+export { CONSTANTS } from "./Constants";
 
 export { Json };
 export { TransformKeysJsonStream } from "./Mapping/Json/Streams/TransformKeysJsonStream";
