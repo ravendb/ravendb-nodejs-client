@@ -1,6 +1,7 @@
 import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
+    DocumentStore,
     IDocumentStore,
     StreamResult,
 } from "../../../../src";
@@ -36,30 +37,46 @@ describe("document streaming", function () {
         await session.saveChanges();
     }
 
-    it("can stream documents starting with", async () => {
-        await prepareData(200);
+    async function streamDocuments(format: "json" | "jsonl") {
+        const newStore = new DocumentStore(store.urls, store.database);
+        newStore.conventions.useJsonlStreaming = format === "jsonl";
+        newStore.initialize();
+        try {
 
-        {
-            const session = store.openSession();
+            await prepareData(200);
 
-            const queryStream = await session.advanced.stream<User>("users/");
+            {
+                const session = newStore.openSession();
 
-            const items = [];
-            queryStream.on("data", item => {
-                items.push(item);
-            });
+                const queryStream = await session.advanced.stream<User>("users/");
 
-            await StreamUtil.finishedAsync(queryStream);
-
-            assert.strictEqual(items.length, 200);
-            items.forEach(item => {
-                assertStreamResultEntry(item, (doc: any) => {
-                    assert.ok(doc);
-                    assert.ok(doc.name);
-                    assert.ok(doc.lastName);
+                const items = [];
+                queryStream.on("data", item => {
+                    items.push(item);
                 });
-            });
+
+                await StreamUtil.finishedAsync(queryStream);
+
+                assert.strictEqual(items.length, 200);
+                items.forEach(item => {
+                    assertStreamResultEntry(item, (doc: any) => {
+                        assert.ok(doc);
+                        assert.ok(doc.name);
+                        assert.ok(doc.lastName);
+                    });
+                });
+            }
+        } finally {
+            newStore.dispose();
         }
+    }
+
+    it("can stream documents starting with - json", async () => {
+        await streamDocuments("json");
+    });
+
+    it("can stream documents starting with - jsonl", async () => {
+        await streamDocuments("jsonl");
     });
 
     it("[TODO] can stream starting with prefix using opts");

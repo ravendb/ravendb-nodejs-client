@@ -7,13 +7,12 @@ import { StartingWithOptions } from "../IDocumentSession";
 import { StreamCommand } from "../../Commands/StreamCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { StreamResultResponse } from "../../Commands/StreamResultResponse";
-import { streamValues } from "stream-json/streamers/StreamValues";
-import { ignore } from "stream-json/filters/Ignore";
-import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
 import { getDocumentResultsAsObjects } from "../../../Mapping/Json/Streams/Pipelines";
-import { TransformKeysJsonStream } from "../../../Mapping/Json/Streams/TransformKeysJsonStream";
-import { getTransformJsonKeysProfile } from "../../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 import { StringBuilder } from "../../../Utility/StringBuilder";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline";
+import { ignore } from "stream-json/filters/Ignore";
+import { streamValues } from "stream-json/streamers/StreamValues";
 
 export class StreamOperation {
     private readonly _session: InMemoryDocumentSessionOperations;
@@ -50,7 +49,9 @@ export class StreamOperation {
     }
 
     private _createRequestForIdPrefix(idPrefix: string, opts: StartingWithOptions): StreamCommand {
-        const sb = new StringBuilder("streams/docs?");
+        const format = this._session.conventions.useJsonlStreaming ? 'jsonl' : 'json';
+
+        const sb = new StringBuilder(`streams/docs?format=${format}&`);
         if (idPrefix) {
             sb.append("startsWith=")
                 .append(encodeURIComponent(idPrefix)).append("&");
@@ -89,25 +90,34 @@ export class StreamOperation {
             throwError("IndexDoesNotExistException", "The index does not exists, failed to stream results.");
         }
 
-        const result = getDocumentResultsAsObjects(this._session.conventions).stream(response.stream);
-        
+        const result = getDocumentResultsAsObjects(this._session.conventions, !!this._isQueryStream)
+            .stream(response.stream);
+
         if (this._isQueryStream) {
-            RavenCommandResponsePipeline.create()
-                .parseJsonAsync([
+            const pipeline = RavenCommandResponsePipeline.create<object[]>();
+
+            this._session.conventions.useJsonlStreaming
+                ? pipeline.parseJsonlAsync('Stats')
+                : pipeline.parseJsonAsync([
                     ignore({ filter: /^Results|Includes$/ }),
-                    new TransformKeysJsonStream(getTransformJsonKeysProfile("CommandResponsePayload")),
                     streamValues()
-                ])
-                .stream(response.stream)
+                ]);
+
+                pipeline.stream(response.stream)
                 .on("error", err => result.emit("error", err))
                 .on("data", data => {
+                    const rawWithCamel = ObjectUtil.transformObjectKeys(data["value"], {
+                        defaultTransform: "camel"
+                    });
+
                     const statsResult =
                         this._session.conventions.objectMapper
-                            .fromObjectLiteral(data["value"], {
+                            .fromObjectLiteral(rawWithCamel, {
                                 nestedTypes: {
                                     indexTimestamp: "date"
                                 }
                             });
+
                     result.emit("stats", statsResult);
                 });
         }

@@ -102,8 +102,19 @@ export class DocumentConventions {
 
     private readonly _bulkInsert: BulkInsertConventions;
 
+    private _useJsonlStreaming = false;
+
     public get bulkInsert() {
         return this._bulkInsert;
+    }
+
+    public get useJsonlStreaming() {
+        return this._useJsonlStreaming;
+    }
+
+    public set useJsonlStreaming(value) {
+        this._assertNotFrozen();
+        this._useJsonlStreaming = value;
     }
 
     public constructor() {

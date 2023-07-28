@@ -33,7 +33,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
     public constructor(opts?: TypesAwareJsonObjectMapperOptions) {
         if (opts) {
             this._dateFormat = opts.dateFormat;
-            
+
             if (!opts.documentConventions) {
                 throwError("InvalidArgumentException", "Document conventions cannot be empty.");
             }
@@ -415,7 +415,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
             return Array.from(map.entries()).reduce((result, [ name, value ]) => {
                 return [
                     ...result,
-                    [ 
+                    [
                         this._makeObjectLiteral(name, valuePathPrefix + "KEY", typeInfoCallback, knownTypes),
                         this._makeObjectLiteral(value, valuePathPrefix, typeInfoCallback, knownTypes)
                     ]
@@ -430,7 +430,7 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         if (TypeUtil.isObject(obj)) {
             if (objPathPrefix) { // if it's non-root object
                 const matchedType = TypeUtil.findType(obj, knownTypes);
-                if (!skipTypes 
+                if (!skipTypes
                     && matchedType
                     && matchedType.name !== "Function") {
                     typeInfoCallback({ [objPathPrefix]: matchedType.name });
