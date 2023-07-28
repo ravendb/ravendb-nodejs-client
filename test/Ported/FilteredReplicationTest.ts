@@ -11,11 +11,10 @@ import { RegisterReplicationHubAccessOperation } from "../../src/Documents/Opera
 import { GenerateCertificateOperation } from "../Infrastructure/GenerateCertificateOperation";
 import { assertThat } from "../Utils/AssertExtensions";
 import { User } from "../Assets/Entities";
-import moment = require("moment");
 import { UnregisterReplicationHubAccessOperation } from "../../src/Documents/Operations/Replication/UnregisterReplicationHubAccessOperation";
 import { GetReplicationHubAccessOperation } from "../../src/Documents/Operations/Replication/GetReplicationHubAccessOperation";
 
-(RavenTestContext.isPullRequest ? describe.skip : describe)("FilteredReplicationTest", function () {
+(RavenTestContext.is60Server || RavenTestContext.isPullRequest ? describe.skip : describe)("FilteredReplicationTest", function () {
 
     let store: IDocumentStore;
     let replication: ReplicationTestContext;
