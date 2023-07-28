@@ -14,6 +14,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 import { DocumentInfo } from "../Session/DocumentInfo";
 import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
 import { IMetadataDictionary } from "../Session/IMetadataDictionary";
+import { EntityToJson } from "../Session/EntityToJson";
 
 export class SubscriptionBatch<T extends object> {
 
@@ -88,7 +89,7 @@ export class SubscriptionBatch<T extends object> {
 
         if (options.transactionMode !== "SingleNode") {
             throwError(
-                "InvalidOperationException", 
+                "InvalidOperationException",
                 "Cannot set TransactionMode when session is opened in subscription. Only 'SingleNode' is supported.");
         }
     }
@@ -165,7 +166,7 @@ export class SubscriptionBatch<T extends object> {
             let instance: T = null;
 
             if (!item.exception) {
-                instance = curDoc;
+                instance = EntityToJson.convertToEntity(this._documentType, id, curDoc, this._requestExecutor.conventions);
 
                 if (!StringUtil.isNullOrEmpty(id)) {
                     this._generateEntityIdOnTheClient.trySetIdentity(instance, id);

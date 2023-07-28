@@ -532,7 +532,7 @@ class ReplicationTestBase2 {
                 const session = docStore.openSession();
                 await session.load(id);
 
-                await BluebirdPromise.delay(10);
+                await delay(10);
             } catch (e) {
                 if (e.name === "DocumentConflictException") {
                     return;

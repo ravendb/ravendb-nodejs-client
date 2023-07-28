@@ -285,7 +285,8 @@ export class BulkInsertOperation {
 
     private static _verifyValidId(id: string): void {
         if (StringUtil.isNullOrEmpty(id)) {
-            throwError("InvalidArgumentException", "Document id must have a non empty value");
+            throwError("InvalidArgumentException", "Document id must have a non empty value." +
+                "If you want to store object literals with empty id, please register convention here: store.conventions.findCollectionNameForObjectLiteral");
         }
 
         if (id.endsWith("|")) {
@@ -323,14 +324,14 @@ export class BulkInsertOperation {
             this._pipelineFinished = StreamUtil.pipelineAsync(this._currentWriter, this._requestBodyStream);
             this._currentWriter.push("[");
 
-            this._bulkInsertExecuteTask = Promise.all([ 
+            this._bulkInsertExecuteTask = Promise.all([
                 bulkCommandPromise,
                 this._pipelineFinished
             ]);
 
             this._bulkInsertExecuteTask
                 .catch(() => this._completedWithError = true);
-            
+
         } catch (e) {
             throwError("RavenException", "Unable to open bulk insert stream.", e);
         }
@@ -813,7 +814,7 @@ export class BulkInsertCommand extends RavenCommand<void> {
 
         const headers = this._headers().typeAppJson().build();
         // TODO: useCompression ? new GzipCompressingEntity(_stream) : _stream);
-        return { 
+        return {
             method: "POST",
             uri,
             body: this._stream,

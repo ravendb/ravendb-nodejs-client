@@ -29,7 +29,7 @@ describe("ConnectionStringsTest", function () {
         });
 
         const sqlConnectionString1 = Object.assign(new SqlConnectionString(), {
-            factoryName: "test",
+            factoryName: "MySql.Data.MySqlClient",
             connectionString: "test",
             name: "s1"
         });

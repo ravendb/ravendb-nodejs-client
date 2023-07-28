@@ -6,8 +6,8 @@ import DocumentStore, {
 } from "../../../src";
 import { createMetadataDictionary } from "../../../src/Mapping/MetadataAsDictionary";
 import { CONSTANTS } from "../../../src/Constants";
-import * as BluebirdPromise from "bluebird";
 import { DateUtil } from "../../../src/Utility/DateUtil";
+import { delay } from "../../../src/Utility/PromiseUtil";
 
 describe("bulk insert", function () {
 
@@ -99,7 +99,7 @@ describe("bulk insert", function () {
             await bulkInsert.store(new FooBar());
             await bulkInsert.store(new FooBar());
             await bulkInsert.store(new FooBar());
-            await BluebirdPromise.delay(500);
+            await delay(500);
             await bulkInsert.abort();
             await bulkInsert.store(new FooBar());
 
@@ -249,7 +249,7 @@ describe("bulk insert", function () {
         {
             // use case transformless store to verify doc
             const session = store.openSession();
-            const loaded = await session.load(camelCasedObj["id"]);
+            const loaded = await session.load<any>(camelCasedObj["id"]);
             assert.ok(loaded);
             assert.ok("Name" in loaded);
             assert.strictEqual(loaded["Name"], camelCasedObj.name);

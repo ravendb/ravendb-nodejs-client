@@ -41,7 +41,7 @@
     "Hibernating Rhinos"
   ],
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "keywords": [
     "ravendb",
@@ -92,6 +92,7 @@
     "bluebird": "^3.7.2",
     "change-case": "^3.1.0",
     "deprecate": "^1.1.1",
+    "form-data": "^4.0.0",
     "md5": "^2.3.0",
     "moment": "^2.29.4",
     "node-fetch": "^2.6.7",

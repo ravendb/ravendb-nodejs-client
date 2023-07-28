@@ -49,7 +49,7 @@ function logOnUncaughtAndUnhandled() {
 class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
         const cliOpts = [
-            "--ServerUrl=http://127.0.0.1:0", 
+            "--ServerUrl=http://127.0.0.1:0",
             "--ServerUrl.Tcp=tcp://127.0.0.1:38884",
             "--Features.Availability=Experimental"
         ];
@@ -136,6 +136,8 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
     public static isRunningOnWindows = os.platform() === "win32";
 
     public static isPullRequest = !process.env["RAVEN_License"];
+
+    public static is60Server = process.env["RAVENDB_SERVER_VERSION"] >= "6.0";
 
     private readonly _locator: RavenServerLocator;
     private readonly _securedLocator: RavenServerLocator;

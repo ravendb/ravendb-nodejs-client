@@ -1,10 +1,10 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
 import moment = require("moment");
 import { DateUtil } from "../../../src/Utility/DateUtil";
 
-describe("ClientGraphQueriesTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("ClientGraphQueriesTest", function () {
 
     let store: IDocumentStore;
 

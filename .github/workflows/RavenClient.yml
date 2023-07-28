@@ -6,7 +6,13 @@ on:
   pull_request:
     branches: [ v5.4 ]
   schedule:
-    - cron: '0 10 * * 6'
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      ravendb_version:
+        description: 'RavenDB Version'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -21,11 +27,12 @@ jobs:
       RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
       RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+      RAVENDB_SERVER_VERSION: ${{ matrix.serverVersion }}
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
-        serverVersion: ["5.4"]
+        node-version: [16.x, 18.x, 20.x]
+        serverVersion: ["5.4", "6.0"]
       fail-fast: false
 
     steps:
@@ -37,7 +44,12 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Download RavenDB Server
-      run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
+      run: |
+        if [[ -n "${{ inputs.ravendb_version }}" ]]; then
+          wget -O RavenDB.tar.bz2 "https://daily-builds.s3.amazonaws.com/RavenDB-${{ inputs.ravendb_version }}-linux-x64.tar.bz2"
+        else
+          wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
+        fi
 
     - run: mkdir certs
     - run: openssl genrsa -out certs/ca.key 2048

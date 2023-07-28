@@ -13,7 +13,10 @@ import { JsonSerializer } from "../Mapping/Json/Serializer";
 import { RavenCommandResponsePipeline } from "./RavenCommandResponsePipeline";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import * as http from "http";
-import { ObjectTypeDescriptor, ServerResponse } from "../Types";
+import { ObjectTypeDescriptor } from "../Types";
+import { ReadableWebToNodeStream } from "../Utility/ReadableWebToNodeStream";
+import { LengthUnawareFormData } from "../Utility/LengthUnawareFormData";
+import { Stream } from "readable-stream";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -120,25 +123,48 @@ export abstract class RavenCommand<TResult> {
 
     public async send(agent: http.Agent,
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: stream.Readable }> {
-        const { body, uri, ...restOptions } = requestOptions;
+
+        const { body, uri, fetcher, ...restOptions } = requestOptions;
+
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
         if (requestOptions.agent) { // support for fiddler
             agent = requestOptions.agent as http.Agent;
         }
 
-        const optionsToUse = { body, ...restOptions, agent } as RequestInit;
+        const bodyToUse = fetcher ? RavenCommand.maybeWrapBody(body) : body;
+
+        const optionsToUse = { body: bodyToUse, ...restOptions, agent } as RequestInit;
 
         const passthrough = new stream.PassThrough();
-        const response = await fetch(uri, optionsToUse);
         passthrough.pause();
-        response.body
+
+        const fetchFn = fetcher ?? fetch; // support for custom fetcher
+        const response = await fetchFn(uri, optionsToUse);
+
+        const effectiveStream: stream.Readable =
+            fetcher && response.body
+                ? new ReadableWebToNodeStream(response.body)
+                : (response.body ?? new Stream());
+
+        effectiveStream
             .pipe(passthrough);
 
         return {
             response,
             bodyStream: passthrough
         };
+    }
+
+    private static maybeWrapBody(body: any) {
+        if (body instanceof LengthUnawareFormData) {
+            throw new Error("Requests using FormData as payload are not yet supported!");
+        }
+        if (body instanceof stream.Readable) {
+            throw new Error("Requests using stream.Readable as payload are not yet supported!");
+        }
+
+        return body;
     }
 
     public setResponseRaw(response: HttpResponse, body: string): void {
@@ -205,9 +231,9 @@ export abstract class RavenCommand<TResult> {
                 `Error processing command ${this.constructor.name} response: ${err.stack}`, err);
         } finally {
             closeHttpResponse(response);
-            // response.destroy(); 
+            // response.destroy();
             // since we're calling same hosts and port a lot, we might not want to destroy sockets explicitly
-            // they're going to get back to Agent's pool and reused 
+            // they're going to get back to Agent's pool and reused
         }
 
         return "Automatic";
@@ -233,9 +259,9 @@ export abstract class RavenCommand<TResult> {
     }
 
     protected _reviveResultTypes<TResponse extends object>(
-        raw: object, 
-        conventions: DocumentConventions, 
-        typeInfo?: TypeInfo, 
+        raw: object,
+        conventions: DocumentConventions,
+        typeInfo?: TypeInfo,
         knownTypes?: Map<string, ObjectTypeDescriptor>) {
         return conventions.objectMapper.fromObjectLiteral<TResponse>(raw, typeInfo, knownTypes);
     }

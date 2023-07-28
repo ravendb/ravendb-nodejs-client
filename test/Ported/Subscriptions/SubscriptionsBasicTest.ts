@@ -1,4 +1,4 @@
-import { Company, User } from "../../Assets/Entities";
+import { Company, Order, User } from "../../Assets/Entities";
 import * as assert from "assert";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
@@ -198,6 +198,49 @@ describe("SubscriptionsBasicTest", function () {
             assert.strictEqual(ages.pop(), 31);
         }
     });
+
+    it("can handle nested object types correctly", async function() {
+        const id = await store.subscriptions.create(Order);
+
+        const subscription = store.subscriptions.getSubscriptionWorker<Order>({
+            subscriptionName: id,
+            documentType: Order,
+            maxErroneousPeriod: 0,
+            timeToWaitBeforeConnectionRetry: 0
+        });
+
+        const orders = new AsyncQueue<Order>();
+
+        {
+            const session = store.openSession();
+            const order = new Order();
+            order.company = "company/1";
+            order.orderedAt = new Date();
+            await session.store(order, "orders/1");
+            await session.saveChanges();
+        }
+
+        subscription.on("batch", (batch, callback) => {
+            batch.items.forEach(x => {
+                orders.push(x.result);
+            });
+            callback();
+        });
+
+        try {
+            await Promise.race([ subscriptionFailed(subscription), assertResults() ]);
+        } finally {
+            subscription.dispose();
+        }
+
+        async function assertResults() {
+            const firstOrder = await orders.poll(_reasonableWaitTime);
+            assertThat(firstOrder instanceof Order)
+                .isTrue();
+            assertThat(firstOrder.orderedAt instanceof Date)
+                .isTrue();
+        }
+    })
 
     it("should send all new and modified docs", async function() {
         const id = await store.subscriptions.create(User);
@@ -427,7 +470,7 @@ describe("SubscriptionsBasicTest", function () {
                     subscriptionFailed(allSubscription),
                     subscriptionFailed(filteredUsersSubscription)
                 ]);
-                
+
                 assert.ok(!usersDocs);
             } finally {
                 filteredUsersSubscription.dispose();
@@ -822,7 +865,7 @@ describe("SubscriptionsBasicTest", function () {
 
                 await session.saveChanges();
             }
-            
+
             const id = await store2.subscriptions.create({
                 query: "from test"
             });
