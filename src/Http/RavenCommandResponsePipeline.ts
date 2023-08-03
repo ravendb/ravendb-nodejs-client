@@ -18,21 +18,27 @@ import {
 } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError, getError } from "../Exceptions";
 import {
-    TransformJsonKeysStreamOptions, 
-    TransformKeysJsonStream } from "../Mapping/Json/Streams/TransformKeysJsonStream";
-import { 
-    TransformJsonKeysProfile, 
-    getTransformJsonKeysProfile } from "../Mapping/Json/Streams/TransformJsonKeysProfiles";
+    TransformJsonKeysStreamOptions,
+    TransformKeysJsonStream
+} from "../Mapping/Json/Streams/TransformKeysJsonStream";
+import {
+    getTransformJsonKeysProfile,
+    TransformJsonKeysProfile
+} from "../Mapping/Json/Streams/TransformJsonKeysProfiles";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as Asm from "stream-json/Assembler";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { StringBuilder } from "../Utility/StringBuilder";
+import { parser as jsonlParser } from "stream-json/jsonl/Parser";
 
 export interface RavenCommandResponsePipelineOptions<TResult> {
     collectBody?: boolean | ((body: string) => void);
     jsonAsync?: {
-        filters: any[]
+        filters: any[];
+    };
+    jsonlAsync?: {
+        transforms: stream.Transform[];
     };
     jsonSync?: boolean;
     streamKeyCaseTransform?: ObjectKeyCaseTransformStreamOptions;
@@ -62,6 +68,34 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
     public parseJsonSync() {
         this._opts.jsonSync = true;
+        return this;
+    }
+
+    /**
+     * @param type Type of object to extract from objects stream - use Raw to skip extraction.
+     * @param options
+     */
+    public parseJsonlAsync(type: "Item" | "Stats" | "Raw", options: { transforms?: stream.Transform[] } = {}) {
+        const transforms = options?.transforms ?? [];
+        if (type !== "Raw") {
+            const extractItemTransform = new stream.Transform({
+                objectMode: true,
+                transform(chunk, encoding, callback) {
+                    const value = chunk["value"][type];
+                    if (!value) {
+                        return callback();
+                    }
+
+                    callback(null, {...chunk, value});
+                }
+            });
+
+            transforms.push(extractItemTransform);
+        }
+        this._opts.jsonlAsync = {
+            transforms
+        };
+
         return this;
     }
 
@@ -170,6 +204,12 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
             if (opts.jsonAsync.filters && opts.jsonAsync.filters.length) {
                 streams.push(...opts.jsonAsync.filters);
+            }
+        } else if (opts.jsonlAsync) {
+            streams.push(jsonlParser());
+
+            if (opts.jsonlAsync.transforms) {
+                streams.push(...opts.jsonlAsync.transforms);
             }
         } else if (opts.jsonSync) {
             const bytesChunks = [];

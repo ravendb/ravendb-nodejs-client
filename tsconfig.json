@@ -7,7 +7,7 @@
     "outDir": "dist",
     "declaration": true,
     "removeComments": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "pretty": true,
     "lib": [ "ES2020" ],
     "typeRoots": [

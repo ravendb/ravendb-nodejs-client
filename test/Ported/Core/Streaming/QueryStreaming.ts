@@ -1,7 +1,7 @@
 import { testContext, disposeTestDocumentStore } from "../../../Utils/TestUtil";
 
 import {
-    AbstractCsharpIndexCreationTask,
+    AbstractCsharpIndexCreationTask, DocumentStore,
     IDocumentStore,
     StreamQueryStatistics,
     StreamResult, TimeSeriesRawResult,
@@ -165,9 +165,9 @@ describe("query streaming", function () {
             reader.on("stats", s => statsFromEvent = s);
 
             await StreamUtil.finishedAsync(reader);
-            
+
             assert.strictEqual(items.length, 100);
-            
+
             // eslint-disable-next-line no-inner-declarations
             function assertStats(stats) {
                 assert.ok(stats);
@@ -218,39 +218,56 @@ describe("query streaming", function () {
 
     });
 
-    it("can stream raw query results with query statistics", async () => {
-        await Promise.all([
-            prepareData(100),
-            await usersByNameIndex.execute(store)
-        ]);
+    async function streamRawQueryResults(format: "json" | "jsonl") {
+        const newStore = new DocumentStore(store.urls, store.database);
+        newStore.conventions.useJsonlStreaming = format === "jsonl";
+        newStore.initialize();
 
-        await testContext.waitForIndexing(store);
+        newStore.conventions.registerJsType(User);
+        try {
+            await Promise.all([
+                prepareData(100),
+                await usersByNameIndex.execute(store)
+            ]);
 
-        {
-            const session = store.openSession();
-            const query = session.advanced.rawQuery<User>("from index 'Users/ByName'");
+            await testContext.waitForIndexing(store);
 
-            let stats = null as StreamQueryStatistics;
-            const queryStream = await session.advanced.stream(query, s => stats = s);
-            const items = [];
-            queryStream.on("data", item => {
-                items.push(item);
-                assertStreamResultEntry<User>(item, doc => {
-                    assert.ok(doc instanceof User);
-                    assert.ok(doc.name);
-                    assert.ok(doc.lastName);
+            {
+                const session = newStore.openSession();
+                const query = session.advanced.rawQuery<User>("from index 'Users/ByName'");
+
+                let stats = null as StreamQueryStatistics;
+                const queryStream = await session.advanced.stream(query, s => stats = s);
+                const items = [];
+                queryStream.on("data", item => {
+                    items.push(item);
+                    assertStreamResultEntry<User>(item, doc => {
+                        assert.ok(doc instanceof User);
+                        assert.ok(doc.name);
+                        assert.ok(doc.lastName);
+                    });
                 });
-            });
 
-            await StreamUtil.finishedAsync(queryStream);
-            assert.strictEqual(items.length, 100);
+                await StreamUtil.finishedAsync(queryStream);
+                assert.strictEqual(items.length, 100);
 
-            assert.ok(stats);
-            assert.strictEqual(stats.indexName, "Users/ByName");
-            assert.strictEqual(stats.totalResults, 100);
-            assert.ok(stats.indexTimestamp instanceof Date);
-            assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());
+                assert.ok(stats);
+                assert.strictEqual(stats.indexName, "Users/ByName");
+                assert.strictEqual(stats.totalResults, 100);
+                assert.ok(stats.indexTimestamp instanceof Date);
+                assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());
+            }
+        } finally {
+            newStore.dispose();
         }
+    }
+
+    it("can stream raw query results with query statistics - json", async () => {
+        await streamRawQueryResults("json");
+    });
+
+    it("can stream raw query results with query statistics - jsonl", async () => {
+        await streamRawQueryResults("jsonl");
     });
 
     it("can stream raw query into stream", async () => {
