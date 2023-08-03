@@ -20,7 +20,7 @@ describe("RavenDB_14724", function () {
         const id = "users/1";
 
         {
-            await testContext.setupRevisions(store, false, 5);
+            await testContext.setupRevisions(store, true, 5);
 
             {
                 const session = store.openSession();
@@ -47,14 +47,14 @@ describe("RavenDB_14724", function () {
                 assertThat(revisions)
                     .hasSize(2);
 
+                await session.delete(id);
+                await session.saveChanges();
+
                 const configuration = new RevisionsConfiguration();
                 configuration.defaultConfig = null;
 
                 const operation = new ConfigureRevisionsOperation(configuration);
                 await store.maintenance.send(operation);
-
-                await session.delete(id);
-                await session.saveChanges();
             }
 
             {
