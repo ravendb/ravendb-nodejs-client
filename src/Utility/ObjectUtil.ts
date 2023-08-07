@@ -4,7 +4,7 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { CONSTANTS } from "../Constants";
 import { MetadataObject } from "../Documents/Session/MetadataObject";
 import { CompareExchangeResultItem } from "../Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
-import { ServerResponse } from "../Types";
+import { ServerCasing, ServerResponse } from "../Types";
 import { TimeSeriesRangeResult } from "../Documents/Operations/TimeSeries/TimeSeriesRangeResult";
 import { TimeSeriesEntry } from "../Documents/Session/TimeSeries/TimeSeriesEntry";
 import { CounterDetail } from "../Documents/Operations/Counters/CounterDetail";
@@ -155,7 +155,6 @@ export class ObjectUtil {
         };
     }
 
-    //TODO: use ServerCasing<CompareExchangeResultItem> instead of any, after upgrading to TS 4.2
     public static mapCompareExchangeToLocalObject(json: Record<string, any>) {
         if (!json) {
             return undefined;
@@ -176,8 +175,7 @@ export class ObjectUtil {
         return result;
     }
 
-    //TODO: use ServerCasing<ServerResponse<TimeSeriesRangeResult> instead of any, after upgrading to TS 4.2
-    public static mapTimeSeriesIncludesToLocalObject(json: Record<string, Record<string, any[]>>) {
+    public static mapTimeSeriesIncludesToLocalObject(json: ServerCasing<ServerResponse<TimeSeriesRangeResult>>) {
         if (!json) {
             return undefined;
         }
@@ -188,7 +186,7 @@ export class ObjectUtil {
             const perDocumentResult: Record<string, ServerResponse<TimeSeriesRangeResult>[]> = {};
 
             for (const [tsName, tsData] of Object.entries(perDocumentTimeSeries)) {
-                perDocumentResult[tsName] = tsData.map(ts => {
+                perDocumentResult[tsName] = (tsData as any).map(ts => {
                     return {
                         from: ts.From,
                         to: ts.To,
@@ -210,7 +208,7 @@ export class ObjectUtil {
         return result;
     }
 
-    public static mapCounterIncludesToLocalObject(json: Record<string, any[]>) {
+    public static mapCounterIncludesToLocalObject(json: object) {
         const result: Record<string, CounterDetail[]> = json ? {} : undefined;
 
         if (json) {

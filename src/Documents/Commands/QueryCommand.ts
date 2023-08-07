@@ -9,7 +9,7 @@ import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import * as stream from "readable-stream";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 import { StringBuilder } from "../../Utility/StringBuilder";
-import { ServerResponse } from "../../Types";
+import { ServerCasing, ServerResponse } from "../../Types";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 import { StringUtil } from "../../Utility/StringUtil";
 import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
@@ -136,8 +136,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
         return queryResult;
     }
 
-    //TODO: use ServerCasing<QueryTimings> instead of any, after upgrading to TS 4.2
-    private static _mapTimingsToLocalObject(timings: any) {
+    private static _mapTimingsToLocalObject(timings: ServerCasing<ServerResponse<QueryTimings>>) {
         if (!timings) {
             return undefined;
         }
@@ -154,7 +153,6 @@ export class QueryCommand extends RavenCommand<QueryResult> {
     }
 
 
-    //TODO: use ServerCasing<ServerResponse<QueryResult>> instead of any, after upgrading to TS 4.2
     private static _mapToLocalObject(json: any, conventions: DocumentConventions): QueryResult {
         const mappedIncludes: Record<string, any> = {};
         if (json.Includes) {

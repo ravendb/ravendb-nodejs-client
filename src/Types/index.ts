@@ -82,3 +82,13 @@ export type ServerResponse<T> = T extends Date|string ? T : {
         ? string
         : ServerResponse<T[K]>;
 }
+
+export type CapitalizeObjectKeys<T> = T extends Array<infer U>
+    ? Array<CapitalizeObjectKeys<U>>
+    : T extends object
+        ? {
+            [K in keyof T as Capitalize<string & K>]: CapitalizeObjectKeys<T[K]>
+        }
+        : T
+
+export type ServerCasing<T extends object> = CapitalizeObjectKeys<T>;

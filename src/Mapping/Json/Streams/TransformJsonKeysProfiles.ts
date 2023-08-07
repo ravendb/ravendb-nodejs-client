@@ -4,7 +4,6 @@ import { throwError } from "../../../Exceptions";
 
 export type TransformJsonKeysProfile =
     "DocumentLoad"
-    | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
     | "GetCompareExchangeValue"
@@ -22,12 +21,6 @@ export function getTransformJsonKeysProfile(
 
             const getCurrentTransform = buildEntityKeysTransformForDocumentLoad(conventions.entityFieldNameConvention);
             return { getCurrentTransform };
-        }
-
-        if (profile === "FacetQuery") {
-            return {
-                getCurrentTransform: facetQueryGetTransform
-            };
         }
 
         if (profile === "Patch") {
@@ -87,19 +80,6 @@ export function getTransformJsonKeysProfile(
         }
 
         throwError("NotSupportedException", `Invalid profile name ${profile}`);
-}
-
-function facetQueryGetTransform(key, stack): CasingConvention {
-    const len = stack.length;
-
-
-    if (stack[0] === "Includes") {
-        if (len >= 3 && stack[2] === "@metadata") {
-            return handleMetadataJsonKeys(key, stack, stack.length, 3);
-        }
-    }
-
-    return "camel";
 }
 
 function buildEntityKeysTransformForPatch(entityCasingConvention) {
