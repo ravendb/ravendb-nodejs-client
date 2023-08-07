@@ -23,9 +23,11 @@ describe("query streaming", function () {
     });
 
     let usersByNameIndex: Users_ByName;
+    let usersByNameIndexPascal: Users_ByNamePascal;
 
     beforeEach(function () {
         usersByNameIndex = new Users_ByName();
+        usersByNameIndexPascal = new Users_ByNamePascal();
     });
 
     afterEach(async () =>
@@ -35,8 +37,8 @@ describe("query streaming", function () {
         throw new Error("Arg is required.");
     }
 
-    async function prepareData(n: number = argError(), withTimeSeries: boolean = false) {
-        const session = store.openSession();
+    async function prepareData(storeToUse: IDocumentStore, n: number = argError(), withTimeSeries: boolean = false) {
+        const session = storeToUse.openSession();
 
         for (let i = 0; i < n; i++) {
             const user = Object.assign(new User(), {
@@ -74,7 +76,7 @@ describe("query streaming", function () {
     }
 
     it("can stream query results", async () => {
-        await prepareData(200);
+        await prepareData(store, 200);
 
         await usersByNameIndex.execute(store);
 
@@ -105,7 +107,7 @@ describe("query streaming", function () {
     });
 
     it.skip("can stream query results with time series", async () => {
-        await prepareData(200, true);
+        await prepareData(store, 200, true);
 
         await usersByNameIndex.execute(store);
 
@@ -139,7 +141,7 @@ describe("query streaming", function () {
 
     it("can stream query results with query statistics", async () => {
         await Promise.all([
-            prepareData(100),
+            prepareData(store, 100),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -191,7 +193,7 @@ describe("query streaming", function () {
 
     it("can stream raw query results", async () => {
         await Promise.all([
-            prepareData(200),
+            prepareData(store, 200),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -218,23 +220,35 @@ describe("query streaming", function () {
 
     });
 
-    async function streamRawQueryResults(format: "json" | "jsonl") {
+    async function streamRawQueryResults(format: "json" | "jsonl", remoteCasing : "camel" | "pascal" = "camel") {
         const newStore = new DocumentStore(store.urls, store.database);
         newStore.conventions.useJsonlStreaming = format === "jsonl";
+
+        if (remoteCasing === "pascal") {
+            newStore.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
+            newStore.conventions.entityFieldNameConvention = "camel";
+            newStore.conventions.remoteEntityFieldNameConvention = "pascal";
+            newStore.conventions.identityProperty = "Id";
+            newStore.conventions.registerEntityIdPropertyName(Object, "Id");
+        }
+
+        const indexToUse = remoteCasing === "pascal" ? usersByNameIndexPascal : usersByNameIndex;
+
         newStore.initialize();
 
         newStore.conventions.registerJsType(User);
         try {
             await Promise.all([
-                prepareData(100),
-                await usersByNameIndex.execute(store)
+                prepareData(newStore, 100),
+                await indexToUse.execute(store)
             ]);
 
             await testContext.waitForIndexing(store);
 
+
             {
                 const session = newStore.openSession();
-                const query = session.advanced.rawQuery<User>("from index 'Users/ByName'");
+                const query = session.advanced.rawQuery<User>("from index '" + indexToUse.getIndexName() + "'");
 
                 let stats = null as StreamQueryStatistics;
                 const queryStream = await session.advanced.stream(query, s => stats = s);
@@ -252,7 +266,7 @@ describe("query streaming", function () {
                 assert.strictEqual(items.length, 100);
 
                 assert.ok(stats);
-                assert.strictEqual(stats.indexName, "Users/ByName");
+                assert.strictEqual(stats.indexName, indexToUse.getIndexName());
                 assert.strictEqual(stats.totalResults, 100);
                 assert.ok(stats.indexTimestamp instanceof Date);
                 assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());
@@ -262,17 +276,25 @@ describe("query streaming", function () {
         }
     }
 
-    it("can stream raw query results with query statistics - json", async () => {
+    it("can stream raw query results with query statistics - json - camel", async () => {
         await streamRawQueryResults("json");
     });
 
-    it("can stream raw query results with query statistics - jsonl", async () => {
+    it("can stream raw query results with query statistics - jsonl - camel", async () => {
         await streamRawQueryResults("jsonl");
+    });
+
+    it("can stream raw query results with query statistics - json - pascal", async () => {
+        await streamRawQueryResults("json", "pascal");
+    });
+
+    it("can stream raw query results with query statistics - jsonl - pascal", async () => {
+        await streamRawQueryResults("jsonl", "pascal");
     });
 
     it("can stream raw query into stream", async () => {
         await Promise.all([
-            prepareData(10),
+            prepareData(store, 10),
             await usersByNameIndex.execute(store)
         ]);
 
@@ -308,5 +330,17 @@ class Users_ByName extends AbstractCsharpIndexCreationTask {
         this.index("name", "Search");
         this.indexSuggestions.add("name");
         this.store("name", "Yes");
+    }
+}
+
+
+class Users_ByNamePascal extends AbstractCsharpIndexCreationTask {
+    public constructor() {
+        super();
+
+        this.map = "from u in docs.Users select new { u.Name, LastName = u.LastName.Boost(10) }";
+        this.index("Name", "Search");
+        this.indexSuggestions.add("Name");
+        this.store("Name", "Yes");
     }
 }

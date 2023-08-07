@@ -8,7 +8,7 @@ import {
     ObjectKeyCaseTransformProfile,
     getObjectKeyCaseTransformProfile
 } from "../Mapping/Json/Conventions";
-import { CasingConvention } from "../Utility/ObjectUtil";
+import { CasingConvention, ObjectUtil } from "../Utility/ObjectUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
 import * as stream from "readable-stream";
 import {
@@ -75,23 +75,26 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
      * @param type Type of object to extract from objects stream - use Raw to skip extraction.
      * @param options
      */
-    public parseJsonlAsync(type: "Item" | "Stats" | "Raw", options: { transforms?: stream.Transform[] } = {}) {
+    public parseJsonlAsync(valueExtractor: (obj: any) => any, conventions?: DocumentConventions, options: { transforms?: stream.Transform[] } = {}) {
         const transforms = options?.transforms ?? [];
-        if (type !== "Raw") {
-            const extractItemTransform = new stream.Transform({
-                objectMode: true,
-                transform(chunk, encoding, callback) {
-                    const value = chunk["value"][type];
-                    if (!value) {
-                        return callback();
-                    }
-
-                    callback(null, {...chunk, value});
+        const extractItemTransform = new stream.Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                let value = valueExtractor(chunk["value"]);
+                if (!value) {
+                    return callback();
                 }
-            });
 
-            transforms.push(extractItemTransform);
-        }
+                if (conventions) {
+                    value = ObjectUtil.transformDocumentKeys(value, conventions);
+                }
+
+                callback(null, {...chunk, value});
+            }
+        });
+
+        transforms.push(extractItemTransform);
+
         this._opts.jsonlAsync = {
             transforms
         };

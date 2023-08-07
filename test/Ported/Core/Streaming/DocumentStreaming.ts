@@ -25,8 +25,8 @@ describe("document streaming", function () {
         throw new Error("Arg is required.");
     }
 
-    async function prepareData(n: number = argError()) {
-        const session = store.openSession();
+    async function prepareData(storeToUse: IDocumentStore, n: number = argError()) {
+        const session = storeToUse.openSession();
 
         for (let i = 0; i < n; i++) {
             await session.store(Object.assign(new User(), {
@@ -37,13 +37,22 @@ describe("document streaming", function () {
         await session.saveChanges();
     }
 
-    async function streamDocuments(format: "json" | "jsonl") {
+    async function streamDocuments(format: "json" | "jsonl", remoteCasing : "camel" | "pascal" = "camel") {
         const newStore = new DocumentStore(store.urls, store.database);
         newStore.conventions.useJsonlStreaming = format === "jsonl";
+
+        if (remoteCasing === "pascal") {
+            newStore.conventions.findCollectionNameForObjectLiteral = (o) => o["collection"];
+            newStore.conventions.entityFieldNameConvention = "camel";
+            newStore.conventions.remoteEntityFieldNameConvention = "pascal";
+            newStore.conventions.identityProperty = "Id";
+            newStore.conventions.registerEntityIdPropertyName(Object, "Id");
+        }
+
         newStore.initialize();
         try {
 
-            await prepareData(200);
+            await prepareData(newStore, 200);
 
             {
                 const session = newStore.openSession();
@@ -71,18 +80,26 @@ describe("document streaming", function () {
         }
     }
 
-    it("can stream documents starting with - json", async () => {
+    it("can stream documents starting with - json - camel", async () => {
         await streamDocuments("json");
     });
 
-    it("can stream documents starting with - jsonl", async () => {
+    it("can stream documents starting with - jsonl - camel", async () => {
         await streamDocuments("jsonl");
     });
 
+    it("can stream documents starting with - json - pascal", async () => {
+        await streamDocuments("json", "pascal");
+    });
+
+    it("can stream documents starting with - jsonl - pascal", async () => {
+        await streamDocuments("jsonl", "pascal");
+    });
+    
     it("[TODO] can stream starting with prefix using opts");
 
     it("can stream without iteration does not leak connection", async () => {
-        await prepareData(200);
+        await prepareData(store, 200);
         for (let i = 0; i < 5; i++) {
             {
                 const session = store.openSession();

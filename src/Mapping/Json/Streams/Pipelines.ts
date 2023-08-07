@@ -15,7 +15,7 @@ export function getDocumentResultsAsObjects(
     const pipeline = RavenCommandResponsePipeline.create<object[]>();
 
     return conventions.useJsonlStreaming
-        ? pipeline.parseJsonlAsync(queryStream ? "Item" : "Raw")
+        ? pipeline.parseJsonlAsync(queryStream ? x => x["Item"] : x => x, conventions)
         : pipeline.parseJsonAsync([
             new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
             pick({ filter: "results" }),
@@ -29,9 +29,8 @@ export function getDocumentStreamResultsIntoStreamPipeline(
     const pipeline = RavenCommandResponsePipeline.create<object[]>();
 
     return conventions.useJsonlStreaming
-        ? pipeline.parseJsonlAsync('Item', {
+        ? pipeline.parseJsonlAsync(x => x["Item"], conventions, {
             transforms: [
-                // TODO: conventions? + what's the purpose?
                 jsonlStringer({ replacer: (key, value) => key === '' ? value.value : value }),
             ]
         })

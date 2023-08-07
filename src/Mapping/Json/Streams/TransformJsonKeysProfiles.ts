@@ -2,10 +2,8 @@ import { CasingConvention } from "../../../Utility/ObjectUtil";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 
-export type TransformJsonKeysProfile = 
-    "CommandResponsePayload"
-    | "NoChange" 
-    | "DocumentLoad"
+export type TransformJsonKeysProfile =
+    "DocumentLoad"
     | "FacetQuery"
     | "Patch"
     | "CompareExchangeValue"
@@ -13,23 +11,9 @@ export type TransformJsonKeysProfile =
     | "SubscriptionResponsePayload"
     | "SubscriptionRevisionsResponsePayload";
 
-function getSimpleKeysTransform(convention: CasingConvention) {
-    return {
-        getCurrentTransform(key: string, stack: (string | number | null)[]): CasingConvention {
-            return convention;
-        }
-    };
-}
 
 export function getTransformJsonKeysProfile(
     profile: TransformJsonKeysProfile, conventions?: DocumentConventions): { getCurrentTransform: (key: any, stack: any) => CasingConvention } {
-        if (profile === "CommandResponsePayload") {
-            return getSimpleKeysTransform("camel");
-        }
-
-        if (profile === "NoChange") {
-            return getSimpleKeysTransform(null);
-        }
 
         if (profile === "DocumentLoad") {
             if (!conventions) {
@@ -51,9 +35,9 @@ export function getTransformJsonKeysProfile(
                 throwError("InvalidArgumentException", "Document conventions are required for this profile.");
             }
 
-            return { 
-                getCurrentTransform: 
-                    buildEntityKeysTransformForPatch(conventions.entityFieldNameConvention) 
+            return {
+                getCurrentTransform:
+                    buildEntityKeysTransformForPatch(conventions.entityFieldNameConvention)
             };
         }
 
@@ -208,7 +192,7 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
             }
         }
 
-        return entityCasingConvention; 
+        return entityCasingConvention;
     };
 }
 
@@ -245,7 +229,7 @@ function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConv
 
             return entityCasingConvention;
         } else if (stack[0] === "Includes") {
-        
+
             if (stack[2] === "@metadata") {
                 return handleMetadataJsonKeys(key, stack, len, 2);
             }
@@ -367,7 +351,7 @@ function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
             }
         }
 
-        return entityCasingConvention; 
+        return entityCasingConvention;
     };
 }
 
