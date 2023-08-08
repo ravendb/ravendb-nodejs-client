@@ -48,12 +48,19 @@ export class FacetQueryCommand extends QueryCommand {
             defaultTransform: "camel"
         }) as any;
 
+        const mappedIncludes: Record<string, any> = {};
+        if (json.Includes) {
+            for (const [key, value] of Object.entries(json.Includes)) {
+                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+        }
+
         return {
             ...restMapped,
             indexTimestamp: conventions.dateUtil.parse(IndexTimestamp),
             lastQueryTime: conventions.dateUtil.parse(LastQueryTime),
             results: Results.map(x => ObjectUtil.transformObjectKeys(x, { defaultTransform: "camel" })),
-            includes: {}
+            includes: mappedIncludes
         };
     }
 }

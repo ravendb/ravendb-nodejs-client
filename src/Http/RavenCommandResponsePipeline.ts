@@ -93,7 +93,7 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             }
         });
 
-        transforms.push(extractItemTransform);
+        transforms.unshift(extractItemTransform);
 
         this._opts.jsonlAsync = {
             transforms

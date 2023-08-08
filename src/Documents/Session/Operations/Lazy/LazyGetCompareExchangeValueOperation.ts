@@ -10,9 +10,10 @@ import {
     CompareExchangeValueResultParser,
     GetCompareExchangeValuesResponse
 } from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
-import { CompareExchangeResultClass } from "../../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../../Types";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { QueryResult } from "../../../Queries/QueryResult";
+import { GetCompareExchangeValuesCommand } from "../../../Operations/CompareExchange/GetCompareExchangeValuesOperation";
 
 export class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;
@@ -76,12 +77,11 @@ export class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
         }
 
         if (response.result) {
-            const results = await RavenCommandResponsePipeline.create<GetCompareExchangeValuesResponse>()
-                .parseJsonAsync()
-                .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
-                .process(stringToReadable(response.result));
+            const results = JSON.parse(response.result) as ServerCasing<ServerResponse<GetCompareExchangeValuesResponse>>;
 
-            const value = CompareExchangeValueResultParser.getValue(results, false, this._conventions, null);
+            const localObject = GetCompareExchangeValuesCommand.mapToLocalObject(results);
+
+            const value = CompareExchangeValueResultParser.getValue(localObject, false, this._conventions, null);
 
             if (this._clusterSession.session.noTracking) {
                 if (!value) {

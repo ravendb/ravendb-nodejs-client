@@ -6,7 +6,6 @@ export type TransformJsonKeysProfile =
     "DocumentLoad"
     | "Patch"
     | "CompareExchangeValue"
-    | "GetCompareExchangeValue"
     | "SubscriptionResponsePayload"
     | "SubscriptionRevisionsResponsePayload";
 
@@ -42,17 +41,6 @@ export function getTransformJsonKeysProfile(
             return {
                 getCurrentTransform:
                     buildEntityKeysTransformForPutCompareExchangeValue(conventions.entityFieldNameConvention)
-            };
-        }
-
-        if (profile === "GetCompareExchangeValue") {
-            if (!conventions) {
-                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
-            }
-
-            return {
-                getCurrentTransform:
-                    buildEntityKeysTransformForGetCompareExchangeValue(conventions.entityFieldNameConvention)
             };
         }
 
@@ -170,24 +158,6 @@ function buildEntityKeysTransformForPutCompareExchangeValue(entityCasingConventi
 
                  return null;
             }
-        }
-
-        return entityCasingConvention;
-    };
-}
-
-function buildEntityKeysTransformForGetCompareExchangeValue(entityCasingConvention) {
-    return function getCompareExchangeValueTransform(key, stack) {
-        const len = stack.length;
-
-        if (stack[0] === "Results") {
-            if (stack[2] === "Value" && stack[3] === "@metadata") {
-                return handleMetadataJsonKeys(key, stack, len, 4);
-            }
-        }
-
-        if (len <= 4) {
-            return "camel";
         }
 
         return entityCasingConvention;

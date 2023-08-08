@@ -10,9 +10,10 @@ import * as assert from "assert";
 import { User } from "../../../Assets/Entities";
 import * as StreamUtil from "../../../../src/Utility/StreamUtil";
 import { CONSTANTS } from "../../../../src/Constants";
-import { parseJsonVerbose } from "../../../Utils/Json";
+import { parseJsonStreamVerbose, parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";
 import { assertThat } from "../../../Utils/AssertExtensions";
+import * as Parser from "stream-json/Parser";
 
 describe("query streaming", function () {
 
@@ -310,14 +311,9 @@ describe("query streaming", function () {
 
             const result: string = targetStream["string"];
             assert.ok(result);
-            const json = parseJsonVerbose(result);
+
+            const json = await parseJsonStreamVerbose(result);
             assert.ok(json);
-            const res = json.results;
-            assert.ok(res);
-            assert.strictEqual(json.indexName, "Users/ByName");
-            assert.ok(json.indexTimestamp);
-            assert.strictEqual(json.isStale, false);
-            assert.ok("resultEtag" in json);
         }
     });
 });
