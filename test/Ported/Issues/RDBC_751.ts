@@ -5,7 +5,7 @@ import {assertThat, assertThrows} from "../../Utils/AssertExtensions";
 import DocumentStore from "../../../src";
 import {CreateSampleDataOperation} from "../../Utils/CreateSampleDataOperation";
 
-describe("RavenDB_20990", function () {
+describe("RDBC_751", function () {
     let regularStore: IDocumentStore;
 
     beforeEach(async function () {
