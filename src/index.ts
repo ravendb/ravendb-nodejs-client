@@ -720,7 +720,6 @@ import * as Json from "./Mapping/Json";
 export { CONSTANTS } from "./Constants";
 
 export { Json };
-export { TransformKeysJsonStream } from "./Mapping/Json/Streams/TransformKeysJsonStream";
 
 import { DocumentStore } from "./Documents/DocumentStore";
 

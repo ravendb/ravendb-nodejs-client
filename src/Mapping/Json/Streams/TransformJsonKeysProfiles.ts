@@ -3,35 +3,12 @@ import { DocumentConventions } from "../../../Documents/Conventions/DocumentConv
 import { throwError } from "../../../Exceptions";
 
 export type TransformJsonKeysProfile =
-    "DocumentLoad"
-    | "Patch"
-    | "SubscriptionResponsePayload"
+    "SubscriptionResponsePayload"
     | "SubscriptionRevisionsResponsePayload";
 
 
 export function getTransformJsonKeysProfile(
     profile: TransformJsonKeysProfile, conventions?: DocumentConventions): { getCurrentTransform: (key: any, stack: any) => CasingConvention } {
-
-        if (profile === "DocumentLoad") {
-            if (!conventions) {
-                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
-            }
-
-            const getCurrentTransform = buildEntityKeysTransformForDocumentLoad(conventions.entityFieldNameConvention);
-            return { getCurrentTransform };
-        }
-
-        if (profile === "Patch") {
-            if (!conventions) {
-                throwError("InvalidArgumentException", "Document conventions are required for this profile.");
-            }
-
-            return {
-                getCurrentTransform:
-                    buildEntityKeysTransformForPatch(conventions.entityFieldNameConvention)
-            };
-        }
-
         if (profile === "SubscriptionResponsePayload") {
             if (!conventions) {
                 throwError("InvalidArgumentException", "Document conventions are required for this profile.");
@@ -56,54 +33,6 @@ export function getTransformJsonKeysProfile(
         }
 
         throwError("NotSupportedException", `Invalid profile name ${profile}`);
-}
-
-function buildEntityKeysTransformForPatch(entityCasingConvention) {
-    return function entityKeysTransform(key, stack) {
-        const len = stack.length;
-        if (len === 1) {
-            return "camel";
-        }
-
-        const isDoc = stack[0] === "OriginalDocument" || stack[0] === "ModifiedDocument";
-        if (isDoc) {
-            if (len === 2) {
-                // top document level
-                return key === "@metadata" ? null : entityCasingConvention;
-            }
-
-            if (len === 3) {
-                if (stack[1] === "@metadata") {
-                    // handle @metadata object keys
-                    if (key[0] === "@" || key === "Raven-Node-Type") {
-                        return null;
-                    }
-                }
-            }
-
-            if (len === 4) {
-                // do not touch @nested-object-types keys
-                if (stack[len - 2] === "@nested-object-types") {
-                    return null;
-                }
-            }
-
-            if (len === 5) {
-                // @metadata.@attachments.[].name
-                if (stack[1] === "@metadata") {
-                    if (stack[2] === "@attachments") {
-                        return "camel";
-                    }
-
-                    return null;
-                }
-            }
-
-            return entityCasingConvention;
-        }
-
-        return "camel";
-    };
 }
 
 function buildEntityKeysTransformForSubscriptionResponsePayload(entityCasingConvention) {
@@ -176,76 +105,6 @@ function buildEntityKeysTransformForSubscriptionRevisionsResponsePayload(entityC
     };
 }
 
-function buildEntityKeysTransformForDocumentLoad(entityCasingConvention) {
-    return function entityKeysTransform(key, stack) {
-        const len = stack.length;
-
-        if (len === 1) {
-            // Results, Includes
-            return "camel";
-        }
-
-        // len === 2 is array index
-        if (len === 2) {
-            if (stack[0] === "CounterIncludes") {
-                return null;
-            }
-        }
-
-        if (len === 3) {
-            if (stack[0] === "CompareExchangeValueIncludes") {
-                return "camel";
-            }
-            // top document level
-            return key === "@metadata" ? null : entityCasingConvention;
-        }
-
-        if (len === 4) {
-            if (stack[0] === "CounterIncludes") {
-                return "camel";
-            }
-            if (stack[0] === "CompareExchangeValueIncludes" && stack[2] === "Value" && stack[3] === "Object") {
-                return "camel";
-            }
-            if (stack[2] === "@metadata") {
-                // handle @metadata object keys
-                if (key[0] === "@" || key === "Raven-Node-Type") {
-                    return null;
-                }
-            }
-        }
-
-        if (len === 5) {
-            // do not touch @nested-object-types keys
-            if (stack[len - 2] === "@nested-object-types") {
-                return null;
-            }
-
-            if (stack[0] === "TimeSeriesIncludes") {
-                return "camel";
-            }
-        }
-
-        if (len === 6) {
-            // @metadata.@attachments.[].name
-            if (stack[2] === "@metadata") {
-                 if (stack[3] === "@attachments") {
-                     return "camel";
-                 }
-
-                 return null;
-            }
-        }
-
-        if (len === 7) {
-            if (stack[0] === "TimeSeriesIncludes") {
-                return "camel";
-            }
-        }
-
-        return entityCasingConvention;
-    };
-}
 
 function handleMetadataJsonKeys(key: string, stack: string[], stackLength: number, metadataKeyLevel: number): CasingConvention {
     if (stackLength === metadataKeyLevel) {

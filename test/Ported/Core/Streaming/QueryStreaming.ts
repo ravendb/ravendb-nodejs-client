@@ -13,7 +13,6 @@ import { CONSTANTS } from "../../../../src/Constants";
 import { parseJsonStreamVerbose, parseJsonVerbose } from "../../../Utils/Json";
 import { getStringWritable } from "../../../Utils/Streams";
 import { assertThat } from "../../../Utils/AssertExtensions";
-import * as Parser from "stream-json/Parser";
 
 describe("query streaming", function () {
 
