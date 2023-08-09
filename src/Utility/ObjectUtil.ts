@@ -155,6 +155,16 @@ export class ObjectUtil {
         };
     }
 
+    public static mapIncludesToLocalObject(json: any, conventions: DocumentConventions) {
+        const mappedIncludes: Record<string, any> = {};
+        if (json) {
+            for (const [key, value] of Object.entries(json)) {
+                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+        }
+        return mappedIncludes;
+    }
+
     public static mapCompareExchangeToLocalObject(json: Record<string, any>) {
         if (!json) {
             return undefined;
@@ -345,16 +355,19 @@ function makeKeyPath(keyStack) {
 }
 
 function shouldTransformKey(currentKey, currentPath, opts) {
-    const currentPathPlusKey = currentPath ? currentPath + "." + currentKey : currentKey;
     for (const x of opts.ignoreKeys) {
         if ("test" in x ? x.test(currentKey) : x === currentKey) {
             return false;
         }
     }
 
-    for (const x of opts.ignorePaths) {
-        if ("test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey) {
-            return false;
+    if (opts.ignorePaths) {
+        const currentPathPlusKey = currentPath ? currentPath + "." + currentKey : currentKey;
+
+        for (const x of opts.ignorePaths) {
+            if ("test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey) {
+                return false;
+            }
         }
     }
 

@@ -154,16 +154,9 @@ export class QueryCommand extends RavenCommand<QueryResult> {
 
 
     private static _mapToLocalObject(json: any, conventions: DocumentConventions): QueryResult {
-        const mappedIncludes: Record<string, any> = {};
-        if (json.Includes) {
-            for (const [key, value] of Object.entries(json.Includes)) {
-                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
-            }
-        }
-
         const props: Omit<QueryResult, "scoreExplanations" | "cappedMaxResults" | "createSnapshot" | "resultSize"> = {
             results: json.Results.map(x => ObjectUtil.transformDocumentKeys(x, conventions)),
-            includes: mappedIncludes,
+            includes: ObjectUtil.mapIncludesToLocalObject(json.Includes, conventions),
             indexName: json.IndexName,
             indexTimestamp: conventions.dateUtil.parse(json.IndexTimestamp),
             includedPaths: json.IncludedPaths,

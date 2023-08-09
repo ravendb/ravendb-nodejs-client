@@ -19,7 +19,6 @@ import {
 import { throwError, getError } from "../Exceptions";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as Asm from "stream-json/Assembler";
-import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { StringBuilder } from "../Utility/StringBuilder";
 import { parser as jsonlParser } from "stream-json/jsonl/Parser";

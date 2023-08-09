@@ -346,16 +346,9 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     private static _mapToLocalObject(json: any, conventions: DocumentConventions): GetDocumentsResult {
-        const mappedIncludes: Record<string, any> = {};
-        if (json.Includes) {
-            for (const [key, value] of Object.entries(json.Includes)) {
-                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
-            }
-        }
-
         return {
             results: json.Results.map(x => ObjectUtil.transformDocumentKeys(x, conventions)),
-            includes: mappedIncludes,
+            includes: ObjectUtil.mapIncludesToLocalObject(json.Includes, conventions),
             compareExchangeValueIncludes: ObjectUtil.mapCompareExchangeToLocalObject(json.CompareExchangeValueIncludes),
             timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),
             counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
