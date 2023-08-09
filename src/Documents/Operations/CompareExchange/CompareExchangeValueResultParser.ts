@@ -10,7 +10,7 @@ import { CompareExchangeResultClass, EntityConstructor } from "../../../Types";
 export interface CompareExchangeResultItem {
     index: number;
     key: string;
-    value: { object: object };
+    value: { object: object, "@metadata"?: any };
 }
 
 export interface GetCompareExchangeValuesResponse {
@@ -91,7 +91,7 @@ export class CompareExchangeValueResultParser {
         }
 
         let rawValue = raw.object;
-        if (TypeUtil.isPrimitiveType(clazz) || !clazz) {
+        if (clazz && TypeUtil.isPrimitiveType(clazz) || TypeUtil.isPrimitive(rawValue)) {
             return new CompareExchangeValue(key, index, rawValue, metadata);
         } else {
             if (!rawValue) {

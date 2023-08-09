@@ -1,7 +1,7 @@
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeResult, CompareExchangeResultResponse } from "./CompareExchangeResult";
-import { CompareExchangeResultClass } from "../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -59,7 +59,7 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key) 
+        const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key)
             + "&index=" + this._index;
         return {
             method: "DELETE",
@@ -69,11 +69,11 @@ export class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchang
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
-        const resObj = await this._pipeline<CompareExchangeResultResponse>()
+        const resObj = await this._pipeline<ServerCasing<ServerResponse<CompareExchangeResultResponse>>>()
             .collectBody(_ => body = _)
-            .parseJsonAsync()
-            .jsonKeysTransform("CompareExchangeValue", this._conventions)
+            .parseJsonSync()
             .process(bodyStream);
+
         this.result = CompareExchangeResult.parseFromObject(resObj, this._conventions, this._clazz);
         return body;
     }

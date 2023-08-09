@@ -1,9 +1,10 @@
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { CompareExchangeResultClass } from "../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../Types";
 import { COMPARE_EXCHANGE } from "../../../Constants";
 import { DocumentType } from "../../DocumentAbstractions";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export interface CompareExchangeResultResponse {
     index: number;
@@ -20,39 +21,15 @@ export class CompareExchangeResult<T> {
     public successful: boolean;
 
     public static parseFromObject<T>(
-        { index, value, successful }: CompareExchangeResultResponse,
+        response: ServerCasing<ServerResponse<CompareExchangeResultResponse>>,
         conventions: DocumentConventions,
         clazz?: CompareExchangeResultClass<T>): CompareExchangeResult<T> {
-        if (!index) {
+        if (!response.Index) {
             throwError("InvalidOperationException", "Response is invalid. Index is missing");
         }
 
-        const val = value.object || null;
-        return CompareExchangeResult._create(val, index, successful, conventions, clazz);
-    }
-
-    public static parseFromString<T>(
-        responseString: string,
-        conventions: DocumentConventions,
-        clazz?: CompareExchangeResultClass<T>): CompareExchangeResult<T> {
-
-        const response = JSON.parse(responseString);
-
-        const index = response["Index"];
-        if (!index) {
-            throwError("InvalidOperationException", "Response is invalid. Index is missing");
-        }
-
-        const successful = response["Successful"];
-        const raw = response["Value"];
-
-        let val = null;
-
-        if (raw) {
-            val = raw[COMPARE_EXCHANGE.OBJECT_FIELD_NAME];
-        }
-
-        return CompareExchangeResult._create(val, index, successful, conventions, clazz);
+        const val = response.Value.Object || null;
+        return CompareExchangeResult._create(val, response.Index, response.Successful, conventions, clazz);
     }
 
     private static _create<T>(
@@ -74,13 +51,22 @@ export class CompareExchangeResult<T> {
             return emptyExchangeResult;
         }
 
-        let result: T;
+        let result: any = null;
         if (TypeUtil.isPrimitive(val)) {
             result = val as any as T;
         } else {
+            let rawValue = val;
             // val comes here with proper key case already
             const entityType = conventions.getJsTypeByDocumentType(clazz as DocumentType);
-            result = conventions.deserializeEntityFromJson(entityType, val) as any as T;
+            if (conventions.entityFieldNameConvention) {
+                rawValue = ObjectUtil.transformObjectKeys(
+                    rawValue, {
+                        defaultTransform: conventions.entityFieldNameConvention,
+                        recursive: true,
+                        arrayRecursive: true
+                    });
+            }
+            result = conventions.deserializeEntityFromJson(entityType, rawValue) as any as T;
         }
 
         const exchangeResult = new CompareExchangeResult<T>();

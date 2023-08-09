@@ -1,14 +1,14 @@
 
 export interface SubscriptionConnectionServerMessage {
     type: MessageType;
-    status: ConnectionStatus;
-    data: any;
-    includes: any;
-    counterIncludes: any;
-    includedCounterNames: Record<string, string[]>;
-    timeSeriesIncludes: any;
-    exception: string;
-    message: string;
+    status?: ConnectionStatus;
+    data?: any;
+    includes?: any;
+    counterIncludes?: any;
+    includedCounterNames?: Record<string, string[]>;
+    timeSeriesIncludes?: any;
+    exception?: string;
+    message?: string;
 }
 
 export interface SubscriptionRedirectData {

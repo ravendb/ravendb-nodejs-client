@@ -25,14 +25,15 @@ import { EmptyCallback } from "../../Types/Callbacks";
 import { delay } from "../../Utility/PromiseUtil";
 import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
-import { TransformKeysJsonStream } from "../../Mapping/Json/Streams/TransformKeysJsonStream";
-import { getTransformJsonKeysProfile } from "../../Mapping/Json/Streams/TransformJsonKeysProfiles";
 import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
 import { ServerNode } from "../../Http/ServerNode";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { GetTcpInfoCommand, TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
 import { GetTcpInfoForRemoteTaskCommand } from "../Commands/GetTcpInfoForRemoteTaskCommand";
 import * as os from "os";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
+import { ServerCasing, ServerResponse } from "../../Types";
+import { CONSTANTS } from "../../Constants";
 
 type EventTypes = "afterAcknowledgment" | "connectionRetry" | "batch" | "error" | "end" | "unexpectedSubscriptionError";
 
@@ -239,16 +240,29 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     private _ensureParser(socket: Socket) {
-        const keysTransformProfile = getTransformJsonKeysProfile(
-            this._revisions
-                ? "SubscriptionRevisionsResponsePayload"
-                : "SubscriptionResponsePayload", this._store.conventions);
+        const conventions = this._store.conventions;
+        const revisions = this._revisions;
+
+        const keysTransform = new stream.Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                let value = chunk["value"];
+                if (!value) {
+                    return callback();
+                }
+
+                value = SubscriptionWorker._mapToLocalObject(value, revisions, conventions);
+
+                callback(null, {...chunk, value});
+            }
+        });
+
 
         this._parser = stream.pipeline([
             socket,
             new Parser({ jsonStreaming: true, streamValues: false }),
-            new TransformKeysJsonStream(keysTransformProfile),
-            new StreamValues()
+            new StreamValues(),
+            keysTransform
         ], err => {
             if (err && !socket.destroyed) {
                 this._emitter.emit("error", err);
@@ -802,6 +816,32 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             | ((error: Error) => void)) {
         this.removeListener(event as any, handler as any);
         return this;
+    }
+
+    private static _mapToLocalObject(json: ServerCasing<ServerResponse<SubscriptionConnectionServerMessage>>, revisions: boolean, conventions: DocumentConventions): SubscriptionConnectionServerMessage {
+        const { Data, Includes, CounterIncludes, ...rest } = json;
+
+        let data: any;
+        if (Data) {
+            if (revisions) {
+                data = {
+                    current: ObjectUtil.transformDocumentKeys(Data.Current, conventions),
+                    previous: ObjectUtil.transformDocumentKeys(Data.Previous, conventions),
+                    [CONSTANTS.Documents.Metadata.KEY]: ObjectUtil.transformMetadataKeys(Data[CONSTANTS.Documents.Metadata.KEY], conventions)
+                }
+            } else {
+                data = ObjectUtil.transformDocumentKeys(Data, conventions);
+            }
+        }
+
+        return {
+            ...ObjectUtil.transformObjectKeys(rest, {
+                defaultTransform: "camel"
+            }),
+            data,
+            includes: ObjectUtil.mapIncludesToLocalObject(Includes, conventions),
+            counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(CounterIncludes),
+        } as SubscriptionConnectionServerMessage;
     }
 
 }

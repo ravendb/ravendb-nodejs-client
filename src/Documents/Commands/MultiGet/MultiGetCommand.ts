@@ -14,6 +14,10 @@ import { IDisposable } from "../../../Types/Contracts";
 import { RequestExecutor } from "../../../Http/RequestExecutor";
 import { AggressiveCacheOptions } from "../../../Http/AggressiveCacheOptions";
 import { HEADERS } from "../../../Constants";
+import { ServerCasing, ServerResponse } from "../../../Types";
+import { ConditionalGetResult } from "../ConditionalGetDocumentsCommand";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
+import { camelCase } from "change-case";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDisposable {
     private readonly _requestExecutor: RequestExecutor;
@@ -144,27 +148,11 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
             this._throwInvalidResponse();
         }
         try {
-            const result = await this._pipeline<GetResponse[]>()
-                .parseJsonAsync()
-                .jsonKeysTransform({
-                    getCurrentTransform(key, stack) {
-                        if (stack.length === 1
-                            || stack.length === 2
-                            || stack.length === 3) {
-                            // results.0.result
-                            return "camel";
-                        }
-
-                        return null;
-                    }
-                })
+            const result = await this._pipeline<ServerCasing<ServerResponse<{ Results: GetResponse[] }>>>()
+                .parseJsonSync()
                 .process(bodyStream);
 
-            const responses = result["results"].reduce((result: GetResponse[], next) => {
-                // TODO try to get it directly from parser
-                next.result = TypeUtil.isNullOrUndefined(next.result) ? next.result : JSON.stringify(next.result);
-                return [...result, next];
-            }, []);
+            const responses = result.Results.map(item => MultiGetCommand._mapToLocalObject(item));
 
             this.result = [];
 
@@ -242,6 +230,17 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
                 delete command.headers[HEADERS.IF_NONE_MATCH];
             }
         }
+    }
+
+    private static _mapToLocalObject(json: ServerCasing<ServerResponse<GetResponse>>): any {
+        // convert from Pascal to camel on top level only
+        const item: any = {};
+        for (const [key, value] of Object.entries(json)) {
+            item[camelCase(key)] = value;
+        }
+
+        item.result = item.result ? JSON.stringify(item.result) : null;
+        return item;
     }
 }
 

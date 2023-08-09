@@ -97,7 +97,7 @@ export class StreamOperation {
             const pipeline = RavenCommandResponsePipeline.create<object[]>();
 
             this._session.conventions.useJsonlStreaming
-                ? pipeline.parseJsonlAsync('Stats')
+                ? pipeline.parseJsonlAsync(x => x["Stats"])
                 : pipeline.parseJsonAsync([
                     ignore({ filter: /^Results|Includes$/ }),
                     streamValues()

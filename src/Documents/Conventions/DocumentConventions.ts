@@ -102,7 +102,7 @@ export class DocumentConventions {
 
     private readonly _bulkInsert: BulkInsertConventions;
 
-    private _useJsonlStreaming = false;
+    private _useJsonlStreaming = true;
 
     public get bulkInsert() {
         return this._bulkInsert;

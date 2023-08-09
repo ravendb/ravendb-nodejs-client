@@ -1,6 +1,6 @@
 import { ILazyOperation } from "./ILazyOperation";
 import { ClusterTransactionOperationsBase } from "../../ClusterTransactionOperationsBase";
-import { CompareExchangeResultClass } from "../../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../../Types";
 import { throwError } from "../../../../Exceptions";
 import { TypeUtil } from "../../../../Utility/TypeUtil";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
@@ -16,6 +16,7 @@ import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { QueryResult } from "../../../Queries/QueryResult";
 import { CompareExchangeValue } from "../../../Operations/CompareExchange/CompareExchangeValue";
 import { StringBuilder } from "../../../../Utility/StringBuilder";
+import { GetCompareExchangeValuesCommand } from "../../../Operations/CompareExchange/GetCompareExchangeValuesOperation";
 
 export class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation {
     private readonly _clusterSession: ClusterTransactionOperationsBase;
@@ -131,14 +132,13 @@ export class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation 
         }
 
         if (response.result) {
-            const results = await RavenCommandResponsePipeline.create<GetCompareExchangeValuesResponse>()
-                .parseJsonAsync()
-                .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
-                .process(stringToReadable(response.result));
+            const results = JSON.parse(response.result) as ServerCasing<ServerResponse<GetCompareExchangeValuesResponse>>;
+
+            const localObject = GetCompareExchangeValuesCommand.mapToLocalObject(results);
 
             if (this._clusterSession.session.noTracking) {
                 const result: { [key: string]: CompareExchangeValue<T> } = {};
-                for (const kvp of Object.entries(CompareExchangeValueResultParser.getValues(results, false, this._conventions))) {
+                for (const kvp of Object.entries(CompareExchangeValueResultParser.getValues(localObject, false, this._conventions))) {
                     if (!kvp[1].value) {
                         result[kvp[0]] = this._clusterSession.registerMissingCompareExchangeValue(kvp[0]).getValue(this._clazz, this._conventions);
                         continue;
@@ -151,7 +151,7 @@ export class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation 
                 return;
             }
 
-            for (const kvp of Object.entries(CompareExchangeValueResultParser.getValues(results, false, this._conventions))) {
+            for (const kvp of Object.entries(CompareExchangeValueResultParser.getValues(localObject, false, this._conventions))) {
                 if (!kvp[1]) {
                     continue;
                 }

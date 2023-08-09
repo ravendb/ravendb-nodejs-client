@@ -273,7 +273,7 @@ describe("With custom key case conventions set", function () {
 
             const cmp = await session.advanced.clusterTransaction.getCompareExchangeValue<typeof pascalCasedCmpXchObj>("cmp/1");
             // we don't transform casing for cmpXchValues
-            assert.strictEqual(cmp.value.Email, pascalCasedCmpXchObj.Email);
+            assert.strictEqual(cmp.value.email, pascalCasedCmpXchObj.Email);
 
             assertThat(session.advanced.numberOfRequests)
                 .isEqualTo(1);

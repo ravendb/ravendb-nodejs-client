@@ -8,7 +8,7 @@ import {
     ObjectKeyCaseTransformProfile,
     getObjectKeyCaseTransformProfile
 } from "../Mapping/Json/Conventions";
-import { CasingConvention } from "../Utility/ObjectUtil";
+import { CasingConvention, ObjectUtil } from "../Utility/ObjectUtil";
 import * as StreamUtil from "../Utility/StreamUtil";
 import * as stream from "readable-stream";
 import {
@@ -17,17 +17,8 @@ import {
     lastChunk
 } from "../Mapping/Json/Streams/CollectResultStream";
 import { throwError, getError } from "../Exceptions";
-import {
-    TransformJsonKeysStreamOptions,
-    TransformKeysJsonStream
-} from "../Mapping/Json/Streams/TransformKeysJsonStream";
-import {
-    getTransformJsonKeysProfile,
-    TransformJsonKeysProfile
-} from "../Mapping/Json/Streams/TransformJsonKeysProfiles";
 import { TypeUtil } from "../Utility/TypeUtil";
 import * as Asm from "stream-json/Assembler";
-import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { ErrorFirstCallback } from "../Types/Callbacks";
 import { StringBuilder } from "../Utility/StringBuilder";
 import { parser as jsonlParser } from "stream-json/jsonl/Parser";
@@ -44,7 +35,6 @@ export interface RavenCommandResponsePipelineOptions<TResult> {
     streamKeyCaseTransform?: ObjectKeyCaseTransformStreamOptions;
     collectResult: CollectResultStreamOptions<TResult>;
     transform?: stream.Stream;
-    transformKeys?: TransformJsonKeysStreamOptions;
 }
 
 export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
@@ -75,23 +65,22 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
      * @param type Type of object to extract from objects stream - use Raw to skip extraction.
      * @param options
      */
-    public parseJsonlAsync(type: "Item" | "Stats" | "Raw", options: { transforms?: stream.Transform[] } = {}) {
+    public parseJsonlAsync(valueExtractor: (obj: any) => any, options: { transforms?: stream.Transform[] } = {}) {
         const transforms = options?.transforms ?? [];
-        if (type !== "Raw") {
-            const extractItemTransform = new stream.Transform({
-                objectMode: true,
-                transform(chunk, encoding, callback) {
-                    const value = chunk["value"][type];
-                    if (!value) {
-                        return callback();
-                    }
-
-                    callback(null, {...chunk, value});
+        const extractItemTransform = new stream.Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                const value = valueExtractor(chunk["value"]);
+                if (!value) {
+                    return callback();
                 }
-            });
 
-            transforms.push(extractItemTransform);
-        }
+                callback(null, {...chunk, value});
+            }
+        });
+
+        transforms.unshift(extractItemTransform);
+
         this._opts.jsonlAsync = {
             transforms
         };
@@ -101,32 +90,6 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
 
     public collectBody(callback?: (body: string) => void) {
         this._opts.collectBody = callback || true;
-        return this;
-    }
-
-    public jsonKeysTransform(): this;
-    public jsonKeysTransform(profile: TransformJsonKeysProfile, conventions: DocumentConventions): this;
-    public jsonKeysTransform(profile: TransformJsonKeysProfile): this;
-    public jsonKeysTransform(opts: TransformJsonKeysStreamOptions): this;
-    public jsonKeysTransform(
-        optsOrProfile?: TransformJsonKeysStreamOptions | TransformJsonKeysProfile,
-        conventions?: DocumentConventions): this {
-
-        if (!this._opts.jsonAsync) {
-            throwError("InvalidOperationException",
-                "Cannot use transformKeys without doing parseJsonAsync() first.");
-        }
-
-        if (!optsOrProfile) {
-            throwError("InvalidArgumentException", "Must provide transform opts or profile name.");
-        }
-
-        if (TypeUtil.isString(optsOrProfile)) {
-            this._opts.transformKeys = getTransformJsonKeysProfile(optsOrProfile, conventions);
-        } else {
-            this._opts.transformKeys = optsOrProfile;
-        }
-
         return this;
     }
 
@@ -243,10 +206,6 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             const handlePath = !!opts.jsonAsync;
             const keyCaseOpts = Object.assign({}, opts.streamKeyCaseTransform, { handlePath });
             streams.push(new ObjectKeyCaseTransformStream(keyCaseOpts));
-        }
-
-        if (opts.transformKeys) {
-            streams.push(new TransformKeysJsonStream(opts.transformKeys) as any);
         }
 
         return streams;

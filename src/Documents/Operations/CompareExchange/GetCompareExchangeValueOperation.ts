@@ -7,9 +7,10 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IDocumentStore } from "../../IDocumentStore";
 import { throwError } from "../../../Exceptions";
 import { ServerNode } from "../../../Http/ServerNode";
-import { CompareExchangeResultClass } from "../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../Types";
 import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } from "./CompareExchangeValueResultParser";
 import * as stream from "readable-stream";
+import { GetCompareExchangeValuesCommand } from "./GetCompareExchangeValuesOperation";
 
 export class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
@@ -60,7 +61,7 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
 
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/cmpxchg?key=" + encodeURIComponent(this._key);
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
@@ -69,14 +70,14 @@ export class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
         }
 
         let body: string = null;
-        const results = await this._pipeline<GetCompareExchangeValuesResponse>()
+        const results = await this._pipeline<ServerCasing<ServerResponse<GetCompareExchangeValuesResponse>>>()
             .collectBody(x => body = x)
-            .parseJsonAsync()
-            .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
+            .parseJsonSync()
             .process(bodyStream);
 
-        this.result = CompareExchangeValueResultParser.getValue(
-                results as GetCompareExchangeValuesResponse, this._materializeMetadata, this._conventions, this._clazz);
+        const localObject = GetCompareExchangeValuesCommand.mapToLocalObject(results);
+
+        this.result = CompareExchangeValueResultParser.getValue(localObject, this._materializeMetadata, this._conventions, this._clazz);
         return body;
     }
 }

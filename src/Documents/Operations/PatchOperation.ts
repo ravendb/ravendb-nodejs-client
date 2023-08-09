@@ -11,6 +11,7 @@ import { ServerNode } from "../../Http/ServerNode";
 import { PatchResult } from "./PatchResult";
 import * as stream from "readable-stream";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
+import { ServerCasing, ServerResponse } from "../../Types";
 
 export interface Payload {
     patch: PatchRequest;
@@ -175,11 +176,25 @@ export class PatchCommand extends RavenCommand<PatchResult> {
         }
 
         let body;
-        this.result = await this._pipeline<PatchResult>()
+        const results= await this._pipeline<ServerCasing<ServerResponse<PatchResult>>>()
             .collectBody(_ => body = _)
-            .parseJsonAsync()
-            .jsonKeysTransform("Patch", this._conventions)
+            .parseJsonSync()
             .process(bodyStream);
+
+        this.result = PatchCommand._mapToLocalObject(results, this._conventions);
+
         return body;
+    }
+
+    private static _mapToLocalObject(json: ServerCasing<ServerResponse<PatchResult>>, conventions: DocumentConventions): PatchResult {
+        return {
+            changeVector: json.ChangeVector,
+            collection: json.Collection,
+            debug: json.Debug,
+            lastModified: conventions.dateUtil.parse(json.LastModified),
+            status: json.Status,
+            modifiedDocument: ObjectUtil.transformDocumentKeys(json.ModifiedDocument, conventions),
+            originalDocument: ObjectUtil.transformDocumentKeys(json.OriginalDocument, conventions)
+        }
     }
 }

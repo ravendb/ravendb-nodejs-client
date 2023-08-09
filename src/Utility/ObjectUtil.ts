@@ -4,7 +4,7 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { CONSTANTS } from "../Constants";
 import { MetadataObject } from "../Documents/Session/MetadataObject";
 import { CompareExchangeResultItem } from "../Documents/Operations/CompareExchange/CompareExchangeValueResultParser";
-import { ServerResponse } from "../Types";
+import { ServerCasing, ServerResponse } from "../Types";
 import { TimeSeriesRangeResult } from "../Documents/Operations/TimeSeries/TimeSeriesRangeResult";
 import { TimeSeriesEntry } from "../Documents/Session/TimeSeries/TimeSeriesEntry";
 import { CounterDetail } from "../Documents/Operations/Counters/CounterDetail";
@@ -155,7 +155,16 @@ export class ObjectUtil {
         };
     }
 
-    //TODO: use ServerCasing<CompareExchangeResultItem> instead of any, after upgrading to TS 4.2
+    public static mapIncludesToLocalObject(json: any, conventions: DocumentConventions) {
+        const mappedIncludes: Record<string, any> = {};
+        if (json) {
+            for (const [key, value] of Object.entries(json)) {
+                mappedIncludes[key] = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+        }
+        return mappedIncludes;
+    }
+
     public static mapCompareExchangeToLocalObject(json: Record<string, any>) {
         if (!json) {
             return undefined;
@@ -176,8 +185,7 @@ export class ObjectUtil {
         return result;
     }
 
-    //TODO: use ServerCasing<ServerResponse<TimeSeriesRangeResult> instead of any, after upgrading to TS 4.2
-    public static mapTimeSeriesIncludesToLocalObject(json: Record<string, Record<string, any[]>>) {
+    public static mapTimeSeriesIncludesToLocalObject(json: ServerCasing<ServerResponse<TimeSeriesRangeResult>>) {
         if (!json) {
             return undefined;
         }
@@ -188,7 +196,7 @@ export class ObjectUtil {
             const perDocumentResult: Record<string, ServerResponse<TimeSeriesRangeResult>[]> = {};
 
             for (const [tsName, tsData] of Object.entries(perDocumentTimeSeries)) {
-                perDocumentResult[tsName] = tsData.map(ts => {
+                perDocumentResult[tsName] = (tsData as any).map(ts => {
                     return {
                         from: ts.From,
                         to: ts.To,
@@ -210,7 +218,7 @@ export class ObjectUtil {
         return result;
     }
 
-    public static mapCounterIncludesToLocalObject(json: Record<string, any[]>) {
+    public static mapCounterIncludesToLocalObject(json: object) {
         const result: Record<string, CounterDetail[]> = json ? {} : undefined;
 
         if (json) {
@@ -347,16 +355,19 @@ function makeKeyPath(keyStack) {
 }
 
 function shouldTransformKey(currentKey, currentPath, opts) {
-    const currentPathPlusKey = currentPath ? currentPath + "." + currentKey : currentKey;
     for (const x of opts.ignoreKeys) {
         if ("test" in x ? x.test(currentKey) : x === currentKey) {
             return false;
         }
     }
 
-    for (const x of opts.ignorePaths) {
-        if ("test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey) {
-            return false;
+    if (opts.ignorePaths) {
+        const currentPathPlusKey = currentPath ? currentPath + "." + currentKey : currentKey;
+
+        for (const x of opts.ignorePaths) {
+            if ("test" in x ? x.test(currentPathPlusKey) : x === currentPathPlusKey) {
+                return false;
+            }
         }
     }
 

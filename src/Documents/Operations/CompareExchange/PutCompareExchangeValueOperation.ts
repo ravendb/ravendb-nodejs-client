@@ -10,7 +10,7 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { JsonSerializer } from "../../../Mapping/Json/Serializer";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import * as stream from "readable-stream";
-import { ObjectTypeDescriptor, CompareExchangeResultClass } from "../../../Types";
+import { ObjectTypeDescriptor, CompareExchangeResultClass, ServerResponse, ServerCasing } from "../../../Types";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator";
 import { COMPARE_EXCHANGE, CONSTANTS } from "../../../Constants";
@@ -103,10 +103,9 @@ export class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExcha
     public async setResponseAsync(bodyStream: stream.Stream, fromCache: boolean): Promise<string> {
         let body: string = null;
 
-        const resObj = await this._pipeline<CompareExchangeResultResponse>()
+        const resObj = await this._pipeline<ServerCasing<ServerResponse<CompareExchangeResultResponse>>>()
             .collectBody(_ => body = _)
-            .parseJsonAsync()
-            .jsonKeysTransform("CompareExchangeValue", this._conventions)
+            .parseJsonSync()
             .process(bodyStream);
 
         const type = !TypeUtil.isPrimitive(this._value)

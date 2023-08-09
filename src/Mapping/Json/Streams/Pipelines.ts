@@ -3,10 +3,9 @@ import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponse
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { stringer as jsonlStringer } from "stream-json/jsonl/Stringer";
 import { stringer } from "stream-json/Stringer";
-import { TransformKeysJsonStream } from "./TransformKeysJsonStream";
-import { getTransformJsonKeysProfile } from "./TransformJsonKeysProfiles";
 import { pick } from "stream-json/filters/Pick";
 import { streamArray } from "stream-json/streamers/StreamArray";
+import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export function getDocumentResultsAsObjects(
     conventions: DocumentConventions,
@@ -14,12 +13,30 @@ export function getDocumentResultsAsObjects(
 ): RavenCommandResponsePipeline<object[]> {
     const pipeline = RavenCommandResponsePipeline.create<object[]>();
 
+    const keysTransform = new stream.Transform({
+        objectMode: true,
+        transform(chunk, encoding, callback) {
+            let value = chunk["value"];
+            if (!value) {
+                return callback();
+            }
+
+            if (conventions) {
+                value = ObjectUtil.transformDocumentKeys(value, conventions);
+            }
+
+            callback(null, {...chunk, value});
+        }
+    });
+
     return conventions.useJsonlStreaming
-        ? pipeline.parseJsonlAsync(queryStream ? "Item" : "Raw")
+        ? pipeline.parseJsonlAsync(queryStream ? x => x["Item"] : x => x, {
+            transforms: [keysTransform]
+        })
         : pipeline.parseJsonAsync([
-            new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
-            pick({ filter: "results" }),
-            streamArray()
+            pick({ filter: "Results" }),
+            streamArray(),
+            keysTransform
         ]);
 }
 
@@ -29,15 +46,13 @@ export function getDocumentStreamResultsIntoStreamPipeline(
     const pipeline = RavenCommandResponsePipeline.create<object[]>();
 
     return conventions.useJsonlStreaming
-        ? pipeline.parseJsonlAsync('Item', {
+        ? pipeline.parseJsonlAsync(x => x["Item"], {
             transforms: [
-                // TODO: conventions? + what's the purpose?
                 jsonlStringer({ replacer: (key, value) => key === '' ? value.value : value }),
             ]
         })
         : pipeline
             .parseJsonAsync([
-                new TransformKeysJsonStream(getTransformJsonKeysProfile("DocumentLoad", conventions)),
                 stringer({ useValues: true })
             ]);
 }

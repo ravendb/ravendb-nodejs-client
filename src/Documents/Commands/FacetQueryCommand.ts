@@ -3,7 +3,8 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import * as stream from "readable-stream";
 import { QueryCommand } from "./QueryCommand";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
-import { ServerResponse } from "../../Types";
+import { ServerCasing, ServerResponse } from "../../Types";
+import { ObjectUtil } from "../../Utility/ObjectUtil";
 
 export class FacetQueryCommand extends QueryCommand {
 
@@ -26,23 +27,33 @@ export class FacetQueryCommand extends QueryCommand {
         fromCache: boolean,
         bodyCallback?: (body: string) => void): Promise<QueryResult> {
 
-        const rawResult = await RavenCommandResponsePipeline.create<ServerResponse<QueryResult>>()
+        const rawResult = await RavenCommandResponsePipeline.create<ServerCasing<ServerResponse<QueryResult>>>()
             .collectBody(bodyCallback)
-            .parseJsonAsync()
-            .jsonKeysTransform("FacetQuery")
+            .parseJsonSync()
             .process(bodyStream);
 
-        const overrides: Partial<QueryResult> = {
-            indexTimestamp: conventions.dateUtil.parse(rawResult.indexTimestamp),
-            lastQueryTime: conventions.dateUtil.parse(rawResult.lastQueryTime)
-        };
-
-        const queryResult = Object.assign(new QueryResult(), rawResult, overrides) as QueryResult;
+        const queryResult = FacetQueryCommand.mapToLocalObject(rawResult, conventions);
 
         if (fromCache) {
             queryResult.durationInMs = -1;
         }
 
         return queryResult;
+    }
+
+    public static mapToLocalObject(json: ServerCasing<ServerResponse<QueryResult>>, conventions: DocumentConventions): QueryResult {
+        const { Results, Includes, IndexTimestamp, LastQueryTime, ...rest } = json;
+
+        const restMapped = ObjectUtil.transformObjectKeys(rest, {
+            defaultTransform: "camel"
+        }) as any;
+
+        return {
+            ...restMapped,
+            indexTimestamp: conventions.dateUtil.parse(IndexTimestamp),
+            lastQueryTime: conventions.dateUtil.parse(LastQueryTime),
+            results: Results.map(x => ObjectUtil.transformObjectKeys(x, { defaultTransform: "camel" })),
+            includes: ObjectUtil.mapIncludesToLocalObject(json.Includes, conventions)
+        };
     }
 }

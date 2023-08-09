@@ -2,7 +2,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { IOperation, OperationResultType } from "../OperationAbstractions";
 import { CompareExchangeValue } from "./CompareExchangeValue";
 import { throwError } from "../../../Exceptions";
-import { CompareExchangeResultClass } from "../../../Types";
+import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../Types";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -12,6 +12,7 @@ import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } fr
 import * as stream from "readable-stream";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { TypeUtil } from "../../../Utility/TypeUtil";
+import { QueryResult } from "../../Queries/QueryResult";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -142,15 +143,41 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
             return body;
         }
 
-        const results = await this._pipeline<GetCompareExchangeValuesResponse>()
+        const results = await this._pipeline<ServerCasing<ServerResponse<GetCompareExchangeValuesResponse>>>()
             .collectBody(b => body = b)
-            .parseJsonAsync()
-            .jsonKeysTransform("GetCompareExchangeValue", this._conventions)
+            .parseJsonSync()
             .process(bodyStream);
 
+        const localObject = GetCompareExchangeValuesCommand.mapToLocalObject(results);
+
         this.result = CompareExchangeValueResultParser.getValues<T>(
-            results, this._materializeMetadata, this._conventions, this._operation.clazz);
+            localObject, this._materializeMetadata, this._conventions, this._operation.clazz);
 
         return body;
+    }
+
+    public static mapToLocalObject(json: ServerCasing<ServerResponse<GetCompareExchangeValuesResponse>>): GetCompareExchangeValuesResponse {
+        return {
+            results: json.Results.map(item => {
+                if (!item.Value) {
+                    return {
+                        index: item.Index,
+                        key: item.Key,
+                        value: null
+                    }
+                }
+
+                const { Object, ...rest} = item.Value;
+
+                return {
+                    value: {
+                        ...rest,
+                        object: Object
+                    },
+                    index: item.Index,
+                    key: item.Key
+                }
+            })
+        }
     }
 }
