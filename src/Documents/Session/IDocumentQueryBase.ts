@@ -55,7 +55,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Specifies a fuzziness factor to the single word term in the last where clause
      * 0.0 to 1.0 where 1.0 means closer match
      *
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Fuzzy%20Searches
      */
     fuzzy(fuzzy: number): TSelf;
 
@@ -131,7 +131,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
 
     /**
      * Specifies a proximity distance for the phrase in the last search clause
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Proximity%20Searches
      */
     proximity(proximity: number): TSelf;
 
