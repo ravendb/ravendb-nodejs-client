@@ -1268,7 +1268,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * <p>
      * 0.0 to 1.0 where 1.0 means closer match
      * <p>
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Fuzzy%20Searches
      */
     public _fuzzy(fuzzy: number): void {
         const tokens = this._getCurrentWhereTokens();
@@ -1294,9 +1294,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     /**
-     * Specifies a proximity distance for the phrase in the last where clause
+     * Specifies a proximity distance for the phrase in the last search clause
      * <p>
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Proximity%20Searches
      */
     public _proximity(proximity: number): void {
         const tokens = this._getCurrentWhereTokens();
@@ -1311,11 +1311,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         if ((whereToken as WhereToken).whereOperator !== "Search" as WhereOperator) {
             throwError("InvalidOperationException", 
-                "Fuzzy can only be used right after where clause with equals operator");
+                "Proximity can only be used right after search clause");
         }
 
-        if (proximity < 1) {
-            throwError("InvalidArgumentException", "Proximity distance must be a positive number.");
+        if (proximity < 0) {
+            throwError("InvalidArgumentException", "Proximity distance must be a number greater than or equal to 0");
         }
 
         (whereToken as WhereToken).options.proximity = proximity;
