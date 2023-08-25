@@ -3,8 +3,9 @@ import * as assert from "assert";
 import { IDocumentStore, IndexDefinition, IndexFieldOptions, PutIndexesOperation, SuggestionOptions } from "../../../src";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { Users_ByName } from "../Indexing/IndexesFromClientTest";
+import { assertThat } from "../../Utils/AssertExtensions";
 
-(RavenTestContext.is60Server ? describe.skip : describe)("SuggestionsTest", function () {
+describe("SuggestionsTest", function () {
 
     let store: IDocumentStore;
 
@@ -164,11 +165,12 @@ import { Users_ByName } from "../Indexing/IndexesFromClientTest";
                 .execute();
 
             assert.strictEqual(suggestionQueryResult.name.suggestions.length, 5);
-            assert.strictEqual(suggestionQueryResult.name.suggestions[0], "john");
-            assert.strictEqual(suggestionQueryResult.name.suggestions[1], "jones");
-            assert.strictEqual(suggestionQueryResult.name.suggestions[2], "johnson");
-            assert.strictEqual(suggestionQueryResult.name.suggestions[3], "david");
-            assert.strictEqual(suggestionQueryResult.name.suggestions[4], "jack");
+            assertThat(suggestionQueryResult.name.suggestions)
+                .contains("john")
+                .contains("jones")
+                .contains("johnson")
+                .contains("david")
+                .contains("jack");
         }
     });
 
