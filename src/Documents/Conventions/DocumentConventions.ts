@@ -301,6 +301,11 @@ export class DocumentConventions {
         return this._dateUtil;
     }
 
+    public set dateUtil(value: DateUtil) {
+        this._assertNotFrozen();
+        this._dateUtil = value;
+    }
+
     public get readBalanceBehavior(): ReadBalanceBehavior {
         return this._readBalanceBehavior;
     }

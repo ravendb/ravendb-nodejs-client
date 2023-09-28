@@ -15,7 +15,7 @@ export class DateUtil {
 
     public static utc: DateUtil = new DateUtil({ useUtcDates: true });
 
-    public constructor(private _opts: DateUtilOpts) {}
+    public constructor(protected opts: DateUtilOpts) {}
 
     public static timestamp(): number {
         return moment().unix();
@@ -35,7 +35,7 @@ export class DateUtil {
         }
 
         let parsed;
-        if (this._opts.useUtcDates || this._opts.withTimezone || dateString.endsWith("Z")) {
+        if (this.opts.useUtcDates || this.opts.withTimezone || dateString.endsWith("Z")) {
             parsed = moment.parseZone(dateString, DateUtil.DEFAULT_DATE_TZ_FORMAT);
         } else {
             parsed = moment(dateString, DateUtil.DEFAULT_DATE_FORMAT);
@@ -50,15 +50,15 @@ export class DateUtil {
 
     public stringify(date: Date): string {
         const m = moment(date);
-        if (this._opts.useUtcDates) {
+        if (this.opts.useUtcDates) {
             m.utc();
         }
 
-        const format = this._opts.withTimezone
+        const format = this.opts.withTimezone
             ? DateUtil.DEFAULT_DATE_TZ_FORMAT
             : DateUtil.DEFAULT_DATE_FORMAT;
         const result = m.format(format);
-        if (this._opts.useUtcDates && !this._opts.withTimezone) {
+        if (this.opts.useUtcDates && !this.opts.withTimezone) {
             return result + "Z";
         }
         
