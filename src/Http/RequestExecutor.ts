@@ -38,7 +38,6 @@ import type * as https from "https";
 import { IBroadcast } from "./IBroadcast";
 import { StringUtil } from "../Utility/StringUtil";
 import { IRaftCommand } from "./IRaftCommand";
-import AbortController from "abort-controller";
 import { EventEmitter } from "events";
 import {
     BeforeRequestEventArgs,

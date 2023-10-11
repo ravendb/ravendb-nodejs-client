@@ -50,8 +50,8 @@ export async function delay(ms: number) {
 
 export async function timeout(ms: number) {
     return new Promise(
-        reject => 
-            setTimeout(() => 
+        reject =>
+            setTimeout(() =>
                 reject(getError("TimeoutException", `Timeout after ${ms} ms.`)), ms));
 }
 
@@ -66,7 +66,7 @@ export class AsyncTimeout {
 
     private _timedOut: boolean = false;
 
-    private _timer: NodeJS.Timer;
+    private _timer: ReturnType<typeof setInterval>;
 
     private _promise: Promise<void>;
 
