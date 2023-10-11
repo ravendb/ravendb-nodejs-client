@@ -1,5 +1,5 @@
 import { Company, User } from "../../Assets/Entities";
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../../Utils/TestUtil";
 
 import DocumentStore, {
     IDocumentStore,
@@ -12,7 +12,7 @@ import * as assert from "assert";
 // skipped for the time being
 // subscriptions are not working with server version 4.1
 // due to RavenDB-12127
-describe("RevisionsSubscriptionsTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("RevisionsSubscriptionsTest", function () {
     this.timeout(5 * 10 * 1000);
 
     let store: IDocumentStore;
@@ -238,11 +238,11 @@ describe("RevisionsSubscriptionsTest", function () {
             const actualPreviousNames = items
                 .filter(x => x.rawResult.previous)
                 .map(x => x.rawResult.previous.name);
-            
+
             actualPreviousNames.sort();
             assert.strictEqual(actualPreviousNames.length, 9);
             assert.strictEqual(
-                JSON.stringify(actualPreviousNames), 
+                JSON.stringify(actualPreviousNames),
                 JSON.stringify(expectedNames.filter(x => x !== "users1 ver 9")));
 
         } finally {

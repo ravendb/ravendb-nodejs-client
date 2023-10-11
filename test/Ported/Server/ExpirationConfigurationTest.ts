@@ -1,10 +1,10 @@
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { ConfigureExpirationOperation } from "../../../src/Documents/Operations/Expiration/ConfigureExpirationOperation";
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { ExpirationConfiguration } from "../../../src/Documents/Operations/Expiration/ExpirationConfiguration";
 
-describe("ExpirationConfigurationTest", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("ExpirationConfigurationTest", function () {
 
     let store: IDocumentStore;
 

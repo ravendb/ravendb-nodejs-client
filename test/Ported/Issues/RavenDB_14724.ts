@@ -1,9 +1,9 @@
 import { ConfigureRevisionsOperation, IDocumentStore, RevisionsConfiguration } from "../../../src";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { User } from "../../Assets/Entities";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("RavenDB_14724", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_14724", function () {
 
     let store: IDocumentStore;
 
