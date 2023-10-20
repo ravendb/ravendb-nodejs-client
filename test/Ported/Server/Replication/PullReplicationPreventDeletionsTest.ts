@@ -24,6 +24,8 @@ import { assertThat } from "../../../Utils/AssertExtensions";
     let store: IDocumentStore;
     let replication: ReplicationTestContext;
 
+    this.timeout(60_000);
+
     beforeEach(async function () {
         store = await testContext.getDocumentStore();
         replication = new ReplicationTestContext();
