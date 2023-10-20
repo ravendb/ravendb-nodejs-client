@@ -10,10 +10,10 @@ export class Timer implements IDisposable {
 
     private _scheduledActionPromise: Promise<any>;
 
-    private _firstTimeDelayId: NodeJS.Timer;
-    private _intervalId: NodeJS.Timer;
+    private _firstTimeDelayId: ReturnType<typeof setInterval>;
+    private _intervalId: ReturnType<typeof setInterval>;
 
-    private _intervalTimerId: NodeJS.Timer;
+    private _intervalTimerId: ReturnType<typeof setInterval>;
 
     /** period in milliseconds */
     private _periodInMs: number;

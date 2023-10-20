@@ -1,12 +1,12 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { User } from "../../Assets/Entities";
 import { RevisionsConfiguration } from "../../../src/Documents/Operations/RevisionsConfiguration";
 import { RevisionsCollectionConfiguration } from "../../../src/Documents/Operations/RevisionsCollectionConfiguration";
 import { ConfigureRevisionsOperation } from "../../../src/Documents/Operations/Revisions/ConfigureRevisionsOperation";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("RavenDB_13762", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("RavenDB_13762", function () {
 
     let store: IDocumentStore;
 

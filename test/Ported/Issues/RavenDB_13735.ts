@@ -1,5 +1,5 @@
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil";
 import { RefreshConfiguration } from "../../../src/Documents/Operations/Refresh/RefreshConfiguration";
 import { ConfigureRefreshOperation } from "../../../src/Documents/Operations/Refresh/ConfigureRefreshOperation";
 import { User } from "../../Assets/Entities";
@@ -10,7 +10,7 @@ import { assertThat } from "../../Utils/AssertExtensions";
 import { delay } from "../../../src/Utility/PromiseUtil";
 import { DateUtil } from "../../../src/Utility/DateUtil";
 
-describe("RavenDB_13735", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("RavenDB_13735", function () {
 
     let store: IDocumentStore;
 
