@@ -440,6 +440,7 @@ describe("RavenDB_14006", function () {
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
+                await testContext.waitForIndexing(store);
             }
 
             companies = await session.query(Company)
@@ -547,6 +548,7 @@ describe("RavenDB_14006", function () {
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
+                innerSession.saveChanges();
             }
 
             companies = await session.advanced.rawQuery("declare function incl(c) {\n" +
@@ -649,7 +651,6 @@ describe("RavenDB_14006", function () {
                 value.value.city = "Bydgoszcz";
 
                 await innerSession.saveChanges();
-
                 await testContext.waitForIndexing(store);
             }
 
