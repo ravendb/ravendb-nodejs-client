@@ -29,6 +29,7 @@ export * from "./Http/UpdateTopologyParameters";
 // SERVERWIDE
 export * from "./ServerWide";
 export * from "./ServerWide/CompactSettings";
+export * from "./ServerWide/Tcp/LicensedFeatures";
 export * from "./Documents/Operations/Etl/ConnectionString";
 export * from "./ServerWide/ModifyOnGoingTaskResult";
 export * from "./ServerWide/DocumentsCompressionConfiguration";
@@ -72,6 +73,8 @@ export * from "./ServerWide/Operations/Configuration/PutDatabaseSettingsOperatio
 export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTopologyCommand";
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand";
+export { NodeInfo } from "./ServerWide/Commands/NodeInfo";
+export { GetNodeInfoCommand } from "./ServerWide/Commands/GetNodeInfoCommand";
 export { AddClusterNodeCommand } from "./ServerWide/Commands/Cluster/AddClusterNodeCommand";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation";
 export { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide";
@@ -80,8 +83,10 @@ export * from "./Documents/Operations/Etl/ConnectionString";
 
 // OPERATIONS AND COMMANDS
 export { BulkInsertOperation } from "./Documents/BulkInsertOperation";
+export { BulkInsertProgress } from "./Documents/Operations/BulkInsertProgress";
 export { CollectionDetails } from "./Documents/Operations/CollectionDetails";
 export * from "./Documents/Operations/Backups/BackupConfiguration";
+export * from "./Documents/Operations/Backups/DelayBackupOperation";
 export * from "./Documents/Operations/Backups/BackupTaskType";
 export { DatabaseHealthCheckOperation } from "./Documents/Operations/DatabaseHealthCheckOperation";
 export { DetailedCollectionStatistics } from "./Documents/Operations/DetailedCollectionStatistics";
@@ -152,6 +157,8 @@ export { GetStatisticsOperation, GetStatisticsCommand } from "./Documents/Operat
 export { DatabaseStatistics } from "./Documents/Operations/DatabaseStatistics";
 export { GetOperationStateOperation } from "./Documents/Operations/GetOperationStateOperation";
 export { IndexInformation } from "./Documents/Operations/IndexInformation";
+export { IndexOptimizeResult } from "./Documents/Operations/IndexOptimizeResult";
+export { PatchResultBase } from "./Documents/Operations/PatchResultBase";
 export { MaintenanceOperationExecutor } from "./Documents/Operations/MaintenanceOperationExecutor";
 export { OperationCompletionAwaiter } from "./Documents/Operations/OperationCompletionAwaiter";
 export { ClientConfiguration } from "./Documents/Operations/Configuration/ClientConfiguration";
@@ -264,6 +271,12 @@ export * from "./Documents/Operations/Configuration/StudioConfiguration";
 export * from "./Documents/Operations/Configuration/StudioEnvironment";
 export * from "./Documents/Operations/ConnectionStrings/GetConnectionStringsOperation";
 export * from "./Documents/Operations/ConnectionStrings/RemoveConnectionStringOperation";
+export * from "./Documents/Operations/Etl/Queue/EtlQueue";
+export * from "./Documents/Operations/Etl/Queue/QueueEtlConfiguration";
+export * from "./Documents/Operations/Etl/Queue/KafkaConnectionSettings";
+export * from "./Documents/Operations/Etl/Queue/RabbitMqConnectionSettings";
+export * from "./Documents/Operations/Etl/ElasticSearch/ElasticSearchIndex";
+export * from "./Documents/Operations/Etl/ElasticSearch/ElasticSearchEtlConfiguration";
 export * from "./Documents/Operations/Etl/EtlConfiguration";
 export * from "./Documents/Operations/Etl/RavenEtlConfiguration";
 export * from "./Documents/Operations/Etl/Sql/SqlEtlConfiguration";
@@ -341,6 +354,7 @@ export * from "./Documents/Indexes/AbstractCommonApiForIndexes";
 export * from "./Documents/Indexes/AbstractIndexDefinitionBuilder";
 export * from "./Documents/Indexes/IAbstractIndexCreationTask";
 export * from "./Documents/Indexes/Errors";
+export * from "./Documents/Indexes/LuceneIndexInputType";
 export * from "./Documents/Indexes/AdditionalAssembly";
 export * from "./Documents/Indexes/IndexDefinitionHelper";
 export * from "./Documents/Indexes/IndexFieldOptions";
@@ -419,6 +433,8 @@ export * from "./Documents/Session/GraphDocumentQuery";
 export * from "./Documents/Session/GroupByDocumentQuery";
 export * from "./Documents/Session/GroupByField";
 export * from "./Documents/Session/IAbstractDocumentQuery";
+export * from "./Documents/Session/ISessionDocumentIncrementalTimeSeries";
+export * from "./Documents/Session/ISessionDocumentTypedIncrementalTimeSeries";
 export * from "./Documents/Session/IAbstractDocumentQueryImpl";
 export * from "./Documents/Session/ILazyRevisionsOperations";
 export * from "./Documents/Session/IAdvancedSessionOperations";
@@ -574,6 +590,8 @@ export * from "./Documents/Queries/GroupBy";
 export * from "./Documents/Queries/QueryOperator";
 export * from "./Documents/Queries/SearchOperator";
 export * from "./Documents/Queries/IIndexQuery";
+export * from "./Documents/Queries/FilterFactory";
+export * from "./Documents/Queries/IFilterFactory";
 export * from "./Documents/Queries/GroupByMethod";
 export * from "./Documents/Queries/ProjectionBehavior";
 export * from "./Documents/Queries/Spatial/SpatialCriteriaFactory";
@@ -650,6 +668,8 @@ export * from "./Documents/Operations/Analyzers/PutAnalyzersOperation";
 
 // CHANGES
 export * from "./Documents/Changes/IndexChange";
+export * from "./Documents/Changes/AggressiveCacheChange";
+export * from "./Documents/Changes/ChangesSupportedFeatures";
 export * from "./Documents/Changes/DatabaseChangesOptions";
 export * from "./Documents/Changes/DocumentChange";
 export * from "./Documents/Changes/TimeSeriesChange";
@@ -710,6 +730,16 @@ export * from "./ServerWide/Operations/OngoingTasks/ServerWideTaskResponse";
 export * from "./ServerWide/Operations/OngoingTasks/ServerWideExternalReplication";
 export * from "./ServerWide/Operations/Sorters/DeleteServerWideSorterOperation";
 export * from "./ServerWide/Operations/Sorters/PutServerWideSortersOperation";
+
+// integrations
+export * from "./ServerWide/Operations/Integrations/PostgreSql/IntegrationConfigurations";
+export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlAuthenticationConfiguration";
+export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlUser";
+export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlConfiguration";
+
+
+export * from "./ServerWide/Operations/ModifyDatabaseTopologyOperation";
+export * from "./ServerWide/Operations/ModifyDatabaseTopologyResult";
 
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper";

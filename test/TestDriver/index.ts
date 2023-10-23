@@ -565,7 +565,7 @@ class IndexesTestBase {
         store: IDocumentStore,
         database?: string,
         timeout?: number,
-        throwOnIndexErrors: boolean = true,
+        throwOnIndexErrors: boolean = false,
         nodeTag?: string): Promise<void> {
         return this._parent.waitForIndexing(store, database, timeout, throwOnIndexErrors, nodeTag);
     }

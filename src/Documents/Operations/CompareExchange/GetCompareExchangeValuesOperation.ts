@@ -161,6 +161,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
             results: json.Results.map(item => {
                 if (!item.Value) {
                     return {
+                        changeVector: item.ChangeVector,
                         index: item.Index,
                         key: item.Key,
                         value: null
@@ -175,7 +176,8 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
                         object: Object
                     },
                     index: item.Index,
-                    key: item.Key
+                    key: item.Key,
+                    changeVector: item.ChangeVector
                 }
             })
         }

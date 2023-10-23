@@ -6,12 +6,14 @@ export class CompareExchangeValue<T> implements ICompareExchangeValue {
     public key: string;
     public index: number;
     public value: T;
+    public changeVector: string;
     private _metadataAsDictionary: IMetadataDictionary;
 
-    public constructor(key: string, index: number, value: T, metadata?: IMetadataDictionary) {
+    public constructor(key: string, index: number, value: T, changeVector: string, metadata?: IMetadataDictionary) {
         this.key = key;
         this.index = index;
         this.value = value;
+        this.changeVector = changeVector;
         this._metadataAsDictionary = metadata;
     }
 

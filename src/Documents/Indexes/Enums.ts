@@ -14,6 +14,11 @@ export type IndexType =
     | "JavaScriptMap"
     | "JavaScriptMapReduce";
 
+export type SearchEngineType =
+    "None"
+    | "Corax"
+    | "Lucene";
+
 export type FieldStorage = "Yes" | "No";
 
 export type FieldIndexing =

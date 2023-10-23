@@ -4,9 +4,10 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
 
 import {
     SessionOptions,
-    IDocumentStore,
+    IDocumentStore, CONSTANTS, GetCompareExchangeValueOperation, PutCompareExchangeValueOperation,
 } from "../../../src";
-import { assertThat } from "../../Utils/AssertExtensions";
+import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
+import { COMPARE_EXCHANGE } from "../../../src/Constants";
 
 describe("ClusterTransactionTest", function () {
 
@@ -16,7 +17,7 @@ describe("ClusterTransactionTest", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("canCreateClusterTransactionRequest", async () => {
@@ -126,8 +127,8 @@ describe("ClusterTransactionTest", function () {
         const user1 = new User();
         user1.name = "Karmel";
 
-        const CLUSTER_OP_WARNING = "This function is part of cluster transaction session," 
-            + " in order to use it you have to open the Session with ClusterWide option"; 
+        const CLUSTER_OP_WARNING = "This function is part of cluster transaction session,"
+            + " in order to use it you have to open the Session with ClusterWide option";
         {
             const session = store.openSession();
             try {
@@ -161,7 +162,7 @@ describe("ClusterTransactionTest", function () {
             } catch (err) {
                 assert.strictEqual(err.name, "InvalidOperationException");
                 assert.ok(err.message.includes(
-                    "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide"), 
+                    "Performing cluster transaction operation require the TransactionMode to be set to ClusterWide"),
                     err.message);
             }
 
@@ -173,4 +174,71 @@ describe("ClusterTransactionTest", function () {
         }
     });
 
+    it("blockWorkingWithAtomicGuardBySession", async function () {
+        const sessionOptions: SessionOptions = {
+            transactionMode: "ClusterWide"
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            const doc = new User();
+            doc.name = "Grisha";
+            await session.store(doc, "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            await assertThrows(() =>
+                    session.advanced.clusterTransaction.getCompareExchangeValue(getAtomicGuardKey("users/1"), "string")
+                , err => {
+                    assertThat(err.message)
+                        .contains("'rvn-atomic/users/1' is an atomic guard and you cannot load it via the session");
+                });
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            session.advanced.clusterTransaction.createCompareExchangeValue(getAtomicGuardKey("users/2"), "foo");
+            await assertThrows(() => session.saveChanges(), err => {
+                assertThat(err.message)
+                    .contains("You cannot manipulate the atomic guard 'rvn-atomic/users/2' via the cluster-wide session");
+            })
+        }
+    });
+
+    it("canModifyingAtomicGuardViaOperations", async function() {
+        const docId = "users/1";
+
+        const sessionOptions: SessionOptions = {
+            transactionMode: "ClusterWide"
+        };
+
+        {
+            const session = store.openSession();
+            const doc = new User();
+            doc.name = "Grisha";
+            await session.store(doc, docId);
+            await session.saveChanges();
+        }
+
+        const compareExchangeKey = "rvn-atomic/" + docId;
+        let val = await store.operations.send(new GetCompareExchangeValueOperation(compareExchangeKey, AtomicGuard));
+        val.value.locked = true;
+
+        await store.operations.send(new PutCompareExchangeValueOperation(val.key, val.value, val.index));
+
+        val = await store.operations.send(new GetCompareExchangeValueOperation(compareExchangeKey, AtomicGuard));
+        assertThat(val.value.locked)
+            .isTrue();
+    });
 });
+
+function getAtomicGuardKey(id: string): string {
+    return COMPARE_EXCHANGE.RVN_ATOMIC_PREFIX + id;
+}
+
+class AtomicGuard {
+    id: string;
+    locked: boolean;
+}

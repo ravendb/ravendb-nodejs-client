@@ -94,6 +94,9 @@ export class GetRevisionOperation {
         documentInfo.metadata = metadata;
         documentInfo.entity = entity;
         this._session.documentsByEntity.put(entity, documentInfo);
+
+        this._session.onAfterConversionToEntityInvoke(id, document, entity);
+
         return entity;
     }
 

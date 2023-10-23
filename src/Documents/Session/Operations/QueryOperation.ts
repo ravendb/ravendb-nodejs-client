@@ -180,7 +180,7 @@ export class QueryOperation {
         if (!this._noTracking) {
             this._session.registerMissingIncludes(
                 queryResult.results, queryResult.includes, queryResult.includedPaths);
-            
+
             if (queryResult.counterIncludes) {
                 this._session.registerCounters(queryResult.counterIncludes, queryResult.includedCounterNames);
             }
@@ -190,7 +190,7 @@ export class QueryOperation {
             }
 
             if (queryResult.compareExchangeValueIncludes) {
-                this._session.clusterSession.registerCompareExchangeValues(queryResult.compareExchangeValueIncludes);
+                this._session.clusterSession.registerCompareExchangeValues(queryResult.compareExchangeValueIncludes, false);
             }
 
             if (queryResult.revisionIncludes) {
@@ -234,7 +234,7 @@ export class QueryOperation {
                     // remove source-alias from projection name
                     projectionField = projectionField.substring(fieldsToFetch.sourceAlias.length + 1);
                 }
-                
+
                 if (projectionField.startsWith("'")) {
                     projectionField = projectionField.substring(1, projectionField.length - 1);
                 }

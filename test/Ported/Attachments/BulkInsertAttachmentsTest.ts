@@ -293,7 +293,7 @@ describe("BulkInsertAttachmentsTest", function () {
             await bulk.store("name", Buffer.from([1, 2, 3]));
         }, err => {
             assertThat(err.name)
-                .isEqualTo("InvalidOperationException");
+                .isEqualTo("BulkInsertInvalidOperationException");
             assertThat(err.message)
                 .contains("There is an already running time series operation, did you forget to close it?");
         });

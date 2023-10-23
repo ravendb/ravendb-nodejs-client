@@ -67,7 +67,7 @@ export class CompareExchangeSessionValue {
                     }
                 }
 
-                const value = new CompareExchangeValue(this._key, this._index, entity);
+                const value = new CompareExchangeValue(this._key, this._index, entity, null);
                 this._value = value;
 
                 return value;
@@ -89,7 +89,7 @@ export class CompareExchangeSessionValue {
         }
 
         this._index = 0;
-        const value = new CompareExchangeValue(this._key, this._index, item);
+        const value = new CompareExchangeValue(this._key, this._index, item, null);
         this._value = value;
         this._state = "Created";
         return value;
@@ -137,7 +137,7 @@ export class CompareExchangeSessionValue {
                     entityJson = entityToInsert = this._convertEntity(this._key, entity, conventions.objectMapper, metadata);
                 }
 
-                const newValue = new CompareExchangeValue(this._key, this._index, entityJson);
+                const newValue = new CompareExchangeValue(this._key, this._index, entityJson, null);
                 const hasChanged = TypeUtil.isNullOrUndefined(this._originalValue) || this.hasChanged(this._originalValue, newValue);
 
                 this._originalValue = newValue;

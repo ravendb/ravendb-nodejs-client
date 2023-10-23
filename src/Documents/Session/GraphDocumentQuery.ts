@@ -15,6 +15,9 @@ import { WithEdgesToken } from "./Tokens/WithEdgesToken";
 import { throwError } from "../../Exceptions/index";
 import { WithToken } from "./Tokens/WithToken";
 
+/**
+ * @deprecated Graph API will be removed in next major version of the product.
+ */
 export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<T, GraphDocumentQuery<T>> implements IGraphDocumentQuery<T> {
     public constructor(session: InMemoryDocumentSessionOperations, graphQuery: string, clazz: DocumentType<T>) {
         super(clazz, session, null, null, false, null, null);
@@ -38,7 +41,7 @@ export class GraphDocumentQuery<T extends object> extends AbstractDocumentQuery<
         super.addParameter(name, value);
         return this;
     }
-    
+
     public skip(count: number): IGraphDocumentQuery<T> {
         this._skip(count);
         return this;

@@ -61,12 +61,15 @@ class GetPeriodicBackupStatusCommand extends RavenCommand<GetPeriodicBackupStatu
             {
                 nestedTypes: {
                     "status.lastFullBackup": "date",
+                    "status.delayUntil": "date",
+                    "status.originalBackupTime": "date",
                     "status.lastIncrementalBackup": "date",
                     "status.lastFullBackupInternal": "date",
                     "status.lastIncrementalBackupInternal": "date",
                     "status.localBackup.lastIncrementalBackup": "date",
                     "status.localBackup.lastFullBackup": "date",
                     "status.nextBackup.dateTime": "date",
+                    "status.nextBackup.originalBackupTime": "date",
                     "status.onGoingBackup.startTime": "date",
                     "status.error.at": "date"
                 }

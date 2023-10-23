@@ -4,6 +4,8 @@ export type OngoingTaskType =
     | "RavenEtl"
     | "SqlEtl"
     | "OlapEtl"
+    | "ElasticSearchEtl"
+    | "QueueEtl"
     | "Backup"
     | "Subscription"
     | "PullReplicationAsHub"

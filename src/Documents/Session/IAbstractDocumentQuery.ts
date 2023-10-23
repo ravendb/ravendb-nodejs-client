@@ -238,7 +238,7 @@ export interface IAbstractDocumentQuery<T> {
     _orElse(): void;
 
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
      *
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
@@ -292,7 +292,7 @@ export interface IAbstractDocumentQuery<T> {
     _orderByScoreDescending(): void;
 
     _highlight(
-        parameters: HighlightingParameters, 
+        parameters: HighlightingParameters,
         highlightingsCallback: ValueCallback<Highlightings>): void;
 
     /**
@@ -372,6 +372,9 @@ export interface IAbstractDocumentQuery<T> {
     _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
 
     _moreLikeThis(): MoreLikeThisScope;
+
+    addFromAliasToFilterTokens(fromAlias: string): void;
+    addFromAliasToOrderByTokens(fromAlias: string): void;
 
     addAliasToIncludesTokens(fromAlias: string): string;
 

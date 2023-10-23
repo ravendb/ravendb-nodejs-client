@@ -25,7 +25,7 @@ describe("RavenDB-11166", function () {
         store = await testContext.getDocumentStore();
     });
 
-    afterEach(async () => 
+    afterEach(async () =>
         await disposeTestDocumentStore(store));
 
     it("canUseSubscriptionWithIncludes ", async () => {
@@ -41,7 +41,7 @@ describe("RavenDB-11166", function () {
         };
         const id = await store.subscriptions.create(options);
 
-        let sub: SubscriptionWorker<Dog>; 
+        let sub: SubscriptionWorker<Dog>;
         try {
             sub = store.subscriptions.getSubscriptionWorker<Dog>(id);
             await new Promise<void>((resolve, reject) => {
@@ -68,6 +68,80 @@ describe("RavenDB-11166", function () {
             });
         } finally {
             sub.dispose();
+        }
+    });
+
+    it("canUseSubscriptionRevisionsWithIncludes", async () => {
+        await testContext.setupRevisions(store, false, 5);
+
+        {
+            const session = store.openSession();
+            const person = new Person();
+            person.name = "Arava";
+            await session.store(person, "people/1");
+
+            const person2 = new Person();
+            person2.name = "Karmel";
+            await session.store(person2, "people/2");
+
+            const dog = new Dog();
+            dog.name = "Oscar";
+            dog.owner = "people/1";
+            await session.store(dog, "dogs/1");
+
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const dog = new Dog();
+            dog.name = "Oscar";
+            dog.owner = "people/2";
+            await session.store(dog, "dogs/1");
+            await session.saveChanges();
+        }
+
+        const options: SubscriptionCreationOptions = {
+            query: "from Dogs (Revisions = true) as d include d.Current.owner, d.Previous.owner",
+        }
+        const id = await store.subscriptions.create(options);
+
+        {
+            const sub = store.subscriptions.getSubscriptionWorkerForRevisions({
+                documentType: Dog,
+                subscriptionName: id
+            });
+
+            await new Promise<void>((resolve, reject) => {
+                const timeout = setTimeout(reject, 15_000);
+
+                sub.on("batch", async batch => {
+                    assertThat(batch.items.length > 0)
+                        .isTrue();
+
+                    {
+                        const s = batch.openSession();
+                        for (const item of batch.items) {
+                            if (!item.result.previous) {
+                                continue;
+                            }
+
+                            const currentOwner = await s.load(item.result.current.owner, Person);
+                            assertThat(currentOwner.name)
+                                .isEqualTo("Karmel");
+                            const previousOwner = await s.load(item.result.previous.owner, Person);
+                            assertThat(previousOwner.name)
+                                .isEqualTo("Arava");
+                        }
+
+                        assertThat(s.advanced.numberOfRequests)
+                            .isZero();
+                    }
+
+                    resolve();
+                    clearTimeout(timeout);
+                });
+            });
         }
     });
 });

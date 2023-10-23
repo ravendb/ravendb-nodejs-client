@@ -74,7 +74,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         const uri = node.url + "/databases/" + node.database + "/bulk_docs?";
         const headers = HeadersBuilder.create().typeAppJson().build();
 
-        if (TypeUtil.isNullOrUndefined(this._supportsAtomicWrites) || node.supportsAtomicClusterWrites !== this._supportsAtomicWrites) {
+        if (TypeUtil.isNullOrUndefined(this._supportsAtomicWrites)) {
             this._supportsAtomicWrites = node.supportsAtomicClusterWrites;
         }
 

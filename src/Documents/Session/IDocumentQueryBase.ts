@@ -27,7 +27,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     //      bool descending = false, OrderingType ordering = OrderingType.String);
 
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
      *
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
@@ -59,7 +59,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     fuzzy(fuzzy: number): TSelf;
 
-    highlight(parameters: HighlightingParameters, hightlightingsCallback: ValueCallback<Highlightings>): TSelf; 
+    highlight(parameters: HighlightingParameters, hightlightingsCallback: ValueCallback<Highlightings>): TSelf;
 
     // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings);
     // TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings);

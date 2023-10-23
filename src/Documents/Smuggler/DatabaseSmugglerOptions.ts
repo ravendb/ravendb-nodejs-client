@@ -12,7 +12,9 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         "Client", "ConflictSolverConfig", "Expiration", "ExternalReplications", "PeriodicBackups", "RavenConnectionStrings",
         "RavenEtls", "Revisions", "Settings", "SqlConnectionStrings", "Sorters", "SqlEtls",
         "HubPullReplications", "SinkPullReplications", "TimeSeries", "DocumentsCompression",
-        "Analyzers", "LockMode", "OlapConnectionStrings", "OlapEtls"
+        "Analyzers", "LockMode", "OlapConnectionStrings", "OlapEtls", "ElasticSearchConnectionStrings",
+        "ElasticSearchEtls", "PostgreSqlIntegration", "QueueConnectionStrings", "QueueEtl",
+        "IndexesHistory", "Refresh"
     ];
 
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;
@@ -27,11 +29,13 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public skipRevisionCreation: boolean;
 
     public encryptionKey: string;
+    public collections: string[];
 
     constructor() {
         this.operateOnTypes = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_TYPES];
         this.operateOnDatabaseRecordType = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES];
         this.maxStepsForTransformScript = DatabaseSmugglerOptions.DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT;
         this.includeExpired = true;
+        this.collections = [];
     }
 }

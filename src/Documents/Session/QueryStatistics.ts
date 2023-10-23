@@ -7,6 +7,7 @@ export class QueryStatistics {
     public totalResults: number;
     public longTotalResults: number;
     public skippedResults: number;
+    public scannedResults: number;
     public timestamp: Date;
     public indexName: string;
     public indexTimestamp: Date;
@@ -21,6 +22,7 @@ export class QueryStatistics {
         this.totalResults = qr.totalResults;
         this.longTotalResults = qr.longTotalResults;
         this.skippedResults = qr.skippedResults;
+        this.scannedResults = qr.scannedResults;
         this.timestamp = qr.indexTimestamp;
         this.indexName = qr.indexName;
         this.indexTimestamp = qr.indexTimestamp;

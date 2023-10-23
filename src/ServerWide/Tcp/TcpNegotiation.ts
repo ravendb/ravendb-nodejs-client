@@ -20,10 +20,14 @@ export class TcpNegotiation {
             + " operation with " + parameters.destinationNodeTag || parameters.destinationUrl);
 
         let currentRef: number = parameters.version;
+        let dataCompression: boolean = false;
         // eslint-disable-next-line no-constant-condition
         while (true) {
             await this._sendTcpVersionInfo(socket, parameters, currentRef);
-            const version = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl, socket);
+            const response = await parameters.readResponseAndGetVersionCallback(parameters.destinationUrl, socket);
+            const version = response.version;
+
+            dataCompression = response.licensedFeatures ? response.licensedFeatures.dataCompression : false;
 
             log.info("Read response from " + (parameters.sourceNodeTag || parameters.destinationUrl)
                 + " for " + parameters.operation + ", received version is '" + version + "'");
@@ -52,7 +56,12 @@ export class TcpNegotiation {
 
         log.info((parameters.destinationNodeTag || parameters.destinationUrl)
             + " agreed on version " + currentRef + " for " + parameters.operation);
-        return getSupportedFeaturesFor(parameters.operation, currentRef);
+        const supportedFeatures = getSupportedFeaturesFor(parameters.operation, currentRef);
+
+        const supportedFeaturesCopy = new SupportedFeatures(supportedFeatures);
+        supportedFeaturesCopy.dataCompression = dataCompression;
+
+        return supportedFeaturesCopy;
     }
 
     private static async _sendTcpVersionInfo(socket: Socket,
@@ -65,7 +74,8 @@ export class TcpNegotiation {
             Operation: parameters.operation,
             SourceNodeTag: parameters.sourceNodeTag,
             OperationVersion: currentVersion,
-            AuthorizeInfo: parameters.authorizeInfo || null
+            AuthorizeInfo: parameters.authorizeInfo || null,
+            LicensedFeatures: parameters.licensedFeatures || null
         }, null, 0);
 
         return new Promise<void>((resolve, reject) => {

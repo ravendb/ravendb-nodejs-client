@@ -176,6 +176,7 @@ export class ObjectUtil {
             result[key] = {
                 index: value.Index,
                 key: value.Key,
+                changeVector: value.ChangeVector,
                 value: {
                     object: value.Value?.Object
                 }
@@ -241,7 +242,7 @@ export class ObjectUtil {
 
 }
 
-/* 
+/*
     This code is a modified version of https://github.com/claudetech/js-change-object-case
 */
 

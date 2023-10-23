@@ -13,6 +13,7 @@ import { IAuthOptions } from "../Auth/AuthOptions";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
+import { CONSTANTS, HEADERS } from "../Constants";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 
@@ -50,7 +51,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
         const executor = new ClusterRequestExecutor(
             authOptions, documentConventions || DocumentConventions.defaultConventions);
 
-        const serverNode = new ServerNode({ url });
+        const serverNode = new ServerNode({ url: urls[0], serverRole: "Member" });
 
         const topology = new Topology(-1, [serverNode]);
 
@@ -60,6 +61,9 @@ export class ClusterRequestExecutor extends RequestExecutor {
         executor._topologyEtag = -2;
         executor._disableClientConfigurationUpdates = true;
         executor._disableTopologyUpdates = true;
+        executor._topologyHeaderName = HEADERS.CLUSTER_TOPOLOGY_ETAG;
+
+        executor.firstTopologyUpdatePromise = executor._singleTopologyUpdateAsync(urls, null);
 
         return executor;
     }
@@ -86,7 +90,8 @@ export class ClusterRequestExecutor extends RequestExecutor {
             documentConventions ? documentConventions : DocumentConventions.defaultConventions);
 
         executor._disableClientConfigurationUpdates = true;
-        executor._firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, null);
+        executor.firstTopologyUpdatePromise = executor._firstTopologyUpdate(initialUrls, null);
+        executor._topologyHeaderName = HEADERS.CLUSTER_TOPOLOGY_ETAG;
         return executor;
     }
 
@@ -121,20 +126,8 @@ export class ClusterRequestExecutor extends RequestExecutor {
                         const nodes = ServerNode.createFrom(results.topology);
 
                         const newTopology = new Topology(results.etag, nodes);
-                        if (!this._nodeSelector) {
-                            this._nodeSelector = new NodeSelector(newTopology);
 
-                            if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                this._nodeSelector.scheduleSpeedTest();
-                            }
-
-                        } else if (this._nodeSelector.onUpdateTopology(newTopology, parameters.forceUpdate)) {
-                            this._disposeAllFailedNodesTimers();
-
-                            if (this.conventions.readBalanceBehavior === "FastestNode") {
-                                this._nodeSelector.scheduleSpeedTest();
-                            }
-                        }
+                        this._updateNodeSelector(newTopology, parameters.forceUpdate);
 
                         this._onTopologyUpdatedInvoke(newTopology);
                     })

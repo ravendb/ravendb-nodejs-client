@@ -4,7 +4,8 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import {
     IDocumentStore,
 } from "../../src";
-import { User } from "../Assets/Entities";
+import { Company, Order, User } from "../Assets/Entities";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("TrackEntityTest", function () {
 
@@ -78,6 +79,139 @@ describe("TrackEntityTest", function () {
         } catch (err) {
             assert.strictEqual(err.name, "NonUniqueObjectException");
             assert.ok(err.message.includes("Attempted to associate a different object with id 'users/1'"));
+        }
+    });
+
+    it("getTrackedEntities", async () => {
+        let userId: string;
+        let companyId: string;
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "Grisha";
+
+            await session.store(user);
+            userId = user.id;
+
+            const company = new Company();
+            company.name = "Hibernating Rhinos";
+            await session.store(company);
+
+            companyId = company.id;
+
+            const order = new Order();
+            order.employee = company.id;
+            await session.store(order);
+
+            const tracked = session.advanced.getTrackedEntities();
+            let value = tracked[userId];
+            assertThat(value)
+                .isNotNull();
+
+            assertThat(value.id)
+                .isEqualTo(userId);
+            assertThat(value.entity instanceof User)
+                .isTrue();
+
+            value = tracked[company.id];
+            assertThat(value)
+                .isNotNull();
+            assertThat(value.id)
+                .isEqualTo(companyId);
+            assertThat(value.entity instanceof Company)
+                .isTrue();
+
+            value = tracked[order.id];
+            assertThat(value)
+                .isNotNull();
+            assertThat(value.id)
+                .isEqualTo(order.id);
+
+            await session.saveChanges();
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            await session.delete(userId);
+            await session.delete(companyId);
+
+            const tracked = session.advanced.getTrackedEntities();
+            assertThat(Object.keys(tracked))
+                .hasSize(2);
+
+            assertThat(tracked[userId].isDeleted)
+                .isTrue();
+            assertThat(tracked[companyId].isDeleted)
+                .isTrue();
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            await session.delete(userId);
+            await session.delete(companyId);
+
+            const usersLazy = session.advanced.lazily.loadStartingWith("u", User);
+            const users = await usersLazy.getValue();
+
+            assertThat(Object.values(users)[0])
+                .isNull();
+
+            const company = await session.load(companyId, Company);
+            assertThat(company)
+                .isNull();
+
+            const tracked = session.advanced.getTrackedEntities();
+            assertThat(Object.keys(tracked))
+                .hasSize(2);
+            assertThat(tracked[userId].isDeleted)
+                .isTrue();
+            assertThat(tracked[companyId].isDeleted)
+                .isTrue();
+        }
+
+        {
+            const session = store.openSession();
+            const user = await session.load(userId, User);
+            await session.delete(user.id);
+
+            const tracked = session.advanced.getTrackedEntities();
+            assertThat(Object.keys(tracked))
+                .hasSize(1);
+            assertThat(tracked[userId].id)
+                .isEqualTo(userId);
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            const user = await session.load(userId, User);
+            await session.delete(user.id.toUpperCase());
+
+            const tracked = session.advanced.getTrackedEntities();
+            assertThat(Object.keys(tracked))
+                .hasSize(1);
+            assertThat(Object.values(tracked)[0].id.toLowerCase())
+                .isEqualTo(userId.toLowerCase());
+            assertThat(Object.values(tracked)[0].isDeleted)
+                .isTrue();
+            session.dispose();
+        }
+
+        {
+            const session = store.openSession();
+            const user = await session.load(userId, User);
+            await session.delete(user);
+            const tracked = await session.advanced.getTrackedEntities();
+            assertThat(Object.keys(tracked))
+                .hasSize(1);
+
+            assertThat(Object.values(tracked)[0].id.toLowerCase())
+                .isEqualTo(userId.toLowerCase());
+            assertThat(Object.values(tracked)[0].isDeleted)
+                .isTrue();
         }
     });
 });

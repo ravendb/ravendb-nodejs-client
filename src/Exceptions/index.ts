@@ -49,6 +49,7 @@ export type RavenErrorType = "RavenException"
     | "RavenTimeoutException"
     | "NotSupportedException"
     | "IndexCompactionInProgressException"
+    | "InvalidQueryException"
     | "InvalidOperationException"
     | "InvalidArgumentException"
     | "ErrorResponseException"
@@ -147,7 +148,12 @@ export type RavenErrorType = "RavenException"
     | "ReplicationHubNotFoundException"
     | "SubscriptionNameException"
     | "SorterDoesNotExistException"
-    | "LicenseActivationException";
+    | "LicenseActivationException"
+    | "NotSupportedInCoraxException"
+    | "NotImplementedInCoraxException"
+    | "CompareExchangeInvalidKeyException"
+    | "BulkInsertInvalidOperationException"
+    | "BulkInsertClientException";
 
 export interface ExceptionSchema {
     url: string;

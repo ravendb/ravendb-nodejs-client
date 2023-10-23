@@ -31,6 +31,7 @@ export class SubscriptionBatch<T extends object> {
     private _includes: object[];
     private _counterIncludes: CounterIncludeItem[];
     private _timeSeriesIncludes: any[];
+    private _sessionOpened = false;
 
     public get items() {
         return this._items;
@@ -51,9 +52,16 @@ export class SubscriptionBatch<T extends object> {
     }
 
     private _openSessionInternal(options: SessionOptions): IDocumentSession {
+        if (this._sessionOpened) {
+            this.throwSessionCanBeOpenedOnlyOnce();
+        }
         const s = this._store.openSession(options);
         this._loadDataToSession(s as any as InMemoryDocumentSessionOperations);
         return s;
+    }
+
+    private throwSessionCanBeOpenedOnlyOnce(): void {
+        throwError("InvalidOperationException", "Session can only be opened once per each Subscription batch");
     }
 
     public getNumberOfItemsInBatch() {
@@ -125,6 +133,7 @@ export class SubscriptionBatch<T extends object> {
             documentInfo.id = item.id;
             documentInfo.document = item.rawResult;
             documentInfo.metadata = item.rawMetadata;
+            documentInfo.metadataInstance = item.metadata;
             documentInfo.changeVector = item.changeVector;
             documentInfo.entity = item.result;
             documentInfo.newDocument = false;
@@ -133,6 +142,7 @@ export class SubscriptionBatch<T extends object> {
      }
 
     public initialize(batch: BatchFromServer): string {
+        this._sessionOpened = false;
         this._includes = batch.includes;
         this._counterIncludes = batch.counterIncludes;
         this._timeSeriesIncludes = batch.timeSeriesIncludes;
@@ -185,6 +195,7 @@ export class SubscriptionBatch<T extends object> {
             itemToAdd.exceptionMessage = item.exception;
             itemToAdd.projection = projection;
             itemToAdd.revision = this._revisions;
+            itemToAdd.metadata = createMetadataDictionary({ raw: metadata });
 
             this._items.push(itemToAdd);
         }
@@ -208,6 +219,7 @@ export class Item<T> {
     public changeVector: string;
     public projection: boolean;
     public revision: boolean;
+    public metadata: IMetadataDictionary;
 
     private _throwItemProcessError() {
         throwError("InvalidOperationException",
@@ -229,14 +241,4 @@ export class Item<T> {
 
     public rawResult: any;
     public rawMetadata: any;
-
-    private _metadata: IMetadataDictionary;
-
-    public get metadata() {
-        if (!this._metadata) {
-            this._metadata = createMetadataDictionary({ raw: this.rawMetadata });
-        }
-
-        return this._metadata;
-    }
 }

@@ -81,9 +81,13 @@ import { OngoingTaskSqlEtlDetails } from "../../../../../src/Documents/Operation
             .isEqualTo("etlToDst");
 
         const configuration = ongoingTask.configuration;
+        assertThat(configuration instanceof SqlEtlConfiguration)
+            .isTrue();
         const transforms = configuration.transforms;
         assertThat(transforms)
             .hasSize(1);
+        assertThat(transforms[0] instanceof Transformation)
+            .isTrue();
         assertThat(transforms[0].applyToAllDocuments)
             .isTrue();
 

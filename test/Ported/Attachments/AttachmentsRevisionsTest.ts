@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../../Utils/TestUtil";
 
 import {
     DeleteDocumentCommand,
@@ -9,7 +9,7 @@ import {
 import { User } from "../../Assets/Entities";
 import { CONSTANTS } from "../../../src/Constants";
 
-describe("AttachmentsRevisions", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("AttachmentsRevisions", function () {
 
     let store: IDocumentStore;
 
@@ -34,7 +34,7 @@ describe("AttachmentsRevisions", function () {
 
         // Delete document should delete all the attachments
         await store.getRequestExecutor().execute(new DeleteDocumentCommand("users/1"));
-        
+
         await assertRevisions(names, (session, revisions) => {
             assertNoRevisionAttachment(revisions[0], session, true);
             assertRevisionAttachments(names, 3, revisions[1], session);

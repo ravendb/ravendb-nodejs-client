@@ -11,6 +11,9 @@ import { ServerNode } from "../../Http/ServerNode";
 import { throwError } from "../../Exceptions/index";
 import { RavenEtlConfiguration } from "./Etl/RavenEtlConfiguration";
 import { SqlEtlConfiguration } from "./Etl/Sql/SqlEtlConfiguration";
+import { OlapEtlConfiguration } from "./Etl/Olap/OlapEtlConfiguration";
+import { ElasticSearchEtlConfiguration } from "./Etl/ElasticSearch/ElasticSearchEtlConfiguration";
+import { QueueEtlConfiguration } from "./Etl/Queue/QueueEtlConfiguration";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -99,14 +102,32 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                     lastClientConnectionTime: "date"
                 }
                 break;
+            case "OlapEtl":
+                nestedTypes = {
+                    configuration: "OlapEtlConfiguration"
+                }
+                break;
+            case "ElasticSearchEtl":
+                nestedTypes = {
+                    configuration: "ElasticSearchEtlConfiguration"
+                }
+                break;
+            case "QueueEtl":
+                nestedTypes = {
+                    configuration: "QueueEtlConfiguration"
+                }
+                break;
             case "PullReplicationAsSink":
                 break;
             case "Backup":
                 nestedTypes = {
                     lastFullBackup: "date",
+                    delayUntil: "date",
+                    originalBackupTime: "date",
                     lastIncrementalBackup: "date",
                     "onGoingBackup.startTime": "date",
-                    "nextBackup.dateTime": "date"
+                    "nextBackup.dateTime": "date",
+                    "nextBackup.originalBackupTime": "date",
                 }
                 break;
         }
@@ -128,5 +149,8 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
 
 const knownTypes = new Map<string, any>([
     [RavenEtlConfiguration.name, RavenEtlConfiguration],
-    [SqlEtlConfiguration.name, SqlEtlConfiguration]
+    [SqlEtlConfiguration.name, SqlEtlConfiguration],
+    [OlapEtlConfiguration.name, OlapEtlConfiguration],
+    [ElasticSearchEtlConfiguration.name, ElasticSearchEtlConfiguration],
+    [QueueEtlConfiguration.name, QueueEtlConfiguration]
 ]);

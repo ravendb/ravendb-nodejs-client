@@ -21,7 +21,9 @@ export class Timer implements IDisposable {
     constructor(action: () => Promise<any>, dueTimeInMs: number, periodInMs?: number) {
         this._action = action;
         this._periodInMs = periodInMs;
-        this._schedule(dueTimeInMs);
+        if (dueTimeInMs != null) {
+            this._schedule(dueTimeInMs);
+        }
     }
 
     public change(dueTimeInMs: number, period?: number) {

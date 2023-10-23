@@ -1,13 +1,14 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ClusterTopology } from "../../Http/ClusterTopology";
 import { HttpRequestParameters } from "../../Primitives/Http";
-import { ServerNode } from "../../Http/ServerNode";
+import { ServerNode, ServerNodeRole } from "../../Http/ServerNode";
 import * as stream from "readable-stream";
 import { NodeStatus } from "../../Http/RequestExecutor";
 
 export class ClusterTopologyResponse {
     public leader: string;
     public nodeTag: string;
+    public serverRole: ServerNodeRole;
     public topology: ClusterTopology;
     public etag: number;
     public status: Map<string, NodeStatus>;

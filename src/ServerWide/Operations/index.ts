@@ -14,7 +14,8 @@ export type DatabasePromotionStatus =
     | "Ok"
     | "OutOfCpuCredits"
     | "EarlyOutOfMemory"
-    | "HighDirtyMemory";
+    | "HighDirtyMemory"
+    | "RaftIndexNotUpToDate";
 
 export interface DatabaseTopology {
     members: string[];

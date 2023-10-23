@@ -54,6 +54,8 @@ import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 import { Field } from "../../Types";
 import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
+import { IFilterFactory } from "../Queries/IFilterFactory";
+import { FilterFactory } from "../Queries/FilterFactory";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -573,6 +575,17 @@ export class DocumentQuery<T extends object>
                 queryData.isCustomFunction, sourceAliasReference);
         } else {
             newFieldsToFetch = null;
+            if (this.fieldsToFetchToken) {
+                queryData = new QueryData(
+                    this.fieldsToFetchToken.fieldsToFetch,
+                    this.fieldsToFetchToken.projections,
+                    this._fromToken.alias(),
+                    this._declareTokens,
+                    this._loadTokens,
+                    this.fieldsToFetchToken.customFunction
+                );
+                queryData.projectionBehavior = this.projectionBehavior;
+            }
         }
 
         if (newFieldsToFetch) {
@@ -597,7 +610,9 @@ export class DocumentQuery<T extends object>
         query._whereTokens = this._whereTokens;
         query._orderByTokens = this._orderByTokens;
         query._groupByTokens = this._groupByTokens;
+        query._filterTokens = this._filterTokens;
         query._queryParameters = this._queryParameters;
+        query._filterModeStack = [...this._filterModeStack];
         query._start = this._start;
         query._timeout = this._timeout;
         query._queryStats = this._queryStats;
@@ -633,6 +648,7 @@ export class DocumentQuery<T extends object>
         query.projectionBehavior = queryData ? queryData.projectionBehavior : this.projectionBehavior;
         query._isIntersect = this._isIntersect;
         query._defaultOperator = this._defaultOperator;
+        query._filterLimit = this._filterLimit;
 
         return query;
     }
@@ -858,5 +874,19 @@ export class DocumentQuery<T extends object>
 
             return new SuggestionDocumentQuery<T>(this);
         }
+    }
+
+    public filter(builder: (factory: IFilterFactory<T>) => void, limit?: number): IDocumentQuery<T> {
+        limit ??= Number.MAX_SAFE_INTEGER;
+
+        const mode = this.setFilterMode(true);
+        try {
+            const f = new FilterFactory(this, limit);
+            builder(f);
+        } finally {
+            mode.dispose();
+        }
+
+        return this;
     }
 }

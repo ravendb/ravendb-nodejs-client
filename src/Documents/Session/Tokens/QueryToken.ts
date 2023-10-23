@@ -28,5 +28,6 @@ export abstract class QueryToken {
         "group",
         "order",
         "include",
+        "filter"
     ]);
 }

@@ -3,6 +3,8 @@ import { DocumentQuery } from "./DocumentQuery";
 import { GroupByField } from "./GroupByField";
 import { throwError } from "../../Exceptions";
 import { IDocumentQuery } from "./IDocumentQuery";
+import { IFilterFactory } from "../Queries/IFilterFactory";
+import { FilterFactory } from "../Queries/FilterFactory";
 
 export class GroupByDocumentQuery<T extends object> implements IGroupByDocumentQuery<T> {
 
@@ -43,5 +45,18 @@ export class GroupByDocumentQuery<T extends object> implements IGroupByDocumentQ
     public selectCount(projectedName: string = "count"): IDocumentQuery<T> {
         this._query._groupByCount(projectedName);
         return this._query;
+    }
+
+    public filter(builder: (factory: IFilterFactory<T>) => void, limit?: number): IGroupByDocumentQuery<T> {
+        limit ??= Number.MAX_SAFE_INTEGER;
+        const mode = this._query.setFilterMode(true);
+        try {
+            const f = new FilterFactory(this._query, limit);
+            builder(f);
+        } finally {
+            mode.dispose();
+        }
+
+        return this;
     }
 }

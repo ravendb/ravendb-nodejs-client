@@ -1,5 +1,6 @@
 import { GroupByField } from "./GroupByField";
 import { IDocumentQuery } from "./IDocumentQuery";
+import { IFilterFactory } from "../Queries/IFilterFactory";
 
 export interface IGroupByDocumentQuery<T extends object> {
 
@@ -11,4 +12,7 @@ export interface IGroupByDocumentQuery<T extends object> {
 
     selectCount(): IDocumentQuery<T>;
     selectCount(projectedName: string): IDocumentQuery<T>;
+
+    filter(builder: (factory: IFilterFactory<T>) => void): IGroupByDocumentQuery<T>;
+    filter(builder: (factory: IFilterFactory<T>) => void, limit: number): IGroupByDocumentQuery<T>;
 }

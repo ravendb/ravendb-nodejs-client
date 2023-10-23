@@ -18,6 +18,10 @@ export class StringUtil {
         return char.repeat(length - inputLength) + s;
     }
 
+    public static startsWithIgnoreCase(s: string, prefix: string) {
+        return s.toLowerCase().startsWith(prefix.toLowerCase());
+    }
+
     public static toWebSocketPath(url: string) {
         return url
             .replace("https://", "wss://")

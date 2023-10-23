@@ -2,7 +2,7 @@ import { IMetadataDictionary, IRawMetadataDictionary } from "../Documents/Sessio
 import { throwError } from "../Exceptions";
 
 export interface MetadataAsDictionaryParentInfo {
-    parent: IMetadataDictionary;
+    parent: MetadataDictionary;
     parentKey: string;
 }
 
@@ -46,7 +46,7 @@ class MetadataInternal {
         if (val == null) {
             return null;
         }
-        
+
         if (typeof val !== "object") {
             return val;
         }

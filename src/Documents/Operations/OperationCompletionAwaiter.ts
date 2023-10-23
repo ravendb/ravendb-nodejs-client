@@ -6,6 +6,7 @@ import { ExceptionDispatcher } from "../../Exceptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { delay } from "../../Utility/PromiseUtil";
+import { KillOperationCommand } from "../Commands/KillOperationCommand";
 
 type OperationStatus = "Completed" | "Canceled" | "Faulted";
 
@@ -71,5 +72,15 @@ export class OperationCompletionAwaiter {
         };
 
         return Promise.resolve(operationStatusPolling());
+    }
+
+    protected _getKillOperationCommand(id: number, nodeTag: string): RavenCommand<void> {
+        return new KillOperationCommand(id, nodeTag);
+    }
+
+    public async kill() {
+        const command = this._getKillOperationCommand(this._id, this.nodeTag);
+
+        await this._requestExecutor.execute(command);
     }
 }

@@ -7,6 +7,7 @@ export interface PeriodicBackupConfiguration extends BackupConfiguration {
     disabled?: boolean;
     mentorNode?: string;
     retentionPolicy?: RetentionPolicy;
+    createdAt?: string;
 
     fullBackupFrequency?: string;
     incrementalBackupFrequency?: string;
