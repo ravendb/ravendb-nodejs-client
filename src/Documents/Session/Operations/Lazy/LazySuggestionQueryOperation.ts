@@ -4,7 +4,6 @@ import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { QueryCommand } from "../../../Commands/QueryCommand";
 import { stringToReadable } from "../../../../Utility/StreamUtil";
-import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { IndexQuery, writeIndexQuery } from "../../../Queries/IndexQuery";
 import { SuggestionsResponseObject } from "../../../../Types";
 import { InMemoryDocumentSessionOperations } from "../../InMemoryDocumentSessionOperations";

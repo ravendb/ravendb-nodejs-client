@@ -1,5 +1,5 @@
 import { IRavenObject } from "../Types/IRavenObject";
-import { UriUtility } from "../Http/UriUtility";
+import { UriUtility } from "./UriUtility";
 import { ClusterTopology } from "./ClusterTopology";
 
 export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";

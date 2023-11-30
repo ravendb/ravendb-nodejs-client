@@ -12,7 +12,6 @@ import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
-import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { SessionOptions } from "./SessionOptions";
 import { throwError } from "../../Exceptions";

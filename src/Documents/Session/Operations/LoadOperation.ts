@@ -10,7 +10,6 @@ import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { StringUtil } from "../../../Utility/StringUtil";
-import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 const log = getLogger({ module: "LoadOperation" });

@@ -7,7 +7,7 @@ import { Explanations } from "../Queries/Explanation/Explanations";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters";
-import { IQueryIncludeBuilder } from "../Session/Loaders/IQueryIncludeBuilder";
+import { IQueryIncludeBuilder } from "./Loaders/IQueryIncludeBuilder";
 import { Field } from "../../Types";
 
 export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQueryBase<T, TSelf>>

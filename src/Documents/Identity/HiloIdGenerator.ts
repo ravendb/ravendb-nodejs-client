@@ -1,10 +1,8 @@
-import { IDocumentStore } from "../../Documents/IDocumentStore";
+import { IDocumentStore } from "../IDocumentStore";
 import { DateUtil } from "../../Utility/DateUtil";
-import { StringUtil } from "../../Utility/StringUtil";
 import { HiloReturnCommand } from "./Commands/HiloReturnCommand";
 import { NextHiloCommand, HiLoResult } from "./Commands/NextHiloCommand";
 import { HiloRangeValue } from "./HiloRangeValue";
-import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { Lazy } from "../Lazy";
 import { NextId } from "./NextId";
 

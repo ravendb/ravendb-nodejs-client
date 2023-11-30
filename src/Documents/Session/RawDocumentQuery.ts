@@ -1,5 +1,5 @@
 import { AbstractDocumentQuery } from "./AbstractDocumentQuery";
-import { IRawDocumentQuery } from "../Session/IRawDocumentQuery";
+import { IRawDocumentQuery } from "./IRawDocumentQuery";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { DocumentType } from "../DocumentAbstractions";
 import { QueryOperator } from "../Queries/QueryOperator";

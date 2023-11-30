@@ -28,18 +28,15 @@ export class SessionDocumentTimeSeries extends SessionTimeSeriesBase implements 
         startOrIncludes?: number | ((builder: ITimeSeriesIncludeBuilder) => void),
         startOrPageSize?: number,
         pageSize?: number) {
-        if (TypeUtil.isNullOrUndefined(startOrFrom)) {
-            // get()
-            return this._getInternal(null, null, null,0, TypeUtil.MAX_INT32);
+
+        if (TypeUtil.isFunction(startOrIncludes)) {
+            return this._getInternal(startOrFrom as Date, toOrPageSize as Date, startOrIncludes, startOrPageSize, pageSize);
+        } else if (TypeUtil.isNumber(startOrIncludes)) {
+            return this._getInternal(startOrFrom as Date, toOrPageSize as Date, null, startOrPageSize, pageSize);
         } else if (TypeUtil.isNumber(startOrFrom)) {
             // get(start: number, pageSize: number)
             return this._getInternal(null, null, null, startOrFrom, toOrPageSize as number);
-        } else if (TypeUtil.isFunction(startOrIncludes)) {
-            return this._getInternal(startOrFrom, toOrPageSize as Date, startOrIncludes, startOrPageSize, pageSize);
-        } else if (TypeUtil.isNumber(startOrIncludes)) {
-            return this._getInternal(startOrFrom, toOrPageSize as Date, null, startOrPageSize, pageSize);
         } else {
-            // 3-rd parameter is null
             return this._getInternal(startOrFrom, toOrPageSize as Date, null, 0, TypeUtil.MAX_INT32);
         }
     }

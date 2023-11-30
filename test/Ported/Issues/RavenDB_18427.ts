@@ -24,7 +24,7 @@ describe("RavenDB_18427Test", function () {
 
             await assertThrows(() => session.store(user, "bar"), err => {
                 assertThat(err.name)
-                    .isEqualTo("IllegalStateException");
+                    .isEqualTo("InvalidOperationException");
             });
             await session.saveChanges();
 
@@ -39,7 +39,7 @@ describe("RavenDB_18427Test", function () {
                 .isNotNull();
             const user2 = await session.load("bar", User);
             assertThat(user2)
-                .isNotNull();
+                .isNull();
         }
     });
 });

@@ -29,11 +29,12 @@ export class AsyncQueue<T> {
         // eslint-disable-next-line @typescript-eslint/ban-types
         let resolveToDelete: Function;
 
+        let timeoutHandle: ReturnType<typeof setTimeout>;
         const timeoutErr = getError(
             "TimeoutException", `Timeout exceeded waiting for element to arrive for ${timeout}.`);
-        const timeoutPromise: Promise<T> = 
-            new Promise((_, reject) => 
-                setTimeout(() => {
+        const timeoutPromise: Promise<T> =
+            new Promise((_, reject) =>
+                timeoutHandle = setTimeout(() => {
                     reject(timeoutErr);
 
                     // we don't want to wait for value
@@ -44,14 +45,17 @@ export class AsyncQueue<T> {
                         }
                     }
                 }, timeout));
-        const resultPromise: Promise<T> = 
+        const resultPromise: Promise<T> =
             new Promise(resolve => {
                 resolveToDelete = resolve;
                 this._promises.push(resolve);
             });
 
         // when result comes first - don't mark item for deletion
-        resultPromise.then(() => resolveToDelete = null);
+        resultPromise.then(() => {
+            clearTimeout(timeoutHandle);
+            resolveToDelete = null;
+        });
 
         // element is not available - wait for it!
         return Promise.race([timeoutPromise, resultPromise]);

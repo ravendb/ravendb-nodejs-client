@@ -8,12 +8,13 @@ import { NestedTypes } from "../../Mapping/ObjectMapper";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerNode } from "../../Http/ServerNode";
-import { throwError } from "../../Exceptions/index";
+import { throwError } from "../../Exceptions";
 import { RavenEtlConfiguration } from "./Etl/RavenEtlConfiguration";
 import { SqlEtlConfiguration } from "./Etl/Sql/SqlEtlConfiguration";
 import { OlapEtlConfiguration } from "./Etl/Olap/OlapEtlConfiguration";
 import { ElasticSearchEtlConfiguration } from "./Etl/ElasticSearch/ElasticSearchEtlConfiguration";
 import { QueueEtlConfiguration } from "./Etl/Queue/QueueEtlConfiguration";
+import { Transformation } from "./Etl/Transformation";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -88,12 +89,14 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 break;
             case "RavenEtl":
                 nestedTypes = {
-                    configuration: "RavenEtlConfiguration"
+                    configuration: "RavenEtlConfiguration",
+                    "configuration.transforms": "Transformation"
                 };
                 break;
             case "SqlEtl":
                 nestedTypes = {
-                    configuration: "SqlEtlConfiguration"
+                    configuration: "SqlEtlConfiguration",
+                    "configuration.transforms": "Transformation"
                 };
                 break;
             case "Subscription":
@@ -104,17 +107,20 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 break;
             case "OlapEtl":
                 nestedTypes = {
-                    configuration: "OlapEtlConfiguration"
+                    configuration: "OlapEtlConfiguration",
+                    "configuration.transforms": "Transformation"
                 }
                 break;
             case "ElasticSearchEtl":
                 nestedTypes = {
-                    configuration: "ElasticSearchEtlConfiguration"
+                    configuration: "ElasticSearchEtlConfiguration",
+                    "configuration.transforms": "Transformation"
                 }
                 break;
             case "QueueEtl":
                 nestedTypes = {
-                    configuration: "QueueEtlConfiguration"
+                    configuration: "QueueEtlConfiguration",
+                    "configuration.transforms": "Transformation"
                 }
                 break;
             case "PullReplicationAsSink":
@@ -152,5 +158,6 @@ const knownTypes = new Map<string, any>([
     [SqlEtlConfiguration.name, SqlEtlConfiguration],
     [OlapEtlConfiguration.name, OlapEtlConfiguration],
     [ElasticSearchEtlConfiguration.name, ElasticSearchEtlConfiguration],
-    [QueueEtlConfiguration.name, QueueEtlConfiguration]
+    [QueueEtlConfiguration.name, QueueEtlConfiguration],
+    [Transformation.name, Transformation]
 ]);

@@ -2,7 +2,6 @@ import { RevisionsCollectionObject } from "../../Types";
 import { DocumentType } from "../DocumentAbstractions";
 import { MetadataAsDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ForceRevisionStrategy } from "./ForceRevisionStrategy";
-import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations";
 import { ILazyRevisionsOperations } from "./ILazyRevisionsOperations";
 
 /**

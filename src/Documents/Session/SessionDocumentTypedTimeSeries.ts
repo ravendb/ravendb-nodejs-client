@@ -24,14 +24,11 @@ export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTim
     public async get(from: Date, to: Date, start: number): Promise<TypedTimeSeriesEntry<T>[]>;
     public async get(from: Date, to: Date, start: number, pageSize: number): Promise<TypedTimeSeriesEntry<T>[]>;
     public async get(startOrFrom?: number | Date, toOrPageSize?: number | Date, start?: number, pageSize?: number): Promise<TypedTimeSeriesEntry<T>[]> {
-        if (TypeUtil.isNullOrUndefined(startOrFrom)) {
-            // get()
-            return this._getTyped(null, null, 0, TypeUtil.MAX_INT32)
-        } else if (TypeUtil.isNumber(startOrFrom)) {
+        if (TypeUtil.isNumber(startOrFrom)) {
             // get(start: number, pageSize: number)
             return this._getTyped(null, null, startOrFrom, toOrPageSize as number);
         } else {
-            return this._getTyped(startOrFrom, toOrPageSize as Date, start ?? 0, pageSize ?? TypeUtil.MAX_INT32);
+            return this._getTyped(startOrFrom, toOrPageSize as Date, 0, TypeUtil.MAX_INT32);
         }
     }
 

@@ -1,5 +1,5 @@
 import { CommandType } from "../CommandData";
-import { AppendOperation, DeleteOperation, TimeSeriesOperation } from "../../Operations/TimeSeries/TimeSeriesOperation";
+import { AppendOperation, DeleteOperation } from "../../Operations/TimeSeries/TimeSeriesOperation";
 import { TimeSeriesCommandData } from "./TimeSeriesCommandData";
 
 export class TimeSeriesBatchCommandData extends TimeSeriesCommandData {

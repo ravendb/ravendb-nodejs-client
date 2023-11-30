@@ -215,7 +215,7 @@ describe("ClusterTransactionTest", function () {
         };
 
         {
-            const session = store.openSession();
+            const session = store.openSession(sessionOptions);
             const doc = new User();
             doc.name = "Grisha";
             await session.store(doc, docId);

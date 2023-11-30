@@ -5,7 +5,7 @@ import { ClusterRequestExecutor } from "../../Http/ClusterRequestExecutor";
 import { RavenCommand } from "../../Http/RavenCommand";
 import { ServerWideOperationCompletionAwaiter } from "../../ServerWide/Operations/ServerWideOperationCompletionAwaiter";
 import { getLogger } from "../../Utility/LogUtil";
-import { throwError } from "../../Exceptions/index";
+import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
 import { Topology } from "../../Http/Topology";
 import { GetBuildNumberOperation } from "../../ServerWide/Operations/GetBuildNumberOperation";

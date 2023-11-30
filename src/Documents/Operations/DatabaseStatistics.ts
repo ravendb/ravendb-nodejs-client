@@ -1,4 +1,4 @@
-import { IndexInformation } from "../../Documents/Operations/IndexInformation";
+import { IndexInformation } from "./IndexInformation";
 import { Size } from "../../Utility/SizeUtil";
 
 export interface DatabaseStatistics {

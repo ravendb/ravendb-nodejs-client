@@ -992,7 +992,7 @@ describe("TimeSeriesBulkInsertTest", function () {
             {
                 const timeSeriesBulkInsert = bulkInsert.timeSeriesFor(documentId, "Heartrate");
 
-                timeSeriesBulkInsert.append(baseLine.clone().add(1, "minutes").toDate(), 59, "watches/fitbit");
+                await timeSeriesBulkInsert.append(baseLine.clone().add(1, "minutes").toDate(), 59, "watches/fitbit");
 
                 const errorMessage = "There is an already running time series operation, did you forget to close it?";
 

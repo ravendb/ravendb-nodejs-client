@@ -1,7 +1,6 @@
 import { DocumentInfo } from "./DocumentInfo";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
-import { Entity } from "../../../test/Assets/Graph";
 
 export class DocumentsById {
 

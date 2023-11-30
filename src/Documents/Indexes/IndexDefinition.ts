@@ -1,5 +1,5 @@
-import { throwError } from "../../Exceptions/index";
-import { IndexPriority, IndexLockMode, IndexType, IndexState } from "./Enums";
+import { throwError } from "../../Exceptions";
+import { IndexLockMode, IndexType } from "./Enums";
 import { IndexFieldOptions } from "./IndexFieldOptions";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinitionHelper } from "./IndexDefinitionHelper";

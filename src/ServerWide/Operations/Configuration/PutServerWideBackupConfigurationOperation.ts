@@ -1,6 +1,6 @@
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
 import { ServerWideBackupConfiguration } from "./ServerWideBackupConfiguration";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { IRaftCommand } from "../../../Http/IRaftCommand";
@@ -9,8 +9,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { ServerNode } from "../../../Http/ServerNode";
 import * as stream from "readable-stream";
 import {
-    PutServerWideBackupConfigurationResponse,
-    ServerWideTaskResponse
+    PutServerWideBackupConfigurationResponse
 } from "../OngoingTasks/ServerWideTaskResponse";
 
 export class PutServerWideBackupConfigurationOperation implements IServerOperation<PutServerWideBackupConfigurationResponse> {

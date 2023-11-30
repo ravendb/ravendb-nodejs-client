@@ -2,7 +2,6 @@ import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTim
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition";
 import { TimeSeriesIndexDefinitionBuilder } from "./TimeSeriesIndexDefinitionBuilder";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { AbstractTimeSeriesIndexCreationTask } from "./AbstractTimeSeriesIndexCreationTask";
 
 export abstract class AbstractCsharpTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
     public map: string;

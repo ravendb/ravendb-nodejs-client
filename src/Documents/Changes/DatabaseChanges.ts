@@ -100,16 +100,18 @@ export class DatabaseChanges implements IDatabaseChanges {
         return this._client && this._client.readyState === WebSocket.OPEN;
     }
 
-    public on(eventName: "connectionStatus", handler: () => void);
-    public on(eventName: "error", handler: (error: Error) => void);
-    public on(eventName: "connectionStatus" | "error", handler) {
+    public on(eventName: "connectionStatus", handler: () => void): this;
+    public on(eventName: "error", handler: (error: Error) => void): this;
+    public on(eventName: "connectionStatus" | "error", handler): this {
         this._emitter.addListener(eventName, handler);
+        return this;
     }
 
-    public off(eventName: "connectionStatus", handler: () => void);
-    public off(eventName: "error", handler: (error: Error) => void);
-    public off(eventName: "connectionStatus" | "error", handler) {
+    public off(eventName: "connectionStatus", handler: () => void): this;
+    public off(eventName: "error", handler: (error: Error) => void): this;
+    public off(eventName: "connectionStatus" | "error", handler): this {
         this._emitter.removeListener(eventName, handler);
+        return this;
     }
 
     public ensureConnectedNow(): Promise<IDatabaseChanges> {

@@ -1,7 +1,7 @@
 import { QueryToken } from "./QueryToken";
 import { OrderingType } from "../OrderingType";
 import { throwError } from "../../../Exceptions";
-import { CONSTANTS, INDEXES } from "../../../Constants";
+import { CONSTANTS } from "../../../Constants";
 
 type OrderByTokenOptions = {
     ordering?: OrderingType;

@@ -1,6 +1,6 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { StringUtil } from "../../../Utility/StringUtil";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { PullReplicationDefinition } from "./PullReplicationDefinition";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { ModifyOngoingTaskResult } from "../../../ServerWide/ModifyOnGoingTaskResult";

@@ -1,5 +1,5 @@
 import { IDocumentQueryBaseSingle } from "./IDocumentQueryBaseSingle";
-import { IAggregationDocumentQuery } from "./../Queries/Facets/IAggregationDocumentQuery";
+import { IAggregationDocumentQuery } from "../Queries/Facets/IAggregationDocumentQuery";
 import { IEnumerableQuery } from "./IEnumerableQuery";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
@@ -8,7 +8,7 @@ import { GroupBy } from "../Queries/GroupBy";
 import { IDocumentQueryBase } from "./IDocumentQueryBase";
 import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
 import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
-import { FacetBase } from "./../Queries/Facets/FacetBase";
+import { FacetBase } from "../Queries/Facets/FacetBase";
 import { IMoreLikeThisBuilderForDocumentQuery } from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
 import { MoreLikeThisBase } from "../Queries/MoreLikeThis/MoreLikeThisBase";
 import { ISuggestionBuilder } from "../Queries/Suggestions/ISuggestionBuilder";

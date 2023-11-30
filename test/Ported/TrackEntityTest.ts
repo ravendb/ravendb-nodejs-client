@@ -138,12 +138,12 @@ describe("TrackEntityTest", function () {
             await session.delete(companyId);
 
             const tracked = session.advanced.getTrackedEntities();
-            assertThat(Object.keys(tracked))
-                .hasSize(2);
+            assertThat(tracked.size)
+                .isEqualTo(2);
 
-            assertThat(tracked[userId].isDeleted)
+            assertThat(tracked.get(userId).isDeleted)
                 .isTrue();
-            assertThat(tracked[companyId].isDeleted)
+            assertThat(tracked.get(companyId).isDeleted)
                 .isTrue();
             session.dispose();
         }
@@ -164,11 +164,11 @@ describe("TrackEntityTest", function () {
                 .isNull();
 
             const tracked = session.advanced.getTrackedEntities();
-            assertThat(Object.keys(tracked))
-                .hasSize(2);
-            assertThat(tracked[userId].isDeleted)
+            assertThat(tracked.size)
+                .isEqualTo(2);
+            assertThat(tracked.get(userId).isDeleted)
                 .isTrue();
-            assertThat(tracked[companyId].isDeleted)
+            assertThat(tracked.get(companyId).isDeleted)
                 .isTrue();
         }
 
@@ -178,9 +178,9 @@ describe("TrackEntityTest", function () {
             await session.delete(user.id);
 
             const tracked = session.advanced.getTrackedEntities();
-            assertThat(Object.keys(tracked))
-                .hasSize(1);
-            assertThat(tracked[userId].id)
+            assertThat(tracked.size)
+                .isEqualTo(1);
+            assertThat(tracked.get(userId).id)
                 .isEqualTo(userId);
             session.dispose();
         }
@@ -191,11 +191,11 @@ describe("TrackEntityTest", function () {
             await session.delete(user.id.toUpperCase());
 
             const tracked = session.advanced.getTrackedEntities();
-            assertThat(Object.keys(tracked))
-                .hasSize(1);
-            assertThat(Object.values(tracked)[0].id.toLowerCase())
+            assertThat(tracked.size)
+                .isEqualTo(1);
+            assertThat(Array.from(tracked.values())[0].id.toLowerCase())
                 .isEqualTo(userId.toLowerCase());
-            assertThat(Object.values(tracked)[0].isDeleted)
+            assertThat(Array.from(tracked.values())[0].isDeleted)
                 .isTrue();
             session.dispose();
         }
@@ -204,13 +204,13 @@ describe("TrackEntityTest", function () {
             const session = store.openSession();
             const user = await session.load(userId, User);
             await session.delete(user);
-            const tracked = await session.advanced.getTrackedEntities();
-            assertThat(Object.keys(tracked))
-                .hasSize(1);
+            const tracked = session.advanced.getTrackedEntities();
+            assertThat(tracked.size)
+                .isEqualTo(1);
 
-            assertThat(Object.values(tracked)[0].id.toLowerCase())
+            assertThat(Array.from(tracked.values())[0].id.toLowerCase())
                 .isEqualTo(userId.toLowerCase());
-            assertThat(Object.values(tracked)[0].isDeleted)
+            assertThat(Array.from(tracked.values())[0].isDeleted)
                 .isTrue();
         }
     });

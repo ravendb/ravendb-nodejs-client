@@ -2,7 +2,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { throwError } from "../../../Exceptions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { CompareExchangeResultClass, ServerCasing, ServerResponse } from "../../../Types";
-import { COMPARE_EXCHANGE } from "../../../Constants";
 import { DocumentType } from "../../DocumentAbstractions";
 import { ObjectUtil } from "../../../Utility/ObjectUtil";
 

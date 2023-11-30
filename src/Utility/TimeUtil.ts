@@ -1,5 +1,5 @@
 import { StringUtil } from "./StringUtil";
-import { throwError } from "../Exceptions/index";
+import { throwError } from "../Exceptions";
 import { StringBuilder } from "./StringBuilder";
 
 export class TimeUtil {

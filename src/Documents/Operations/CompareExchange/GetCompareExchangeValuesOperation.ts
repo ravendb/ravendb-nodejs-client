@@ -12,7 +12,6 @@ import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } fr
 import * as stream from "readable-stream";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { QueryResult } from "../../Queries/QueryResult";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];

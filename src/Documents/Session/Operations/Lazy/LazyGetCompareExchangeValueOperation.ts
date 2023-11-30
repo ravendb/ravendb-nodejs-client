@@ -4,8 +4,6 @@ import { throwError } from "../../../../Exceptions";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { TypeUtil } from "../../../../Utility/TypeUtil";
-import { RavenCommandResponsePipeline } from "../../../../Http/RavenCommandResponsePipeline";
-import { stringToReadable } from "../../../../Utility/StreamUtil";
 import {
     CompareExchangeValueResultParser,
     GetCompareExchangeValuesResponse

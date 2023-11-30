@@ -1,5 +1,5 @@
 import { DatabaseChange } from "./DatabaseChange";
-import { DocumentChange, DocumentChangeTypes } from "./DocumentChange";
+import { DocumentChange } from "./DocumentChange";
 import { IndexChange } from "./IndexChange";
 
 export class AggressiveCacheChange implements DatabaseChange {

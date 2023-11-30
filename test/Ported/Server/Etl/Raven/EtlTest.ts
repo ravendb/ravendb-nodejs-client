@@ -91,6 +91,9 @@ import { OngoingTaskRavenEtlDetails } from "../../../../../src/Documents/Operati
                 assertThat(ongoingTask.taskName)
                     .isEqualTo("etlToDst");
 
+                assertThat(ongoingTask.configuration.transforms[0] instanceof Transformation)
+                    .isTrue();
+
                 const deleteResult = await src.maintenance.send(
                     new DeleteOngoingTaskOperation(etlResult.taskId, "RavenEtl"));
 

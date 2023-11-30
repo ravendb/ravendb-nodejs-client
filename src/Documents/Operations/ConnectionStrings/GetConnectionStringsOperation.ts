@@ -10,7 +10,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
-import { OlapEtlConfiguration } from "../Etl/Olap/OlapEtlConfiguration";
 
 export interface GetConnectionStringsResult {
     ravenConnectionStrings: Record<string, RavenConnectionString>;

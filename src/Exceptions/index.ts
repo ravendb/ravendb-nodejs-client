@@ -1,5 +1,5 @@
 import { VError } from "verror";
-import { closeHttpResponse } from "./../Utility/HttpUtil";
+import { closeHttpResponse } from "../Utility/HttpUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
 import { JsonSerializer } from "../Mapping/Json/Serializer";

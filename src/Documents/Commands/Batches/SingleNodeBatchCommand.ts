@@ -3,10 +3,10 @@ import { BatchCommandResult } from "../../Session/Operations/BatchCommandResult"
 import { IDisposable } from "../../../Types/Contracts";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { ICommandData } from "../CommandData";
-import { AttachmentData } from "../../Attachments/index";
+import { AttachmentData } from "../../Attachments";
 import { BatchOptions } from "./BatchOptions";
 import { TransactionMode } from "../../Session/TransactionMode";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { PutAttachmentCommandData } from "./PutAttachmentCommandData";
 import { HttpRequestParameters } from "../../../Primitives/Http";
 import { HeadersBuilder } from "../../../Utility/HttpUtil";

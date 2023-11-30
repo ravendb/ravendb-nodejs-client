@@ -55,6 +55,7 @@ export class SubscriptionBatch<T extends object> {
         if (this._sessionOpened) {
             this.throwSessionCanBeOpenedOnlyOnce();
         }
+        this._sessionOpened = true;
         const s = this._store.openSession(options);
         this._loadDataToSession(s as any as InMemoryDocumentSessionOperations);
         return s;

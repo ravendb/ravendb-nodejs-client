@@ -351,7 +351,7 @@ describe("IncrementalTimeSeriesTest", function () {
                     session.incrementalTimeSeriesFor("users/karmel", p1.getTimeSeriesName(INCREMENTAL_TS_NAME)).get()
                 , err => {
                     assertThat(err.name)
-                        .isEqualTo("IllegalArgumentException");
+                        .isEqualTo("InvalidArgumentException");
                     assertThat(err.message)
                         .contains("Time Series from type Rollup cannot be Incremental");
                 })
@@ -392,7 +392,7 @@ describe("IncrementalTimeSeriesTest", function () {
         assertThat(result.value)
             .isEqualTo(0);
 
-        assertThat(result.nodeValues)
+        assertThat(Object.keys(result.nodeValues))
             .hasSize(1);
 
     });
@@ -417,7 +417,7 @@ describe("IncrementalTimeSeriesTest", function () {
                 await session.saveChanges();
             }, err => {
                 assertThat(err.name)
-                    .isEqualTo("IllegalArgumentException");
+                    .isEqualTo("InvalidArgumentException");
                 assertThat(err.message)
                     .contains("Time Series name must start with");
             })

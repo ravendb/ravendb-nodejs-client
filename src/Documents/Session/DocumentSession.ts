@@ -77,7 +77,7 @@ import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTyp
 import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
 import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 import { DocumentInfo } from "./DocumentInfo";
-import { MetadataAsDictionary, MetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import { MetadataDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ConditionalLoadResult } from "./ConditionalLoadResult";
 import { StringUtil } from "../../Utility/StringUtil";
 import { ConditionalGetDocumentsCommand } from "../Commands/ConditionalGetDocumentsCommand";
@@ -1134,6 +1134,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         }
 
         if (TypeUtil.isString(nameOrClass)) {
+            InMemoryDocumentSessionOperations.validateIncrementalTimeSeriesName(nameOrClass);
             return new SessionDocumentTimeSeries(this, entityOrDocumentId, nameOrClass);
         } else {
             const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);

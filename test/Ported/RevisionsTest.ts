@@ -138,7 +138,7 @@ import { delay } from "../../src/Utility/PromiseUtil";
             await session.saveChanges();
         }
 
-        const revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(store.conventions, 1024, 20);
+        const revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(store.conventions, 0, 20);
         await store.getRequestExecutor().execute(revisionsBinEntryCommand);
 
         const result = revisionsBinEntryCommand.result;

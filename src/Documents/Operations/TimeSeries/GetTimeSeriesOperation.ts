@@ -16,7 +16,6 @@ import { StringBuilder } from "../../../Utility/StringBuilder";
 import { ServerResponse } from "../../../Types";
 import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
 import { TimeSeriesIncludeBuilder } from "../../Session/Loaders/TimeSeriesIncludeBuilder";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -193,7 +192,8 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
                 timestamp: entry.Timestamp,
                 tag: entry.Tag,
                 values: entry.Values,
-                isRollup: entry.IsRollup
+                isRollup: entry.IsRollup,
+                nodeValues: entry.NodeValues
             }))
         };
 
@@ -212,6 +212,7 @@ export function reviveTimeSeriesRangeResult(json: ServerResponse<TimeSeriesRange
         result.isRollup = rawEntry.isRollup;
         result.tag = rawEntry.tag;
         result.values = rawEntry.values;
+        result.nodeValues = rawEntry.nodeValues;
 
         return result;
     };

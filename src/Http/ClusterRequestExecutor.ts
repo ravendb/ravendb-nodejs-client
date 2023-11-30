@@ -13,7 +13,7 @@ import { IAuthOptions } from "../Auth/AuthOptions";
 import { acquireSemaphore } from "../Utility/SemaphoreUtil";
 import { DocumentConventions } from "../Documents/Conventions/DocumentConventions";
 import { UpdateTopologyParameters } from "./UpdateTopologyParameters";
-import { CONSTANTS, HEADERS } from "../Constants";
+import { HEADERS } from "../Constants";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 

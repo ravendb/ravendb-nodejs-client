@@ -12,7 +12,7 @@ import { DocumentQuery } from "./DocumentQuery";
 import { IDocumentSession } from "./IDocumentSession";
 import { DocumentQueryOptions } from "./QueryOptions";
 import { WithEdgesToken } from "./Tokens/WithEdgesToken";
-import { throwError } from "../../Exceptions/index";
+import { throwError } from "../../Exceptions";
 import { WithToken } from "./Tokens/WithToken";
 
 /**

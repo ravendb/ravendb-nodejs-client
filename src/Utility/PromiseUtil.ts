@@ -1,5 +1,6 @@
 import * as BluebirdPromise from "bluebird";
 import { getError } from "../Exceptions";
+import { clearTimeout } from "timers";
 
 export interface IDefer<TResult> {
     resolve: (value: TResult) => void;
@@ -48,11 +49,32 @@ export async function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function timeout(ms: number) {
-    return new Promise(
-        reject =>
-            setTimeout(() =>
-                reject(getError("TimeoutException", `Timeout after ${ms} ms.`)), ms));
+export async function wrapWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    let timeoutHandle: ReturnType<typeof setTimeout>;
+
+    const error = getError("TimeoutException", `Timeout after ${ms} ms.`);
+
+    const timeoutPromise = new Promise<Error>((resolve) => {
+        timeoutHandle = setTimeout(() => {
+            resolve(error)
+        }, ms);
+    })
+
+    try {
+        const raceWinner = await Promise.race([promise, timeoutPromise]);
+        if (raceWinner === error) {
+            // timeout win
+            throw raceWinner;
+        } else {
+            // cancel existing timeout
+            clearTimeout(timeoutHandle);
+            return raceWinner as T;
+        }
+    } catch (e) {
+        clearTimeout(timeoutHandle);
+        throw e;
+    }
+
 }
 
 export class AsyncTimeout {

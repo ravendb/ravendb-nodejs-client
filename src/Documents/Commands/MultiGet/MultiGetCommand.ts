@@ -8,15 +8,12 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { IDisposable } from "../../../Types/Contracts";
 import { RequestExecutor } from "../../../Http/RequestExecutor";
 import { AggressiveCacheOptions } from "../../../Http/AggressiveCacheOptions";
-import { CONSTANTS, HEADERS } from "../../../Constants";
+import { HEADERS } from "../../../Constants";
 import { ServerCasing, ServerResponse } from "../../../Types";
-import { ConditionalGetResult } from "../ConditionalGetDocumentsCommand";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { camelCase } from "change-case";
 import { SessionInfo } from "../../Session/IDocumentSession";
 

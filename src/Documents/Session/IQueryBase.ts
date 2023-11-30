@@ -2,7 +2,7 @@ import { QueryOperator } from "../Queries/QueryOperator";
 import { IndexQuery } from "../Queries/IndexQuery";
 import { QueryStatistics } from "./QueryStatistics";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { QueryEventsEmitter } from "../Session/QueryEvents";
+import { QueryEventsEmitter } from "./QueryEvents";
 import { ValueCallback } from "../../Types/Callbacks";
 import { QueryTimings } from "../Queries/Timings/QueryTimings";
 

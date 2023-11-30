@@ -22,7 +22,7 @@ import { TimeUtil } from "../../Utility/TimeUtil";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { SubscriptionConnectionServerMessage } from "./SubscriptionConnectionServerMessage";
 import { EmptyCallback } from "../../Types/Callbacks";
-import { delay, timeout } from "../../Utility/PromiseUtil";
+import { delay, wrapWithTimeout } from "../../Utility/PromiseUtil";
 import * as Parser from "stream-json/Parser";
 import * as StreamValues from "stream-json/streamers/StreamValues";
 import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer";
@@ -527,7 +527,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             // it isn't an error, so we don't need to treat it as such
         } finally {
             try {
-                await Promise.race([notifiedSubscriber, timeout(15_000)]);
+                await wrapWithTimeout(notifiedSubscriber, 15_000);
             } catch (e) {
                 // ignore
             }
@@ -803,23 +803,23 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
     }
 
     public on(event: "batch",
-              handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+              handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
     public on(event: "error",
-              handler: (error?: Error) => void);
+              handler: (error?: Error) => void): this;
     public on(event: "end",
-              handler: (error?: Error) => void);
+              handler: (error?: Error) => void): this;
     public on(event: "unexpectedSubscriptionError",
-              handler: (error?: Error) => void);
-    public on(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void);
+              handler: (error?: Error) => void): this;
+    public on(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void): this;
     public on(event: "afterAcknowledgment",
-              handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
+              handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
     public on(event: "connectionRetry",
-              handler: (error?: Error) => void);
+              handler: (error?: Error) => void): this;
     public on(event: EventTypes,
               handler:
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((value: SubscriptionWorker<any>) => void)
-                  | ((error: Error) => void)) {
+                  | ((error: Error) => void)): this {
         this._emitter.on(event, handler);
 
         if (event === "batch" && !this._subscriptionTask) {
@@ -831,42 +831,42 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
         return this;
     }
 
-    public off(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public off(event: "error", handler: (error?: Error) => void);
-    public off(event: "unexpectedSubscriptionError", handler: (error?: Error) => void);
-    public off(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void);
-    public off(event: "end", handler: (error?: Error) => void);
-    public off(event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public off(event: "connectionRetry", handler: (error?: Error) => void);
+    public off(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
+    public off(event: "error", handler: (error?: Error) => void): this;
+    public off(event: "unexpectedSubscriptionError", handler: (error?: Error) => void): this;
+    public off(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void): this;
+    public off(event: "end", handler: (error?: Error) => void): this;
+    public off(event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
+    public off(event: "connectionRetry", handler: (error?: Error) => void): this;
     public off(event: EventTypes,
                handler:
                   ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
                   | ((value: SubscriptionWorker<any>) => void)
-                  | ((error: Error) => void)) {
+                  | ((error: Error) => void)): this {
         this._emitter.removeListener(event, handler);
         return this;
     }
 
-    public removeListener(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public removeListener(event: "error", handler: (error?: Error) => void);
-    public removeListener(event: "unexpectedSubscriptionError", handler: (error?: Error) => void);
-    public removeListener(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void);
-    public removeListener(event: "end", handler: (error?: Error) => void);
+    public removeListener(event: "batch", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
+    public removeListener(event: "error", handler: (error?: Error) => void): this;
+    public removeListener(event: "unexpectedSubscriptionError", handler: (error?: Error) => void): this;
+    public removeListener(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void): this;
+    public removeListener(event: "end", handler: (error?: Error) => void): this;
     public removeListener(
-        event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void);
-    public removeListener(event: "connectionRetry", handler: (error?: Error) => void);
+        event: "afterAcknowledgment", handler: (value: SubscriptionBatch<T>, callback: EmptyCallback) => void): this;
+    public removeListener(event: "connectionRetry", handler: (error?: Error) => void): this;
     public removeListener(
         event: EventTypes,
         handler:
             ((batchOrError: SubscriptionBatch<T>, callback: EmptyCallback) => void)
             | ((value: SubscriptionWorker<any>) => void)
-            | ((error: Error) => void)) {
+            | ((error: Error) => void)): this {
         this.removeListener(event as any, handler as any);
         return this;
     }
 
     private static _mapToLocalObject(json: ServerCasing<ServerResponse<SubscriptionConnectionServerMessage>>, revisions: boolean, conventions: DocumentConventions): SubscriptionConnectionServerMessage {
-        const { Data, Includes, CounterIncludes, ...rest } = json;
+        const { Data, Includes, CounterIncludes, TimeSeriesIncludes, ...rest } = json;
 
         let data: any;
         if (Data) {
@@ -888,6 +888,7 @@ export class SubscriptionWorker<T extends object> implements IDisposable {
             data,
             includes: ObjectUtil.mapIncludesToLocalObject(Includes, conventions),
             counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(CounterIncludes),
+            timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(TimeSeriesIncludes),
         } as SubscriptionConnectionServerMessage;
     }
 

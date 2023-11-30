@@ -41,9 +41,8 @@ import { DocumentsChanges } from "./DocumentsChanges";
 import { EventEmitter } from "events";
 import { JsonOperation } from "../../Mapping/JsonOperation";
 import { IRavenObject } from "../../Types/IRavenObject";
-import { GetDocumentsCommand, GetDocumentsResult } from "../Commands/GetDocumentsCommand";
+import { GetDocumentsCommand } from "../Commands/GetDocumentsCommand";
 import { DocumentConventions } from "../Conventions/DocumentConventions";
-import { RavenCommand } from "../../Http/RavenCommand";
 import { JsonSerializer } from "../../Mapping/Json/Serializer";
 import { OperationExecutor } from "../Operations/OperationExecutor";
 import { createMetadataDictionary } from "../../Mapping/MetadataAsDictionary";
@@ -66,7 +65,6 @@ import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeR
 import { DatesComparator, leftDate, rightDate } from "../../Primitives/DatesComparator";
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
 import { reviveTimeSeriesRangeResult } from "../Operations/TimeSeries/GetTimeSeriesOperation";
-import { Entity } from "../../../test/Assets/Graph";
 
 export abstract class InMemoryDocumentSessionOperations
     extends EventEmitter
@@ -1365,7 +1363,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         const value = this.documentsByEntity.get(entity);
         if (value) {
-            if (!id && !StringUtil.equalsIgnoreCase(value.id, id)) {
+            if (id && !StringUtil.equalsIgnoreCase(value.id, id)) {
                 throwError("InvalidOperationException", "Cannot store the same entity (id: " + value.id + ") with different id (" + id + ")");
             }
             value.changeVector = changeVector || value.changeVector;
@@ -2227,7 +2225,7 @@ export abstract class InMemoryDocumentSessionOperations
         }
 
         if (!StringUtil.startsWithIgnoreCase(name, HEADERS.INCREMENTAL_TIME_SERIES_PREFIX)) {
-            throwError("InvalidArgumentException", "Time Series name cannot start with " + HEADERS.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+            throwError("InvalidArgumentException", "Time Series name must start with " + HEADERS.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
         }
 
         if (name.includes("@")) {

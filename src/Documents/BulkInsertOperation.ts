@@ -146,12 +146,15 @@ export class BulkInsertOperation {
         return false;
     }
 
-    public on(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void) {
+    public on(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void): this {
         this._emitter.on("progress", handler);
+        this._onProgressInitialized = true;
+        return this;
     }
 
-    public off(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void) {
+    public off(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void): this {
         this._emitter.off("progress", handler);
+        return this;
     }
 
     get useCompression(): boolean {
@@ -191,6 +194,26 @@ export class BulkInsertOperation {
         await this._requestExecutor.execute(bulkInsertGetIdRequest);
         this._operationId = bulkInsertGetIdRequest.result;
         this._nodeTag = bulkInsertGetIdRequest.nodeTag;
+
+        if (this._onProgressInitialized && !this._unsubscribeChanges) {
+            const observable = this._store.changes()
+                .forOperationId(this._operationId);
+
+            const handler = value => {
+                const state = value.state;
+                if (state && state.status === "InProgress") {
+                    this._emitter.emit("progress", new BulkInsertOnProgressEventArgs(state.progress));
+                }
+            }
+
+            observable.on("data", handler);
+
+            this._unsubscribeChanges = {
+                dispose(): void {
+                    observable.off("data", handler)
+                }
+            };
+        }
     }
 
     private static _typeCheckStoreArgs(

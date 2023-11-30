@@ -141,8 +141,8 @@ describe("RavenDB_19545Test", function () {
             await session.store(user, docId);
 
             const tsf = session.timeSeriesFor(docId, timeSeriesName);
-            for (let i = 0; i <= 10; i++) {
-                tsf.append(baseline.add(i, "days").toDate(), i, tag);
+            for (let i = 1; i <= 10; i++) {
+                tsf.append(baseline.clone().add(i, "days").toDate(), i, tag);
                 await session.saveChanges();
             }
 
@@ -162,7 +162,7 @@ describe("RavenDB_19545Test", function () {
 
             session.timeSeriesFor(docId, timeSeriesName)
                 .delete(baseline.clone().add(6, "days").toDate(), null);
-            session.saveChanges();
+            await session.saveChanges();
 
             const entries2 = await session.timeSeriesFor(docId, timeSeriesName)
                 .get();

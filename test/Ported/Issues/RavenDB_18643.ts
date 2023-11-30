@@ -21,19 +21,23 @@ describe("RavenDB_18643Test", function () {
         {
             const bulkInsert = store.bulkInsert();
 
-            bulkInsert.on("progress", (event: BulkInsertOnProgressEventArgs) => {
-                lastInsertedDocId.push(event.progress.lastProcessedId);
-                assertThat(event.progress.lastProcessedId)
-                    .isNotNull();
-            });
+            try {
+                bulkInsert.on("progress", (event: BulkInsertOnProgressEventArgs) => {
+                    lastInsertedDocId.push(event.progress.lastProcessedId);
+                    assertThat(event.progress.lastProcessedId)
+                        .isNotNull();
+                });
 
-            let i = 0;
+                let i = 0;
 
-            while (lastInsertedDocId.length === 0) {
-                const exampleItem = new ExampleItem();
-                exampleItem.name = "ExampleItem/" + i++;
-                await bulkInsert.store(exampleItem);
-                await delay(200);
+                while (lastInsertedDocId.length === 0) {
+                    const exampleItem = new ExampleItem();
+                    exampleItem.name = "ExampleItem/" + i++;
+                    await bulkInsert.store(exampleItem);
+                    await delay(200);
+                }
+            } finally {
+                await bulkInsert.finish();
             }
 
             assertThat(lastInsertedDocId)

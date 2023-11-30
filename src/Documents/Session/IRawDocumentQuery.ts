@@ -1,6 +1,6 @@
 import { IQueryBase } from "./IQueryBase";
-import { IDocumentQueryBaseSingle } from "../Session/IDocumentQueryBaseSingle";
-import { IEnumerableQuery } from "../Session/IEnumerableQuery";
+import { IDocumentQueryBaseSingle } from "./IDocumentQueryBaseSingle";
+import { IEnumerableQuery } from "./IEnumerableQuery";
 import { FacetResult } from "../Queries/Facets";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 

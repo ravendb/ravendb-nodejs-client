@@ -281,20 +281,22 @@ export class RequestExecutor implements IDisposable {
         this._firstBroadcastAttemptTimeout = timeout;
     }
 
-    public on(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
-    public on(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
-    public on(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void);
-    public on(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void);
-    public on(event: string, handler: (value: any) => void) {
+    public on(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void): this;
+    public on(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void): this;
+    public on(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void): this;
+    public on(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void): this;
+    public on(event: string, handler: (value: any) => void): this {
         this._emitter.on(event, handler);
+        return this;
     }
 
-    public off(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void);
-    public off(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void);
-    public off(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void);
-    public off(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void);
-    public off(event: string, handler: (value: any) => void) {
+    public off(event: "topologyUpdated", handler: (value: TopologyUpdatedEventArgs) => void): this;
+    public off(event: "failedRequest", handler: (value: FailedRequestEventArgs) => void): this;
+    public off(event: "beforeRequest", handler: (value: BeforeRequestEventArgs) => void): this;
+    public off(event: "succeedRequest", handler: (value: SucceedRequestEventArgs) => void): this;
+    public off(event: string, handler: (value: any) => void): this {
         this._emitter.off(event, handler);
+        return this;
     }
 
     private _onFailedRequestInvoke(url: string, e: Error, req?: HttpRequestParameters, response?: HttpResponse) {

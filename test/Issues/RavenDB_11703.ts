@@ -7,7 +7,7 @@ import {
     IChangesObservable,
 } from "../../src";
 import { User } from "../Assets/Entities";
-import { timeout, delay } from "../../src/Utility/PromiseUtil";
+import { delay, wrapWithTimeout } from "../../src/Utility/PromiseUtil";
 
 describe("RavenDB-11703", function () {
 
@@ -48,11 +48,11 @@ describe("RavenDB-11703", function () {
                 session.countersFor("users/1").increment("likes");
                 await session.saveChanges();
             }
-            
+
             await delay(100);
         }
 
-        await Promise.race([errored, timeout(2000), act()]);
+        await Promise.race([errored, wrapWithTimeout(act(), 2000)]);
 
         assert.strictEqual(changesList.length, 2, "Expected exactly 2 changes to show up.");
 
@@ -104,8 +104,8 @@ describe("RavenDB-11703", function () {
             await delay(100);
         }
 
-        await Promise.race([errored, timeout(2000), act()]);
-        
+        await Promise.race([errored, wrapWithTimeout(act(), 2000)]);
+
         assert.strictEqual(changesList.length, 2, "Expected exactly 2 changes to show up.");
 
         let counterChange = changesList.pop();

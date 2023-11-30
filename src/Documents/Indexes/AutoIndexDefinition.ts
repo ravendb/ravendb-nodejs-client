@@ -1,4 +1,4 @@
-import { IndexPriority, IndexState, IndexType } from "./Enums";
+import { IndexType } from "./Enums";
 import { AutoIndexFieldOptions } from "./AutoIndexFieldOptions";
 import { IndexDefinitionBase } from "./IndexDefinitionBase";
 

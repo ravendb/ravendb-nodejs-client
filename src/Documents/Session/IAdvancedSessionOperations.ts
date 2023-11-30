@@ -1,4 +1,4 @@
-import { StreamQueryStatistics } from "../Session/StreamQueryStatistics";
+import { StreamQueryStatistics } from "./StreamQueryStatistics";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ServerNode } from "../../Http/ServerNode";
 import { ICommandData } from "../Commands/CommandData";
@@ -23,7 +23,6 @@ import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 import { JavaScriptMap } from "./JavaScriptMap";
-import { ClassConstructor } from "../../Types";
 import { ConditionalLoadResult } from "./ConditionalLoadResult";
 import { EntityInfo } from "./DocumentsById";
 

@@ -1,6 +1,6 @@
 import { RavenCommand } from "../../Http/RavenCommand";
 import { TcpConnectionInfo } from "../../ServerWide/Commands/GetTcpInfoCommand";
-import { throwError } from "../../Exceptions/index";
+import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
 import { HttpRequestParameters } from "../../Primitives/Http";
 import * as stream from "readable-stream";

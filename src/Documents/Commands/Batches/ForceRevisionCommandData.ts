@@ -1,5 +1,5 @@
 import { CommandType, ICommandData } from "../CommandData";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class ForceRevisionCommandData implements ICommandData {

@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -17,7 +17,7 @@ class Person {
     public name: string;
 }
 
-describe("RavenDB-11166", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("RavenDB-11166", function () {
 
     let store: IDocumentStore;
 
@@ -112,36 +112,41 @@ describe("RavenDB-11166", function () {
                 subscriptionName: id
             });
 
-            await new Promise<void>((resolve, reject) => {
-                const timeout = setTimeout(reject, 15_000);
+            try {
 
-                sub.on("batch", async batch => {
-                    assertThat(batch.items.length > 0)
-                        .isTrue();
+                await new Promise<void>((resolve, reject) => {
+                    const timeout = setTimeout(reject, 15_000);
 
-                    {
-                        const s = batch.openSession();
-                        for (const item of batch.items) {
-                            if (!item.result.previous) {
-                                continue;
+                    sub.on("batch", async batch => {
+                        assertThat(batch.items.length > 0)
+                            .isTrue();
+
+                        {
+                            const s = batch.openSession();
+                            for (const item of batch.items) {
+                                if (!item.result.previous) {
+                                    continue;
+                                }
+
+                                const currentOwner = await s.load(item.result.current.owner, Person);
+                                assertThat(currentOwner.name)
+                                    .isEqualTo("Karmel");
+                                const previousOwner = await s.load(item.result.previous.owner, Person);
+                                assertThat(previousOwner.name)
+                                    .isEqualTo("Arava");
                             }
 
-                            const currentOwner = await s.load(item.result.current.owner, Person);
-                            assertThat(currentOwner.name)
-                                .isEqualTo("Karmel");
-                            const previousOwner = await s.load(item.result.previous.owner, Person);
-                            assertThat(previousOwner.name)
-                                .isEqualTo("Arava");
+                            assertThat(s.advanced.numberOfRequests)
+                                .isZero();
                         }
 
-                        assertThat(s.advanced.numberOfRequests)
-                            .isZero();
-                    }
-
-                    resolve();
-                    clearTimeout(timeout);
+                        resolve();
+                        clearTimeout(timeout);
+                    });
                 });
-            });
+            } finally {
+                sub.dispose();
+            }
         }
     });
 });

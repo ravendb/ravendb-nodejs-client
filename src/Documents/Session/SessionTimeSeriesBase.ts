@@ -18,7 +18,6 @@ import { GetMultipleTimeSeriesOperation } from "../Operations/TimeSeries/GetMult
 import { CONSTANTS } from "../../Constants";
 import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder";
 import { TimeSeriesDetails } from "../Operations/TimeSeries/TimeSeriesDetails";
-import { DateUtil } from "../../Utility/DateUtil";
 import { IncrementalTimeSeriesBatchCommandData } from "../Commands/Batches/IncrementalTimeSeriesBatchCommandData";
 
 export class SessionTimeSeriesBase {

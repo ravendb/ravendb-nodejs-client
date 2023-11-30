@@ -48,28 +48,33 @@ describe("RavenDB_17624Test", function () {
 
         {
             const worker = store.subscriptions.getSubscriptionWorker(workerOptions);
-            await new Promise<void>((resolve, reject) => {
-                worker.on("batch", async (batch, callback) => {
-                    {
-                        const session = batch.openSession();
-                    }
-                    try {
-                        await assertThrows(() => batch.openSession(), err => {
-                            assertThat(err.name)
-                                .isEqualTo("IllegalStateException")
-                                .contains("Session can only be opened once per each Subscription batch");
-                        });
-                        callback();
-                        resolve();
-                    } catch (e) {
-                        reject(e);
-                    }
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    worker.on("batch", async (batch, callback) => {
+                        {
+                            const session = batch.openSession();
+                        }
+                        try {
+                            await assertThrows(() => batch.openSession(), err => {
+                                assertThat(err.name)
+                                    .isEqualTo("InvalidOperationException");
+                                assertThat(err.message)
+                                    .contains("Session can only be opened once per each Subscription batch");
+                            });
+                            callback();
+                            resolve();
+                        } catch (e) {
+                            reject(e);
+                        }
 
+                    });
+
+                    worker.on("error", reject);
+                    worker.on("connectionRetry", reject);
                 });
-
-                worker.on("error", reject);
-                worker.on("connectionRetry", reject);
-            });
+            } finally {
+                worker.dispose();
+            }
         }
     });
 })
