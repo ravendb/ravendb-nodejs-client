@@ -90,6 +90,22 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
                 }), {} as Record<string, SqlConnectionString>);
         }
 
+        if (this.result.elasticSearchConnectionStrings) {
+            this.result.elasticSearchConnectionStrings = Object.entries(this.result.elasticSearchConnectionStrings)
+                .reduce(((previousValue, currentValue) => {
+                    previousValue[currentValue[0]] = Object.assign(new ElasticSearchConnectionString(), currentValue[1]);
+                    return previousValue;
+                }), {} as Record<string, ElasticSearchConnectionString>);
+        }
+
+        if (this.result.queueConnectionStrings) {
+            this.result.queueConnectionStrings = Object.entries(this.result.queueConnectionStrings)
+                .reduce(((previousValue, currentValue) => {
+                    previousValue[currentValue[0]] = Object.assign(new QueueConnectionString(), currentValue[1]);
+                    return previousValue;
+                }), {} as Record<string, QueueConnectionString>);
+        }
+
         if (this.result.olapConnectionStrings) {
             this.result.olapConnectionStrings = Object.entries(this.result.olapConnectionStrings)
                 .reduce(((previousValue, currentValue) => {

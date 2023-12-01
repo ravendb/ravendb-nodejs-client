@@ -4,7 +4,7 @@ import {
     RavenConnectionString,
     SqlConnectionString,
     GetConnectionStringsOperation,
-    RemoveConnectionStringOperation, OlapConnectionString
+    RemoveConnectionStringOperation, OlapConnectionString, ElasticSearchConnectionString, QueueConnectionString
 } from "../../../../src";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
 import { assertThat } from "../../../Utils/AssertExtensions";
@@ -33,12 +33,36 @@ describe("ConnectionStringsTest", function () {
             name: "s1"
         });
 
+        const elasticSearchConnectionString = Object.assign(new ElasticSearchConnectionString(), {
+            name: "e1",
+            nodes: ["http://127.0.0.1:8080"]
+        });
+
+        const kafkaConnectionString = Object.assign(new QueueConnectionString(), {
+            name: "k1",
+            brokerType: "Kafka",
+            kafkaConnectionSettings: {
+                bootstrapServers: "localhost:9092"
+            }
+        });
+
+        const rabbitConnectionString = Object.assign(new QueueConnectionString(), {
+            name: "r1",
+            brokerType: "RabbitMq",
+            rabbitMqConnectionSettings: {
+                connectionString: "localhost:888"
+            }
+        });
+
         const olapConnectionString1 = Object.assign(new OlapConnectionString(), {
             name: "o1",
         });
 
         const putResult = await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString1));
         await store.maintenance.send(new PutConnectionStringOperation(sqlConnectionString1));
+        await store.maintenance.send(new PutConnectionStringOperation(elasticSearchConnectionString));
+        await store.maintenance.send(new PutConnectionStringOperation(kafkaConnectionString));
+        await store.maintenance.send(new PutConnectionStringOperation(rabbitConnectionString));
         await store.maintenance.send(new PutConnectionStringOperation(olapConnectionString1));
 
         assertThat(putResult.raftCommandIndex)
@@ -53,6 +77,18 @@ describe("ConnectionStringsTest", function () {
         assertThat(connectionStrings.sqlConnectionStrings)
             .hasSize(1);
         assertThat(connectionStrings.sqlConnectionStrings["s1"] instanceof SqlConnectionString)
+            .isTrue();
+
+        assertThat(connectionStrings.elasticSearchConnectionStrings)
+            .hasSize(1);
+        assertThat(connectionStrings.elasticSearchConnectionStrings["e1"] instanceof ElasticSearchConnectionString)
+            .isTrue();
+
+        assertThat(connectionStrings.queueConnectionStrings)
+            .hasSize(2);
+        assertThat(connectionStrings.queueConnectionStrings["k1"] instanceof QueueConnectionString)
+            .isTrue();
+        assertThat(connectionStrings.queueConnectionStrings["r1"] instanceof QueueConnectionString)
             .isTrue();
 
         assertThat(connectionStrings.olapConnectionStrings)
@@ -80,8 +116,31 @@ describe("ConnectionStringsTest", function () {
         assertThat(sqlOnly.sqlConnectionStrings)
             .hasSize(1);
 
+        const elasticOnly = await store.maintenance.send(new GetConnectionStringsOperation("e1", "ElasticSearch"));
+        assertThat(elasticOnly.ravenConnectionStrings)
+            .hasSize(0);
+        assertThat(elasticOnly.elasticSearchConnectionStrings)
+            .hasSize(1);
+
+
         const olapOnly = await store.maintenance.send(
             new GetConnectionStringsOperation("o1", "Olap"));
+
+        const rabbitOnly = await store.maintenance.send(new GetConnectionStringsOperation("r1", "Queue"));
+        assertThat(rabbitOnly.ravenConnectionStrings)
+            .hasSize(0);
+        assertThat(rabbitOnly.queueConnectionStrings)
+            .hasSize(1);
+        assertThat(rabbitOnly.queueConnectionStrings["r1"] instanceof QueueConnectionString)
+            .isTrue();
+
+        const kafkaOnly = await store.maintenance.send(new GetConnectionStringsOperation("k1", "Queue"));
+        assertThat(kafkaOnly.ravenConnectionStrings)
+            .hasSize(0);
+        assertThat(kafkaOnly.queueConnectionStrings)
+            .hasSize(1);
+        assertThat(kafkaOnly.queueConnectionStrings["k1"] instanceof QueueConnectionString)
+            .isTrue();
 
         assertThat(olapOnly.ravenConnectionStrings)
             .hasSize(0);
