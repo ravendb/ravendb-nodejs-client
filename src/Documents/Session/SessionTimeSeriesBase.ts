@@ -5,7 +5,7 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { throwError } from "../../Exceptions";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { StringUtil } from "../../Utility/StringUtil";
-import { AppendOperation, DeleteOperation } from "../Operations/TimeSeries/TimeSeriesOperation";
+import { AppendOperation, DeleteOperation, IncrementOperation } from "../Operations/TimeSeries/TimeSeriesOperation";
 import { IdTypeAndName } from "../IdTypeAndName";
 import { TimeSeriesBatchCommandData } from "../Commands/Batches/TimeSeriesBatchCommandData";
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry";
@@ -18,6 +18,7 @@ import { GetMultipleTimeSeriesOperation } from "../Operations/TimeSeries/GetMult
 import { CONSTANTS } from "../../Constants";
 import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder";
 import { TimeSeriesDetails } from "../Operations/TimeSeries/TimeSeriesDetails";
+import { IncrementalTimeSeriesBatchCommandData } from "../Commands/Batches/IncrementalTimeSeriesBatchCommandData";
 
 export class SessionTimeSeriesBase {
     protected docId: string;
@@ -101,10 +102,53 @@ export class SessionTimeSeriesBase {
             this.session.defer(new TimeSeriesBatchCommandData(this.docId, this.name, null, deletes));
         }
 
+
+        this._removeFromCacheIfNeeded(from, to);
     }
 
     public deleteAt(at: Date) {
         this.delete(at, at);
+    }
+
+    private _removeFromCacheIfNeeded(from: Date, to: Date) {
+        const cache = this.session.timeSeriesByDocId.get(this.docId);
+        if (!cache) {
+            return;
+        }
+
+        if (!from && !to) {
+            cache.delete(this.name);
+            return;
+        }
+
+        const ranges = cache.get(this.name);
+        if (ranges && ranges.length) {
+            const newRanges =
+                ranges.filter(range => DatesComparator.compare(leftDate(range.from), leftDate(from)) > 0
+                    || DatesComparator.compare(rightDate(range.to), rightDate(to)) < 0);
+            cache.set(this.name, newRanges);
+        }
+    }
+
+    protected _incrementInternal(timestamp: Date, values: number[]): void {
+        const documentInfo = this.session.documentsById.getValue(this.docId);
+        if (documentInfo && this.session.deletedEntities.contains(documentInfo.entity)) {
+            SessionTimeSeriesBase._throwDocumentAlreadyDeletedInSession(this.docId, this.name);
+        }
+
+        const op = new IncrementOperation();
+        op.timestamp = timestamp;
+        op.values = values;
+
+        const command = this.session.deferredCommandsMap.get(IdTypeAndName.keyFor(this.docId, "TimeSeriesWithIncrements", this.name));
+        if (command) {
+            const tsCmd = command as IncrementalTimeSeriesBatchCommandData;
+            tsCmd.timeSeries.increment(op);
+        } else {
+            const list: IncrementOperation[] = [];
+            list.push(op);
+            this.session.defer(new IncrementalTimeSeriesBatchCommandData(this.docId, this.name, list));
+        }
     }
 
     private static _throwDocumentAlreadyDeletedInSession(documentId: string, timeSeries: string) {
@@ -303,15 +347,14 @@ export class SessionTimeSeriesBase {
 
         if (!this.session.noTracking) {
             const fromDates = details.values.get(this.name)
-                .map(x => x.from)
-                .filter(x => x);
+                .map(x => leftDate(x.from));
 
             if (fromDates.length) {
-                from = fromDates[0];
+                from = fromDates[0].date;
 
                 fromDates.forEach(d => {
-                    if (d.getTime() < from.getTime()) {
-                        from = d;
+                    if (DatesComparator.compare(d, leftDate(from)) < 0) {
+                        from = d.date;
                     }
                 });
             } else {
@@ -319,14 +362,13 @@ export class SessionTimeSeriesBase {
             }
 
             const toDates = details.values.get(this.name)
-                .map(x => x.to)
-                .filter(x => x);
+                .map(x => rightDate(x.to))
 
             if (toDates.length) {
-                to = toDates[0];
+                to = toDates[0].date;
                 toDates.forEach(d => {
-                    if (d.getTime() > to.getTime()) {
-                        to = d;
+                    if (DatesComparator.compare(d, rightDate(to)) > 0) {
+                        to = d.date;
                     }
                 })
             } else {
@@ -416,7 +458,12 @@ export class SessionTimeSeriesBase {
             // add current range from cache to the merged list.
             // in order to avoid duplication, skip first item in range if needed
 
-            const toAdd = ranges[i].entries.slice(mergedValues.length === 0 ? 0 : 1);
+            let shouldSkip = false;
+            if (mergedValues.length > 0) {
+                shouldSkip = ranges[i].entries[0].timestamp.getTime() === mergedValues[mergedValues.length - 1].timestamp.getTime();
+            }
+
+            const toAdd = ranges[i].entries.slice(!shouldSkip ? 0 : 1);
             mergedValues.push(...toAdd);
         }
 

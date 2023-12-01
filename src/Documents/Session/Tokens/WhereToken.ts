@@ -113,7 +113,7 @@ export class WhereToken extends QueryToken {
     }
 
     public addAlias(alias: string): WhereToken {
-        if ("id()" === this.fieldName) {
+        if (CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME === this.fieldName) {
             return this;
         }
 
@@ -124,7 +124,7 @@ export class WhereToken extends QueryToken {
         whereToken.parameterName = this.parameterName;
         whereToken.whereOperator = this.whereOperator;
         whereToken.options = this.options;
-        
+
         return whereToken;
     }
 

@@ -1,5 +1,5 @@
 import { IDocumentQueryBaseSingle } from "./IDocumentQueryBaseSingle";
-import { IAggregationDocumentQuery } from "./../Queries/Facets/IAggregationDocumentQuery";
+import { IAggregationDocumentQuery } from "../Queries/Facets/IAggregationDocumentQuery";
 import { IEnumerableQuery } from "./IEnumerableQuery";
 import { QueryResult } from "../Queries/QueryResult";
 import { DocumentType } from "../DocumentAbstractions";
@@ -8,7 +8,7 @@ import { GroupBy } from "../Queries/GroupBy";
 import { IDocumentQueryBase } from "./IDocumentQueryBase";
 import { IGroupByDocumentQuery } from "./IGroupByDocumentQuery";
 import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder";
-import { FacetBase } from "./../Queries/Facets/FacetBase";
+import { FacetBase } from "../Queries/Facets/FacetBase";
 import { IMoreLikeThisBuilderForDocumentQuery } from "../Queries/MoreLikeThis/IMoreLikeThisBuilderForDocumentQuery";
 import { MoreLikeThisBase } from "../Queries/MoreLikeThis/MoreLikeThisBase";
 import { ISuggestionBuilder } from "../Queries/Suggestions/ISuggestionBuilder";
@@ -19,6 +19,7 @@ import { TimeSeriesAggregationResult } from "../Queries/TimeSeries/TimeSeriesAgg
 import { TimeSeriesRawResult } from "../Queries/TimeSeries/TimeSeriesRawResult";
 import { Field } from "../../Types";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
+import { IFilterFactory } from "../Queries/IFilterFactory";
 
 /**
  * A query against a Raven index
@@ -126,6 +127,24 @@ export interface IDocumentQuery<T extends object>
         builder: (moreLikeThisBuilder: IMoreLikeThisBuilderForDocumentQuery<T>) => void): IDocumentQuery<T>;
 
     moreLikeThis(moreLikeThis: MoreLikeThisBase): IDocumentQuery<T>;
+
+
+    /**
+     * Filter allows querying on documents without the need for issuing indexes.
+     * It is meant for exploratory queries or post query filtering.
+     * Criteria are evaluated at query time so please use Filter wisely to avoid performance issues.
+     * @param builder Builder of a Filter query
+     */
+    filter(builder: (factory: IFilterFactory<T>) => void): IDocumentQuery<T>;
+
+    /**
+     * Filter allows querying on documents without the need for issuing indexes.
+     * It is meant for exploratory queries or post query filtering.
+     * Criteria are evaluated at query time so please use Filter wisely to avoid performance issues.
+     * @param builder Builder of a Filter query
+     * @param limit Limits the number of documents processed by Filter.
+     */
+    filter(builder: (factory: IFilterFactory<T>) => void, limit: number): IDocumentQuery<T>;
 
     //TBD MoreLikeThis
 

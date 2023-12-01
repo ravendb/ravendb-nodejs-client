@@ -1,4 +1,4 @@
-import { StreamQueryStatistics } from "../Session/StreamQueryStatistics";
+import { StreamQueryStatistics } from "./StreamQueryStatistics";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { ServerNode } from "../../Http/ServerNode";
 import { ICommandData } from "../Commands/CommandData";
@@ -23,8 +23,8 @@ import * as stream from "readable-stream";
 import { IDocumentQueryBuilder } from "./IDocumentQueryBuilder";
 import { IGraphDocumentQuery } from "./IGraphDocumentQuery";
 import { JavaScriptMap } from "./JavaScriptMap";
-import { ClassConstructor } from "../../Types";
 import { ConditionalLoadResult } from "./ConditionalLoadResult";
+import { EntityInfo } from "./DocumentsById";
 
 export type StreamQueryStatisticsCallback = (stats: StreamQueryStatistics) => void;
 
@@ -61,11 +61,21 @@ export interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     refresh<TEntity extends object>(entity: TEntity): Promise<void>;
 
     /**
+     * Updates entities with latest changes from server
+     */
+    refresh<TEntity extends object>(entities: TEntity[]): Promise<void>;
+
+    /**
      * Query the specified index using provided raw query
      */
 
     rawQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IRawDocumentQuery<TResult>;
 
+    /**
+     * @deprecated Graph API will be removed in next major version of the product.
+     * @param query query
+     * @param documentType document type
+     */
     graphQuery<TResult extends object>(query: string, documentType?: DocumentType<TResult>): IGraphDocumentQuery<TResult>;
 
     exists(id: string): Promise<boolean>;
@@ -212,7 +222,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     getCurrentSessionNode(): Promise<ServerNode>;
 
     requestExecutor: RequestExecutor;
-    
+
     sessionInfo: SessionInfo;
 
     /**
@@ -320,29 +330,34 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     whatChanged(): { [id: string]: DocumentsChanges[] };
 
     /**
-     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     * Returns all the tracked entities in this session.
      */
-    waitForReplicationAfterSaveChanges();
+    getTrackedEntities(): Map<string, EntityInfo>;
 
     /**
      * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
      */
-    waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions);
+    waitForReplicationAfterSaveChanges(): void;
+
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
+    waitForReplicationAfterSaveChanges(opts: ReplicationBatchOptions): void;
 
     /**
      * SaveChanges will wait for the indexes to catch up with the saved changes
      */
-    waitForIndexesAfterSaveChanges();
+    waitForIndexesAfterSaveChanges(): void;
 
     /**
      * SaveChanges will wait for the indexes to catch up with the saved changes
      */
-    waitForIndexesAfterSaveChanges(opts: IndexBatchOptions);
+    waitForIndexesAfterSaveChanges(opts: IndexBatchOptions): void;
 
     entityToJson: EntityToJson;
 
     /**
      * Overwrite the existing transaction mode for the current session.
      */
-    transactionMode: TransactionMode; 
+    transactionMode: TransactionMode;
 }

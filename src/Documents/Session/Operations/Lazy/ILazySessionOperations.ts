@@ -1,4 +1,4 @@
-import { ILazyLoaderWithInclude } from "../../../Session/Loaders/ILazyLoaderWithInclude";
+import { ILazyLoaderWithInclude } from "../../Loaders/ILazyLoaderWithInclude";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../../Types";
 import { Lazy } from "../../../Lazy";
 import { SessionLoadStartingWithOptions } from "../../IDocumentSession";

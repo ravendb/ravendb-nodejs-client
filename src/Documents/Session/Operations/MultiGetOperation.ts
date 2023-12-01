@@ -11,7 +11,7 @@ export class MultiGetOperation {
 
     public createRequest(requests: GetRequest[]): MultiGetCommand {
         return new MultiGetCommand(
-            this._session.requestExecutor, this._session.conventions, requests);
+            this._session.requestExecutor, this._session.conventions, requests, this._session.sessionInfo);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-empty-function

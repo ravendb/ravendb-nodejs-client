@@ -1,5 +1,5 @@
 import { IRavenObject } from "../Types/IRavenObject";
-import { UriUtility } from "../Http/UriUtility";
+import { UriUtility } from "./UriUtility";
 import { ClusterTopology } from "./ClusterTopology";
 
 export type ServerNodeRole = "None" | "Promotable" | "Member" | "Rehab";
@@ -14,7 +14,7 @@ export class ServerNode {
     private _lastServerVersionCheck: number = 0;
     private _lastServerVersion: string;
 
-    public constructor(opts?: { database?: string, url?: string, clusterTag?: string }) {
+    public constructor(opts?: { database?: string, url?: string, clusterTag?: string, serverRole?: ServerNodeRole }) {
         if (opts) {
             this.database = opts.database;
             this.url = opts.url;
@@ -69,7 +69,8 @@ export class ServerNode {
 
             nodes.push(new ServerNode({
                 url: member,
-                clusterTag: node
+                clusterTag: node,
+                serverRole: "Member"
             }));
         });
 
@@ -78,7 +79,8 @@ export class ServerNode {
 
             nodes.push(new ServerNode({
                 url: watcher,
-                clusterTag: node
+                clusterTag: node,
+                serverRole: "Member"
             }));
         });
 

@@ -24,6 +24,7 @@ import { ObjectTypeDescriptor, ServerResponse } from "../../Types";
 import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { TimeSeriesChange } from "./TimeSeriesChange";
+import { AggressiveCacheChange } from "./AggressiveCacheChange";
 
 export class DatabaseChanges implements IDatabaseChanges {
 
@@ -81,7 +82,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
         try {
             await acquiredSemContext.promise;
-            
+
             if (this.connected) {
                 this._tcs.resolve(this);
                 return;
@@ -99,16 +100,18 @@ export class DatabaseChanges implements IDatabaseChanges {
         return this._client && this._client.readyState === WebSocket.OPEN;
     }
 
-    public on(eventName: "connectionStatus", handler: () => void);
-    public on(eventName: "error", handler: (error: Error) => void);
-    public on(eventName: "connectionStatus" | "error", handler) {
+    public on(eventName: "connectionStatus", handler: () => void): this;
+    public on(eventName: "error", handler: (error: Error) => void): this;
+    public on(eventName: "connectionStatus" | "error", handler): this {
         this._emitter.addListener(eventName, handler);
+        return this;
     }
 
-    public off(eventName: "connectionStatus", handler: () => void);
-    public off(eventName: "error", handler: (error: Error) => void);
-    public off(eventName: "connectionStatus" | "error", handler) {
+    public off(eventName: "connectionStatus", handler: () => void): this;
+    public off(eventName: "error", handler: (error: Error) => void): this;
+    public off(eventName: "connectionStatus" | "error", handler): this {
         this._emitter.removeListener(eventName, handler);
+        return this;
     }
 
     public ensureConnectedNow(): Promise<IDatabaseChanges> {
@@ -429,7 +432,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                 if (!type) {
                     continue;
                 }
-                
+
                 switch (type) {
                     case "Error": {
                         const exceptionAsString = message.Exception;
@@ -460,7 +463,7 @@ export class DatabaseChanges implements IDatabaseChanges {
 
                             transformedValue = Object.assign(transformedValue, overrides);
                         }
-                        this._notifySubscribers(type, transformedValue, Array.from(this._counters.values()));
+                        this._notifySubscribers(type, transformedValue);
                         break;
                     }
                 }
@@ -471,22 +474,25 @@ export class DatabaseChanges implements IDatabaseChanges {
         }
     }
 
-    private _notifySubscribers(type: string, value: any, states: DatabaseConnectionState[]): void {
+    private _notifySubscribers(type: string, value: any): void {
         switch (type) {
+            case "AggressiveCacheChange":
+                this._counters.forEach(state => state.send("AggressiveCache", AggressiveCacheChange.INSTANCE));
+                break;
             case "DocumentChange":
-                states.forEach(state => state.send("Document", value));
+                this._counters.forEach(state => state.send("Document", value));
                 break;
             case "CounterChange":
-                states.forEach(state => state.send("Counter", value));
+                this._counters.forEach(state => state.send("Counter", value));
                 break;
             case "TimeSeriesChange":
-                states.forEach(state => state.send("TimeSeries", value));
+                this._counters.forEach(state => state.send("TimeSeries", value));
                 break;
             case "IndexChange":
-                states.forEach(state => state.send("Index", value));
+                this._counters.forEach(state => state.send("Index", value));
                 break;
             case "OperationStatusChange":
-                states.forEach(state => state.send("Operation", value));
+                this._counters.forEach(state => state.send("Operation", value));
                 break;
             case "TopologyChange": {
                 const topologyChange = value as TopologyChange;
@@ -553,10 +559,10 @@ export class DatabaseChanges implements IDatabaseChanges {
         }
 
         const counter = this._getOrAddConnectionState(
-            "document/" + documentId + "/counter/" + counterName, 
-            "watch-document-counter", 
-            "unwatch-document-counter", 
-            null, 
+            "document/" + documentId + "/counter/" + counterName,
+            "watch-document-counter",
+            "unwatch-document-counter",
+            null,
             [ documentId, counterName ]);
         const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
             "Counter", counter,
@@ -568,14 +574,14 @@ export class DatabaseChanges implements IDatabaseChanges {
     public forCountersOfDocument(documentId: string): IChangesObservable<CounterChange> {
         if (StringUtil.isNullOrWhitespace(documentId)) {
             throwError(
-                "InvalidArgumentException", 
+                "InvalidArgumentException",
                 "DocumentId cannot be null or whitespace.");
         }
-        
+
         const counter = this._getOrAddConnectionState(
             "document/" + documentId + "/counter", "watch-document-counters", "unwatch-document-counters", documentId);
         const taskedObservable = new ChangesObservable<CounterChange, DatabaseConnectionState>(
-            "Counter", 
+            "Counter",
             counter,
             notification => StringUtil.equalsIgnoreCase(documentId, notification.documentId));
         return taskedObservable;

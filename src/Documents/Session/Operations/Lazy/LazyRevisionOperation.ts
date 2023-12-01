@@ -1,14 +1,11 @@
 import { ILazyOperation } from "./ILazyOperation";
-import { IRavenArrayResult, ObjectTypeDescriptor } from "../../../../Types";
+import { IRavenArrayResult } from "../../../../Types";
 import { GetRevisionOperation } from "../GetRevisionOperation";
 import { QueryResult } from "../../../Queries/QueryResult";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { DocumentType } from "../../../DocumentAbstractions";
 import { throwError } from "../../../../Exceptions";
-import { StringBuilder } from "../../../../Utility/StringBuilder";
-import { GetDocumentsCommand } from "../../../Commands/GetDocumentsCommand";
-import { readToEnd, stringToReadable } from "../../../../Utility/StreamUtil";
 
 export type Mode = "Single" | "Multi" | "Map" | "ListOfMetadata";
 

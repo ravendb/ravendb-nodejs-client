@@ -10,7 +10,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http";
 import { DateUtil } from "../../../Utility/DateUtil";
 import * as stream from "readable-stream";
 import { CaseInsensitiveKeysMap } from "../../../Primitives/CaseInsensitiveKeysMap";
-import { GetTimeSeriesCommand, GetTimeSeriesOperation, reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
+import { GetTimeSeriesCommand, reviveTimeSeriesRangeResult } from "./GetTimeSeriesOperation";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";

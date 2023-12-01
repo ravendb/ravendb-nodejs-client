@@ -1,7 +1,7 @@
 import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { AttachmentDetails } from "./../../Attachments/index";
-import { getEtagHeader } from "./../../../Utility/HttpUtil";
-import { HttpRequestParameters, HttpResponse } from "./../../../Primitives/Http";
+import { AttachmentDetails } from "../../Attachments";
+import { getEtagHeader } from "../../../Utility/HttpUtil";
+import { HttpRequestParameters, HttpResponse } from "../../../Primitives/Http";
 import { AttachmentResult, AttachmentType } from "../../Attachments";
 import { RavenCommand, ResponseDisposeHandling } from "../../../Http/RavenCommand";
 import { HttpCache } from "../../../Http/HttpCache";

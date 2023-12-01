@@ -1,6 +1,6 @@
 import { ServerNode } from "./ServerNode";
-import { HttpCache } from "../Http/HttpCache";
-import { StatusCodes } from "../Http/StatusCode";
+import { HttpCache } from "./HttpCache";
+import { StatusCodes } from "./StatusCode";
 import * as stream from "readable-stream";
 import { Response, default as fetch, RequestInit } from "node-fetch";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http";

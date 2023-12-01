@@ -88,6 +88,7 @@ import { ProjectionBehavior } from "../Queries/ProjectionBehavior";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 import { IAbstractDocumentQueryImpl } from "./IAbstractDocumentQueryImpl";
 import { RevisionIncludesToken } from "./Tokens/RevisionIncludesToken";
+import { IDisposable } from "../../Types/Contracts";
 
 /**
  * A query against a Raven index
@@ -109,6 +110,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     protected _negate: boolean;
 
+    /**
+     * Whether to negate the next operation in Filter
+     */
+    protected _negateFilter: boolean;
+
     private readonly _indexName: string;
     private readonly _collectionName: string;
     private _currentClauseDepth: number;
@@ -122,6 +128,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public get collectionName() {
         return this._collectionName;
     }
+
+    protected _filterModeStack: boolean[] = [];
 
     protected _queryParameters: { [key: string]: object } = {};
 
@@ -150,11 +158,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     protected _withTokens: QueryToken[] = [];
 
+    protected _filterTokens: QueryToken[] = [];
+
     protected _graphRawQuery: QueryToken;
 
     protected _start: number;
 
     private readonly _conventions: DocumentConventions;
+
+    /**
+     * Limits filter clause.
+     */
+    protected _filterLimit: number;
 
     protected _timeout: number;
 
@@ -178,16 +193,21 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     private _parameterPrefix = "p";
 
     private _includesAlias: string;
-    
+
     protected _highlightingTokens: HighlightingToken[] = [];
-    
+
     protected _queryHighlightings: QueryHighlightings = new QueryHighlightings();
 
     protected _queryTimings: QueryTimings;
 
     protected _explanations: Explanations;
-    
+
     protected _explanationToken: ExplanationToken;
+
+    protected isFilterActive(): boolean {
+        return this._filterModeStack.length && this._filterModeStack[0];
+    }
+
 
     public get isDistinct(): boolean {
         return this._selectTokens
@@ -296,7 +316,22 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._isProjectInto = isProjectInto || false;
     }
 
+    private _assertMethodIsCurrentlySupported(methodName: string) {
+        if (!this.isFilterActive()) {
+            return;
+        }
+
+        throwError("InvalidQueryException", methodName
+            + " is currently unsupported for 'filter'. If you want to use"
+            + methodName + " in where method you have to put it before 'filter'");
+
+    }
+
     private _getCurrentWhereTokens(): QueryToken[] {
+        if (this.isFilterActive()) {
+            return this._filterTokens;
+        }
+
         if (!this._isInMoreLikeThis) {
             return this._whereTokens;
         }
@@ -404,7 +439,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _usingDefaultOperator(operator): void {
-        if (!this._whereTokens || !!this._whereTokens.length) {
+        if (this._getCurrentWhereTokens().length > 0) {
             throwError("InvalidOperationException",
                 "Default operator can only be set before any where clause is added.");
         }
@@ -546,6 +581,24 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const fields = [ TIME_SERIES.SELECT_FIELD_NAME + "(" + builder.queryText + ")"];
         const projections = [ TIME_SERIES.QUERY_FUNCTION ];
         return new QueryData(fields, projections);
+    }
+
+    public _addFilterLimit(filterLimit: number) {
+        if (filterLimit <= 0) {
+            throwError("InvalidOperationException", "filterLimit need to be positive and bigger than 0.");
+        }
+
+        if (filterLimit !== Number.MAX_SAFE_INTEGER) {
+            this._filterLimit = filterLimit;
+        }
+    }
+
+    private _getCurrentOrderByTokens() {
+        return this._orderByTokens;
+    }
+
+    private _getCurrentFilterTokens() {
+        return this._filterTokens;
     }
 
     protected _updateFieldsToFetchToken(fieldsToFetch: FieldsToFetchToken): void {
@@ -966,6 +1019,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Check that the field has one of the specified value
      */
     public _whereIn(fieldName: string, values: any[], exact: boolean = false): void {
+        this._assertMethodIsCurrentlySupported("whereIn");
+
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -981,6 +1036,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _whereStartsWith(fieldName: string, value: any, exact: boolean = false): void {
+        this._assertMethodIsCurrentlySupported("whereStartsWith");
+
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -1005,6 +1062,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields which ends with the specified value.
      */
     public _whereEndsWith(fieldName: string, value: any, exact: boolean = false): void {
+        this._assertMethodIsCurrentlySupported("whereEndsWith");
+
         const whereParams = new WhereParams();
         whereParams.fieldName = fieldName;
         whereParams.value = value;
@@ -1037,6 +1096,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where the value is between the specified start and end, inclusive
      */
     public _whereBetween(fieldName: string, start: any, end: any, exact: boolean = false): void {
+        this._assertMethodIsCurrentlySupported("whereBetween");
+
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -1165,6 +1226,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * Matches fields where Regex.IsMatch(filedName, pattern)
      */
     public _whereRegex(fieldName: string, pattern: string): void {
+        this._assertMethodIsCurrentlySupported("whereRegex");
+
         fieldName = this._ensureValidFieldName(fieldName, false);
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
@@ -1218,8 +1281,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         tokens.push(QueryOperatorToken.OR);
     }
 
+    public setFilterMode(on: boolean): IDisposable {
+        return new FilterModeScope(this._filterModeStack, on);
+    }
+
+
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
      * <p>
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
@@ -1227,6 +1295,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
      */
     public _boost(boost: number): void {
+        this._assertMethodIsCurrentlySupported("boost");
+
         if (boost === 1.0) {
             return;
         }
@@ -1246,16 +1316,22 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
             const close = last;
 
+            let openSubclauseToSkip = 0;
             let index = tokens.indexOf(last);
 
             while (last && index > 0) {
                 index--;
                 last = tokens[index]; // find the previous option
 
-                if (last instanceof OpenSubclauseToken) {
+                if (last instanceof CloseSubclauseToken) {
+                    // We have to count how many inner subclauses were inside current subclause
+                    openSubclauseToSkip++;
+                } else if (last instanceof OpenSubclauseToken && openSubclauseToSkip > 0) {
+                    // Inner subclause open - we have to skip it because we want to match only the leftmost opening.
+                    openSubclauseToSkip--;
+                } else if (last instanceof OpenSubclauseToken) {
                     last.boostParameterName = parameter;
                     close.boostParameterName = parameter;
-                    return;
                 }
             }
         } else {
@@ -1271,6 +1347,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Fuzzy%20Searches
      */
     public _fuzzy(fuzzy: number): void {
+        this._assertMethodIsCurrentlySupported("fuzzy");
+
         const tokens = this._getCurrentWhereTokens();
         if (!tokens && !tokens.length) {
             throwError("InvalidOperationException", "Fuzzy can only be used right after where clause.");
@@ -1282,7 +1360,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if ((whereToken as WhereToken).whereOperator !== "Equals" as WhereOperator) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Fuzzy can only be used right after where clause with equals operator");
         }
 
@@ -1299,6 +1377,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Proximity%20Searches
      */
     public _proximity(proximity: number): void {
+        this._assertMethodIsCurrentlySupported("proximity");
         const tokens = this._getCurrentWhereTokens();
         if (!tokens && !tokens.length) {
             throwError("InvalidOperationException", "Proximity can only be used right after search clause.");
@@ -1310,7 +1389,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if ((whereToken as WhereToken).whereOperator !== "Search" as WhereOperator) {
-            throwError("InvalidOperationException", 
+            throwError("InvalidOperationException",
                 "Proximity can only be used right after search clause");
         }
 
@@ -1437,6 +1516,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * If there is more than a single term, each of them will be checked independently.
      */
     public _search(fieldName: string, searchTerms: string, operator: SearchOperator = "OR"): void {
+        this._assertMethodIsCurrentlySupported("search");
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
 
@@ -1472,6 +1552,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._buildOrderBy(queryText);
 
         this._buildLoad(queryText);
+        this._buildFilter(queryText);
         this._buildSelect(queryText);
         this._buildInclude(queryText);
 
@@ -1500,6 +1581,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 .append(this._addQueryParameter(this._start))
                 .append(", $")
                 .append(this._addQueryParameter(this._pageSize));
+        }
+
+        if (this._filterTokens.length > 0 && this._filterLimit > 0) {
+            queryText
+                .append(" filter_limit $")
+                .append(this._addQueryParameter(this._filterLimit));
         }
     }
 
@@ -1605,6 +1692,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _containsAny(fieldName: string, values: any[]): void {
+        this._assertMethodIsCurrentlySupported("containsAny");
+
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -1618,6 +1707,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _containsAll(fieldName: string, values: any[]): void {
+        this._assertMethodIsCurrentlySupported("containsAll");
+
         fieldName = this._ensureValidFieldName(fieldName, false);
 
         const tokens = this._getCurrentWhereTokens();
@@ -1658,7 +1749,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     private _updateStatsAndHighlightingsAndExplanations(queryResult: QueryResult): void {
         this._queryStats.updateQueryStats(queryResult);
         this._queryHighlightings.update(queryResult);
-        
+
         if (this._explanations) {
             this._explanations.update(queryResult);
         }
@@ -1770,6 +1861,20 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
     }
 
+    private _buildFilter(writer: StringBuilder) {
+        if (this._filterTokens.length === 0) {
+            return;
+        }
+
+        writer
+            .append(" filter ");
+
+        for (let i = 0; i < this._filterTokens.length; i++) {
+            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? this._filterTokens[i - 1] : null, this._filterTokens[i], writer);
+            this._filterTokens[i].writeTo(writer);
+        }
+    }
+
     private _buildOrderBy(writer: StringBuilder): void {
         if (!this._orderByTokens || !this._orderByTokens.length) {
             return;
@@ -1833,12 +1938,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _highlight(
-        parameters: HighlightingParameters, 
+        parameters: HighlightingParameters,
         highlightingsCallback: ValueCallback<Highlightings>): void {
         highlightingsCallback(this._queryHighlightings.add(parameters.fieldName));
         const optionsParameterName = parameters
             ? this._addQueryParameter(
-                extractHighlightingOptionsFromParameters(parameters)) 
+                extractHighlightingOptionsFromParameters(parameters))
             : null;
         const token = HighlightingToken.create(
             parameters.fieldName, parameters.fragmentLength, parameters.fragmentCount, optionsParameterName);
@@ -1873,9 +1978,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     protected _spatialByShapeWkt(
-        fieldName: string, 
-        shapeWkt: string, 
-        relation: SpatialRelation, 
+        fieldName: string,
+        shapeWkt: string,
+        relation: SpatialRelation,
         units: SpatialUnits,
         distErrorPercent: number): void {
         fieldName = this._ensureValidFieldName(fieldName, false);
@@ -1914,7 +2019,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _spatial(dynamicField: DynamicSpatialField, criteria: SpatialCriteria): void;
     public _spatial(fieldName: string, criteria: SpatialCriteria): void;
     public _spatial(
-        fieldNameOrDynamicSpatialField: string | DynamicSpatialField, 
+        fieldNameOrDynamicSpatialField: string | DynamicSpatialField,
         criteria: SpatialCriteria): void {
 
         let tokens: QueryToken[];
@@ -2256,8 +2361,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
            throwError("InvalidOperationException", "Duplicate IncludeExplanations method calls are forbidden.");
        }
 
-       const optionsParameterName = options 
-            ? this._addQueryParameter(options) 
+       const optionsParameterName = options
+            ? this._addQueryParameter(options)
             : null;
        this._explanationToken = ExplanationToken.create(optionsParameterName);
        this._explanations = new Explanations();
@@ -2324,13 +2429,30 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public addFromAliasToWhereTokens(fromAlias: string): void {
+        const tokens = this._getCurrentWhereTokens();
+        this._addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    public addFromAliasToOrderByTokens(fromAlias: string) {
+        const tokens = this._getCurrentOrderByTokens();
+        this._addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    addFromAliasToFilterTokens(fromAlias: string) {
+        const tokens = this._getCurrentFilterTokens();
+        this._addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    private _addFromAliasToTokens(fromAlias: string, tokens: QueryToken[]): void {
         if (!fromAlias) {
             throwError("InvalidArgumentException", "Alias cannot be null or empty.");
         }
 
-        const tokens = this._getCurrentWhereTokens();
         for (const token of tokens) {
             if (token instanceof WhereToken) {
+                token.addAlias(fromAlias);
+            }
+            if (token instanceof OrderByToken) {
                 token.addAlias(fromAlias);
             }
         }
@@ -2387,3 +2509,18 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._parameterPrefix = prefix;
     }
 }
+
+
+class FilterModeScope implements IDisposable {
+    private readonly _modeStack: boolean[];
+
+    public constructor(modeStack: boolean[], on: boolean) {
+        this._modeStack = modeStack;
+        this._modeStack.push(on);
+    }
+
+    public dispose(): void {
+        this._modeStack.pop();
+    }
+}
+

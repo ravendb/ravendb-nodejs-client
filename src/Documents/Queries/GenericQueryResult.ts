@@ -1,8 +1,8 @@
 import { QueryResultBase } from "./QueryResultBase";
 
-export interface QueryResultHighlightings { 
+export interface QueryResultHighlightings {
     [key: string]: { [key: string]: string[] };
-} 
+}
 
 export interface QueryResultExplanations {
     [key: string]: string[];
@@ -19,6 +19,7 @@ export class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      */
     public cappedMaxResults: number;
     public skippedResults: number;
+    public scannedResults: number;
     public highlightings: QueryResultHighlightings;
     public explanations: QueryResultExplanations;
     public durationInMs: number;

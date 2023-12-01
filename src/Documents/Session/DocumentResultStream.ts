@@ -1,5 +1,4 @@
 import { StreamResult } from "../Commands/StreamResult";
-import { TypedEventEmitter } from "../../Primitives/Events";
 import { StreamQueryStatistics } from "./StreamQueryStatistics";
 
 export interface DocumentStreamResultEvents<TEntity extends object> {

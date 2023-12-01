@@ -1,4 +1,4 @@
-import { IndexType } from "../Indexes/Enums";
+import { IndexType } from "./Enums";
 
 export class IndexTypeExtensions {
 

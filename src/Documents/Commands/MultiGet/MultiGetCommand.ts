@@ -8,28 +8,27 @@ import { ServerNode } from "../../../Http/ServerNode";
 import { StatusCodes } from "../../../Http/StatusCode";
 import { getEtagHeader } from "../../../Utility/HttpUtil";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
-import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { IDisposable } from "../../../Types/Contracts";
 import { RequestExecutor } from "../../../Http/RequestExecutor";
 import { AggressiveCacheOptions } from "../../../Http/AggressiveCacheOptions";
 import { HEADERS } from "../../../Constants";
 import { ServerCasing, ServerResponse } from "../../../Types";
-import { ConditionalGetResult } from "../ConditionalGetDocumentsCommand";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 import { camelCase } from "change-case";
+import { SessionInfo } from "../../Session/IDocumentSession";
 
 export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDisposable {
     private readonly _requestExecutor: RequestExecutor;
     private _httpCache: HttpCache;
     private readonly _commands: GetRequest[];
+    private _sessionInfo: SessionInfo;
     private _conventions: DocumentConventions;
     private _baseUrl: string;
     private _cached: Cached;
 
     aggressivelyCached: boolean;
 
-    public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, commands: GetRequest[]) {
+    public constructor(requestExecutor: RequestExecutor, conventions: DocumentConventions, commands: GetRequest[], sessionInfo?: SessionInfo) {
         super();
 
         this._requestExecutor = requestExecutor;
@@ -45,6 +44,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
 
         this._commands = commands;
         this._conventions = conventions;
+        this._sessionInfo = sessionInfo;
         this._responseType = "Raw";
     }
 
@@ -64,7 +64,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
             headers: this._headers().typeAppJson().build(),
         };
 
-        if (this._maybeReadAllFromCache(this._requestExecutor.aggressiveCaching)) {
+        if ((!this._sessionInfo || !this._sessionInfo.noCaching) && this._maybeReadAllFromCache(this._requestExecutor.aggressiveCaching)) {
             this.aggressivelyCached = true;
             return null; // aggressively cached
         }
@@ -93,6 +93,11 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
 
         for (let i = 0; i < this._commands.length; i++) {
             const command = this._commands[i];
+
+            if (HEADERS.IF_NONE_MATCH in command.headers) {
+                continue;  // command already explicitly handling setting this, let's not touch it.
+            }
+
             const cacheKey = this._getCacheKey(command);
 
             let changeVector: string;

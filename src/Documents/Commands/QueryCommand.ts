@@ -171,6 +171,7 @@ export class QueryCommand extends RavenCommand<QueryResult> {
             durationInMs: json.DurationInMs,
             resultEtag: json.ResultEtag,
             nodeTag: json.NodeTag,
+            scannedResults: json.ScannedResults,
             counterIncludes: ObjectUtil.mapCounterIncludesToLocalObject(json.CounterIncludes),
             includedCounterNames: json.IncludedCounterNames,
             timeSeriesIncludes: ObjectUtil.mapTimeSeriesIncludesToLocalObject(json.TimeSeriesIncludes),

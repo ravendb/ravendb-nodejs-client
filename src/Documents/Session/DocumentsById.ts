@@ -1,5 +1,6 @@
 import { DocumentInfo } from "./DocumentInfo";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap";
+import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 
 export class DocumentsById {
 
@@ -36,4 +37,25 @@ export class DocumentsById {
     public entries() {
         return this._inner.entries();
     }
+
+    public getTrackedEntities(session: InMemoryDocumentSessionOperations): Map<string, EntityInfo> {
+        const result = CaseInsensitiveKeysMap.create<EntityInfo>();
+
+        for (const keyValue of this._inner.entries()) {
+            const entityInfo = new EntityInfo();
+            entityInfo.id = keyValue[0];
+            entityInfo.entity = keyValue[1].entity;
+            entityInfo.isDeleted = session.isDeleted(keyValue[0]);
+            result[keyValue[0]] = entityInfo;
+        }
+
+        return result;
+    }
+}
+
+
+export class EntityInfo {
+    id: string;
+    entity: object;
+    isDeleted: boolean;
 }

@@ -9,7 +9,6 @@ import {
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil";
 import { assertThat } from "../../../Utils/AssertExtensions";
 
-
 describe("ConnectionStringsTest", function () {
 
     let store: IDocumentStore;

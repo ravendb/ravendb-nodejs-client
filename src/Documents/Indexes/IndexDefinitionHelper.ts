@@ -1,5 +1,5 @@
 import { IndexType } from "./Enums";
-import { throwError } from "../../Exceptions/index";
+import { throwError } from "../../Exceptions";
 import { StringUtil } from "../../Utility/StringUtil";
 import * as XRegExp from "xregexp";
 import { IndexSourceType } from "./IndexSourceType";
@@ -39,7 +39,7 @@ export class IndexDefinitionHelper {
 
     /**
      * Extract runtime enum notation
-     * @param provider
+     * @param functionBody
      */
     public static extractEnumNotation(functionBody: string): string {
         functionBody = functionBody.trim();

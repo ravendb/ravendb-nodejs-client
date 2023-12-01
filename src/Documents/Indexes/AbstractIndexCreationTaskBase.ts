@@ -1,26 +1,28 @@
 import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { IndexDefinition } from "./IndexDefinition";
-import { IndexPriority, IndexLockMode, IndexState } from "./Enums";
+import { IndexPriority, IndexLockMode, IndexState, SearchEngineType } from "./Enums";
 import { IDocumentStore } from "../IDocumentStore";
 import { PutIndexesOperation } from "../Operations/Indexes/PutIndexesOperation";
 import { AbstractCommonApiForIndexes } from "./AbstractCommonApiForIndexes";
 import { IAbstractIndexCreationTask } from "./IAbstractIndexCreationTask";
 import { DocumentStoreBase } from "../DocumentStoreBase";
 import { IndexDeploymentMode } from "./IndexDeploymentMode";
+import { INDEXES } from "../../Constants";
 
 export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
     extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
-    
+
     /**
      *  Creates the index definition.
      */
     public abstract createIndexDefinition(): TIndexDefinition;
-    
+
     public conventions: DocumentConventions;
     public priority: IndexPriority;
     public lockMode: IndexLockMode;
 
     public deploymentMode: IndexDeploymentMode;
+    public searchEngineType: SearchEngineType;
     public state: IndexState;
 
     /**
@@ -36,7 +38,7 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
      */
     public async execute(store: IDocumentStore, conventions: DocumentConventions, database: string): Promise<void>;
     public async execute(
-        store: IDocumentStore, 
+        store: IDocumentStore,
         conventions?: DocumentConventions,
         database?: string): Promise<void> {
         if (!conventions && !database) {
@@ -73,11 +75,15 @@ export abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
                 indexDefinition.deploymentMode = this.deploymentMode;
             }
 
+            if (this.searchEngineType) {
+                indexDefinition.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+            }
+
             await store.maintenance.forDatabase(database)
                 .send(new PutIndexesOperation(indexDefinition));
         } finally {
             this.conventions = oldConventions;
         }
     }
-    
+
 }

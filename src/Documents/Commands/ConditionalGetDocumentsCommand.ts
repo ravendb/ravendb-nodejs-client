@@ -8,7 +8,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { readToEnd, stringToReadable } from "../../Utility/StreamUtil";
 import { RavenCommandResponsePipeline } from "../../Http/RavenCommandResponsePipeline";
 import { ObjectUtil } from "../../Utility/ObjectUtil";
-import { CONSTANTS, HEADERS } from "../../Constants";
+import { HEADERS } from "../../Constants";
 
 export class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetResult> {
 
@@ -27,7 +27,7 @@ export class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetR
 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/docs?id=" + this._urlEncode(this._id);
-        
+
         return {
             uri,
             method: "GET",

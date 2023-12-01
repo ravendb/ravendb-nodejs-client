@@ -1,5 +1,5 @@
 import { AttachmentName } from "../Attachments";
-import { AttachmentData } from "./../Attachments";
+import { AttachmentData } from "../Attachments";
 
 export interface IAttachmentsSessionOperationsBase {
     /**
@@ -43,32 +43,32 @@ export interface IAttachmentsSessionOperationsBase {
      * Marks the specified document's attachment for rename. The attachment will be renamed when saveChanges is called.
      */
     rename(documentId: string, name: string, newName: string): void;
-    
+
     /**
      * Marks the specified document's attachment for rename. The attachment will be renamed when saveChanges is called.
      */
     rename(entity: object, name: string, newName: string): void;
 
     /**
-     * Moves specified source document attachment to destination document. 
+     * Moves specified source document attachment to destination document.
      * The operation will be executed when saveChanges is called.
      */
     move(sourceEntity: object, sourceName: string, destinationEntity: object, destinationName: string): void;
 
     /**
-     * Moves specified source document attachment to destination document. 
+     * Moves specified source document attachment to destination document.
      * The operation will be executed when saveChanges is called.
      */
     move(sourceDocumentId: string, sourceName: string, destinationDocumentId: string, destinationName: string): void;
 
     /**
-     * Copies specified source document attachment to destination document. 
+     * Copies specified source document attachment to destination document.
      * The operation will be executed when saveChanges is called.
      */
     copy(sourceDocumentId: string, sourceName: string, destinationDocumentId: string, destinationName: string): void;
 
     /**
-     * Copies specified source document attachment to destination document. 
+     * Copies specified source document attachment to destination document.
      * The operation will be executed when saveChanges is called.
      */
     copy(sourceEntity: object, sourceName: string, destinationEntity: object, destinationName: string): void;

@@ -65,6 +65,7 @@ export const HEADERS = {
     REQUEST_TIME: "Raven-Request-Time",
     REFRESH_TOPOLOGY: "Refresh-Topology",
     TOPOLOGY_ETAG: "Topology-Etag",
+    CLUSTER_TOPOLOGY_ETAG: "Cluster-Topology-Etag",
     LAST_KNOWN_CLUSTER_TRANSACTION_INDEX: "Known-Raft-Index",
     CLIENT_CONFIGURATION_ETAG: "Client-Configuration-Etag",
     REFRESH_CLIENT_CONFIGURATION: "Refresh-Client-Configuration",
@@ -75,6 +76,7 @@ export const HEADERS = {
     TRANSFER_ENCODING: "Transfer-Encoding",
     CONTENT_ENCODING: "Content-Encoding",
     CONTENT_LENGTH: "Content-Length",
+    INCREMENTAL_TIME_SERIES_PREFIX: "INC:",
     DATABASE_MISSING: "Database-Missing"
 } as const;
 
@@ -91,5 +93,18 @@ export const TIME_SERIES = {
 
 
 export const COMPARE_EXCHANGE = {
+    RVN_ATOMIC_PREFIX: "rvn-atomic/",
     OBJECT_FIELD_NAME: "Object"
 } as const;
+
+export const INDEXES = {
+    INDEXING_STATIC_SEARCH_ENGINE_TYPE: "Indexing.Static.SearchEngineType"
+} as const;
+
+export const IDENTITIES = {
+    DEFAULT_SEPARATOR: "/"
+} as const;
+
+export const OBSOLETE = {
+    GRAPH_API: "Graph API will be removed in next major version of the product."
+}

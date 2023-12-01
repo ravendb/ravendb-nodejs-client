@@ -1,6 +1,6 @@
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
-import { QueryResult } from "../../../../Documents/Queries/QueryResult";
+import { QueryResult } from "../../../Queries/QueryResult";
 
 export interface ILazyOperation {
     result: any;

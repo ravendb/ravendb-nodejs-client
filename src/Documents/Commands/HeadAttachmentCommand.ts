@@ -1,10 +1,10 @@
-import { RavenCommand, ResponseDisposeHandling } from "./../../Http/RavenCommand";
-import { HttpCache } from "./../../Http/HttpCache";
-import { HttpRequestParameters, HttpResponse } from "./../../Primitives/Http";
+import { RavenCommand, ResponseDisposeHandling } from "../../Http/RavenCommand";
+import { HttpCache } from "../../Http/HttpCache";
+import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
 import { StringUtil } from "../../Utility/StringUtil";
 import { throwError } from "../../Exceptions";
 import { ServerNode } from "../../Http/ServerNode";
-import { StatusCodes } from "./../../Http/StatusCode";
+import { StatusCodes } from "../../Http/StatusCode";
 import * as stream from "readable-stream";
 import { getRequiredEtagHeader } from "../../Utility/HttpUtil";
 import { HEADERS } from "../../Constants";

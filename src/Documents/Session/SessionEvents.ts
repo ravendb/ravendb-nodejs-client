@@ -6,6 +6,7 @@ import { Reference } from "../../Utility/Reference";
 import { Topology } from "../../Http/Topology";
 import { HttpRequestParameters, HttpResponse } from "../../Primitives/Http";
 import { SessionDisposingEventArgs } from "../IDocumentStore";
+import { BulkInsertProgress } from "../Operations/BulkInsertProgress";
 
 export interface SessionEventsEmitter {
     on(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
@@ -18,6 +19,12 @@ export interface SessionEventsEmitter {
 
     on(eventName: "sessionDisposing", eventHandler: (eventArgs: SessionDisposingEventArgs) => void): this;
 
+    on(eventName: "beforeConversionToDocument", eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void): this;
+    on(eventName: "afterConversionToDocument", eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void): this;
+    on(eventName: "beforeConversionToEntity", eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void): this;
+    on(eventName: "afterConversionToEntity", eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void): this;
+
+
     removeListener(eventName: "beforeStore", eventHandler: (eventArgs: SessionBeforeStoreEventArgs) => void): this;
 
     removeListener(
@@ -29,15 +36,21 @@ export interface SessionEventsEmitter {
 
     removeListener(eventName: "sessionDisposing", eventHandler: (eventArgs: SessionDisposingEventArgs) => void): this;
 
-    emit(eventName: "beforeStore", eventArgs: SessionBeforeStoreEventArgs);
+    removeListener(eventName: "beforeConversionToDocument", eventHandler: (eventArgs: BeforeConversionToDocumentEventArgs) => void): this;
+    removeListener(eventName: "afterConversionToDocument", eventHandler: (eventArgs: AfterConversionToDocumentEventArgs) => void): this;
+    removeListener(eventName: "beforeConversionToEntity", eventHandler: (eventArgs: BeforeConversionToEntityEventArgs) => void): this;
+    removeListener(eventName: "afterConversionToEntity", eventHandler: (eventArgs: AfterConversionToEntityEventArgs) => void): this;
 
-    emit(eventName: "afterSaveChanges", eventArgs: SessionAfterSaveChangesEventArgs);
+    emit(eventName: "beforeStore", eventArgs: SessionBeforeStoreEventArgs): void;
+    emit(eventName: "afterSaveChanges", eventArgs: SessionAfterSaveChangesEventArgs): void;
+    emit(eventName: "beforeQuery", eventArgs: SessionBeforeQueryEventArgs): void;
+    emit(eventName: "beforeDelete", eventArgs: SessionBeforeDeleteEventArgs): void;
+    emit(eventName: "sessionDisposing", eventArgs: SessionDisposingEventArgs): void;
 
-    emit(eventName: "beforeQuery", eventArgs: SessionBeforeQueryEventArgs);
-
-    emit(eventName: "beforeDelete", eventArgs: SessionBeforeDeleteEventArgs);
-
-    emit(eventName: "sessionDisposing", eventArgs: SessionDisposingEventArgs);
+    emit(eventName: "beforeConversionToDocument", eventArgs: BeforeConversionToDocumentEventArgs): void;
+    emit(eventName: "afterConversionToDocument", eventArgs: AfterConversionToDocumentEventArgs): void;
+    emit(eventName: "beforeConversionToEntity", eventArgs: BeforeConversionToEntityEventArgs): void;
+    emit(eventName: "afterConversionToEntity", eventArgs: AfterConversionToEntityEventArgs): void;
 }
 
 export class SessionBeforeStoreEventArgs {
@@ -141,6 +154,15 @@ export class SessionAfterSaveChangesEventArgs {
         }
 
         return this._documentMetadata;
+    }
+}
+
+export class BulkInsertOnProgressEventArgs {
+    public readonly progress: BulkInsertProgress;
+
+
+    public constructor(progress: BulkInsertProgress) {
+        this.progress = progress;
     }
 }
 

@@ -4,7 +4,7 @@ import { ConfigureExpirationOperation } from "../../../src/Documents/Operations/
 import { IDocumentStore } from "../../../src/Documents/IDocumentStore";
 import { ExpirationConfiguration } from "../../../src/Documents/Operations/Expiration/ExpirationConfiguration";
 
-(RavenTestContext.is60Server ? describe.skip : describe)("ExpirationConfigurationTest", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ExpirationConfigurationTest", function () {
 
     let store: IDocumentStore;
 

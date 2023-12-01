@@ -12,7 +12,6 @@ import { CompareExchangeValueResultParser, GetCompareExchangeValuesResponse } fr
 import * as stream from "readable-stream";
 import { StringBuilder } from "../../../Utility/StringBuilder";
 import { TypeUtil } from "../../../Utility/TypeUtil";
-import { QueryResult } from "../../Queries/QueryResult";
 
 export interface GetCompareExchangeValuesParameters<T> {
     keys?: string[];
@@ -161,6 +160,7 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
             results: json.Results.map(item => {
                 if (!item.Value) {
                     return {
+                        changeVector: item.ChangeVector,
                         index: item.Index,
                         key: item.Key,
                         value: null
@@ -175,7 +175,8 @@ export class GetCompareExchangeValuesCommand<T> extends RavenCommand<{ [key: str
                         object: Object
                     },
                     index: item.Index,
-                    key: item.Key
+                    key: item.Key,
+                    changeVector: item.ChangeVector
                 }
             })
         }

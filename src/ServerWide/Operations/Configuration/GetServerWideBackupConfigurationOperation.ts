@@ -1,5 +1,5 @@
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";

@@ -1,16 +1,15 @@
 import { InMemoryDocumentSessionOperations } from "../InMemoryDocumentSessionOperations";
 import { getLogger } from "../../../Utility/LogUtil";
 import { DocumentInfo } from "../DocumentInfo";
-import { 
-    GetDocumentsCommand, 
-    GetDocumentsResult, 
-    GetDocumentsByIdsCommandOptions 
+import {
+    GetDocumentsCommand,
+    GetDocumentsResult,
+    GetDocumentsByIdsCommandOptions
 } from "../../Commands/GetDocumentsCommand";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { throwError } from "../../../Exceptions";
 import { ObjectTypeDescriptor, EntitiesCollectionObject } from "../../../Types";
 import { StringUtil } from "../../../Utility/StringUtil";
-import { TimeSeriesRange } from "../../Operations/TimeSeries/TimeSeriesRange";
 import { AbstractTimeSeriesRange } from "../../Operations/TimeSeries/AbstractTimeSeriesRange";
 
 const log = getLogger({ module: "LoadOperation" });
@@ -59,10 +58,12 @@ export class LoadOperation {
         if (this._includeAllCounters) {
             opts.includeAllCounters = true;
         } else if (this._countersToInclude) {
-            opts.counterIncludes = this._countersToInclude; 
+            opts.counterIncludes = this._countersToInclude;
         }
 
-        return new GetDocumentsCommand(opts);
+        const cmd = new GetDocumentsCommand(opts);
+        cmd.transactionMode = this._session.transactionMode;
+        return cmd;
     }
 
     public byId(id: string): LoadOperation {
@@ -189,7 +190,7 @@ export class LoadOperation {
             if (!this._results || !this._results.results || !this._results.results.length) {
                 return finalResults;
             }
-            
+
             for (const document of this._results.results) {
                 if (!document) {
                     continue;
@@ -198,7 +199,7 @@ export class LoadOperation {
                 const newDocumentInfo = DocumentInfo.getNewDocumentInfo(document);
                 finalResults[newDocumentInfo.id] = this._session.trackEntity(clazz, newDocumentInfo);
             }
-            
+
             return finalResults;
         }
 
@@ -238,8 +239,10 @@ export class LoadOperation {
             this._session.registerRevisionIncludes(result.revisionIncludes);
         }
 
-        if (this._compareExchangeValuesToInclude) {
-            this._session.clusterSession.registerCompareExchangeValues(result.compareExchangeValueIncludes);
+        const includingMissingAtomicGuards = this._session.transactionMode === "ClusterWide";
+        if (this._compareExchangeValuesToInclude || includingMissingAtomicGuards) {
+            const clusterSession = this._session.clusterSession;
+            clusterSession.registerCompareExchangeValues(result.compareExchangeValueIncludes, includingMissingAtomicGuards);
         }
 
         for (const document of result.results) {

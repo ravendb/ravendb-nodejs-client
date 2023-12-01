@@ -3,13 +3,13 @@ import { ConnectionString } from "./ConnectionString";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 
 export class EtlConfiguration<T extends ConnectionString> {
-    public taskId: number;
-    public name: string;
-    public mentorNode: string;
+    public taskId?: number;
+    public name?: string;
+    public mentorNode?: string;
     public connectionStringName: string;
     public transforms: Transformation[];
-    public disabled: boolean;
-    public allowEtlOnNonEncryptedChannel: boolean;
+    public disabled?: boolean;
+    public allowEtlOnNonEncryptedChannel?: boolean;
 
     public serialize(conventions: DocumentConventions): object {
         return {

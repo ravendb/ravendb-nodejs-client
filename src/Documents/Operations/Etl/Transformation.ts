@@ -5,6 +5,7 @@ export class Transformation {
     collections?: string[];
     applyToAllDocuments?: boolean;
     script?: string;
+    documentIdPostfix?: string;
 }
 
 export function serializeTransformation(transformation: Transformation) {

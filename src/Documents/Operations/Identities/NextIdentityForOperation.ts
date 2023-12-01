@@ -1,6 +1,6 @@
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 import { StringUtil } from "../../../Utility/StringUtil";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { NextIdentityForCommand } from "../../Commands/NextIdentityForCommand";

@@ -20,6 +20,15 @@ export class BackupUtils {
         CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION
     ];
 
+    public static isFullBackupOrSnapshot(extension: string): boolean {
+        return BackupUtils.isSnapshot(extension) || BackupUtils.isFullBackup(extension);
+    }
+
+    public static isFullBackup(extension: string): boolean {
+        return StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION, extension)
+            || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION, extension);
+    }
+
     public static isSnapshot(extension: string) {
         return StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.SNAPSHOT_EXTENSION, extension)
             || StringUtil.equalsIgnoreCase(CONSTANTS.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION, extension);

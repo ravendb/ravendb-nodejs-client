@@ -1,4 +1,4 @@
-import { QueryTimings } from "../Queries/Timings/QueryTimings";
+import { QueryTimings } from "./Timings/QueryTimings";
 
 export abstract class QueryResultBase<TResult, TInclude> {
 

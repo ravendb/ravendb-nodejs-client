@@ -7,7 +7,7 @@ import {
 } from "../../../src";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("Issue RavenDB-8328", function () {
+(RavenTestContext.is60Server ? describe.skip : describe)("Issue RavenDB-8328", function () {
 
     let store: IDocumentStore;
 

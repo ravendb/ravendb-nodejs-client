@@ -4,7 +4,6 @@ import { User } from "../../Assets/Entities";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 
 describe("BulkInsertCountersTest", function () {
-
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -76,20 +75,23 @@ describe("BulkInsertCountersTest", function () {
 
         {
             const bulkInsert = store.bulkInsert();
-            const counter = bulkInsert.countersFor(userId1);
+            try {
+                const counter = bulkInsert.countersFor(userId1);
 
-            await counter.increment("likes", 100);
-            await counter.increment("downloads", 500);
+                await counter.increment("likes", 100);
+                await counter.increment("downloads", 500);
 
-            const user2 = new User();
-            user2.name = "Kotler";
-            await bulkInsert.store(user2);
+                const user2 = new User();
+                user2.name = "Kotler";
+                await bulkInsert.store(user2);
 
-            userId2 = user2.id;
+                userId2 = user2.id;
 
-            await bulkInsert.countersFor(userId2)
-                .increment("votes", 1000);
-            await bulkInsert.finish();
+                await bulkInsert.countersFor(userId2)
+                    .increment("votes", 1000);
+            } finally {
+                await bulkInsert.finish();
+            }
         }
 
         const counters = (await store.operations
@@ -161,14 +163,18 @@ describe("BulkInsertCountersTest", function () {
     });
 
     it("incrementCounterNullId", async () => {
-        await assertThrows(() => {
-            const bulkInsert = store.bulkInsert();
-            bulkInsert.countersFor(null)
-                .increment("votes", 1000);
-        }, err => {
-            assertThat(err.message)
-                .contains("Document id cannot be null or empty");
-        });
+        const bulkInsert = store.bulkInsert();
+        try {
+            await assertThrows(() => {
+                bulkInsert.countersFor(null)
+                    .increment("votes", 1000);
+            }, err => {
+                assertThat(err.message)
+                    .contains("Document id cannot be null or empty");
+            });
+        } finally {
+            await bulkInsert.finish();
+        }
     });
 
     it("incrementManyCounters", async () => {

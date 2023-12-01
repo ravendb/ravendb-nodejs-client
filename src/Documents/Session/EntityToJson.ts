@@ -77,14 +77,14 @@ export class EntityToJson {
     public static convertEntityToJson(
         entity: object, conventions: DocumentConventions): object;
     public static convertEntityToJson(
-        entity: object, 
-        conventions: DocumentConventions, 
+        entity: object,
+        conventions: DocumentConventions,
         documentInfo: DocumentInfo,
         removeIdentityProperty: boolean): object;
     public static convertEntityToJson(
-        entity: object, 
-        conventions: DocumentConventions, 
-        documentInfo?: DocumentInfo, 
+        entity: object,
+        conventions: DocumentConventions,
+        documentInfo?: DocumentInfo,
         removeIdentityProperty: boolean = true): object {
 
         let typeInfo: TypeInfo;
@@ -223,8 +223,6 @@ export class EntityToJson {
             if (id) {
                 this._session.generateEntityIdOnTheClient.trySetIdentity(entity, id, isProjection);
             }
-
-            this._session.onAfterConversionToEntityInvoke(id, document, entity);
 
             return entity;
         } catch (err) {

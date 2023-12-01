@@ -1,4 +1,4 @@
-import { IndexState, IndexPriority, IndexLockMode, IndexType } from "./Enums";
+import { IndexState, IndexPriority, IndexLockMode, IndexType, SearchEngineType } from "./Enums";
 import { IndexRunningStatus } from "./IndexingStatus";
 import { IndexSourceType } from "./IndexSourceType";
 
@@ -28,6 +28,7 @@ export interface IndexStats {
     stale: boolean;
     lockMode: IndexLockMode;
     type: IndexType;
+    searchEngineType: SearchEngineType;
     status: IndexRunningStatus;
     entriesCount: number;
     errorsCount: number;

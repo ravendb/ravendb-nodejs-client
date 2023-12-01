@@ -19,4 +19,11 @@ export type DatabaseRecordItemType =
     | "Analyzers"
     | "LockMode"
     | "OlapConnectionStrings"
-    | "OlapEtls";
+    | "OlapEtls"
+    | "ElasticSearchConnectionStrings"
+    | "ElasticSearchEtls"
+    | "PostgreSqlIntegration"
+    | "QueueConnectionStrings"
+    | "QueueEtl"
+    | "IndexesHistory"
+    | "Refresh";

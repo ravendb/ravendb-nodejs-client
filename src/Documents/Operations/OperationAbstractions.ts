@@ -1,6 +1,6 @@
 import { RavenCommand } from "../../Http/RavenCommand";
-import { IDocumentStore } from "../../Documents/IDocumentStore";
-import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions";
+import { IDocumentStore } from "../IDocumentStore";
+import { DocumentConventions } from "../Conventions/DocumentConventions";
 import { HttpCache } from "../../Http/HttpCache";
 
 export type OperationResultType = "OperationId" | "CommandResult" | "PatchResult";

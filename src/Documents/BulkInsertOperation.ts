@@ -4,7 +4,7 @@ import { RavenCommand } from "../Http/RavenCommand";
 import { HttpRequestParameters } from "../Primitives/Http";
 import { IMetadataDictionary } from "./Session/IMetadataDictionary";
 import { createMetadataDictionary } from "../Mapping/MetadataAsDictionary";
-import { CONSTANTS } from "../Constants";
+import { CONSTANTS, HEADERS } from "../Constants";
 import { getError, throwError } from "../Exceptions";
 import { GetOperationStateCommand } from "./Operations/GetOperationStateOperation";
 import { StringUtil } from "../Utility/StringUtil";
@@ -26,9 +26,15 @@ import { TypedTimeSeriesEntry } from "./Session/TimeSeries/TypedTimeSeriesEntry"
 import { ClassConstructor, EntityConstructor } from "../Types";
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations";
 import { TimeSeriesValuesHelper } from "./Session/TimeSeries/TimeSeriesValuesHelper";
+import { Timer } from "../Primitives/Timer";
+import { EventEmitter } from "events";
+import { BulkInsertOnProgressEventArgs } from "./Session/SessionEvents";
 
 export class BulkInsertOperation {
+    private _emitter = new EventEmitter();
+
     private _options: BulkInsertOptions;
+    private _database: string;
     private readonly _generateEntityIdOnTheClient: GenerateEntityIdOnTheClient;
 
     private readonly _requestExecutor: RequestExecutor;
@@ -55,8 +61,15 @@ export class BulkInsertOperation {
     private _requestBodyStream: stream.PassThrough;
     private _pipelineFinished: Promise<void>;
 
+    private _unsubscribeChanges: IDisposable;
+    private _onProgressInitialized = false;
+    private _timer: Timer;
+    private _lastWriteToStream: Date;
+    private _heartbeatCheckInterval = 40_000;
+
     public constructor(database: string, store: IDocumentStore, options?: BulkInsertOptions) {
         this._conventions = store.conventions;
+        this._store = store;
         if (StringUtil.isNullOrEmpty(database)) {
             this._throwNoDatabase();
         }
@@ -64,6 +77,7 @@ export class BulkInsertOperation {
         this._useCompression = options ? options.useCompression : false;
 
         this._options = options ?? {};
+        this._database = database;
 
         this._timeSeriesBatchSize = this._conventions.bulkInsert.timeSeriesBatchSize;
 
@@ -74,6 +88,73 @@ export class BulkInsertOperation {
         this._bulkInsertAborted.catch(err => {
             // we're awaiting it elsewhere
         });
+
+        this._lastWriteToStream = new Date();
+
+        const timerState: TimerState = {
+            parent: this,
+            timer: null
+        };
+
+        this._timer = new Timer(() => BulkInsertOperation._handleHeartbeat(timerState), this._heartbeatCheckInterval, this._heartbeatCheckInterval);
+        timerState.timer = this._timer;
+    }
+
+    private static async _handleHeartbeat(timerState: TimerState): Promise<void> {
+        const bulkInsert = timerState.parent;
+        if (!bulkInsert) {
+            timerState.timer.dispose();
+            return;
+        }
+
+        await bulkInsert.sendHeartBeat();
+    }
+
+    private async sendHeartBeat(): Promise<void> {
+        if (new Date().getTime() - this._lastWriteToStream.getTime() < this._heartbeatCheckInterval) {
+            return;
+        }
+
+        await this._executeBeforeStore();
+        this._endPreviousCommandIfNeeded();
+        if (!BulkInsertOperation._checkServerVersion(this._requestExecutor.lastServerVersion)) {
+            return ;
+        }
+
+        if (!this._first) {
+            this._writeComma();
+        }
+
+        this._first = false;
+        this._inProgressCommand = "None";
+        this._currentWriter.push("{\"Type\":\"HeartBeat\"}");
+    }
+
+    private static _checkServerVersion(serverVersion: string): boolean {
+        if (serverVersion) {
+            const versionParsed = serverVersion.split(".");
+            const major = parseInt(versionParsed[0], 10);
+            const minor = versionParsed.length > 1 ? parseInt(versionParsed[1]) : 0;
+            const build = versionParsed.length> 2 ? parseInt(versionParsed[2]) : 0;
+            if (isNaN(major) || isNaN(minor)) {
+                return false;
+            }
+
+            return major > 5 || (major == 5 && minor >= 4 && build >= 110);
+        }
+
+        return false;
+    }
+
+    public on(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void): this {
+        this._emitter.on("progress", handler);
+        this._onProgressInitialized = true;
+        return this;
+    }
+
+    public off(event: "progress", handler: (value: BulkInsertOnProgressEventArgs) => void): this {
+        this._emitter.off("progress", handler);
+        return this;
     }
 
     get useCompression(): boolean {
@@ -100,7 +181,7 @@ export class BulkInsertOperation {
     }
 
     private _throwNoDatabase(): void {
-        throwError("InvalidOperationException", "Cannot start bulk insert operation without specifying a name of a database to operate on."
+        throwError("BulkInsertInvalidOperationException", "Cannot start bulk insert operation without specifying a name of a database to operate on."
             + "Database name can be passed as an argument when bulk insert is being created or default database can be defined using 'DocumentStore.setDatabase' method.");
     }
 
@@ -113,6 +194,26 @@ export class BulkInsertOperation {
         await this._requestExecutor.execute(bulkInsertGetIdRequest);
         this._operationId = bulkInsertGetIdRequest.result;
         this._nodeTag = bulkInsertGetIdRequest.nodeTag;
+
+        if (this._onProgressInitialized && !this._unsubscribeChanges) {
+            const observable = this._store.changes()
+                .forOperationId(this._operationId);
+
+            const handler = value => {
+                const state = value.state;
+                if (state && state.status === "InProgress") {
+                    this._emitter.emit("progress", new BulkInsertOnProgressEventArgs(state.progress));
+                }
+            }
+
+            observable.on("data", handler);
+
+            this._unsubscribeChanges = {
+                dispose(): void {
+                    observable.off("data", handler)
+                }
+            };
+        }
     }
 
     private static _typeCheckStoreArgs(
@@ -148,44 +249,56 @@ export class BulkInsertOperation {
         entity: object,
         idOrMetadata?: string | IMetadataDictionary,
         optionalMetadata?: IMetadataDictionary) {
-        const opts = BulkInsertOperation._typeCheckStoreArgs(idOrMetadata, optionalMetadata);
-        let metadata = opts.metadata;
 
-        const id = opts.getId ? await this._getId(entity) : opts.id;
-        BulkInsertOperation._verifyValidId(id);
+        const check = this._concurrencyCheck();
+        try {
 
-        if (!this._currentWriter) {
-            await this._waitForId();
-            await this._ensureStream();
-        }
+            const opts = BulkInsertOperation._typeCheckStoreArgs(idOrMetadata, optionalMetadata);
+            let metadata = opts.metadata;
 
-        if (this._completedWithError || this._aborted) {
-            await this._checkIfBulkInsertWasAborted();
-        }
+            const id = opts.getId ? await this._getId(entity) : opts.id;
+            this._lastWriteToStream = new Date();
+            BulkInsertOperation._verifyValidId(id);
 
-        if (!metadata) {
-            metadata = createMetadataDictionary({
-                raw: {}
-            });
-        }
-
-        if (!(("@collection" as keyof MetadataObject) in metadata)) {
-            const collection = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
-            if (collection) {
-                metadata["@collection"] = collection;
+            if (!this._currentWriter) {
+                await this._waitForId();
+                await this._ensureStream();
             }
-        }
 
-        if (!("Raven-Node-Type" as keyof MetadataObject in metadata)) {
-            const descriptor = this._conventions.getTypeDescriptorByEntity(entity);
-            const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
-            if (jsType) {
-                metadata["Raven-Node-Type"] = jsType;
+            if (this._completedWithError || this._aborted) {
+                await this._checkIfBulkInsertWasAborted();
             }
+
+            if (!metadata) {
+                metadata = createMetadataDictionary({
+                    raw: {}
+                });
+            }
+
+            if (!(("@collection" as keyof MetadataObject) in metadata)) {
+                const collection = this._requestExecutor.conventions.getCollectionNameForEntity(entity);
+                if (collection) {
+                    metadata["@collection"] = collection;
+                }
+            }
+
+            if (!("Raven-Node-Type" as keyof MetadataObject in metadata)) {
+                const descriptor = this._conventions.getTypeDescriptorByEntity(entity);
+                const jsType = this._requestExecutor.conventions.getJsTypeName(descriptor);
+                if (jsType) {
+                    metadata["Raven-Node-Type"] = jsType;
+                }
+            }
+
+            this._endPreviousCommandIfNeeded();
+
+            this._writeToStream(entity, id, metadata, "PUT");
+        } finally {
+            check.dispose();
         }
+    }
 
-        this._endPreviousCommandIfNeeded();
-
+    private _writeToStream(entity: object, id: string, metadata: IMetadataDictionary, type: CommandType) {
         if (this._first) {
             this._first = false;
         } else {
@@ -206,9 +319,13 @@ export class BulkInsertOperation {
         this._writeString(id);
         const jsonString = JsonSerializer.getDefault().serialize(json);
         this._currentWriter.push(`","Type":"PUT","Document":${jsonString}}`);
+
     }
 
     private _handleErrors(documentId: string, e: Error) {
+        if (e.name === "BulkInsertClientException") {
+            throw e;
+        }
         const error = this._getExceptionFromOperation();
         if (error) {
             throw error;
@@ -219,7 +336,7 @@ export class BulkInsertOperation {
 
     private _concurrencyCheck(): IDisposable {
         if (this._concurrentCheck) {
-            throwError("InvalidOperationException", "Bulk Insert store methods cannot be executed concurrently.");
+            throwError("BulkInsertInvalidOperationException", "Bulk Insert store methods cannot be executed concurrently.");
         }
 
         this._concurrentCheck = 1;
@@ -285,7 +402,7 @@ export class BulkInsertOperation {
 
     private static _verifyValidId(id: string): void {
         if (StringUtil.isNullOrEmpty(id)) {
-            throwError("InvalidArgumentException", "Document id must have a non empty value." +
+            throwError("BulkInsertInvalidOperationException", "Document id must have a non empty value." +
                 "If you want to store object literals with empty id, please register convention here: store.conventions.findCollectionNameForObjectLiteral");
         }
 
@@ -358,30 +475,41 @@ export class BulkInsertOperation {
     }
 
     public async finish(): Promise<void> {
-        this._endPreviousCommandIfNeeded();
+        try {
+            this._endPreviousCommandIfNeeded();
 
-        if (this._currentWriter) {
-            this._currentWriter.push("]");
-            this._currentWriter.push(null);
+            if (this._currentWriter) {
+                this._currentWriter.push("]");
+                this._currentWriter.push(null);
+            }
+
+            if (this._operationId === -1) {
+                // closing without calling a single store.
+                return;
+            }
+
+            if (this._completedWithError || this._aborted) {
+                await this._checkIfBulkInsertWasAborted();
+            }
+
+            if (this._unsubscribeChanges) {
+                this._unsubscribeChanges.dispose();
+            }
+
+            await Promise.race(
+                [
+                    this._bulkInsertExecuteTask || Promise.resolve(),
+                    this._bulkInsertAborted || Promise.resolve()
+                ]);
+        } finally {
+            if (this._timer) {
+                this._timer.dispose();
+            }
         }
-
-        if (this._operationId === -1) {
-            // closing without calling a single store.
-            return;
-        }
-
-        if (this._completedWithError || this._aborted) {
-            await this._checkIfBulkInsertWasAborted();
-        }
-
-        await Promise.race(
-            [
-                this._bulkInsertExecuteTask || Promise.resolve(),
-                this._bulkInsertAborted || Promise.resolve()
-            ]);
     }
 
     private readonly _conventions: DocumentConventions;
+    private readonly _store: IDocumentStore;
 
     private async _getId(entity: any) {
         let idRef: string;
@@ -424,9 +552,7 @@ export class BulkInsertOperation {
             tsName = TimeSeriesOperations.getTimeSeriesName(clazz, this._conventions);
         }
 
-        if (StringUtil.isNullOrEmpty(tsName)) {
-            throwError("InvalidArgumentException", "Time series name cannot be null or empty");
-        }
+        BulkInsertOperation._validateTimeSeriesName(tsName);
 
         return new BulkInsertOperation._typedTimeSeriesBulkInsertClass(this, clazz, id, tsName);
 
@@ -445,15 +571,23 @@ export class BulkInsertOperation {
             throwError("InvalidArgumentException", "Document id cannot be null or empty");
         }
 
-        if (StringUtil.isNullOrEmpty(name)) {
-            throwError("InvalidArgumentException", "Time series name cannot be null or empty");
-        }
+        BulkInsertOperation._validateTimeSeriesName(name);
 
         return new BulkInsertOperation._timeSeriesBulkInsertClass(this, id, name);
     }
 
+    private static _validateTimeSeriesName(name: string) {
+        if (StringUtil.isNullOrEmpty(name)) {
+            throwError("InvalidArgumentException", "Time series name cannot be null or empty");
+        }
+
+        if (StringUtil.startsWithIgnoreCase(name, HEADERS.INCREMENTAL_TIME_SERIES_PREFIX) && !name.includes("@")) {
+            throwError("InvalidArgumentException", "Time Series name cannot start with " + HEADERS.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+        }
+    }
+
     static throwAlreadyRunningTimeSeries() {
-        throwError("InvalidOperationException", "There is an already running time series operation, did you forget to close it?");
+        throwError("BulkInsertInvalidOperationException", "There is an already running time series operation, did you forget to close it?");
     }
 
     private static readonly _countersBulkInsertClass = class CountersBulkInsert implements ICountersBulkInsert {
@@ -584,6 +718,7 @@ export class BulkInsertOperation {
         protected async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
             const check = this._operation._concurrencyCheck();
             try {
+                this._operation._lastWriteToStream = new Date();
 
                 await this._operation._executeBeforeStore();
 
@@ -730,6 +865,7 @@ export class BulkInsertOperation {
             const check = this._operation._concurrencyCheck();
 
             try {
+                this._operation._lastWriteToStream = new Date();
                 this._operation._endPreviousCommandIfNeeded();
 
                 await this._operation._executeBeforeStore();
@@ -831,4 +967,9 @@ export class BulkInsertCommand extends RavenCommand<void> {
 export interface BulkInsertOptions {
     useCompression?: boolean;
     skipOverwriteIfUnchanged?: boolean;
+}
+
+export interface TimerState {
+    parent: BulkInsertOperation;
+    timer: Timer;
 }

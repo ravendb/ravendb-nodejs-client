@@ -16,7 +16,6 @@ import { StringBuilder } from "../../../Utility/StringBuilder";
 import { ServerResponse } from "../../../Types";
 import { ITimeSeriesIncludeBuilder } from "../../Session/Loaders/ITimeSeriesIncludeBuilder";
 import { TimeSeriesIncludeBuilder } from "../../Session/Loaders/TimeSeriesIncludeBuilder";
-import { ObjectUtil } from "../../../Utility/ObjectUtil";
 
 export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private readonly _docId: string;
@@ -26,14 +25,16 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     private readonly _from: Date;
     private readonly _to: Date;
     private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
+    private readonly _returnFullResults: boolean;
 
     public constructor(docId: string, timeseries: string);
     public constructor(docId: string, timeseries: string, from: Date, to: Date);
     public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number);
     public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number, pageSize: number);
     public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number, pageSize: number, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void);
+    public constructor(docId: string, timeseries: string, from: Date, to: Date, start: number, pageSize: number, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, returnFullResults: boolean);
     public constructor(docId: string, timeseries: string, from?: Date, to?: Date, start: number = 0, pageSize: number = TypeUtil.MAX_INT32,
-                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
+                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void, returnFullResults: boolean = false) {
         if (StringUtil.isNullOrEmpty(docId)) {
             throwError("InvalidArgumentException", "DocId cannot be null or empty");
         }
@@ -49,6 +50,7 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         this._from = from;
         this._to = to;
         this._includes = includes;
+        this._returnFullResults = returnFullResults;
     }
 
     public get resultType(): OperationResultType {
@@ -56,7 +58,7 @@ export class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     }
 
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<TimeSeriesRangeResult> {
-        return new GetTimeSeriesCommand(conventions, this._docId, this._name, this._from, this._to, this._start, this._pageSize, this._includes);
+        return new GetTimeSeriesCommand(conventions, this._docId, this._name, this._from, this._to, this._start, this._pageSize, this._includes, this._returnFullResults);
     }
 }
 
@@ -69,9 +71,10 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     private readonly _from: Date;
     private readonly _to: Date;
     private readonly _includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void;
+    private readonly _returnFullResults: boolean;
 
     public constructor(conventions: DocumentConventions, docId: string, name: string, from: Date, to: Date, start: number, pageSize: number,
-                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void) {
+                       includes?: (includeBuilder: ITimeSeriesIncludeBuilder) => void, returnFullResults: boolean = false) {
         super();
 
         this._conventions = conventions;
@@ -82,6 +85,7 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         this._from = from;
         this._to = to;
         this._includes = includes;
+        this._returnFullResults = returnFullResults;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
@@ -124,6 +128,11 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
 
         if (this._includes) {
             GetTimeSeriesCommand.addIncludesToRequest(pathBuilder, this._includes);
+        }
+
+        if (this._returnFullResults) {
+            pathBuilder
+                .append("&full=true");
         }
 
         const uri = pathBuilder.toString();
@@ -183,7 +192,8 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
                 timestamp: entry.Timestamp,
                 tag: entry.Tag,
                 values: entry.Values,
-                isRollup: entry.IsRollup
+                isRollup: entry.IsRollup,
+                nodeValues: entry.NodeValues
             }))
         };
 
@@ -202,6 +212,7 @@ export function reviveTimeSeriesRangeResult(json: ServerResponse<TimeSeriesRange
         result.isRollup = rawEntry.isRollup;
         result.tag = rawEntry.tag;
         result.values = rawEntry.values;
+        result.nodeValues = rawEntry.nodeValues;
 
         return result;
     };

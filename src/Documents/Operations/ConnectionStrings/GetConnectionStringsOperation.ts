@@ -4,18 +4,19 @@ import {
     ConnectionStringType,
     SqlConnectionString,
     RavenConnectionString,
-    OlapConnectionString
+    OlapConnectionString, ElasticSearchConnectionString, QueueConnectionString
 } from "../Etl/ConnectionString";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { ServerNode } from "../../../Http/ServerNode";
-import { OlapEtlConfiguration } from "../Etl/Olap/OlapEtlConfiguration";
 
 export interface GetConnectionStringsResult {
     ravenConnectionStrings: Record<string, RavenConnectionString>;
     sqlConnectionStrings: Record<string, SqlConnectionString>;
     olapConnectionStrings: Record<string, OlapConnectionString>;
+    elasticSearchConnectionStrings: Record<string, ElasticSearchConnectionString>;
+    queueConnectionStrings: Record<string, QueueConnectionString>;
 }
 
 export class GetConnectionStringsOperation implements IMaintenanceOperation<GetConnectionStringsResult> {

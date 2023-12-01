@@ -287,13 +287,17 @@ describe("BulkInsertAttachmentsTest", function () {
     it("storeAsyncShouldThrowIfRunningTimeSeriesBulkInsert", async () => {
         await assertThrows(async () => {
             const bulkInsert = store.bulkInsert();
-            bulkInsert.timeSeriesFor("id", "name");
+            try {
+                bulkInsert.timeSeriesFor("id", "name");
 
-            const bulk = bulkInsert.attachmentsFor("id");
-            await bulk.store("name", Buffer.from([1, 2, 3]));
+                const bulk = bulkInsert.attachmentsFor("id");
+                await bulk.store("name", Buffer.from([1, 2, 3]));
+            } finally {
+                await bulkInsert.finish();
+            }
         }, err => {
             assertThat(err.name)
-                .isEqualTo("InvalidOperationException");
+                .isEqualTo("BulkInsertInvalidOperationException");
             assertThat(err.message)
                 .contains("There is an already running time series operation, did you forget to close it?");
         });

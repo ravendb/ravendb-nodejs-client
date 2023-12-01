@@ -1,5 +1,5 @@
 import { IOperation, OperationResultType } from "../OperationAbstractions";
-import { CountersDetail } from "../Counters/CountersDetail";
+import { CountersDetail } from "./CountersDetail";
 import { IDocumentStore } from "../../IDocumentStore";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { HttpCache } from "../../../Http/HttpCache";
@@ -83,7 +83,7 @@ export class GetCounterValuesCommand extends RavenCommand<CountersDetail> {
                     .append(encodeURIComponent(this._counters[0]));
             }
         }
-        
+
         if (this._returnFullResults && req.method === "GET") {
             // if we dropped to Post, _returnFullResults is part of the request content
             pathBuilder.append("&full=true");

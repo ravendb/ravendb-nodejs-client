@@ -1,5 +1,6 @@
 import { StringUtil } from "./StringUtil";
-import { throwError } from "../Exceptions/index";
+import { throwError } from "../Exceptions";
+import { StringBuilder } from "./StringBuilder";
 
 export class TimeUtil {
 
@@ -18,6 +19,39 @@ export class TimeUtil {
     }
 
     public static readonly MILLIS_IN_DAY = 24 * 3600 * 1000;
+
+    public static durationToTimeSpan(duration: number) {
+        let time = duration;
+        const millis = time % 1000;
+        time -= millis;
+        time = time / 1000; // seconds
+        const seconds = time % 60;
+        time -= seconds;
+        time = time / 60; // in minutes
+        const minutes = time % 60;
+        time -= minutes;
+        time = time / 60; // in hours
+        const hours = time % 24;
+        time -= hours;
+        time = time / 24; // in days
+        const days = time;
+
+        const sb = new StringBuilder();
+        if (days) {
+            sb.append(days).append(".");
+        }
+        sb.append(hours.toString().padStart(2, "0")).append(":");
+        sb.append(minutes.toString().padStart(2, "0")).append(":");
+        sb.append(seconds.toString().padStart(2, "0"));
+
+        if (millis) {
+            sb.append(".");
+            sb.append(millis.toString().padStart(3, "0"))
+                .append("0000");
+        }
+
+        return sb.toString();
+    }
 
     public static timeSpanToDuration(text: string) {
         const hasDays = !!text.match(/^\d+\./);

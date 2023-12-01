@@ -12,7 +12,6 @@ import { ISessionDocumentCounters } from "./ISessionDocumentCounters";
 import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries";
-import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations";
 import { SessionOptions } from "./SessionOptions";
 import { throwError } from "../../Exceptions";
@@ -23,6 +22,8 @@ import { DocumentStoreBase } from "../DocumentStoreBase";
 import { RequestExecutor } from "../../Http/RequestExecutor";
 import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
+import { ISessionDocumentTypedIncrementalTimeSeries } from "./ISessionDocumentTypedIncrementalTimeSeries";
+import { ISessionDocumentIncrementalTimeSeries } from "./ISessionDocumentIncrementalTimeSeries";
 
 export class SessionInfo {
     private static _clientSessionIdCounter: number = 0;
@@ -260,6 +261,14 @@ export interface IDocumentSession extends IDisposable {
     timeSeriesRollupFor<T extends object>(entity: object, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
     timeSeriesRollupFor<T extends object>(documentId: string, policy: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
     timeSeriesRollupFor<T extends object>(documentId: string, policy: string, raw: string, clazz: ClassConstructor<T>): ISessionDocumentRollupTypedTimeSeries<T>;
+
+    incrementalTimeSeriesFor(documentId: string, name: string): ISessionDocumentIncrementalTimeSeries;
+    incrementalTimeSeriesFor(entity: object, name: string): ISessionDocumentIncrementalTimeSeries;
+
+    incrementalTimeSeriesFor<T extends object>(documentId: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    incrementalTimeSeriesFor<T extends object>(documentId: string, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    incrementalTimeSeriesFor<T extends object>(entity: object, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    incrementalTimeSeriesFor<T extends object>(entity: object, name: string, clazz: ObjectTypeDescriptor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
 }
 
 /**
@@ -316,7 +325,7 @@ export interface StartingWithOptions {
 }
 
 export interface SessionLoadInternalParameters<TResult extends object> {
-    includes?: string[]; 
+    includes?: string[];
     documentType?: DocumentType<TResult>;
     counterIncludes?: string[];
     includeAllCounters?: boolean;

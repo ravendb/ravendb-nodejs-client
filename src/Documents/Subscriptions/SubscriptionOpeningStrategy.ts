@@ -16,5 +16,6 @@ export type SubscriptionOpeningStrategy =
      * If the client currently cannot open the subscription because it is used by
      * another client but it will wait for that client to complete and keep attempting to gain the subscription
      */
-    "WaitForFree"
+    "WaitForFree" |
+    "Concurrent"
     ;

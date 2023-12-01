@@ -19,9 +19,9 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
         this._filter = filter;
     }
 
-    public on(event: "data", handler: (value: T) => void);
-    public on(event: "error", handler: (error: Error) => void);
-    public on(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
+    public on(event: "data", handler: (value: T) => void): this;
+    public on(event: "error", handler: (error: Error) => void): this;
+    public on(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)): this {
         switch (event) {
             case "data":
                 // since allow multiple subscriptions on single object we cant register it multiple times
@@ -49,15 +49,15 @@ export class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
         return this;
     }
 
-    public removeListener(event: "data", handler: (value: T) => void);
-    public removeListener(event: "error", handler: (error: Error) => void);
-    public removeListener(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
+    public removeListener(event: "data", handler: (value: T) => void): this;
+    public removeListener(event: "error", handler: (error: Error) => void): this;
+    public removeListener(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)): this {
         return this.off(event as any, handler as any);
     }
 
-    public off(event: "data", handler: (value: T) => void);
-    public off(event: "error", handler: (error: Error) => void);
-    public off(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)) {
+    public off(event: "data", handler: (value: T) => void): this;
+    public off(event: "error", handler: (error: Error) => void): this;
+    public off(event: "data" | "error", handler: ((value: T) => void) | ((error: Error) => void)): this {
 
         switch (event) {
             case "data":

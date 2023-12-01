@@ -587,7 +587,7 @@ export class ClusterTestContext extends RavenTestDriver implements IDisposable {
         const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(dbName || store.database));
 
         for (const nodeTag of getAllNodesFromTopology(record.topology)) {
-            await this.waitForIndexing(store, dbName, timeout, true, nodeTag);
+            await this.waitForIndexing(store, dbName, timeout, false, nodeTag);
         }
     }
 

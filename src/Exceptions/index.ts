@@ -1,5 +1,5 @@
 import { VError } from "verror";
-import { closeHttpResponse } from "./../Utility/HttpUtil";
+import { closeHttpResponse } from "../Utility/HttpUtil";
 import { StatusCodes } from "../Http/StatusCode";
 import { HttpResponse } from "../Primitives/Http";
 import { JsonSerializer } from "../Mapping/Json/Serializer";
@@ -49,6 +49,7 @@ export type RavenErrorType = "RavenException"
     | "RavenTimeoutException"
     | "NotSupportedException"
     | "IndexCompactionInProgressException"
+    | "InvalidQueryException"
     | "InvalidOperationException"
     | "InvalidArgumentException"
     | "ErrorResponseException"
@@ -147,7 +148,12 @@ export type RavenErrorType = "RavenException"
     | "ReplicationHubNotFoundException"
     | "SubscriptionNameException"
     | "SorterDoesNotExistException"
-    | "LicenseActivationException";
+    | "LicenseActivationException"
+    | "NotSupportedInCoraxException"
+    | "NotImplementedInCoraxException"
+    | "CompareExchangeInvalidKeyException"
+    | "BulkInsertInvalidOperationException"
+    | "BulkInsertClientException";
 
 export interface ExceptionSchema {
     url: string;

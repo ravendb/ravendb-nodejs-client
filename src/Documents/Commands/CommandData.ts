@@ -23,8 +23,11 @@ export type CommandType =
     | "BatchPATCH"
     | "ForceRevisionCreation"
     | "TimeSeries"
+    | "TimeSeriesWithIncrements"
     | "TimeSeriesBulkInsert"
     | "TimeSeriesCopy"
+    | "JsonPatch"
+    | "HeartBeat"
     ;
 
 export interface ICommandData {

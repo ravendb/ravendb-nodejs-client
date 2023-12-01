@@ -8,6 +8,7 @@ export class TimeSeriesEntry {
     public tag: string;
     public values: number[];
     public isRollup: boolean;
+    public nodeValues: Record<string, number[]>;
 
     public get value(): number {
         if (this.values.length === 1) {

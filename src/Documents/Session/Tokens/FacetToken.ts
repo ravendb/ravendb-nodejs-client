@@ -1,5 +1,5 @@
 import { QueryToken } from "./QueryToken";
-import { throwError } from "../../../Exceptions/index";
+import { throwError } from "../../../Exceptions";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { Facet } from "../../Queries/Facets/Facet";
 import { FacetAggregation, FacetOptions } from "../../Queries/Facets";

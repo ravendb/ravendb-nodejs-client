@@ -1,13 +1,6 @@
-import { PatchStatus } from "./PatchStatus";
+import { PatchResultBase } from "./PatchResultBase";
 
-export class PatchResult {
-
-    public status: PatchStatus;
-    public modifiedDocument: object;
+export class PatchResult extends PatchResultBase {
     public originalDocument: object;
     public debug: object;
-
-    public changeVector: string;
-    public collection: string;
-    public lastModified: Date;
 }

@@ -4,7 +4,6 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { TypeUtil } from "../../../Utility/TypeUtil";
 import { TimeSeriesRangeType } from "../../Operations/TimeSeries/TimeSeriesRangeType";
 import { TimeValue } from "../../../Primitives/TimeValue";
-import { IIncludeBuilder } from "./IIncludeBuilder";
 import { TIME_SERIES } from "../../../Constants";
 
 export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryIncludeBuilder {
@@ -45,7 +44,7 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
         } else {
             this._includeAllCounters("");
         }
-        
+
         return this;
     }
 

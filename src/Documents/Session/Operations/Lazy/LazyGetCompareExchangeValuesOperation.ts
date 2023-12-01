@@ -6,12 +6,10 @@ import { TypeUtil } from "../../../../Utility/TypeUtil";
 import { GetRequest } from "../../../Commands/MultiGet/GetRequest";
 import { GetResponse } from "../../../Commands/MultiGet/GetResponse";
 import { StringUtil } from "../../../../Utility/StringUtil";
-import { RavenCommandResponsePipeline } from "../../../../Http/RavenCommandResponsePipeline";
 import {
     CompareExchangeValueResultParser,
     GetCompareExchangeValuesResponse
 } from "../../../Operations/CompareExchange/CompareExchangeValueResultParser";
-import { stringToReadable } from "../../../../Utility/StreamUtil";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions";
 import { QueryResult } from "../../../Queries/QueryResult";
 import { CompareExchangeValue } from "../../../Operations/CompareExchange/CompareExchangeValue";

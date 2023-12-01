@@ -1,5 +1,5 @@
 import { ICommandData, CommandType } from "../CommandData";
-import { AttachmentData } from "./../../Attachments/index";
+import { AttachmentData } from "../../Attachments";
 import { StringUtil } from "../../../Utility/StringUtil";
 import { throwError } from "../../../Exceptions";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";

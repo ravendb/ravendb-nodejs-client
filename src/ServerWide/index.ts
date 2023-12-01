@@ -13,7 +13,8 @@ import { IndexDefinition } from "../Documents/Indexes/IndexDefinition";
 import { RevisionsConfiguration } from "../Documents/Operations/RevisionsConfiguration";
 import { ExternalReplication } from "../Documents/Replication/ExternalReplication";
 import {
-    OlapConnectionString,
+    ElasticSearchConnectionString,
+    OlapConnectionString, QueueConnectionString,
     RavenConnectionString,
     SqlConnectionString
 } from "../Documents/Operations/Etl/ConnectionString";
@@ -26,6 +27,9 @@ import { RollingIndexDeployment } from "../Documents/Indexes/RollingIndexDeploym
 import { RollingIndex } from "../Documents/Indexes/RollingIndex";
 import { AnalyzerDefinition } from "../Documents/Indexes/Analysis/AnalyzerDefinition";
 import { OlapEtlConfiguration } from "../Documents/Operations/Etl/Olap/OlapEtlConfiguration";
+import { IntegrationConfigurations } from "./Operations/Integrations/PostgreSql/IntegrationConfigurations";
+import { ElasticSearchEtlConfiguration } from "../Documents/Operations/Etl/ElasticSearch/ElasticSearchEtlConfiguration";
+import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEtlConfiguration";
 
 export interface ScriptResolver {
     script: string;
@@ -60,6 +64,7 @@ export interface DatabaseRecord {
     revisionsForConflicts?: RevisionsCollectionConfiguration;
     expiration?: ExpirationConfiguration;
     refresh?: RefreshConfiguration;
+    integrations?: IntegrationConfigurations;
     periodicBackups?: PeriodicBackupConfiguration[];
     externalReplications?: ExternalReplication[];
     sinkPullReplications?: PullReplicationAsSink[];
@@ -67,9 +72,13 @@ export interface DatabaseRecord {
     ravenConnectionStrings?: { [key: string]: RavenConnectionString };
     sqlConnectionStrings?: { [key: string]: SqlConnectionString };
     olapConnectionStrings?: { [key: string]: OlapConnectionString };
+    elasticSearchConnectionStrings?: { [key: string]: ElasticSearchConnectionString };
+    queueConnectionStrings?: { [key: string]: QueueConnectionString };
     ravenEtls?: RavenEtlConfiguration[];
     sqlEtls?: SqlEtlConfiguration[];
+    elasticSearchEtls?: ElasticSearchEtlConfiguration[];
     olapEtls?: OlapEtlConfiguration[];
+    queueEtls?: QueueEtlConfiguration[];
     client?: ClientConfiguration;
     studio?: StudioConfiguration;
     truncatedClusterTransactionIndex?: number;

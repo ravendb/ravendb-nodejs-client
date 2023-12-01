@@ -2,7 +2,7 @@ import * as stream from "readable-stream";
 import { ServerNode } from "../../../Http/ServerNode";
 import { RavenCommand } from "../../../Http/RavenCommand";
 import { HttpRequestParameters } from "../../../Primitives/Http";
-import { ClientConfiguration } from "../Configuration/ClientConfiguration";
+import { ClientConfiguration } from "./ClientConfiguration";
 import { DocumentConventions } from "../../Conventions/DocumentConventions";
 import { IMaintenanceOperation, OperationResultType } from "../OperationAbstractions";
 

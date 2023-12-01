@@ -46,4 +46,5 @@ export type UploadType =
 
 export interface SnapshotSettings {
     compressionLevel: CompressionLevel;
+    excludeIndexes?: boolean;
 }

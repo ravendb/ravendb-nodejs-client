@@ -34,9 +34,9 @@ export class BatchOperation {
         this._onSuccessfulRequest = result.onSuccess;
         this._sessionCommandsCount = result.sessionCommands.length;
         result.sessionCommands.push(...result.deferredCommands);
-        
+
         this._session.validateClusterTransaction(result);
-        
+
         this._allCommandsCount = result.sessionCommands.length;
         if (this._allCommandsCount === 0) {
             return null;
@@ -75,8 +75,8 @@ export class BatchOperation {
             if (result.transactionIndex <= 0) {
                 throwError(
                     "ClientVersionMismatchException",
-                    "Cluster transaction was send to a node that is not supporting it. " 
-                    + "So it was executed ONLY on the requested node on " 
+                    "Cluster transaction was send to a node that is not supporting it. "
+                    + "So it was executed ONLY on the requested node on "
                     + this._session.requestExecutor.getUrl());
             }
         }
@@ -148,6 +148,7 @@ export class BatchOperation {
                     this._handleCounters(batchResult);
                     break;
                 case "TimeSeries":
+                case "TimeSeriesWithIncrements":
                     //TODO: RavenDB-13474 add to time series cache
                     break;
                 case "TimeSeriesCopy":
@@ -171,7 +172,7 @@ export class BatchOperation {
             this._applyMetadataModifications(id, docInfo);
         }
     }
-    
+
     private _applyMetadataModifications(id: string, documentInfo: DocumentInfo): void {
         documentInfo.metadataInstance = null;
         documentInfo.metadata = ObjectUtil.deepLiteralClone(documentInfo.metadata);
@@ -183,13 +184,13 @@ export class BatchOperation {
 
         documentInfo.document = documentCopy;
     }
-    
+
     private _getOrAddModifications(
         id: string, documentInfo: DocumentInfo, applyModifications: boolean): DocumentInfo {
         if (!this._modifications) {
             this._modifications = CaseInsensitiveKeysMap.create<DocumentInfo>();
         }
-        
+
         let modifiedDocumentInfo = this._modifications.get(id);
         if (modifiedDocumentInfo) {
             if (applyModifications) {
@@ -199,7 +200,7 @@ export class BatchOperation {
             modifiedDocumentInfo = documentInfo;
             this._modifications.set(id, documentInfo);
         }
-        
+
         return modifiedDocumentInfo;
     }
 
@@ -267,7 +268,7 @@ export class BatchOperation {
             if (attachmentName === name) {
                 continue;
             }
-            
+
             attachments.push(attachment);
         }
     }
@@ -412,7 +413,7 @@ export class BatchOperation {
             if (!sessionDocumentInfo) {
                 return;
             }
-            
+
             documentInfo = this._getOrAddModifications(id, sessionDocumentInfo, true);
             entity = documentInfo.entity;
         }
@@ -458,9 +459,9 @@ export class BatchOperation {
 
         let cache = this._session.countersByDocId.get(docId);
         if (!cache) {
-            cache = { 
-                gotAll: false, 
-                data: CaseInsensitiveKeysMap.create<number>() 
+            cache = {
+                gotAll: false,
+                data: CaseInsensitiveKeysMap.create<number>()
             } as CounterTracking;
             this._session.countersByDocId.set(docId, cache);
         }
@@ -513,6 +514,10 @@ export class BatchOperation {
         return jsonNode;
     }
 
+    private static _throwInvalidValue(arg: string, fieldName: string) {
+        throwError("InvalidOperationException", "'" + arg + "' is not a valid value for field " + fieldName);
+    }
+
     private static _throwMissingField(type: CommandType, fieldName: string): void {
         throwError("InvalidOperationException", type + " response is invalid. Field '" + fieldName + "' is missing.");
     }
@@ -521,4 +526,4 @@ export class BatchOperation {
 
 function getCommandType(batchResult: object): CommandType {
     return batchResult["type"] || "None";
-}       
+}

@@ -68,8 +68,8 @@ describe("bulk insert", function () {
     });
 
     it("can be killed early before making connection", async () => {
+        const bulkInsert = store.bulkInsert();
         try {
-            const bulkInsert = store.bulkInsert();
             await bulkInsert.store(new FooBar());
             await bulkInsert.abort();
             await bulkInsert.store(new FooBar());
@@ -89,12 +89,19 @@ describe("bulk insert", function () {
                 || bulkInsertNotRegisteredYet
                 || bulkInsertSuccessfullyKilled,
                 "Unexpected error message:" + error.message);
+        } finally {
+            try {
+                await bulkInsert.finish();
+            } catch (e) {
+                // ignore
+            }
         }
     });
 
     it("can be aborted after a while", async () => {
+        const bulkInsert = store.bulkInsert();
         try {
-            const bulkInsert = store.bulkInsert();
+
             await bulkInsert.store(new FooBar());
             await bulkInsert.store(new FooBar());
             await bulkInsert.store(new FooBar());
@@ -118,18 +125,27 @@ describe("bulk insert", function () {
                 || bulkInsertNotRegisteredYet
                 || bulkInsertSuccessfullyKilled,
                 "Unexpected error message:" + error.message);
+        } finally {
+            try {
+                await bulkInsert.finish();
+            } catch (e) {
+                //ignore
+            }
         }
     });
 
     it("should not accept ids ending with pipeline", async () => {
+        const bulkInsert = store.bulkInsert();
         try {
-            const bulkInsert = store.bulkInsert();
+
             await bulkInsert.store(new FooBar(), "foobars|");
 
             assert.fail("Should have thrown.");
         } catch (error) {
             assert.strictEqual(error.name, "NotSupportedException");
             assert.strictEqual(error.message, "Document ids cannot end with '|', but was called with foobars|");
+        } finally {
+            await bulkInsert.finish();
         }
     });
 

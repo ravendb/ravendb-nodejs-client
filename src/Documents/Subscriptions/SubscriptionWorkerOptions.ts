@@ -10,4 +10,5 @@ export interface SubscriptionWorkerOptions<T extends object> {
     maxErroneousPeriod?: number;
     closeWhenNoDocsLeft?: boolean;
     documentType?: DocumentType<T>;
+    workerId?: string;
 }

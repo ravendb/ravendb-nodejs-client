@@ -18,4 +18,4 @@ export interface IChangesConnectionState<T> extends IDisposable {
     removeOnError(handler: (value: Error) => void);
 }
 
-export type ChangesType = "Document" | "Index" | "Operation" | "Counter" | "TimeSeries";
+export type ChangesType = "Document" | "Index" | "Operation" | "Counter" | "TimeSeries" | "AggressiveCache";

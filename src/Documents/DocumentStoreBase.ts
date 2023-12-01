@@ -23,7 +23,7 @@ import { IDocumentSession } from "./Session/IDocumentSession";
 import { DocumentSession } from "./Session/DocumentSession";
 import { DocumentConventions } from "./Conventions/DocumentConventions";
 import { RequestExecutor } from "../Http/RequestExecutor";
-import { IndexCreation } from "../Documents/Indexes/IndexCreation";
+import { IndexCreation } from "./Indexes/IndexCreation";
 import { PutIndexesOperation } from "./Operations/Indexes/PutIndexesOperation";
 import { BulkInsertOperation, BulkInsertOptions } from "./BulkInsertOperation";
 import { IDatabaseChanges } from "./Changes/IDatabaseChanges";
@@ -174,7 +174,7 @@ export abstract class DocumentStoreBase
         if (!index) {
             return null;
         }
-        
+
         return index;
     }
 

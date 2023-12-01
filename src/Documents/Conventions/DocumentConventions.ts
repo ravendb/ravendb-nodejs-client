@@ -57,6 +57,9 @@ export class DocumentConventions {
     private _disableTopologyUpdates: boolean;
 
     private _disableAtomicDocumentWritesInClusterWideTransaction: boolean;
+
+    private _disableTcpCompression = true; // not yet supported
+
     private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
 
     private _transformClassCollectionNameToDocumentIdPrefix: (maybeClassCollectionName: string) => string;
@@ -322,6 +325,10 @@ export class DocumentConventions {
     public set loadBalancerContextSeed(seed: number) {
         this._assertNotFrozen();
         this._loadBalancerContextSeed = seed;
+    }
+
+    public get isDisableTcpCompression() {
+        return this._disableTcpCompression;
     }
 
     /**

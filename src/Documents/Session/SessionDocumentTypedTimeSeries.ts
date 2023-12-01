@@ -5,8 +5,10 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { TypedTimeSeriesEntry } from "./TimeSeries/TypedTimeSeriesEntry";
 import { TypeUtil } from "../../Utility/TypeUtil";
 import { TimeSeriesValuesHelper } from "./TimeSeries/TimeSeriesValuesHelper";
+import { ISessionDocumentTypedIncrementalTimeSeries } from "./ISessionDocumentTypedIncrementalTimeSeries";
 
-export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTimeSeriesBase implements ISessionDocumentTypedTimeSeries<T> {
+export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTimeSeriesBase
+    implements ISessionDocumentTypedTimeSeries<T>, ISessionDocumentTypedIncrementalTimeSeries<T> {
     private readonly _clazz: ClassConstructor<T>;
 
     public constructor(session: InMemoryDocumentSessionOperations, entity: any, name: string, clazz: ClassConstructor<T>);
@@ -22,14 +24,11 @@ export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTim
     public async get(from: Date, to: Date, start: number): Promise<TypedTimeSeriesEntry<T>[]>;
     public async get(from: Date, to: Date, start: number, pageSize: number): Promise<TypedTimeSeriesEntry<T>[]>;
     public async get(startOrFrom?: number | Date, toOrPageSize?: number | Date, start?: number, pageSize?: number): Promise<TypedTimeSeriesEntry<T>[]> {
-        if (TypeUtil.isNullOrUndefined(startOrFrom)) {
-            // get()
-            return this._getTyped(null, null, 0, TypeUtil.MAX_INT32)
-        } else if (TypeUtil.isNumber(startOrFrom)) {
+        if (TypeUtil.isNumber(startOrFrom)) {
             // get(start: number, pageSize: number)
             return this._getTyped(null, null, startOrFrom, toOrPageSize as number);
         } else {
-            return this._getTyped(startOrFrom, toOrPageSize as Date, start ?? 0, pageSize ?? TypeUtil.MAX_INT32);
+            return this._getTyped(startOrFrom, toOrPageSize as Date, 0, TypeUtil.MAX_INT32);
         }
     }
 
@@ -56,6 +55,40 @@ export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTim
         } else {
             const values = TimeSeriesValuesHelper.getValues<T>(this._clazz, entry);
             this._appendInternal(entryOrTimestamp, values, tag);
+        }
+    }
+
+    public increment(timestamp: Date, values: number[]): void;
+    public increment(values: number[]): void;
+    public increment(timestamp: Date, value: number): void;
+    public increment(value: number): void;
+    public increment(timestamp: Date, entry: T): void;
+    public increment(entry: T): void;
+    public increment(entryOrTimestampOrValuesOrValue: T | Date | number[] | number, valuesOrValueOrEntry?: number[] | number | T): void {
+        if (entryOrTimestampOrValuesOrValue instanceof Date) {
+            if (valuesOrValueOrEntry instanceof TypedTimeSeriesEntry) {
+                const values = valuesOrValueOrEntry.values ?? [valuesOrValueOrEntry.value];
+                return this.increment(valuesOrValueOrEntry.timestamp, values);
+            } else if (TypeUtil.isNumber(valuesOrValueOrEntry)) {
+                return this._incrementInternal(entryOrTimestampOrValuesOrValue, [valuesOrValueOrEntry]);
+            } else if (TypeUtil.isArray(valuesOrValueOrEntry)) {
+                return this._incrementInternal(entryOrTimestampOrValuesOrValue, valuesOrValueOrEntry);
+            } else {
+                const values = TimeSeriesValuesHelper.getValues(this._clazz, valuesOrValueOrEntry);
+                return this._incrementInternal(entryOrTimestampOrValuesOrValue, values);
+            }
+        } else {
+            if (entryOrTimestampOrValuesOrValue instanceof TypedTimeSeriesEntry) {
+                const values = entryOrTimestampOrValuesOrValue.values ?? [entryOrTimestampOrValuesOrValue.value];
+                return this.increment(entryOrTimestampOrValuesOrValue.timestamp, values);
+            } else if (TypeUtil.isArray(entryOrTimestampOrValuesOrValue)) {
+                return this._incrementInternal(new Date(), entryOrTimestampOrValuesOrValue);
+            } else if (TypeUtil.isNumber(entryOrTimestampOrValuesOrValue)) {
+                return this._incrementInternal(new Date(), [entryOrTimestampOrValuesOrValue]);
+            } else {
+                const values = TimeSeriesValuesHelper.getValues(this._clazz, entryOrTimestampOrValuesOrValue);
+                return this._incrementInternal(new Date(), values);
+            }
         }
     }
 }

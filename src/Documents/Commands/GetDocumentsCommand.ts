@@ -20,6 +20,7 @@ import { ObjectUtil } from "../../Utility/ObjectUtil";
 import { AbstractTimeSeriesRange } from "../Operations/TimeSeries/AbstractTimeSeriesRange";
 import { TimeSeriesTimeRange } from "../Operations/TimeSeries/TimeSeriesTimeRange";
 import { TimeSeriesCountRange } from "../Operations/TimeSeries/TimeSeriesCountRange";
+import { TransactionMode } from "../Session/TransactionMode";
 
 export interface GetDocumentsCommandCounterOptions {
     counterIncludes?: string[];
@@ -74,10 +75,11 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private readonly _id: string;
 
     private readonly _ids: string[];
-    private readonly _includes: string[];    
-    
+    private readonly _includes: string[];
+
     private _counters: string[];
     private _includeAllCounters: boolean;
+    private _txMode: TransactionMode;
 
     private _timeSeriesIncludes: AbstractTimeSeriesRange[];
     private _revisionsIncludeByChangeVector: string[];
@@ -162,6 +164,11 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         const uriPath = `${node.url}/databases/${node.database}/docs?`;
 
         let query = "";
+
+        if (this._txMode === "ClusterWide") {
+            query += "&txMode=ClusterWide";
+        }
+
         if (!TypeUtil.isNullOrUndefined(this._start)) {
             query += `&start=${this._start}`;
         }
@@ -359,5 +366,9 @@ export class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     public get isReadRequest(): boolean {
         return true;
+    }
+
+    public set transactionMode(mode: TransactionMode) {
+        this._txMode = mode;
     }
 }

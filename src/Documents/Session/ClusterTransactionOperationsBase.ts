@@ -13,6 +13,8 @@ import {
 import { GetCompareExchangeValueOperation } from "../Operations/CompareExchange/GetCompareExchangeValueOperation";
 import { GetCompareExchangeValuesOperation } from "../Operations/CompareExchange/GetCompareExchangeValuesOperation";
 import { SaveChangesData } from "../Commands/CommandData";
+import { StringUtil } from "../../Utility/StringUtil";
+import { COMPARE_EXCHANGE } from "../../Constants";
 
 export class StoredCompareExchange {
     public readonly entity: any;
@@ -29,6 +31,19 @@ export abstract class ClusterTransactionOperationsBase {
 
     protected readonly _session: DocumentSession;
     private readonly _state = CaseInsensitiveKeysMap.create<CompareExchangeSessionValue>();
+
+    private _missingDocumentsTooAtomicGuardIndex: Map<string, string>;
+
+    public tryGetMissingAtomicGuardFor(docId: string, changeVectorCallback: (changeVector: string) => void): boolean {
+        if (!this._missingDocumentsTooAtomicGuardIndex) {
+            changeVectorCallback(null);
+            return false;
+        }
+
+        const cv = this._missingDocumentsTooAtomicGuardIndex.get(docId);
+        changeVectorCallback(cv);
+        return cv != null;
+    }
 
     public get numberOfTrackedCompareExchangeValues() {
         return this._state.size;
@@ -225,19 +240,34 @@ export abstract class ClusterTransactionOperationsBase {
         return value;
     }
 
-    public registerCompareExchangeValues(values: Record<string, CompareExchangeResultItem>) {
+    public registerCompareExchangeValues(values: Record<string, CompareExchangeResultItem>, includingMissingAtomicGuards: boolean) {
         if (this.session.noTracking) {
             return;
         }
 
         if (values) {
             for (const [key, value] of Object.entries(values)) {
-                this.registerCompareExchangeValue(CompareExchangeValueResultParser.getSingleValue(value, false, this.session.conventions, null));
+                const val = CompareExchangeValueResultParser.getSingleValue(value, false, this.session.conventions, null);
+
+                if (includingMissingAtomicGuards
+                    && StringUtil.startsWithIgnoreCase(val.key, COMPARE_EXCHANGE.RVN_ATOMIC_PREFIX)
+                    && val.changeVector) {
+                    if (!this._missingDocumentsTooAtomicGuardIndex) {
+                        this._missingDocumentsTooAtomicGuardIndex = new Map<string, string>();
+                    }
+
+                    this._missingDocumentsTooAtomicGuardIndex.set(val.key.substring(COMPARE_EXCHANGE.RVN_ATOMIC_PREFIX.length), val.changeVector);
+                } else {
+                    this.registerCompareExchangeValue(val);
+                }
             }
         }
     }
 
     public registerCompareExchangeValue(value: CompareExchangeValue<any>): CompareExchangeSessionValue {
+        if (StringUtil.startsWithIgnoreCase(value.key, COMPARE_EXCHANGE.RVN_ATOMIC_PREFIX)) {
+            throwError("InvalidOperationException", "'" + value.key + "' is an atomic guard and you cannot load it via the session");
+        }
         if (this.session.noTracking) {
             return new CompareExchangeSessionValue(value);
         }

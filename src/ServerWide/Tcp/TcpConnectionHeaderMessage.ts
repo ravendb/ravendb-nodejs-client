@@ -1,5 +1,7 @@
 import { throwError } from "../../Exceptions";
 import { DetailedReplicationHubAccess } from "../../Documents/Operations/Replication/DetailedReplicationHubAccess";
+import { LicensedFeatures } from "./LicensedFeatures";
+import { TypeUtil } from "../../Utility/TypeUtil";
 
 export interface TcpConnectionHeaderMessage {
     databaseName: string;
@@ -9,6 +11,7 @@ export interface TcpConnectionHeaderMessage {
     operationVersion: number;
     info: string;
     authorizeInfo: AuthorizationInfo;
+    licensedFeatures: LicensedFeatures;
     replicationHubAccess: DetailedReplicationHubAccess;
 }
 
@@ -30,14 +33,16 @@ export const DROP_BASE_LINE = -2;
 export const HEARTBEATS_BASE_LINE = 20;
 export const HEARTBEATS_41200 = 41_200;
 export const HEARTBEATS_42000 = 42_000;
+export const HEARTBEATS_WITH_TCP_COMPRESSION = 54_000;
 export const SUBSCRIPTION_BASE_LINE = 40;
 export const SUBSCRIPTION_INCLUDES = 41_400;
 export const SUBSCRIPTION_COUNTER_INCLUDES = 50_000;
 export const SUBSCRIPTION_TIME_SERIES_INCLUDES = 51_000;
+export const TCP_CONNECTIONS_WITH_COMPRESSION = 53_000;
 export const TEST_CONNECTION_BASE_LINE = 50;
 
-export const HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
-export const SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_TIME_SERIES_INCLUDES;
+export const HEARTBEATS_TCP_VERSION = HEARTBEATS_WITH_TCP_COMPRESSION;
+export const SUBSCRIPTION_TCP_VERSION = TCP_CONNECTIONS_WITH_COMPRESSION;
 export const TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
 export class PingFeatures {
@@ -72,9 +77,24 @@ export class TestConnectionFeatures {
 export class SupportedFeatures {
     public readonly protocolVersion: number;
 
-    public constructor(version: number) {
-        this.protocolVersion = version;
+    public constructor(version: number)
+    public constructor(source: SupportedFeatures)
+    public constructor(versionOrSource: number | SupportedFeatures) {
+        if (TypeUtil.isNumber(versionOrSource)) {
+            this.protocolVersion = versionOrSource;
+            return;
+        }
+        const source = versionOrSource;
+        this.protocolVersion = source.protocolVersion;
+        this.ping = source.ping;
+        this.none = source.none;
+        this.drop = source.drop;
+        this.subscription = source.subscription;
+        this.heartbeats = source.heartbeats;
+        this.testConnection = source.testConnection;
+        this.dataCompression = source.dataCompression;
     }
+
 
     public ping: PingFeatures;
     public none: NoneFeatures;
@@ -82,6 +102,8 @@ export class SupportedFeatures {
     public subscription: SubscriptionFeatures;
     public heartbeats: HeartbeatsFeatures;
     public testConnection: TestConnectionFeatures;
+
+    public dataCompression: boolean;
 }
 
 const operationsToSupportedProtocolVersions = new Map<OperationTypes, number[]>();
@@ -92,11 +114,13 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     operationsToSupportedProtocolVersions.set("None", [NONE_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Drop", [DROP_BASE_LINE]);
     operationsToSupportedProtocolVersions.set("Subscription", [
-        SUBSCRIPTION_TIME_SERIES_INCLUDES, SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
+        TCP_CONNECTIONS_WITH_COMPRESSION, SUBSCRIPTION_TIME_SERIES_INCLUDES, SUBSCRIPTION_COUNTER_INCLUDES,
+        SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE
     ]);
     operationsToSupportedProtocolVersions.set("Heartbeats", [
+        HEARTBEATS_TCP_VERSION,
         HEARTBEATS_42000,
-        HEARTBEATS_41200, 
+        HEARTBEATS_41200,
         HEARTBEATS_BASE_LINE
     ]);
     operationsToSupportedProtocolVersions.set("TestConnection", [TEST_CONNECTION_BASE_LINE]);
@@ -143,6 +167,14 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     subscriptions51000Features.subscription.timeSeriesIncludes = true;
     subscriptionFeaturesMap.set(SUBSCRIPTION_TIME_SERIES_INCLUDES, subscriptions51000Features);
 
+    const subscriptions53000Features = new SupportedFeatures(TCP_CONNECTIONS_WITH_COMPRESSION);
+    subscriptions53000Features.dataCompression = true;
+    subscriptions53000Features.subscription = new SubscriptionFeatures();
+    subscriptions53000Features.subscription.includes = true;
+    subscriptions53000Features.subscription.counterIncludes = true;
+    subscriptions53000Features.subscription.timeSeriesIncludes = true;
+    subscriptionFeaturesMap.set(TCP_CONNECTIONS_WITH_COMPRESSION, subscriptions53000Features);
+
     const heartbeatsFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("Heartbeats", heartbeatsFeaturesMap);
     const heartbeatsFeatures = new SupportedFeatures(HEARTBEATS_BASE_LINE);
@@ -159,6 +191,13 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     heartbeats42000Features.heartbeats.sendChangesOnly = true;
     heartbeats42000Features.heartbeats.includeServerInfo = true;
     heartbeatsFeaturesMap.set(HEARTBEATS_42000, heartbeats42000Features);
+
+    const heartbeatsWithTcpCompressionFeatures = new SupportedFeatures(HEARTBEATS_WITH_TCP_COMPRESSION);
+    heartbeatsWithTcpCompressionFeatures.heartbeats = new HeartbeatsFeatures();
+    heartbeatsWithTcpCompressionFeatures.heartbeats.sendChangesOnly = true
+    heartbeatsWithTcpCompressionFeatures.heartbeats.includeServerInfo = true;
+    heartbeatsWithTcpCompressionFeatures.dataCompression = true;
+    heartbeatsFeaturesMap.set(HEARTBEATS_WITH_TCP_COMPRESSION, heartbeatsWithTcpCompressionFeatures);
 
     const testConnectionFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("TestConnection", testConnectionFeaturesMap);

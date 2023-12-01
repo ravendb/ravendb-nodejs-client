@@ -53,7 +53,7 @@ import { StreamResult } from "../Commands/StreamResult";
 import { DocumentResultStream } from "./DocumentResultStream";
 import { StreamOperation } from "./Operations/StreamOperation";
 import { QueryOperation } from "./Operations/QueryOperation";
-import { StreamQueryStatisticsCallback } from "./IAdvancedSessionOperations";
+import { IAdvancedSessionOperations, StreamQueryStatisticsCallback } from "./IAdvancedSessionOperations";
 import { streamResultsIntoStream } from "../../Mapping/Json/Streams/Pipelines";
 import { IClusterTransactionOperations } from "./IClusterTransactionOperations";
 import { ClusterTransactionOperations } from "./ClusterTransactionOperations";
@@ -77,11 +77,13 @@ import { SessionDocumentRollupTypedTimeSeries } from "./SessionDocumentRollupTyp
 import { TIME_SERIES_ROLLUP_SEPARATOR } from "../Operations/TimeSeries/RawTimeSeriesTypes";
 import { AbstractCommonApiForIndexes } from "../Indexes/AbstractCommonApiForIndexes";
 import { DocumentInfo } from "./DocumentInfo";
-import { MetadataAsDictionary, MetadataDictionary } from "../../Mapping/MetadataAsDictionary";
+import { MetadataDictionary } from "../../Mapping/MetadataAsDictionary";
 import { ConditionalLoadResult } from "./ConditionalLoadResult";
 import { StringUtil } from "../../Utility/StringUtil";
 import { ConditionalGetDocumentsCommand } from "../Commands/ConditionalGetDocumentsCommand";
 import { StatusCodes } from "../../Http/StatusCode";
+import { ISessionDocumentIncrementalTimeSeries } from "./ISessionDocumentIncrementalTimeSeries";
+import { ISessionDocumentTypedIncrementalTimeSeries } from "./ISessionDocumentTypedIncrementalTimeSeries";
 
 export interface IStoredRawEntityInfo {
     originalValue: object;
@@ -102,7 +104,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     }
 
-    public get advanced() {
+    public get advanced(): IAdvancedSessionOperations {
         return this;
     }
 
@@ -167,7 +169,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             if (TypeUtil.isFunction(options.includes)) {
                 const builder = new IncludeBuilder(this.conventions);
                 options.includes(builder);
-                
+
                 if (builder.countersToInclude) {
                     internalOpts.counterIncludes = [...builder.countersToInclude];
                 }
@@ -190,7 +192,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
                 internalOpts.includeAllCounters = builder.isAllCounters;
             } else {
                 internalOpts.includes = options.includes as string[];
-            } 
+            }
         }
 
         return internalOpts;
@@ -198,7 +200,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     private async _loadInternal(
         ids: string[],
-        operation: LoadOperation, 
+        operation: LoadOperation,
         writable: stream.Writable): Promise<void>;
     private async _loadInternal(
         ids: string[],
@@ -250,10 +252,20 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     /**
      * Refreshes the specified entity from Raven server.
      */
-    public async refresh<TEntity extends object>(entity: TEntity): Promise<void> {
+    public async refresh<TEntity extends object>(entity: TEntity): Promise<void>;
+    public async refresh<TEntity extends object>(entities: TEntity[]): Promise<void>;
+    public async refresh<TEntity extends object>(entityOrEntities: TEntity[] | TEntity): Promise<void> {
+        if (TypeUtil.isArray(entityOrEntities)) {
+            return this._refreshEntitiesInternal(entityOrEntities);
+        } else {
+            return this._refreshEntityInternal(entityOrEntities);
+        }
+    }
+
+    private async _refreshEntityInternal<TEntity extends object>(entity: TEntity): Promise<void> {
         const documentInfo = this.documentsByEntity.get(entity);
         if (!documentInfo) {
-            throwError("InvalidOperationException", "Cannot refresh a transient instance");
+            DocumentSession._throwCouldNotRefreshDocument("Cannot refresh a transient instance");
         }
 
         this.incrementRequestCount();
@@ -264,8 +276,26 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         });
 
         await this._requestExecutor.execute(command, this._sessionInfo);
-        this._refreshInternal(entity, command, documentInfo);
+        const commandResult = command.result.results[0];
+        this._refreshInternal(entity, commandResult, documentInfo);
     }
+
+    private async _refreshEntitiesInternal<TEntity extends object>(entities: TEntity[]): Promise<void> {
+        const idsEntitiesPairs = this._buildEntityDocInfoByIdHolder(entities);
+
+        this.incrementRequestCount();
+
+        const command = new GetDocumentsCommand({
+            ids: Array.from(idsEntitiesPairs.keys()),
+            includes: null,
+            metadataOnly: false,
+            conventions: this.conventions
+        });
+        await this._requestExecutor.execute(command, this.sessionInfo);
+
+        this._refreshEntities(command, idsEntitiesPairs);
+    }
+
 
     /**
      * Check if document exists without loading it
@@ -714,7 +744,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         if (!isIndex && !isCollection) {
             const entityType = this.conventions.getJsTypeByDocumentType(opts.documentType);
-            collection = this.conventions.getCollectionNameForType(entityType) 
+            collection = this.conventions.getCollectionNameForType(entityType)
                 || CONSTANTS.Documents.Metadata.ALL_DOCUMENTS_COLLECTION;
         }
 
@@ -995,12 +1025,15 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             transform(chunk: object, encoding: string, callback: stream.TransformCallback) {
                 const doc = chunk["value"];
                 const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
-                const changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
+                let changeVector: string = null;
                 // MapReduce indexes return reduce results that don't have @id property
                 const id = metadata[CONSTANTS.Documents.Metadata.ID] || null;
                 //TODO: pass timeseries fields!
                 const entity = QueryOperation.deserialize(
                     id, doc, metadata, fieldsToFetchToken || null, true, session, clazz, isProjectInto);
+                if (id) {
+                    changeVector = metadata[CONSTANTS.Documents.Metadata.CHANGE_VECTOR];
+                }
                 callback(null, {
                     changeVector,
                     metadata,
@@ -1037,6 +1070,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return new SessionDocumentCounters(this, entityOrId as any);
     }
 
+    /**
+     * @deprecated Graph API will be removed in next major version of the product.
+     */
     public graphQuery<TEntity extends object>(
         query: string, documentType?: DocumentType<TEntity>): IGraphDocumentQuery<TEntity> {
         return new GraphDocumentQuery<TEntity>(this, query, documentType);
@@ -1052,6 +1088,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         if (clazz) {
             const name = nameOrClass as string;
             const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            InMemoryDocumentSessionOperations.validateTimeSeriesName(tsName);
             return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, clazz);
         }
 
@@ -1059,6 +1096,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             return new SessionDocumentTimeSeries(this, entityOrDocumentId, nameOrClass);
         } else {
             const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);
+            InMemoryDocumentSessionOperations.validateTimeSeriesName(tsName);
             return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, nameOrClass);
         }
     }
@@ -1076,6 +1114,33 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
         const tsName = TimeSeriesOperations.getTimeSeriesName(rawOrClass as ClassConstructor<T>, this.conventions);
         return new SessionDocumentRollupTypedTimeSeries(this, entityOrDocumentId, tsName + TIME_SERIES_ROLLUP_SEPARATOR + policy, rawOrClass as ClassConstructor<T>);
+    }
+
+    public incrementalTimeSeriesFor(documentId: string, name: string): ISessionDocumentIncrementalTimeSeries;
+    public incrementalTimeSeriesFor(entity: object, name: string): ISessionDocumentIncrementalTimeSeries;
+    public incrementalTimeSeriesFor<T extends object>(documentId: string, clazz: ClassConstructor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    public incrementalTimeSeriesFor<T extends object>(documentId: string, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    public incrementalTimeSeriesFor<T extends object>(entity: object, clazz: ClassConstructor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    public incrementalTimeSeriesFor<T extends object>(entity: object, name: string, clazz: ClassConstructor<T>): ISessionDocumentTypedIncrementalTimeSeries<T>;
+    public incrementalTimeSeriesFor<T extends object>(entityOrDocumentId: string | object,
+                                                      nameOrClass: string | ClassConstructor<T>,
+                                                      clazz?: ClassConstructor<T>
+    ): ISessionDocumentTypedIncrementalTimeSeries<T> | ISessionDocumentIncrementalTimeSeries {
+        if (clazz) {
+            const name = nameOrClass as string;
+            const tsName = name ?? TimeSeriesOperations.getTimeSeriesName(clazz, this.conventions);
+            InMemoryDocumentSessionOperations.validateIncrementalTimeSeriesName(tsName);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, clazz);
+        }
+
+        if (TypeUtil.isString(nameOrClass)) {
+            InMemoryDocumentSessionOperations.validateIncrementalTimeSeriesName(nameOrClass);
+            return new SessionDocumentTimeSeries(this, entityOrDocumentId, nameOrClass);
+        } else {
+            const tsName = TimeSeriesOperations.getTimeSeriesName(nameOrClass, this.conventions);
+            InMemoryDocumentSessionOperations.validateIncrementalTimeSeriesName(tsName);
+            return new SessionDocumentTypedTimeSeries(this, entityOrDocumentId, tsName, nameOrClass);
+        }
     }
 
     async conditionalLoad<T extends object>(id: string, changeVector: string, clazz: ClassConstructor<T>): Promise<ConditionalLoadResult<T>> {

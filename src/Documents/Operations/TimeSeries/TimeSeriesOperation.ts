@@ -4,6 +4,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions";
 export class TimeSeriesOperation {
     private _appends: Map<number, AppendOperation>; // using map in node - for performance
     private _deletes: DeleteOperation[];
+    private _increments: Map<number, IncrementOperation>;
     name: string;
 
     public constructor()
@@ -22,8 +23,22 @@ export class TimeSeriesOperation {
         return {
             Name: this.name,
             Appends: sortedAppends,
-            Deletes: this._deletes ? this._deletes.map(x => x.serialize(conventions)) : null
+            Deletes: this._deletes ? this._deletes.map(x => x.serialize(conventions)) : null,
+            Increments: this._increments ? Array.from(this._increments.values()).map(x => x.serialize(conventions)) : null
         }
+    }
+
+    public increment(incrementOperation: IncrementOperation) {
+        if (!this._increments) {
+            this._increments = new Map<number, IncrementOperation>();
+        }
+
+        const time = incrementOperation.timestamp.getTime();
+        if (this._increments.has(time)) {
+            this._increments.delete(time);
+        }
+
+        this._increments.set(time, incrementOperation);
     }
 
     public append(appendOperation: AppendOperation): void {
@@ -87,5 +102,17 @@ export class DeleteOperation {
             From: this.from ? DateUtil.utc.stringify(this.from) : null,
             To : this.to ? DateUtil.utc.stringify(this.to) : null
         };
+    }
+}
+
+export class IncrementOperation {
+    public timestamp: Date;
+    public values: number[];
+
+    public serialize(conventions: DocumentConventions): object {
+        return {
+            Timestamp: this.timestamp ? DateUtil.utc.stringify(this.timestamp) : null,
+            Values: this.values
+        }
     }
 }
