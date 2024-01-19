@@ -100,7 +100,7 @@ class DelayCommand extends RavenCommand<void> {
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/test/delay?value=" + this._value;
+        const uri = node.url + "/admin/test/delay?value=" + this._value;
 
         return {
             method: "GET",
