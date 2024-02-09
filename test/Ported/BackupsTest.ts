@@ -45,6 +45,8 @@ import { TimeUtil } from "../../src/Utility/TimeUtil";
             const operation = new UpdatePeriodicBackupOperation(backupConfiguration);
             const backupOperationResult = await store.maintenance.send(operation);
 
+            await waitForResponsibleNodeUpdate(store, backupOperationResult.taskId);
+
             const startBackupOperation = new StartBackupOperation(true, backupOperationResult.taskId);
             const send = await store.maintenance.send(startBackupOperation);
 
@@ -101,6 +103,13 @@ import { TimeUtil } from "../../src/Utility/TimeUtil";
             .isTrue();
     });
 });
+
+async function waitForResponsibleNodeUpdate(store: IDocumentStore, taskId: number) {
+    await testContext.waitForValue(async () => {
+        const task = await store.maintenance.send(new GetOngoingTaskInfoOperation(taskId, "Backup"));
+        return task.responsibleNode != null && !!task.responsibleNode.nodeTag;
+    }, true);
+}
 
 async function waitForBackup(backup: string) {
     const sw = Stopwatch.createStarted();

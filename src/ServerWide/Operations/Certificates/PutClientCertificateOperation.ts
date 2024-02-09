@@ -15,8 +15,9 @@ export class PutClientCertificateOperation implements IServerOperation<void> {
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _name: string;
     private readonly _clearance: SecurityClearance;
+    private readonly _twoFactorAuthenticationKey: string;
 
-    public constructor(name: string, certificate: string, permissions: Record<string, DatabaseAccess>, clearance: SecurityClearance) {
+    public constructor(name: string, certificate: string, permissions: Record<string, DatabaseAccess>, clearance: SecurityClearance, twoFactorAuthenticationKey?: string) {
         if (!certificate) {
             throwError("InvalidArgumentException", "Certificate cannot be null");
         }
@@ -33,6 +34,7 @@ export class PutClientCertificateOperation implements IServerOperation<void> {
         this._permissions = permissions;
         this._name = name;
         this._clearance = clearance;
+        this._twoFactorAuthenticationKey = twoFactorAuthenticationKey;
     }
 
     public get resultType(): OperationResultType {
@@ -40,7 +42,7 @@ export class PutClientCertificateOperation implements IServerOperation<void> {
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<void> {
-        return new PutClientCertificateCommand(this._name, this._certificate, this._permissions, this._clearance);
+        return new PutClientCertificateCommand(this._name, this._certificate, this._permissions, this._clearance, this._twoFactorAuthenticationKey);
     }
 }
 
@@ -49,11 +51,13 @@ class PutClientCertificateCommand extends RavenCommand<void> implements IRaftCom
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _name: string;
     private readonly _clearance: SecurityClearance;
+    private readonly _twoFactorAuthenticationKey: string;
 
     public constructor(name: string,
                        certificate: string,
                        permissions: Record<string, DatabaseAccess>,
-                       clearance: SecurityClearance) {
+                       clearance: SecurityClearance,
+                       twoFactorAuthenticationKey: string) {
         super();
 
         if (!certificate) {
@@ -68,6 +72,7 @@ class PutClientCertificateCommand extends RavenCommand<void> implements IRaftCom
         this._permissions = permissions;
         this._name = name;
         this._clearance = clearance;
+        this._twoFactorAuthenticationKey = twoFactorAuthenticationKey;
     }
 
     get isReadRequest(): boolean {
@@ -83,7 +88,7 @@ class PutClientCertificateCommand extends RavenCommand<void> implements IRaftCom
                 Certificate: this._certificate,
                 SecurityClearance: this._clearance,
                 Permissions: this._permissions,
-
+                TwoFactorAuthenticationKey: this._twoFactorAuthenticationKey ?? undefined
             });
 
         return {

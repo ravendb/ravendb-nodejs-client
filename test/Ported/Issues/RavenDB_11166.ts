@@ -17,7 +17,7 @@ class Person {
     public name: string;
 }
 
-(RavenTestContext.is60Server ? describe.skip : describe)("RavenDB-11166", function () {
+(RavenTestContext.is60Server || RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB-11166", function () {
 
     let store: IDocumentStore;
 

@@ -251,7 +251,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         })
             .timeout(2000)
             .finally(() => {
-                this._killProcess(p);
+                this.stopServerProcess(p);
             });
 
         if (store) {
@@ -713,7 +713,7 @@ class ClusterController implements IDisposable {
     public dispose() {
         for (const node of this.nodes) {
             try {
-                node.serverProcess.kill("SIGKILL");
+                RavenTestContext.stopServerProcess(node.serverProcess);
             } catch {
                 // ignore
             }

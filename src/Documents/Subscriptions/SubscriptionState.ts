@@ -8,5 +8,6 @@ export interface SubscriptionState {
     nodeTag: string;
     lastBatchAckTime: string;
     lastClientConnectionTime: string;
+    raftCommandIndex: number;
     disabled: boolean;
 }

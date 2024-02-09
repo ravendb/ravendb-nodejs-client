@@ -48,7 +48,7 @@ export class JsonOperation {
                 return true;
             }
 
-            JsonOperation._newChange(fieldPath, field, null, null, docChanges, "RemovedField");
+            JsonOperation._newChange(fieldPath, field, null, originalJson[field], docChanges, "RemovedField");
         }
 
         for (const prop of newJsonProps) {

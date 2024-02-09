@@ -330,6 +330,12 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     whatChanged(): { [id: string]: DocumentsChanges[] };
 
     /**
+     * Returns all changes for the specified entity. Including name of the field/property that changed, its old and new value and change type.
+     * @param entity Entity
+     */
+    whatChangedFor(entity: object): DocumentsChanges[];
+
+    /**
      * Returns all the tracked entities in this session.
      */
     getTrackedEntities(): Map<string, EntityInfo>;

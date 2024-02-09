@@ -12,14 +12,15 @@ export class UpdateUnusedDatabasesOperation implements IServerOperation<void> {
     private readonly _database: string;
     private readonly _parameters: UpdateUnusedDatabasesParameters;
 
-    public constructor(database: string, unusedDatabaseIds: string[]) {
+    public constructor(database: string, unusedDatabaseIds: string[], validate: boolean = false) {
         if (StringUtil.isNullOrEmpty(database)) {
             throwError("InvalidArgumentException", "Database cannot be null");
         }
 
         this._database = database;
         this._parameters = {
-            databaseIds: unusedDatabaseIds
+            databaseIds: unusedDatabaseIds,
+            validate
         };
     }
 
@@ -44,7 +45,11 @@ class UpdateUnusedDatabasesCommand extends RavenCommand<void> implements IRaftCo
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/admin/databases/unused-ids?name=" + this._database;
+        let uri = node.url + "/admin/databases/unused-ids?name=" + this._database;
+
+        if (this._parameters.validate) {
+            uri += "&validate=true";
+        }
 
         const body = this._serializer.serialize(this._parameters);
 
@@ -67,4 +72,5 @@ class UpdateUnusedDatabasesCommand extends RavenCommand<void> implements IRaftCo
 
 export interface UpdateUnusedDatabasesParameters {
     databaseIds: string[];
+    validate: boolean;
 }

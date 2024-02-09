@@ -42,9 +42,12 @@ export class HashCalculator {
             for (const item of o) {
                 this.write(item, mapper);
             }
+            this.write(o.length);
         } else if (typeof o === "object") {
             for (const key of Object.keys(o)) {
-                this.write(key, mapper);
+                this.write("key");
+                this.write(key, mapper)
+                this.write("value");
                 this.write(o[key], mapper);
             }
         } else {

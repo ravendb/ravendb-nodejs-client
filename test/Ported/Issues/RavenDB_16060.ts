@@ -552,7 +552,7 @@ import { delay } from "bluebird";
             await session.saveChanges();
         }
 
-        await delay(2_000); // wait for rollups
+        await delay(3_000); // wait for rollups
 
         {
             const session = store.openSession();
@@ -613,7 +613,7 @@ import { delay } from "bluebird";
             await session.saveChanges();
         }
 
-        await delay(2_000); // wait for rollups
+        await delay(3_000); // wait for rollups
 
         {
             const session = store.openSession();

@@ -1,4 +1,6 @@
-import { IDocumentStore } from "../../src";
+import {
+    IDocumentStore,
+} from "../../src";
 import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
 import * as assert from "assert";
 

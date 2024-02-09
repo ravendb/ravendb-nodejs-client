@@ -1,5 +1,11 @@
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
-import { CreateDatabaseOperation, DatabaseRecord, GetDatabaseRecordOperation, IDocumentStore } from "../../../src";
+import {
+    CreateDatabaseOperation,
+    DatabaseRecord,
+    DeleteDatabasesOperation,
+    GetDatabaseRecordOperation,
+    IDocumentStore
+} from "../../../src";
 import { ToggleDatabasesStateOperation } from "../../../src/Documents/Operations/ToggleDatabasesStateOperation";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
 import { AddDatabaseNodeOperation } from "../../../src/ServerWide/Operations/AddDatabaseNodeOperation";
@@ -24,31 +30,38 @@ describe("DatabasesTest", function () {
         const databaseOperation = new CreateDatabaseOperation(dbRecord);
         await store.maintenance.server.send(databaseOperation);
 
-        let toggleResult = await store.maintenance.server.send(
-            new ToggleDatabasesStateOperation("enableDisable", true));
+        try {
+            let toggleResult = await store.maintenance.server.send(
+                new ToggleDatabasesStateOperation("enableDisable", true));
 
-        assertThat(toggleResult)
-            .isNotNull();
-        assertThat(toggleResult.name)
-            .isNotNull();
+            assertThat(toggleResult)
+                .isNotNull();
+            assertThat(toggleResult.name)
+                .isNotNull();
 
-        const disabledDatabaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation("enableDisable"));
-        assertThat(disabledDatabaseRecord.disabled)
-            .isTrue();
+            const disabledDatabaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation("enableDisable"));
+            assertThat(disabledDatabaseRecord.disabled)
+                .isTrue();
 
-        // now enable database
+            // now enable database
 
-        toggleResult = await store.maintenance.server.send(
-            new ToggleDatabasesStateOperation("enableDisable", false));
+            toggleResult = await store.maintenance.server.send(
+                new ToggleDatabasesStateOperation("enableDisable", false));
 
-        assertThat(toggleResult)
-            .isNotNull();
-        assertThat(toggleResult.name)
-            .isNotNull();
+            assertThat(toggleResult)
+                .isNotNull();
+            assertThat(toggleResult.name)
+                .isNotNull();
 
-        const enabledDatabaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation("enableDisable"));
-        assertThat(enabledDatabaseRecord.disabled)
-            .isFalse();
+            const enabledDatabaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation("enableDisable"));
+            assertThat(enabledDatabaseRecord.disabled)
+                .isFalse();
+        } finally {
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [dbRecord.databaseName],
+                hardDelete: true
+            }));
+        }
     });
 
     it("Cannot add node if single node cluster - database is on all nodes", async () => {

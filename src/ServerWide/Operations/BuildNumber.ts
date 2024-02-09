@@ -3,4 +3,5 @@ export interface BuildNumber {
     buildVersion: number;
     commitHash: string;
     fullVersion: string;
+    assemblyVersion: string;
 }

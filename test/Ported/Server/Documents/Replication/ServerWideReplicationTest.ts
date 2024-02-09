@@ -1,5 +1,5 @@
 import {
-    CreateDatabaseOperation,
+    CreateDatabaseOperation, DeleteDatabasesOperation,
     ExternalReplication,
     GetDatabaseRecordOperation,
     IDocumentStore, PutConnectionStringOperation, RavenConnectionString, UpdateExternalReplicationOperation
@@ -52,36 +52,43 @@ import { PutConnectionStringResult } from "../../../../../src/Documents/Operatio
 
             // the configuration is applied to new databases
             const newDbName = store.database + "-testDatabase";
-            await store.maintenance.server.send(new CreateDatabaseOperation({
-                databaseName: newDbName
-            }));
-            const externalReplications = record1.externalReplications;
-            assertThat(externalReplications)
-                .hasSize(1);
+            try {
+                await store.maintenance.server.send(new CreateDatabaseOperation({
+                    databaseName: newDbName
+                }));
+                const externalReplications = record1.externalReplications;
+                assertThat(externalReplications)
+                    .hasSize(1);
 
-            let record2 = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
-            validateConfiguration(serverWideConfiguration, record2.externalReplications[0], newDbName);
+                let record2 = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
+                validateConfiguration(serverWideConfiguration, record2.externalReplications[0], newDbName);
 
-            // update the external replication configuration
+                // update the external replication configuration
 
-            putConfiguration.topologyDiscoveryUrls = [ store.urls[0], "http://localhost:8080" ];
-            putConfiguration.name = serverWideConfiguration.name;
+                putConfiguration.topologyDiscoveryUrls = [store.urls[0], "http://localhost:8080"];
+                putConfiguration.name = serverWideConfiguration.name;
 
-            result = await store.maintenance.server.send(new PutServerWideExternalReplicationOperation(putConfiguration));
-            serverWideConfiguration = await store.maintenance.server.send(new GetServerWideExternalReplicationOperation(result.name));
+                result = await store.maintenance.server.send(new PutServerWideExternalReplicationOperation(putConfiguration));
+                serverWideConfiguration = await store.maintenance.server.send(new GetServerWideExternalReplicationOperation(result.name));
 
-            validateServerWideConfiguration(serverWideConfiguration, putConfiguration);
+                validateServerWideConfiguration(serverWideConfiguration, putConfiguration);
 
-            record1 = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
-            assertThat(record1.externalReplications)
-                .hasSize(1);
-            validateConfiguration(serverWideConfiguration, record1.externalReplications[0], store.database);
+                record1 = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
+                assertThat(record1.externalReplications)
+                    .hasSize(1);
+                validateConfiguration(serverWideConfiguration, record1.externalReplications[0], store.database);
 
-            record2 = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
-            assertThat(record2.externalReplications)
-                .hasSize(1);
+                record2 = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
+                assertThat(record2.externalReplications)
+                    .hasSize(1);
 
-            validateConfiguration(serverWideConfiguration, record2.externalReplications[0], newDbName);
+                validateConfiguration(serverWideConfiguration, record2.externalReplications[0], newDbName);
+            } finally {
+                await store.maintenance.server.send(new DeleteDatabasesOperation({
+                    databaseNames: [newDbName],
+                    hardDelete: true
+                }));
+            }
         } finally {
             await store.maintenance.server.send(new DeleteServerWideTaskOperation(serverWideConfiguration.name, "Replication"));
         }
