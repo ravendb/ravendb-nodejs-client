@@ -9,6 +9,7 @@ import { throwError } from "../../../src/Exceptions/index";
 import { assertThat } from "../../Utils/AssertExtensions";
 import { delay } from "../../../src/Utility/PromiseUtil";
 import { DateUtil } from "../../../src/Utility/DateUtil";
+import { CONSTANTS } from "../../../src/Constants";
 
 (RavenTestContext.is60Server ? describe.skip : describe)("RavenDB_13735", function () {
 
@@ -35,7 +36,7 @@ import { DateUtil } from "../../../src/Utility/DateUtil";
 
             const hourAgo = moment().add(-1, "hour");
 
-            session.advanced.getMetadataFor(user)["@refresh"] = DateUtil.utc.stringify(hourAgo.toDate());
+            session.advanced.getMetadataFor(user)[CONSTANTS.Documents.Metadata.REFRESH] = DateUtil.utc.stringify(hourAgo.toDate());
 
             await session.saveChanges();
 
