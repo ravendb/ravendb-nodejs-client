@@ -25,6 +25,7 @@ export interface IndexingMapUtils {
     createField(name: string, value: any, options: CreateFieldOptions): void;
     attachmentsFor(document: any): CapitalizeType<AttachmentName>[];
     loadAttachment(document: any, attachmentName: string): IAttachmentObject;
+    loadAttachments(document: any): IAttachmentObject[];
     noTracking: NoTrackingUtils;
 }
 
@@ -41,6 +42,7 @@ export class StubMapUtils<T> implements IndexingMapUtils {
     createField: (name: string, value: any, options?: CreateFieldOptions) => void;
     attachmentsFor: (document: any) => CapitalizeType<AttachmentName>[];
     loadAttachment: (document: any, attachmentName: string) => IAttachmentObject;
+    loadAttachments: (document: any) => IAttachmentObject[];
     noTracking: NoTrackingUtils;
 }
 
