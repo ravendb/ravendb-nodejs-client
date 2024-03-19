@@ -887,7 +887,7 @@ export class RequestExecutor implements IDisposable {
 
     public static validateUrls(initialUrls: string[], authOptions: IAuthOptions) {
         const cleanUrls = [...Array(initialUrls.length)];
-        let requireHttps = !!authOptions;
+        let requireHttps = !!authOptions?.certificate;
         for (let index = 0; index < initialUrls.length; index++) {
             const url = initialUrls[index];
             validateUri(url);
