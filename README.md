@@ -905,6 +905,7 @@ const bulkInsert = store.bulkInsert();
 for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"]) {
     const user = new User({ name });
     await bulkInsert.store(user);
+    // The data stored in bulkInsert will be streamed to the server in batches 
 }
 
 // Sample documents stored:
@@ -915,7 +916,7 @@ for (const name of ["Anna", "Maria", "Miguel", "Emanuel", "Dayanara", "Aleida"])
 // User { name: 'Dayanara', id: 'users/5-A' }
 // User { name: 'Aleida', id: 'users/6-A' }
 
-// Persist the data - call finish
+// Call finish to send all remaining data to the server
 await bulkInsert.finish();
 ```
 
