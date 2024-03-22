@@ -11,7 +11,7 @@ import { delay } from "../../../src/Utility/PromiseUtil";
 import { DateUtil } from "../../../src/Utility/DateUtil";
 import { CONSTANTS } from "../../../src/Constants";
 
-(RavenTestContext.is60Server ? describe.skip : describe)("RavenDB_13735", function () {
+(RavenTestContext.is60Server || RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_13735", function () {
 
     let store: IDocumentStore;
 

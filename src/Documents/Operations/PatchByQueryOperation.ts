@@ -75,6 +75,10 @@ export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
             path += "&staleTimeout=" + this._options.staleTimeout;
         }
 
+        if (this._options.ignoreMaxStepsForScript) {
+            path += "&ignoreMaxStepsForScript=true";
+        }
+
         const body = `{ "Query": ${writeIndexQuery(this._conventions, this._queryToUpdate)} }`;
 
         return {

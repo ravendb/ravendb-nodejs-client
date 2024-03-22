@@ -30,6 +30,10 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public encryptionKey: string;
     public collections: string[];
+    /**
+     * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
+     */
+    public skipCorruptedData: boolean;
 
     constructor() {
         this.operateOnTypes = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_TYPES];

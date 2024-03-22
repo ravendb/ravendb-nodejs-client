@@ -62,4 +62,5 @@ export interface SetLogsConfigurationParameters {
     retentionTime?: string;
     retentionSize?: number;
     compress?: boolean;
+    persist?: boolean;
 }

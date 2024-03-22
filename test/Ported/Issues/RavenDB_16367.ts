@@ -2,14 +2,12 @@ import {
     CreateDatabaseOperation, DatabaseLockMode,
     DeleteDatabasesOperation,
     GetDatabaseRecordOperation,
+    SetDatabasesLockOperation,
+    SetDatabasesLockParameters,
     IDocumentStore, ToggleDatabasesStateOperation
 } from "../../../src";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions";
-import {
-    SetDatabasesLockOperation,
-    SetDatabasesLockParameters
-} from "../../../src/ServerWide/Operations/OngoingTasks/SetDatabasesLockOperation";
 
 
 describe("RavenDB_16367Test", function () {
@@ -38,47 +36,55 @@ describe("RavenDB_16367Test", function () {
             databaseName: databaseName1
         }));
 
-        let databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
-        assertThat(databaseRecord.lockMode)
-            .isEqualTo("Unlock");
+        try {
 
-        await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "Unlock"));
+            let databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
+            assertThat(databaseRecord.lockMode)
+                .isEqualTo("Unlock");
 
-        databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
-        assertThat(databaseRecord.lockMode)
-            .isEqualTo("Unlock");
+            await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "Unlock"));
 
-        await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "PreventDeletesError"));
+            databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
+            assertThat(databaseRecord.lockMode)
+                .isEqualTo("Unlock");
 
-        databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
-        assertThat(databaseRecord.lockMode)
-            .isEqualTo("PreventDeletesError");
+            await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "PreventDeletesError"));
 
-        await assertThrows(() => store.maintenance.server.send(new DeleteDatabasesOperation({
-            databaseNames: [ databaseName1 ],
-            hardDelete: true
-        })), err => {
-            assertThat(err.message)
-                .contains("cannot be deleted because of the set lock mode");
-        });
+            databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
+            assertThat(databaseRecord.lockMode)
+                .isEqualTo("PreventDeletesError");
 
-        await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "PreventDeletesIgnore"));
+            await assertThrows(() => store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [databaseName1],
+                hardDelete: true
+            })), err => {
+                assertThat(err.message)
+                    .contains("cannot be deleted because of the set lock mode");
+            });
 
-        databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
-        assertThat(databaseRecord.lockMode)
-            .isEqualTo("PreventDeletesIgnore");
+            await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "PreventDeletesIgnore"));
 
-        const result = await store.maintenance.server.send(new DeleteDatabasesOperation({
-            databaseNames: [ databaseName1 ],
-            hardDelete: true
-        }));
+            databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
+            assertThat(databaseRecord.lockMode)
+                .isEqualTo("PreventDeletesIgnore");
 
-        assertThat(result.raftCommandIndex)
-            .isEqualTo(-1);
+            const result = await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [databaseName1],
+                hardDelete: true
+            }));
 
-        databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
-        assertThat(databaseRecord)
-            .isNotNull();
+            assertThat(result.raftCommandIndex)
+                .isEqualTo(-1);
+
+            databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName1));
+            assertThat(databaseRecord)
+                .isNotNull();
+        } finally {
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [databaseName1],
+                hardDelete: true
+            }))
+        }
     });
 
     it("canLockDatabase_Multiple", async function () {

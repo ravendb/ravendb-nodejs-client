@@ -1,4 +1,4 @@
-import { BackupType } from "./Enums";
+import { BackupType, BackupUploadMode } from "./Enums";
 import { SnapshotSettings } from "./BackupStatus";
 import { BackupEncryptionSettings } from "./BackupEncryptionSettings";
 import { LocalSettings } from "./LocalSettings";
@@ -11,6 +11,7 @@ import { GoogleCloudSettings } from "./GoogleCloudSettings";
 export interface BackupConfiguration {
 
     backupType?: BackupType;
+    backupUploadMode?: BackupUploadMode;
     snapshotSettings?: SnapshotSettings;
     backupEncryptionSettings?: BackupEncryptionSettings;
 

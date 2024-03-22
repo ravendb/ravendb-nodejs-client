@@ -3,7 +3,7 @@ import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../U
 import { assertThat } from "../../Utils/AssertExtensions";
 import { delay } from "bluebird";
 
-(RavenTestContext.is60Server ? describe.skip : describe)("CanQueryAndIncludeRevisionsTest", function () {
+(RavenTestContext.is60Server || RavenTestContext.isPullRequest ? describe.skip : describe)("CanQueryAndIncludeRevisionsTest", function () {
 
     let store: IDocumentStore;
 

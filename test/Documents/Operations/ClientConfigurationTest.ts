@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import {
     testContext,
-    disposeTestDocumentStore
+    disposeTestDocumentStore, RavenTestContext
 } from "../../Utils/TestUtil";
 
 import {
@@ -13,7 +13,7 @@ import {
 } from "../../../src";
 import { assertThat } from "../../Utils/AssertExtensions";
 
-describe("Client configuration", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("Client configuration", function () {
 
     let store: IDocumentStore;
 

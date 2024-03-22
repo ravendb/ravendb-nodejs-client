@@ -694,6 +694,7 @@ export * from "./Documents/Identity/MultiDatabaseHiLoIdGenerator";
 
 // Smuggler
 export * from "./Documents/Smuggler/DatabaseItemType";
+export * from "./Documents/Smuggler/ExportCompressionAlgorithm";
 export * from "./Documents/Smuggler/DatabaseRecordItemType";
 export * from "./Documents/Smuggler/DatabaseSmuggler";
 export * from "./Documents/Smuggler/DatabaseSmugglerExportOptions";

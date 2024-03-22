@@ -8,19 +8,49 @@ import { throwError } from "../Exceptions";
 
 class NodeSelectorState {
     public topology: Topology;
-    public nodes: ServerNode[];
     public failures: number[];
     public fastestRecords: number[];
-    public fastest: number;
+    public fastest: number = 0;
     public speedTestMode = 1;
     public unlikelyEveryoneFaultedChoiceIndex: number;
 
-    constructor(topology: Topology) {
+    constructor(topology: Topology, prevState?: NodeSelectorState) {
         this.topology = topology;
-        this.nodes = topology.nodes;
         this.failures = ArrayUtil.range(topology.nodes.length, () => 0);
         this.fastestRecords = ArrayUtil.range(topology.nodes.length, () => 0);
         this.unlikelyEveryoneFaultedChoiceIndex = 0;
+
+        if (prevState) {
+            if (prevState.fastest < 0 || prevState.fastest >= prevState.nodes.length) {
+                return;
+            }
+
+            const fastestNode = prevState.nodes[prevState.fastest];
+            let index = 0;
+            for (const node of topology.nodes) {
+                if (node.clusterTag === fastestNode.clusterTag) {
+                    this.fastest = index;
+                    break;
+                }
+                index++;
+            }
+
+            // fastest node was not found in the new topology. enable speed tests
+            if (index >= topology.nodes.length) {
+                this.speedTestMode = 2;
+            } else {
+                // we might be in the process of finding fastest node when we reorder the nodes, we don't want the tests to stop until we reach 10
+                // otherwise, we want to stop the tests and they may be scheduled later on relevant topology change
+
+                if (this.fastest < prevState.fastestRecords.length && prevState.fastestRecords[this.fastest] < 10) {
+                    this.speedTestMode = prevState.speedTestMode;
+                }
+            }
+        }
+    }
+
+    public get nodes() {
+        return this.topology.nodes;
     }
 
     public getNodeWhenEveryoneMarkedAsFaulted(): CurrentIndexAndNode {
@@ -35,7 +65,7 @@ class NodeSelectorState {
 export class NodeSelector {
 
     private _updateFastestNodeTimer: Timer;
-    private _state: NodeSelectorState;
+    protected _state: NodeSelectorState;
 
     constructor(topology: Topology) {
         this._state = new NodeSelectorState(topology);
@@ -66,7 +96,7 @@ export class NodeSelector {
             return false;
         }
 
-        this._state = new NodeSelectorState(topology);
+        this._state = new NodeSelectorState(topology, this._state);
 
         return true;
     }
@@ -169,11 +199,9 @@ export class NodeSelector {
             return new CurrentIndexAndNode(state.fastest, state.nodes[state.fastest]);
         }
 
-        // if the fastest node has failures, we'll immediately schedule
-        // another run of finding who the fastest node is, in the meantime
-        // we'll just use the server preferred node or failover as usual
+        // until new fastest node is selected, we'll just use the server preferred node or failover as usual
 
-        this._switchToSpeedTestPhase();
+        this.scheduleSpeedTest();
         return this.getPreferredNode();
     }
 
@@ -185,10 +213,6 @@ export class NodeSelector {
         }
 
         state.failures[nodeIndex] = 0;
-    }
-
-    protected _throwEmptyTopology(): void {
-        throwError("InvalidOperationException", "Empty database topology, this shouldn't happen.");
     }
 
     private _switchToSpeedTestPhase(): void {
@@ -226,6 +250,7 @@ export class NodeSelector {
 
         if (++stateFastest[index] >= 10) {
             this._selectFastest(state, index);
+            return;
         }
 
         if (++state.speedTestMode <= state.nodes.length * 10) {
@@ -258,20 +283,20 @@ export class NodeSelector {
         state.fastest = index;
         state.speedTestMode = 0;
 
-        this._ensureFastestNodeTimerExists();
-
-        const minuteMs = moment.duration(1, "m").asMilliseconds();
-        this._updateFastestNodeTimer.change(minuteMs, null);
+        this.scheduleSpeedTest();
     }
 
     public scheduleSpeedTest(): void {
-        this._ensureFastestNodeTimerExists();
+        if (this._updateFastestNodeTimer) {
+            return;
+        }
         this._switchToSpeedTestPhase();
+
+        const minuteMs = moment.duration(1, "m").asMilliseconds();
+        this._updateFastestNodeTimer = new Timer(async () => this._switchToSpeedTestPhase(), minuteMs, minuteMs);
     }
 
-    private _ensureFastestNodeTimerExists() {
-        if (!this._updateFastestNodeTimer) {
-            this._updateFastestNodeTimer = new Timer(async () => this._switchToSpeedTestPhase(), null, null);
-        }
+    public dispose(): void {
+        this._updateFastestNodeTimer?.dispose();
     }
 }

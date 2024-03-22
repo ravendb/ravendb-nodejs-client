@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../Utils/TestUtil";
 
 import {
     IDocumentStore,
@@ -7,7 +7,7 @@ import {
 import { Company } from "../Assets/Entities";
 import { delay } from "../../src/Utility/PromiseUtil";
 
-describe("RavenDB_11770Test", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_11770Test", function () {
 
     let store: IDocumentStore;
 

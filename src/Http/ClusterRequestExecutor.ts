@@ -108,6 +108,10 @@ export class ClusterRequestExecutor extends RequestExecutor {
             return Promise.resolve(false);
         }
 
+        if (this._disableTopologyUpdates) {
+            return Promise.resolve(false);
+        }
+
         const acquiredSemContext = acquireSemaphore(this._clusterTopologySemaphore, { timeout: parameters.timeoutInMs });
         const result = BluebirdPromise.resolve(acquiredSemContext.promise)
             .then(() => {

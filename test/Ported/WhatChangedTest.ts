@@ -5,6 +5,7 @@ import {
     IDocumentStore,
 } from "../../src";
 import { User } from "../Assets/Entities";
+import { assertThat } from "../Utils/AssertExtensions";
 
 describe("WhatChangedTest", function () {
 
@@ -286,7 +287,177 @@ describe("WhatChangedTest", function () {
 
         }
     });
+
+    it("what_Changed_For_Delete_After_Change_Value", async () => {
+        //RavenDB-13501
+
+        {
+            const session = store.openSession();
+
+            const id = "ABC";
+            let o = new TestObject();
+            o.id = id;
+            o.a = "A";
+            o.b = "B";
+            await session.store(o);
+            await session.saveChanges();
+
+            assertThat(session.advanced.hasChanges()).isFalse();
+
+            o = await session.load(id, TestObject);
+            o.a = "B";
+            o.b = "C";
+            await session.delete(o);
+
+            const whatChangedFor = session.advanced.whatChangedFor(o);
+            assertThat(whatChangedFor.length === 1 && whatChangedFor[0].change === "DocumentDeleted")
+                .isTrue();
+
+            await session.saveChanges();
+
+            o = await session.load(id, TestObject);
+            assertThat(o)
+                .isNull();
+        }
+    })
+
+    // We don't support whatChanged for metadata
+    it.skip("what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork", async () => {
+        const docId = "d/1";
+
+        {
+            const session = store.openSession();
+            const d = new Doc();
+            await session.store(d, docId);
+
+            const meta = session.advanced.getMetadataFor(d);
+
+            meta["Test-A"] = ["a", "a", "a"];
+            meta["Test-B"] = ["c", "c", "c"];
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            meta["Test-A"] = ["b", "a", "c"];
+
+            const changes = session.advanced.whatChangedFor(d);
+            assertThat(changes)
+                .hasSize(2);
+            assertThat(changes[0].change)
+                .isEqualTo("ArrayValueChanged");
+            assertThat(changes[0].fieldName)
+                .isEqualTo("Test-A");
+            assertThat(changes[1].change)
+                .isEqualTo("ArrayValueChanged");
+            assertThat(changes[1].fieldName)
+                .isEqualTo("Test-A");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+
+            const changes = session.advanced.whatChangedFor(d);
+            assertThat(changes)
+                .hasSize(1);
+            assertThat(changes[0].change)
+                .isEqualTo("RemovedField");
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+            delete meta["Test-C"];
+            meta["Test-B"] = ["b", "b", "b"];
+            meta["Test-D"] = ["d", "d", "d"];
+
+            const changes = session.advanced.whatChangedFor(d);
+
+            assertThat(changes)
+                .hasSize(4);
+            assertThat(changes.find(x => x.fieldName === "Test-A").change)
+                .isEqualTo("RemovedField");
+            assertThat(changes.find(x => x.fieldName === "Test-C").change)
+                .isEqualTo("RemovedField");
+            assertThat(changes.find(x => x.fieldName === "Test-B").change)
+                .isEqualTo("NewField");
+            assertThat(changes.find(x => x.fieldName === "Test-D").change)
+                .isEqualTo("NewField");
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+            meta["Test-B"] = ["b", "b", "b"];
+
+            const changes = session.advanced.whatChangedFor(d);
+            assertThat(changes.find(x => x.fieldName === "Test-A").change)
+                .isEqualTo("RemovedField");
+            assertThat(changes.find(x => x.fieldName === "Test-B").change)
+                .isEqualTo("NewField");
+        }
+    });
+
+    it("whatChanged_RemovedFieldFromDictionary", async () => {
+        {
+            const session = store.openSession();
+            const entity = new Entity();
+            entity.someData.set("Key", "Value");
+            await session.store(entity, "entities/1");
+            await session.saveChanges()
+        }
+
+        {
+            const session = store.openSession();
+            const entity = await session.load("entities/1", Entity);
+            entity.someData.delete("Key");
+
+            const changes = session.advanced.whatChanged()["entities/1"];
+            assertThat(changes)
+                .hasSize(1);
+
+            assertThat(changes[0].change)
+                .isEqualTo("ArrayValueRemoved"); // in node.js we serialize maps as arrays of tuples
+            assertThat(changes[0].fieldName)
+                .isEqualTo("someData");
+            assertThat(changes[0].fieldOldValue[0])
+                .isEqualTo("Key");
+            assertThat(changes[0].fieldOldValue[1])
+                .isEqualTo("Value");
+            assertThat(changes[0].fieldNewValue)
+                .isNull();
+        }
+    })
 });
+
+
+class TestObject {
+    public id: string;
+    public a: string;
+    public b: string;
+}
+
+class Doc {
+    public id: string;
+}
+
+class Entity {
+    public someData = new Map<string, string>();
+}
 
 class BasicName {
     public name: string;

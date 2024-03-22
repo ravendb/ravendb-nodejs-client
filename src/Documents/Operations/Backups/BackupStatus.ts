@@ -1,5 +1,6 @@
 import { UploadProgress } from "./UploadProgress";
 import { CompressionLevel } from "./CompressionLevel";
+import { SnapshotBackupCompressionAlgorithm } from "./Enums";
 
 export interface BackupStatus {
     lastFullBackup: Date;
@@ -45,6 +46,7 @@ export type UploadType =
     | "Chunked";
 
 export interface SnapshotSettings {
+    compressionAlgorithm: SnapshotBackupCompressionAlgorithm;
     compressionLevel: CompressionLevel;
     excludeIndexes?: boolean;
 }

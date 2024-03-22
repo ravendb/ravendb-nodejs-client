@@ -99,7 +99,8 @@ export const COMPARE_EXCHANGE = {
 } as const;
 
 export const INDEXES = {
-    INDEXING_STATIC_SEARCH_ENGINE_TYPE: "Indexing.Static.SearchEngineType"
+    INDEXING_STATIC_SEARCH_ENGINE_TYPE: "Indexing.Static.SearchEngineType",
+    INDEXING_AUTO_SEARCH_ENGINE_TYPE: "Indexing.Auto.SearchEngineType"
 } as const;
 
 export const IDENTITIES = {

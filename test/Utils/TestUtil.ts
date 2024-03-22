@@ -29,6 +29,7 @@ import { AdminJsConsoleOperation } from "./AdminJsConsoleOperation";
 import { Stopwatch } from "../../src/Utility/Stopwatch";
 import { delay } from "../../src/Utility/PromiseUtil";
 import moment = require("moment");
+import { INDEXES } from "../../src/Constants";
 
 const log = getLogger({ module: "TestDriver" });
 
@@ -251,7 +252,7 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         })
             .timeout(2000)
             .finally(() => {
-                this._killProcess(p);
+                this.stopServerProcess(p);
             });
 
         if (store) {
@@ -308,7 +309,11 @@ export class RavenTestContext extends RavenTestDriver implements IDisposable {
         }
 
         const documentStore = RavenTestContext._getGlobalServer(secured);
-        const databaseRecord: DatabaseRecord = { databaseName };
+        const databaseRecord: DatabaseRecord = { databaseName, settings: {} };
+
+        // force lucene on database level
+        databaseRecord.settings[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = "Lucene";
+        databaseRecord.settings[INDEXES.INDEXING_AUTO_SEARCH_ENGINE_TYPE] = "Lucene";
 
         if (this._customizeDbRecord) {
             this._customizeDbRecord(databaseRecord);
@@ -713,7 +718,7 @@ class ClusterController implements IDisposable {
     public dispose() {
         for (const node of this.nodes) {
             try {
-                node.serverProcess.kill("SIGKILL");
+                RavenTestContext.stopServerProcess(node.serverProcess);
             } catch {
                 // ignore
             }

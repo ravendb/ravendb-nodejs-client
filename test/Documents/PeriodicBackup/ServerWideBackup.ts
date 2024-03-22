@@ -11,6 +11,7 @@ import { CreateDatabaseOperation } from "../../../src/ServerWide/Operations/Crea
 import { DatabaseRecord } from "../../../src/ServerWide/index";
 import { GetServerWideBackupConfigurationOperation } from "../../../src/ServerWide/Operations/Configuration/GetServerWideBackupConfigurationOperation";
 import { DeleteServerWideTaskOperation } from "../../../src/ServerWide/Operations/OngoingTasks/DeleteServerWideTaskOperation";
+import { DeleteDatabasesOperation } from "../../../src";
 
 (RavenTestContext.isPullRequest ? describe.skip : describe)("ServerWideBackup", function () {
 
@@ -73,17 +74,24 @@ import { DeleteServerWideTaskOperation } from "../../../src/ServerWide/Operation
             const dbRecord: DatabaseRecord = {
                 databaseName: newDbName
             };
-            await store.maintenance.server.send(new CreateDatabaseOperation(dbRecord));
-            databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
-            assertThat(databaseRecord.periodicBackups)
-                .hasSize(3);
+            try {
+                await store.maintenance.server.send(new CreateDatabaseOperation(dbRecord));
+                databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(newDbName));
+                assertThat(databaseRecord.periodicBackups)
+                    .hasSize(3);
 
-            // get by name
+                // get by name
 
-            const backupConfiguration = await store.maintenance.server.send(
-                new GetServerWideBackupConfigurationOperation("Backup w/o destinations"));
-            assertThat(backupConfiguration)
-                .isNotNull();
+                const backupConfiguration = await store.maintenance.server.send(
+                    new GetServerWideBackupConfigurationOperation("Backup w/o destinations"));
+                assertThat(backupConfiguration)
+                    .isNotNull();
+            } finally {
+                await store.maintenance.server.send(new DeleteDatabasesOperation({
+                    databaseNames: [newDbName],
+                    hardDelete: true
+                }));
+            }
 
         } finally {
             await cleanupServerWideBackups(store);

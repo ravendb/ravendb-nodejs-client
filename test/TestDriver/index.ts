@@ -255,15 +255,26 @@ export abstract class RavenTestDriver {
         } while (true);
     }
 
-    protected static _killProcess(p: ChildProcess) {
+    public static stopServerProcess(p: ChildProcess) {
         if (p && !p.killed) {
             log.info("Kill global server");
 
-            try {
-                p.kill("SIGKILL");
-            } catch (err) {
-                log.error(err);
+            if (p.killed) {
+                return;
             }
+
+            p.stdin.write("shutdown no-confirmation");
+
+            setTimeout(() => {
+                if (p.killed) {
+                    return;
+                }
+                try {
+                    p.kill("SIGKILL");
+                } catch (err) {
+                    log.error(err);
+                }
+            }, 2000);
         }
     }
 

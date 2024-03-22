@@ -2020,6 +2020,35 @@ export abstract class InMemoryDocumentSessionOperations
         this.onAfterConversionToEntityInvoke(documentInfo.id, documentInfo.document, documentInfo.entity);
     }
 
+    /**
+     * Returns all changes for the specified entity. Including name of the field/property that changed, its old and new value and change type.
+     * @param entity Entity
+     */
+    public whatChangedFor(entity: object): DocumentsChanges[] {
+        const documentInfo = this.documentsByEntity.get(entity);
+        if (!documentInfo) {
+            return [];
+        }
+
+        if (this.deletedEntities.contains(entity)) {
+            const change = new DocumentsChanges();
+            change.fieldNewValue = "";
+            change.fieldOldValue = "";
+            change.change = "DocumentDeleted";
+
+            return [change];
+        }
+
+        InMemoryDocumentSessionOperations._updateMetadataModifications(documentInfo);
+        const document = this.entityToJson.convertEntityToJson(documentInfo.entity, documentInfo);
+
+        const changes: { [id: string]: DocumentsChanges[] } = {};
+        if (!this._entityChanged(document, documentInfo, changes)) {
+            return [];
+        }
+
+        return changes[documentInfo.id];
+    }
 
     public getTrackedEntities(): Map<string, EntityInfo> {
         const tracked = this.documentsById.getTrackedEntities(this);
