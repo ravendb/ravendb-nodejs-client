@@ -293,7 +293,10 @@ export class NodeSelector {
         this._switchToSpeedTestPhase();
 
         const minuteMs = moment.duration(1, "m").asMilliseconds();
-        //TODO: 1 minute + 1 minute
-        this._updateFastestNodeTimer = new Timer(async () => this._switchToSpeedTestPhase(), null, null);
+        this._updateFastestNodeTimer = new Timer(async () => this._switchToSpeedTestPhase(), minuteMs, minuteMs);
+    }
+
+    public dispose(): void {
+        this._updateFastestNodeTimer?.dispose();
     }
 }

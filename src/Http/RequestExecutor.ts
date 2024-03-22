@@ -864,6 +864,7 @@ export class RequestExecutor implements IDisposable {
 
         topology.nodes = topologyNodes;
 
+        this._nodeSelector?.dispose();
         this._nodeSelector = new NodeSelector(topology);
 
         if (initialUrls && initialUrls.length > 0) {
@@ -1943,6 +1944,7 @@ export class RequestExecutor implements IDisposable {
         if (this._updateTopologyTimer) {
             this._updateTopologyTimer.dispose();
         }
+        this._nodeSelector?.dispose();
 
         this._disposeAllFailedNodesTimers();
     }
