@@ -36,6 +36,7 @@ import {
 } from "../../../src";
 import { MoreLikeThisOptions } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisOptions";
 import { MoreLikeThisStopWords } from "../../../src/Documents/Queries/MoreLikeThis/MoreLikeThisStopWords";
+import { assertThat } from "../../Utils/AssertExtensions";
 
 export class DataIndex extends AbstractJavaScriptIndexCreationTask<Data, Pick<Data, "body" | "whitespaceAnalyzerField">> {
 
@@ -256,6 +257,40 @@ describe("MoreLikeThisTests", function () {
         }
 
         await assertMoreLikeThisHasMatchesFor("DataIndex", store, id);
+    });
+
+    it("can use whereEquals after moreLikeThis", async () => {
+        const key = "data/1-A";
+
+        {
+            const session = store.openSession();
+
+            await new DataIndex().execute(store);
+
+            for (let i = 0; i < 3; i++) {
+                const data = new Data();
+                data.body = "Body" + i;
+                data.whitespaceAnalyzerField = "test test";
+                await session.store(data);
+            }
+
+            await session.saveChanges();
+            await testContext.waitForIndexing(store);
+        }
+
+        {
+            const session = store.openSession();
+            const query = session
+                .query<any>({ indexName: "DataIndex" })
+                .moreLikeThis(f => f.usingDocument(b => b.whereEquals("id()", key)))
+                .whereEquals("body", "Body2");
+
+            const list = await query.all();
+            assertThat(query.toString())
+                .isEqualTo("from index 'DataIndex' where moreLikeThis(id() = $p0) and body = $p1");
+
+            assert.ok(list.length > 0);
+        }
     });
 
     it("can get results using term vectors and storage", async () => {
