@@ -393,7 +393,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             : QueryOperatorToken.OR;
 
         if (lastWhere
-            && lastWhere.options.searchOperator) {
+            && lastWhere.options?.searchOperator) {
             token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
         }
 
