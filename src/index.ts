@@ -602,6 +602,7 @@ export { TimeSeriesTimeRange } from "./Documents/Operations/TimeSeries/TimeSerie
 export { TimeSeriesRangeResult } from "./Documents/Operations/TimeSeries/TimeSeriesRangeResult.js";
 export { TimeSeriesStatistics } from "./Documents/Operations/TimeSeries/TimeSeriesStatistics.js";
 export { AbstractTimeSeriesRange } from "./Documents/Operations/TimeSeries/AbstractTimeSeriesRange.js";
+export { TimeValue } from "./Primitives/TimeValue.js";
 
 // AUTH
 export * from "./Auth/AuthOptions.js";
