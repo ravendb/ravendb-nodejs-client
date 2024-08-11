@@ -11,6 +11,7 @@ src/**/*.js.map
 test/**/*.js
 test/**/*.d.ts
 .build/
+.tshy-build/
 test/certs
 tryouts/
 .DS_Store
