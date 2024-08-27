@@ -1386,7 +1386,7 @@ export abstract class InMemoryDocumentSessionOperations
                 this._rememberEntityForDocumentIdGeneration(entity);
             }
         } else {
-            this.generateEntityIdOnTheClient.trySetIdentity(entity, id);
+            this._generateEntityIdOnTheClient.trySetIdentity(entity, id);
         }
 
         const cmdKey = IdTypeAndName.keyFor(id, "ClientAnyCommand", null);
