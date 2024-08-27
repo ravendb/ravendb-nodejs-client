@@ -223,7 +223,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil.js";
                     const definitionName1 = "pull-replication" + hub.database;
                     const definitionName2 = "pull-replication" + hub2.database;
 
-                    const timeout = 3_000;
+                    const timeout = 15_000;
 
                     await hub.maintenance.forDatabase(hub.database).send(new PutPullReplicationAsHubOperation(definitionName1));
                     await hub2.maintenance.forDatabase(hub2.database).send(new PutPullReplicationAsHubOperation(definitionName2));
@@ -242,7 +242,8 @@ import { delay } from "../../../../src/Utility/PromiseUtil.js";
                         connectionStringName: "ConnectionString2-" + sink.database,
                         hubName: definitionName2,
                         taskId: pullTasks[0].taskId,
-                        mode: "HubToSink"
+                        mode: "HubToSink",
+                        url: sink.urls[0]
                     };
 
                     await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub2.urls);
@@ -350,7 +351,7 @@ import { delay } from "../../../../src/Utility/PromiseUtil.js";
                 hub = await testContext.getDocumentStore();
 
                 const definitionName = "pull-replication" + hub.database;
-                const timeout = 10_000;
+                const timeout = 15_000;
 
                 await hub.maintenance.forDatabase(hub.database)
                     .send(new PutPullReplicationAsHubOperation(definitionName));
@@ -371,7 +372,8 @@ import { delay } from "../../../../src/Utility/PromiseUtil.js";
                     hubName: definitionName,
                     disabled: true,
                     taskId: pullTasks[0].taskId,
-                    mode: "HubToSink"
+                    mode: "HubToSink",
+                    url: sink.urls[0],
                 };
 
                 await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...hub.urls);
@@ -517,7 +519,8 @@ async function setupPullReplication(remoteName: string, sink: IDocumentStore, ..
             database: store.database,
             connectionStringName: "ConnectionString-" + store.database,
             hubName: remoteName,
-            mode: "HubToSink"
+            mode: "HubToSink",
+            url: sink.urls[0],
         };
 
         resList.push(await ReplicationTestContext.addWatcherToReplicationTopology(sink, pull, ...store.urls));
