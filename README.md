@@ -75,6 +75,13 @@ session
   });
 ```
 
+5. When you have finished using the session and the document store objects,  
+make sure to dispose of them properly to free up resources:  
+```javascript
+session.dispose();
+store.dispose();
+```
+
 ## Supported asynchronous call types
 
 Most methods on the session object are asynchronous and return a Promise.  
