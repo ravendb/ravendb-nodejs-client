@@ -493,6 +493,7 @@ export * from "./Documents/Session/ISessionDocumentTypedAppendTimeSeriesBase.js"
 export * from "./Documents/Session/ISessionDocumentTypedTimeSeries.js";
 export * from "./Documents/Session/JavaScriptMap.js";
 export * from "./Documents/Session/IMetadataDictionary.js";
+export type { MetadataAsDictionary } from "./Mapping/MetadataAsDictionary.js";
 export * from "./Documents/Session/DocumentResultStream.js";
 export * from "./Documents/Session/SessionDocumentRollupTypedTimeSeries.js";
 export * from "./Documents/Session/SessionDocumentTimeSeries.js";
