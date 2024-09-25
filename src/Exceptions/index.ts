@@ -17,6 +17,19 @@ export function throwError(
     throw getError(errName, message, errCause, info);
 }
 
+function buildMessageWithInner(error: any) {
+    if (!error) {
+        return null;
+    }
+    if (!error.cause) {
+        return error.message;
+    }
+
+    const inner = buildMessageWithInner(error.cause);
+    return inner ? error.message + ": " + inner : error.message;
+}
+
+
 export function getError(errName: RavenErrorType, message: string): Error;
 export function getError(
     errName: string,
@@ -32,7 +45,8 @@ export function getError(
     message: string = "",
     errCause?: Error,
     info?: { [key: string]: any }): Error {
-    const error = new Error(message + (errCause ? ": " + errCause.message : ""), { cause: errCause });
+    const innerMessage = buildMessageWithInner(errCause);
+    const error = new Error(message + (innerMessage ? ": " + innerMessage : ""), { cause: errCause });
     error.name = errName;
 
     if (info) {
