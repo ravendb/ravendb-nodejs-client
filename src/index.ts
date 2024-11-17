@@ -163,6 +163,7 @@ export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOper
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation.js";
 export type { CollectionStatistics } from "./Documents/Operations/CollectionStatistics.js";
 export type { GetServerWideExternalReplicationsResponse } from "./Documents/Operations/GetServerWideExternalReplicationsResponse.js";
+export { CreateSubscriptionCommand } from "./Documents/Commands/CreateSubscriptionCommand.js";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand.js";
 export { KillOperationCommand } from "./Documents/Commands/KillOperationCommand.js";
 export { DeleteDocumentCommand } from "./Documents/Commands/DeleteDocumentCommand.js";
