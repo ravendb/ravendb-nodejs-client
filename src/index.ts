@@ -146,6 +146,7 @@ export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOper
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation";
 export { CollectionStatistics } from "./Documents/Operations/CollectionStatistics";
 export { GetServerWideExternalReplicationsResponse } from "./Documents/Operations/GetServerWideExternalReplicationsResponse";
+export { SingleNodeBatchCommand } from "./Documents/Commands/Batches/SingleNodeBatchCommand.js";
 export { CreateSubscriptionCommand } from "./Documents/Commands/CreateSubscriptionCommand.js";
 export { GetNextOperationIdCommand } from "./Documents/Commands/GetNextOperationIdCommand";
 export { KillOperationCommand } from "./Documents/Commands/KillOperationCommand";
