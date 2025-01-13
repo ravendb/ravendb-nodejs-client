@@ -135,6 +135,8 @@ class TestSecuredServiceLocator extends RavenServerLocator {
 
 export class RavenTestContext extends RavenTestDriver implements IDisposable {
 
+    public static is70Server = process.env["RAVENDB_SERVER_VERSION"] >= "7.0";
+
     public static isPullRequest = !process.env["RAVEN_License"];
 
     private readonly _locator: RavenServerLocator;
