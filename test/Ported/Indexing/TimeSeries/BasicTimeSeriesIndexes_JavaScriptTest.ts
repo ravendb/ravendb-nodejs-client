@@ -326,7 +326,7 @@ class AverageHeartRateDaily_ByDateAndCity extends AbstractRawJavaScriptTimeSerie
             " .aggregate(g => ({\n" +
             "     heartBeat: g.values.reduce((total, val) => val.heartBeat + total, 0) / g.values.reduce((total, val) => val.count + total, 0),\n" +
             "     date: g.key.date,\n" +
-            "     city: g.key.city\n" +
+            "     city: g.key.city,\n" +
             "     count: g.values.reduce((total, val) => val.count + total, 0)\n" +
             " }))";
     }
