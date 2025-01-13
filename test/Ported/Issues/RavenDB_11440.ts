@@ -4,12 +4,12 @@ import {
     SetLogsConfigurationOperation,
     LogMode
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { throwError } from "../../../src/Exceptions/index.js";
 import { TimeUtil } from "../../../src/Utility/TimeUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-describe("RavenDB_11440", function () {
+(RavenTestContext.is70Server ? describe.skip : describe)("RavenDB_11440", function () {
 
     let store: IDocumentStore;
 

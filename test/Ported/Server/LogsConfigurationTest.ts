@@ -4,10 +4,10 @@ import {
     SetLogsConfigurationOperation,
     SetLogsConfigurationParameters
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-describe("LogsConfigurationTest", function () {
+(RavenTestContext.is70Server ? describe.skip : describe)("LogsConfigurationTest", function () {
 
     let store: IDocumentStore;
 
