@@ -5,6 +5,7 @@ import { throwError } from "../../../Exceptions/index.js";
 import { TypeUtil } from "../../../Utility/TypeUtil.js";
 import { WhereOperator } from "./WhereOperator.js";
 import { CONSTANTS } from "../../../Constants.js";
+import { IVectorOptions, VectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
 export type MethodsType = "CmpXchg";
 
@@ -36,11 +37,16 @@ export interface WhereOptionsMethodTypeRelatedParameters {
     exact: boolean;
 }
 
+export interface WhereOptionsVectorSearchRelatedParameters {
+    vectorSearch: IVectorOptions;
+}
+
 export type WhereOptionsParameters =
     WhereOptionsShapeRelatedParameters
     | WhereOptionsExactFromToRelatedParameters
     | WhereOptionsMethodTypeRelatedParameters
-    | WhereOptionsSearchRelatedParameters;
+    | WhereOptionsSearchRelatedParameters
+    | WhereOptionsVectorSearchRelatedParameters;
 
 export class WhereOptions {
     public searchOperator: SearchOperator;
@@ -53,12 +59,14 @@ export class WhereOptions {
     public method: WhereMethodCall;
     public whereShape: ShapeToken;
     public distanceErrorPct: number;
+    public vectorSearch: VectorOptions;
 
     public static defaultOptions() {
         return new WhereOptions();
     }
 
     public constructor(parameters?: WhereOptionsParameters) {
+        console.log("@@parameters", parameters)
         parameters = parameters || {} as WhereOptionsParameters;
         if (parameters["methodType"]) {
             const p = parameters as WhereOptionsMethodTypeRelatedParameters;
@@ -84,6 +92,8 @@ export class WhereOptions {
             this.toParameterName = p.to;
         } else if (parameters["search"]) {
             this.searchOperator = parameters["search"] as SearchOperator;
+        } else if (parameters["vectorSearch"]) {
+            this.vectorSearch = parameters["vectorSearch"] as VectorOptions;
         }
     }
 }
@@ -109,6 +119,7 @@ export class WhereToken extends QueryToken {
         token.parameterName = parameterName;
         token.whereOperator = op;
         token.options = options || WhereOptions.defaultOptions();
+        console.log("@@token", token)
         return token;
     }
 
@@ -220,6 +231,10 @@ export class WhereToken extends QueryToken {
                 writer.append("regex(");
                 break;
             }
+            case "VectorSearch": {
+                writer.append("vector.search(")
+                break;
+            }
         }
 
         this._writeInnerWhere(writer);
@@ -290,7 +305,7 @@ export class WhereToken extends QueryToken {
         }
 
         if (!this._writeMethod(writer)) {
-            writer.append("$").append(this.parameterName);
+            writer.append(`"${this.parameterName}"`);
         }
     }
 
@@ -358,6 +373,17 @@ export class WhereToken extends QueryToken {
                 }
                 writer
                     .append(")");
+                break;
+            }
+            case "VectorSearch": {
+                const {vectorSearch} = this.options
+
+                writer.append(", $").append(this.parameterName);
+                writer.append(", ").append(vectorSearch?.similarity ?? "null");
+                writer.append(", ").append(vectorSearch?.numberOfCandidates ?? "null");
+
+                writer.append(")");
+                console.log("@@query", writer.toString());
                 break;
             }
             default: {

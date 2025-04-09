@@ -21,7 +21,7 @@ import { GroupBySumToken } from "../Session/Tokens/GroupBySumToken.js";
 import { ExplanationToken } from "../Session/Tokens/ExplanationToken.js";
 import { TimingsToken } from "../Session/Tokens/TimingsToken.js";
 import { TrueToken } from "../Session/Tokens/TrueToken.js";
-import { WhereToken, WhereOptions } from "../Session/Tokens/WhereToken.js";
+import { WhereOptions, WhereToken } from "../Session/Tokens/WhereToken.js";
 import { QueryFieldUtil } from "../Queries/QueryFieldUtil.js";
 import { QueryToken } from "./Tokens/QueryToken.js";
 import { CloseSubclauseToken } from "./Tokens/CloseSubclauseToken.js";
@@ -47,7 +47,7 @@ import { WhereOperator } from "./Tokens/WhereOperator.js";
 import { OrderingType } from "./OrderingType.js";
 import { SearchOperator } from "../Queries/SearchOperator.js";
 import { DocumentQueryHelper } from "./DocumentQueryHelper.js";
-import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial.js";
+import { SpatialRelation, SpatialUnits } from "../Indexes/Spatial.js";
 import { ShapeToken } from "./Tokens/ShapeToken.js";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField.js";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria.js";
@@ -69,8 +69,7 @@ import { QueryData } from "../Queries/QueryData.js";
 import { QueryTimings } from "../Queries/Timings/QueryTimings.js";
 import { Explanations } from "../Queries/Explanation/Explanations.js";
 import { Highlightings } from "../Queries/Highlighting/Hightlightings.js";
-import {
-    extractHighlightingOptionsFromParameters } from "../Queries/Highlighting/HighlightingOptions.js";
+import { extractHighlightingOptionsFromParameters } from "../Queries/Highlighting/HighlightingOptions.js";
 import { HighlightingParameters } from "../Queries/Highlighting/HighlightingParameters.js";
 import { QueryHighlightings } from "../Queries/Highlighting/QueryHighlightings.js";
 import { ExplanationOptions } from "../Queries/Explanation/ExplanationOptions.js";
@@ -89,6 +88,14 @@ import { RevisionIncludesToken } from "./Tokens/RevisionIncludesToken.js";
 import { IDisposable } from "../../Types/Contracts.js";
 import { IQueryShardedContextBuilder } from "./Querying/Sharding/IQueryShardedContextBuilder.js";
 import { QueryShardedContextBuilder } from "./Querying/Sharding/QueryShardedContextBuilder.js";
+import { IVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
+import {
+    IVectorEmbeddingField,
+    IVectorEmbeddingFieldFactoryAccessor, IVectorEmbeddingTextField,
+    IVectorField,
+    IVectorFieldFactory, IVectorFieldValueFactory, VectorEmbeddingFieldValueFactory
+} from "./IVectorFieldFactory.js";
+import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
 
 /**
  * A query against a Raven index
@@ -535,6 +542,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     private _addQueryParameter(value: any): string {
         const parameterName = this.parameterPrefix + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = this._stringifyParameter(value);
+        console.log("@@QueryParams", value, parameterName, this._queryParameters);
         return parameterName;
     }
 
@@ -981,6 +989,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _whereNotEquals(whereParams: WhereParams): void;
     public _whereNotEquals(fieldNameOrWhereParams: string | WhereParams, value?: object, exact: boolean = false): void {
         let whereParams: WhereParams;
+        console.log("@@_whereNotEquals", fieldNameOrWhereParams, value, exact);
         if (TypeUtil.isString(fieldNameOrWhereParams)) {
             whereParams = new WhereParams();
             whereParams.fieldName = fieldNameOrWhereParams as string;
@@ -2530,6 +2539,68 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public set parameterPrefix(prefix: string) {
         this._parameterPrefix = prefix;
     }
+
+    /**
+     * Performs a vector similarity search against a field containing vector embeddings
+     * @param fieldName The field containing vector values or a field expression
+     * @param valueOrFactory The query vector or a function that configures how to provide the vector value
+     * @param options Additional vector search options
+     */
+    protected _vectorSearch(
+        fieldName: string | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
+        valueOrFactory: number[] | string | ((factory: IVectorFieldValueFactory<T>) => void),
+        options?: IVectorOptions
+    ) {
+        this._assertMethodIsCurrentlySupported("vectorSearch");
+
+        const factory = new VectorEmbeddingFieldFactory<T>();
+
+        if (typeof fieldName === "string") {
+            factory.fieldName = fieldName;
+        } else if (typeof fieldName === "function") {
+            fieldName(factory);
+        } else {
+            throwError("InvalidArgumentException",
+                "fieldName must be either a string or a function that selects a vector field");
+        }
+
+        const whereParams = new WhereParams();
+        whereParams.fieldName = (factory as IVectorEmbeddingFieldFactoryAccessor).fieldName;
+
+        // Handle value or valueFactory
+        if (typeof valueOrFactory === "function") {
+            const fieldValueFactory = new VectorEmbeddingFieldValueFactory();
+            valueOrFactory(fieldValueFactory);
+
+            if (fieldValueFactory.embeddings) {
+                whereParams.value = fieldValueFactory.embeddings;
+            } else if (fieldValueFactory.text) {
+                whereParams.value = fieldValueFactory.text;
+            } else if (fieldValueFactory.texts) {
+                whereParams.value = fieldValueFactory.texts;
+            } else {
+                throwError("InvalidOperationException", "No value was provided in the valueFactory");
+            }
+        } else {
+            whereParams.value = valueOrFactory;
+        }
+
+        whereParams.allowWildcards = true;
+        const transformToEqualValue = this._transformValue(whereParams);
+
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, whereParams.fieldName);
+
+        const whereToken = WhereToken.create(
+            "VectorSearch",
+            whereParams.fieldName,
+            this._addQueryParameter(transformToEqualValue),
+            new WhereOptions({vectorSearch: options, exact: options?.isExact})
+        );
+
+        tokens.push(whereToken);
+    }
 }
 
 
@@ -2545,4 +2616,3 @@ class FilterModeScope implements IDisposable {
         this._modeStack.pop();
     }
 }
-

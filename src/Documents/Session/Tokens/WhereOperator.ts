@@ -17,4 +17,5 @@ export type WhereOperator =
     | "SpatialContains"
     | "SpatialDisjoint"
     | "SpatialIntersects"
-    | "Regex";
+    | "Regex"
+    | "VectorSearch";

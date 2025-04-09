@@ -1,5 +1,6 @@
 import { AggregationOperation, AutoFieldIndexing, FieldStorage, GroupByArrayBehavior } from "./Enums.js";
 import { AutoSpatialOptions } from "./Spatial/AutoSpatialOptions.js";
+import { AutoVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
 
 export interface AutoIndexFieldOptions {
     storage: FieldStorage;
@@ -9,4 +10,5 @@ export interface AutoIndexFieldOptions {
     groupByArrayBehavior: GroupByArrayBehavior;
     suggestions: boolean;
     isNameQuoted: boolean;
+    vector: AutoVectorOptions;
 }

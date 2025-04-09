@@ -418,6 +418,9 @@ export * from "./Documents/Indexes/TimeSeries/AbstractCsharpTimeSeriesIndexCreat
 export * from "./Documents/Indexes/TimeSeries/AbstractRawJavaScriptTimeSeriesIndexCreationTask.js";
 export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinition.js";
 export * from "./Documents/Indexes/TimeSeries/TimeSeriesIndexDefinitionBuilder.js";
+// VECTOR SEARCH
+export * from "./Documents/Indexes/VectorSearch/VectorSearch.js"
+export * from "./Utility/VectorSearchUtil.js"
 
 // REPLICATION
 export * from "./Documents/Replication/ExternalReplication.js";
