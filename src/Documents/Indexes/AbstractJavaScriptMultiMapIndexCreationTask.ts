@@ -13,6 +13,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { StringBuilder } from "../../Utility/StringBuilder.js";
 import { BaseJavaScriptIndexCreationTask } from "./BaseJavaScriptIndexCreationTask.js";
 import { INDEXES } from "../../Constants.js";
+import { ObjectUtil } from "../../Utility/ObjectUtil.js";
 
 export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends object = any>
     extends BaseJavaScriptIndexCreationTask<keyof TMapResult & string> {
@@ -85,6 +86,7 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
         indexDefinitionBuilder.storesStrings = this.storesStrings;
         indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
         indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
+        indexDefinitionBuilder.vectorFieldStrings = this.vectorOptionsStrings;
         indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
         indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
         indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
@@ -99,6 +101,8 @@ export class AbstractJavaScriptMultiMapIndexCreationTask<TMapResult extends obje
 
         if (this.searchEngineType) {
             indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        } else if (!ObjectUtil.isEmpty(this.vectorOptionsStrings)) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = "Corax";
         }
 
         const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);

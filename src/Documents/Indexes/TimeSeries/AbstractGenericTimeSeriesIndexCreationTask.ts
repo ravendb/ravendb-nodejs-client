@@ -3,6 +3,7 @@ import { AbstractIndexCreationTaskBase } from "../AbstractIndexCreationTaskBase.
 import { FieldIndexing, FieldStorage, FieldTermVector } from "../Enums.js";
 import { SpatialOptions, SpatialOptionsFactory } from "../Spatial.js";
 import { CONSTANTS } from "../../../Constants.js";
+import { FieldVectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
 /**
  * Abstract class used to provide infrastructure service for actual creation tasks
@@ -16,6 +17,7 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
     protected _indexSuggestions: Set<string>;
     protected _termVectorsStrings: Record<string, FieldTermVector>;
     protected _spatialOptionsStrings: Record<string, SpatialOptions>;
+    protected _vectorOptionsStrings: Record<string, FieldVectorOptions>;
 
     protected _outputReduceToCollection: string;
     protected _patternForOutputReduceToCollectionReferences: string;
@@ -82,5 +84,9 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
 
     protected suggestion(field: string): void {
         this._indexSuggestions.add(field);
+    }
+
+    protected vectorField(field: string, vector: FieldVectorOptions): void {
+        this._vectorOptionsStrings[field] = vector;
     }
 }

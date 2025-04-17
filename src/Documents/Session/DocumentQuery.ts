@@ -916,7 +916,7 @@ export class DocumentQuery<T extends object>
      */
     public vectorSearch(
         fieldName: Field<T> | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
-        valueFactory: number[] | string | ((factory: IVectorFieldValueFactory<T>) => void),
+        valueFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void),
         options?: IVectorOptions
     ): IDocumentQuery<T> {
         this._vectorSearch(fieldName, valueFactory, options);

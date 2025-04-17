@@ -11,7 +11,7 @@ export interface IVectorFieldFactory<T> {
      * Defines the text field that vector search will be performed on
      * @param propertySelector Path to the document field containing text data
      */
-    withText(propertySelector: (field: T) => any): IVectorEmbeddingTextField;
+    withText(propertySelector: (field: T) => void): IVectorEmbeddingTextField;
 
     /**
      * Defines the embedding field that vector search will be performed on
@@ -39,7 +39,7 @@ export interface IVectorFieldFactory<T> {
      * @param propertySelector Path to the document field containing base64 encoded embedding data
      * @param storedEmbeddingQuantization Quantization of stored embeddings
      */
-    withBase64(propertySelector: (field: T) => any, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
+    withBase64(propertySelector: (field: T) => void, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
 
     /**
      * Defines the field (that's already indexed) that vector search will be performed on
@@ -51,7 +51,7 @@ export interface IVectorFieldFactory<T> {
      * Defines the field (that's already indexed) that vector search will be performed on
      * @param propertySelector Path to the index-field containing indexed data
      */
-    withField(propertySelector: (field: T) => any): IVectorField;
+    withField(propertySelector: (field: T) => void): IVectorField;
 }
 
 export interface IVectorEmbeddingTextField {
@@ -63,11 +63,10 @@ export interface IVectorEmbeddingTextField {
 
 
     /**
-     * TODO: This method is not implemented yet
      * Defines which task will be used to get embeddings from
      * @param embeddingsGenerationTaskIdentifier Task identifier
      */
-    // usingTask(embeddingsGenerationTaskIdentifier: string): IVectorEmbeddingTextField;
+    usingTask(embeddingsGenerationTaskIdentifier: string): IVectorEmbeddingTextField;
 }
 
 export interface IVectorEmbeddingField {
@@ -123,11 +122,11 @@ export interface IVectorEmbeddingFieldValueFactory {
      */
     byEmbedding<T extends number>(embedding: Iterable<T>): void;
 
-    /**
-     * Defines queried embeddings.
-     * @param embeddings Enumerable containing embeddings values
-     */
-    byEmbedding<T extends number>(embeddings: Iterable<Iterable<T>>): void;
+    // /**
+    //  * Defines queried embeddings.
+    //  * @param embeddings Enumerable containing embeddings values
+    //  */
+    // byEmbedding<T extends number>(embeddings: Iterable<Iterable<T>>): void;
 
     /**
      * Defines queried embedding.
@@ -166,25 +165,18 @@ export interface IVectorEmbeddingFieldValueFactory {
     byEmbedding<T extends number>(embedding: {"@vector": IRavenVector<T>}): void;
 }
 
-export interface IVectorFieldValueFactory<T = any> extends
+export interface IVectorFieldValueFactory extends
     IVectorEmbeddingTextFieldValueFactory,
     IVectorEmbeddingFieldValueFactory {
 }
 
 export interface IVectorFieldValueFactoryAccessor {
-    /**
-     * Gets or sets the embeddings
-     */
-    embeddings: object;
+    embeddings: number[][];
 
-    /**
-     * Gets or sets the text
-     */
-    text: string | null;
+    embedding: number[];
 
-    /**
-     * Gets or sets the texts collection
-     */
+    text: string;
+
     texts: string[];
 }
 
@@ -192,16 +184,15 @@ export class VectorEmbeddingFieldValueFactory implements
     IVectorEmbeddingFieldValueFactory,
     IVectorFieldValueFactoryAccessor {
 
-    public embeddings: object = null;
-    public text: string | null = null;
+    public embedding: number[] = null;
+    public embeddings: number[][] = null;
+    public text: string = null;
     public texts: string[] = null;
 
     /**
      * Defines queried embedding.
      * @param embedding Iterable containing embedding values
      */
-    public byEmbedding<T extends number>(embedding: Iterable<T>): void;
-    public byEmbedding<T extends number>(embeddings: Iterable<Iterable<T>>): void;
     public byEmbedding<T extends number>(embedding: T[]): void;
     public byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
     public byEmbedding(embedding: any): void {
@@ -228,8 +219,8 @@ export class VectorEmbeddingFieldValueFactory implements
      * Defines queried embeddings in base64 format.
      * @param base64Embeddings Embeddings encoded as base64 strings
      */
-    public byBase64Embeddings(base64Embeddings: string[] | Iterable<string>): void {
-        this.texts = Array.isArray(base64Embeddings) ? base64Embeddings : Array.from(base64Embeddings);
+    public byBase64Embeddings(base64Embeddings: string[]): void {
+        this.texts = base64Embeddings
     }
 
     /**
@@ -248,4 +239,3 @@ export class VectorEmbeddingFieldValueFactory implements
         this.texts = texts;
     }
 }
-

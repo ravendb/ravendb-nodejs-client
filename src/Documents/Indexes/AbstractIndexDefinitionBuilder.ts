@@ -6,6 +6,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { IndexFieldOptions } from "./IndexFieldOptions.js";
 import { IndexDeploymentMode } from "./IndexDeploymentMode.js";
 import { AdditionalAssembly } from "./AdditionalAssembly.js";
+import { FieldVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
 
 export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends IndexDefinition> {
     protected readonly _indexName: string;
@@ -18,7 +19,7 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     public suggestionsOptions: Set<string>;
     public termVectorsStrings: { [key: string]: FieldTermVector };
     public spatialIndexesStrings: { [key: string]: SpatialOptions };
-
+    public vectorFieldStrings: { [key: string]: FieldVectorOptions };
     public lockMode: IndexLockMode;
     public priority: IndexPriority;
     public state: IndexState;
@@ -45,6 +46,8 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
         this.analyzersStrings = {};
         this.termVectorsStrings = {};
         this.spatialIndexesStrings = {};
+        this.vectorFieldStrings = {};
+
         this.configuration = {};
     }
 
@@ -78,6 +81,8 @@ export abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
                 (options, value) => options.spatial = value);
             this._applyValues(indexDefinition, suggestions,
                 (options, value) => options.suggestions = value);
+            this._applyValues(indexDefinition, this.vectorFieldStrings,
+                (options, value) => options.vector = value);
 
             indexDefinition.additionalSources = this.additionalSources;
             indexDefinition.additionalAssemblies = this.additionalAssemblies;

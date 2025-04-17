@@ -59,14 +59,13 @@ export class WhereOptions {
     public method: WhereMethodCall;
     public whereShape: ShapeToken;
     public distanceErrorPct: number;
-    public vectorSearch: VectorOptions;
+    public vectorSearch: IVectorOptions;
 
     public static defaultOptions() {
         return new WhereOptions();
     }
 
     public constructor(parameters?: WhereOptionsParameters) {
-        console.log("@@parameters", parameters)
         parameters = parameters || {} as WhereOptionsParameters;
         if (parameters["methodType"]) {
             const p = parameters as WhereOptionsMethodTypeRelatedParameters;
@@ -84,6 +83,10 @@ export class WhereOptions {
             const p = parameters as WhereOptionsShapeRelatedParameters;
             this.whereShape = p.shape;
             this.distanceErrorPct = p.distance;
+        }  else if (parameters["vectorSearch"]) {
+            const vectorSearchParameters = parameters["vectorSearch"] as IVectorOptions;
+            this.vectorSearch = vectorSearchParameters;
+            this.exact = vectorSearchParameters.isExact ?? false;
         } else if (!TypeUtil.isNullOrUndefined(parameters["exact"])
             && !parameters["methodType"]) {
             const p = parameters as WhereOptionsExactFromToRelatedParameters;
@@ -92,8 +95,6 @@ export class WhereOptions {
             this.toParameterName = p.to;
         } else if (parameters["search"]) {
             this.searchOperator = parameters["search"] as SearchOperator;
-        } else if (parameters["vectorSearch"]) {
-            this.vectorSearch = parameters["vectorSearch"] as VectorOptions;
         }
     }
 }
@@ -119,7 +120,6 @@ export class WhereToken extends QueryToken {
         token.parameterName = parameterName;
         token.whereOperator = op;
         token.options = options || WhereOptions.defaultOptions();
-        console.log("@@token", token)
         return token;
     }
 
@@ -377,13 +377,14 @@ export class WhereToken extends QueryToken {
             }
             case "VectorSearch": {
                 const {vectorSearch} = this.options
-
                 writer.append(", $").append(this.parameterName);
+
+                // writer.append(", ai.task(").append(this.options.vectorSearch.embeddingsGenerationTaskIdentifier ?? "null").append(")");
+
                 writer.append(", ").append(vectorSearch?.similarity ?? "null");
                 writer.append(", ").append(vectorSearch?.numberOfCandidates ?? "null");
 
                 writer.append(")");
-                console.log("@@query", writer.toString());
                 break;
             }
             default: {

@@ -37,18 +37,13 @@ export function getFieldNameFor(fieldSelector: (field: any) => any): string {
         throwError("InvalidArgumentException", "Field selector cannot be null");
     }
     
-    // Convert the selector function to string to extract the property name
     const funcStr = fieldSelector.toString();
     
-    // Try to match property access patterns like: x => x.property or (x) => x.property
     const arrowMatch = /=>.*?\.([^.\s()[\]]+)/.exec(funcStr);
     if (arrowMatch && arrowMatch[1]) {
         return arrowMatch[1];
     }
     
-    // For more complex selectors, we need more sophisticated parsing
-    // This is a simplified implementation - in production code you might need
-    // more robust handling of complex property paths
-    throwError("InvalidOperationException", 
+    throwError("InvalidOperationException",
         "Could not extract field name from selector. Use a simple property selector like 'x => x.propertyName'");
 }

@@ -3,6 +3,7 @@ import { FieldIndexing, FieldStorage, FieldTermVector } from "../Enums.js";
 import { SpatialOptions, SpatialOptionsFactory } from "../Spatial.js";
 import { CONSTANTS } from "../../../Constants.js";
 import { CountersIndexDefinition } from "./CountersIndexDefinition.js";
+import { FieldVectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
 export abstract class AbstractGenericCountersIndexCreationTask extends AbstractIndexCreationTaskBase<CountersIndexDefinition> {
     protected _reduce: string;
@@ -13,6 +14,7 @@ export abstract class AbstractGenericCountersIndexCreationTask extends AbstractI
     protected _indexSuggestions: Set<string>;
     protected _termVectorsStrings: Record<string, FieldTermVector>;
     protected _spatialOptionsStrings: Record<string, SpatialOptions>;
+    protected _vectorOptionsStrings: Record<string, FieldVectorOptions>;
 
     protected _outputReduceToCollection: string;
     protected _patternForOutputReduceToCollectionReferences: string;
@@ -27,6 +29,7 @@ export abstract class AbstractGenericCountersIndexCreationTask extends AbstractI
         this._indexSuggestions = new Set<string>();
         this._termVectorsStrings = {};
         this._spatialOptionsStrings = {};
+        this._vectorOptionsStrings = {};
     }
 
     /**
@@ -81,5 +84,9 @@ export abstract class AbstractGenericCountersIndexCreationTask extends AbstractI
 
     protected suggestion(field: string): void {
         this._indexSuggestions.add(field);
+    }
+
+    protected vectorField(field: string, vector: FieldVectorOptions): void {
+        this._vectorOptionsStrings[field] = vector;
     }
 }

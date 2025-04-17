@@ -2,6 +2,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition.js";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask.js";
 import { INDEXES } from "../../Constants.js";
+import { ObjectUtil } from "../../Utility/ObjectUtil.js";
 
 /**
  * Base class for creating indexes using C# code in string.
@@ -39,6 +40,7 @@ export abstract class AbstractCsharpIndexCreationTask extends AbstractGenericInd
         indexDefinitionBuilder.suggestionsOptions = this.indexSuggestions;
         indexDefinitionBuilder.termVectorsStrings = this.termVectorsStrings;
         indexDefinitionBuilder.spatialIndexesStrings = this.spatialOptionsStrings;
+        indexDefinitionBuilder.vectorFieldStrings = this.vectorOptionsStrings
         indexDefinitionBuilder.outputReduceToCollection = this.outputReduceToCollection;
         indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this.patternForOutputReduceToCollectionReferences;
         indexDefinitionBuilder.patternReferencesCollectionName = this.patternReferencesCollectionName;
@@ -54,6 +56,8 @@ export abstract class AbstractCsharpIndexCreationTask extends AbstractGenericInd
 
         if (this.searchEngineType && this.searchEngineType !== "None") {
             indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        } else if (!ObjectUtil.isEmpty(this.vectorOptionsStrings)) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = "Corax";
         }
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);

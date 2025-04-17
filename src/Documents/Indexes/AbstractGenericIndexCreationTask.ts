@@ -5,6 +5,7 @@ import { CONSTANTS } from "../../Constants.js";
 import { IndexDefinition } from "./IndexDefinition.js";
 import { AdditionalAssembly } from "./AdditionalAssembly.js";
 import { throwError } from "../../Exceptions/index.js";
+import { FieldVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
 
 type FieldOrAllFields<TField> = TField | "__all_fields";
 
@@ -19,6 +20,7 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
     protected indexSuggestions: Set<FieldOrAllFields<TField>>;
     protected termVectorsStrings: Record<FieldOrAllFields<TField>, FieldTermVector>;
     protected spatialOptionsStrings: Record<FieldOrAllFields<TField>, SpatialOptions>;
+    protected vectorOptionsStrings: Record<FieldOrAllFields<TField>, FieldVectorOptions>;
 
     protected outputReduceToCollection: string;
     protected patternForOutputReduceToCollectionReferences: string;
@@ -33,6 +35,7 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
         this.indexSuggestions = new Set<FieldOrAllFields<TField>>();
         this.termVectorsStrings = {} as Record<FieldOrAllFields<TField>, FieldTermVector>;
         this.spatialOptionsStrings = {} as Record<FieldOrAllFields<TField>, SpatialOptions>;
+        this.vectorOptionsStrings = {} as Record<FieldOrAllFields<TField>, FieldVectorOptions>;
     }
 
     abstract get isMapReduce(): boolean;
@@ -92,5 +95,9 @@ export abstract class AbstractGenericIndexCreationTask<TField extends string = s
         }
 
         this.additionalAssemblies.push(assembly);
+    }
+
+    protected vectorField(field: FieldOrAllFields<TField>, vector: FieldVectorOptions): void {
+        this.vectorOptionsStrings[field] = vector;
     }
 }

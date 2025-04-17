@@ -106,6 +106,8 @@ export class AbstractRawJavaScriptIndexCreationTask extends AbstractIndexCreatio
 
         if (this.searchEngineType && this.searchEngineType !== "None") {
             this._definition.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        } else if (this._definition.fields && Object.values(this._definition.fields).some(fieldOptions => fieldOptions.vector)) {
+            this._definition.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = "Corax";
         }
 
         return this._definition;

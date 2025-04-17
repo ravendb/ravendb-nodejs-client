@@ -1,12 +1,17 @@
 import { VectorEmbeddingType } from "../../Indexes/VectorSearch/index.js";
 
 export interface IVectorOptions {
-    sourceEmbeddingType?: VectorEmbeddingType;
-    destinationEmbeddingType?: VectorEmbeddingType;
-    numberOfEdges?: number;
     numberOfCandidates?: number;
     similarity?: number;
     isExact?: boolean;
+}
+
+export interface FieldVectorOptions {
+    dimensions?: number;
+    sourceEmbeddingType: VectorEmbeddingType;
+    destinationEmbeddingType: VectorEmbeddingType;
+    numberOfEdges?: number;
+    numberOfCandidatesForIndexing?: number;
 }
 
 export interface IVectorOptionsJson {

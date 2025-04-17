@@ -177,7 +177,7 @@ export interface IDocumentQuery<T extends object>
     ): IDocumentQuery<T>;
     vectorSearch(
         fieldName: ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
-        valueFactory: ((factory: IVectorFieldValueFactory<T>) => void),
+        valueFactory: ((factory: IVectorFieldValueFactory) => void),
         options?: IVectorOptions
     ): IDocumentQuery<T>;
 }

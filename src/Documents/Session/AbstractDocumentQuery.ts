@@ -96,6 +96,7 @@ import {
     IVectorFieldFactory, IVectorFieldValueFactory, VectorEmbeddingFieldValueFactory
 } from "./IVectorFieldFactory.js";
 import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
+import { VectorFieldFactory } from "./VectorFieldFactory.js";
 
 /**
  * A query against a Raven index
@@ -542,7 +543,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     private _addQueryParameter(value: any): string {
         const parameterName = this.parameterPrefix + Object.keys(this._queryParameters).length;
         this._queryParameters[parameterName] = this._stringifyParameter(value);
-        console.log("@@QueryParams", value, parameterName, this._queryParameters);
         return parameterName;
     }
 
@@ -989,7 +989,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _whereNotEquals(whereParams: WhereParams): void;
     public _whereNotEquals(fieldNameOrWhereParams: string | WhereParams, value?: object, exact: boolean = false): void {
         let whereParams: WhereParams;
-        console.log("@@_whereNotEquals", fieldNameOrWhereParams, value, exact);
         if (TypeUtil.isString(fieldNameOrWhereParams)) {
             whereParams = new WhereParams();
             whereParams.fieldName = fieldNameOrWhereParams as string;
@@ -2548,7 +2547,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     protected _vectorSearch(
         fieldName: string | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
-        valueOrFactory: number[] | string | ((factory: IVectorFieldValueFactory<T>) => void),
+        valueOrFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void),
         options?: IVectorOptions
     ) {
         this._assertMethodIsCurrentlySupported("vectorSearch");
