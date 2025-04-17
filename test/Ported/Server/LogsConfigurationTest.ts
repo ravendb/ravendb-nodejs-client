@@ -7,7 +7,7 @@ import {
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-(RavenTestContext.is70Server ? describe.skip : describe)("LogsConfigurationTest", function () {
+(!RavenTestContext.is70Server ? describe.skip : describe)("LogsConfigurationTest", function () {
 
     let store: IDocumentStore;
 
