@@ -5,23 +5,23 @@ import {
     IVectorField,
     IVectorFieldFactory
 } from "./IVectorFieldFactory.js";
-import { VectorEmbeddingType } from "../Indexes/VectorSearch/index.js";
-import { getFieldNameFor } from "./DocumentQuery/QueryFieldUtil.js";
+import { VectorEmbeddingType } from "../Queries/VectorSearch/VectorEmbeddingType.js";
+import { Field } from "../../Types/index.js";
 
 type PartialRecord<K extends keyof any, T> = {
     [P in K]?: T;
 };
 
-abstract class VectorFieldBase {
-    public rawFieldName: string;
-    public fieldName: string;
+abstract class VectorFieldBase<T> {
+    public rawFieldName: keyof T;
+    public fieldName: Field<T>;
 
-    constructor(fieldName: string) {
-        this.rawFieldName = fieldName;
-        this.fieldName = fieldName;
+    constructor(fieldName: Field<T>) {
+        this.rawFieldName = fieldName as keyof T;
+        this.fieldName = fieldName as string;
     }
 
-    protected getFormattedFieldName(rawFieldName: string, sourceType: VectorEmbeddingType,
+    protected getFormattedFieldName(rawFieldName: Field<T>, sourceType: VectorEmbeddingType,
                                    destType: VectorEmbeddingType,
                                    taskIdentifier?: string, byFieldMethodUsed = false): string {
         const configurationMap: Record<VectorEmbeddingType, PartialRecord<VectorEmbeddingType, string>> = {
@@ -73,23 +73,23 @@ abstract class VectorFieldBase {
     }
 }
 
-class VectorEmbeddingTextField extends VectorFieldBase implements
+class VectorEmbeddingTextField<T> extends VectorFieldBase<T> implements
     IVectorEmbeddingTextField, 
-    IVectorEmbeddingFieldFactoryAccessor {
+    IVectorEmbeddingFieldFactoryAccessor<T> {
 
     public sourceQuantizationType: VectorEmbeddingType = "Text";
     public destinationQuantizationType: VectorEmbeddingType = "Single";
     public isBase64Encoded: boolean = false;
     public embeddingsGenerationTaskIdentifier: string = "";
 
-    constructor(fieldName: string) {
+    constructor(fieldName: Field<T>) {
         super(fieldName);
         this.updateFieldName();
     }
 
     private updateFieldName(): void {
         this.fieldName = this.getFormattedFieldName(
-            this.rawFieldName,
+            this.rawFieldName as string,
             this.sourceQuantizationType,
             this.destinationQuantizationType,
             this.embeddingsGenerationTaskIdentifier
@@ -117,18 +117,20 @@ class VectorEmbeddingTextField extends VectorFieldBase implements
     }
 }
 
-class VectorEmbeddingField extends VectorFieldBase implements
-    IVectorEmbeddingField, 
-    IVectorEmbeddingFieldFactoryAccessor {
+class VectorEmbeddingField<T> extends VectorFieldBase<T> implements
+    IVectorEmbeddingField,
+    IVectorEmbeddingFieldFactoryAccessor<T> {
 
     public sourceQuantizationType: VectorEmbeddingType;
     public destinationQuantizationType: VectorEmbeddingType;
     public isBase64Encoded: boolean;
     public embeddingsGenerationTaskIdentifier: string = "";
 
-    constructor(fieldName: string, 
-                sourceQuantizationType: VectorEmbeddingType = "Single",
-                isBase64Encoded: boolean = false) {
+    constructor(
+        fieldName: Field<T>,
+        sourceQuantizationType: VectorEmbeddingType = "Single",
+        isBase64Encoded: boolean = false
+    ) {
         super(fieldName);
         this.sourceQuantizationType = sourceQuantizationType;
         this.destinationQuantizationType = sourceQuantizationType;
@@ -138,7 +140,7 @@ class VectorEmbeddingField extends VectorFieldBase implements
 
     private updateFieldName(): void {
         this.fieldName = this.getFormattedFieldName(
-            this.rawFieldName,
+            this.rawFieldName as Field<T>,
             this.sourceQuantizationType,
             this.destinationQuantizationType
         );
@@ -151,9 +153,10 @@ class VectorEmbeddingField extends VectorFieldBase implements
 
         this.destinationQuantizationType = targetEmbeddingQuantization;
 
-        if ((this.sourceQuantizationType === "Int8" ||
-             this.sourceQuantizationType === "Binary") &&
-             this.destinationQuantizationType !== this.sourceQuantizationType) {
+        if (
+            (this.sourceQuantizationType === "Int8" || this.sourceQuantizationType === "Binary") &&
+            this.destinationQuantizationType !== this.sourceQuantizationType
+        ) {
             throw new Error(`Cannot quantize already quantized embeddings. Source VectorEmbeddingType is ${this.sourceQuantizationType}; however the destination is ${this.destinationQuantizationType}.`);
         }
 
@@ -162,8 +165,8 @@ class VectorEmbeddingField extends VectorFieldBase implements
     }
 }
 
-class VectorField extends VectorFieldBase implements IVectorField {
-    constructor(fieldName: string) {
+class VectorField<T> extends VectorFieldBase<T> implements IVectorField {
+    constructor(fieldName: Field<T>) {
         super(fieldName);
         this.fieldName = fieldName;
     }
@@ -171,41 +174,27 @@ class VectorField extends VectorFieldBase implements IVectorField {
 
 export class VectorFieldFactory<T> implements IVectorFieldFactory<T> {
 
-    public withText(fieldNameOrSelector: string | ((field: T) => void)): IVectorEmbeddingTextField {
-        const fieldName = typeof fieldNameOrSelector === "string" 
-            ? fieldNameOrSelector 
-            : getFieldNameFor(fieldNameOrSelector);
-
+    public withText(fieldName: Field<T>): IVectorEmbeddingTextField {
         return new VectorEmbeddingTextField(fieldName);
     }
 
     public withEmbedding(
-        fieldNameOrSelector: string | ((field: T) => void),
+        fieldName: Field<T>,
         storedEmbeddingQuantization: VectorEmbeddingType = "Single"
     ): IVectorEmbeddingField {
-        const fieldName = typeof fieldNameOrSelector === "string" 
-            ? fieldNameOrSelector 
-            : getFieldNameFor(fieldNameOrSelector);
-        
         return new VectorEmbeddingField(fieldName, storedEmbeddingQuantization, false);
     }
 
     public withBase64(
-        fieldNameOrSelector: string | ((field: T) => void),
+        fieldName: Field<T>,
         storedEmbeddingQuantization: VectorEmbeddingType = "Single"
     ): IVectorEmbeddingField {
-        const fieldName = typeof fieldNameOrSelector === "string" 
-            ? fieldNameOrSelector 
-            : getFieldNameFor(fieldNameOrSelector);
-        
         return new VectorEmbeddingField(fieldName, storedEmbeddingQuantization, true);
     }
 
-    public withField(fieldNameOrSelector: string | ((field: T) => void)): IVectorField {
-        const fieldName = typeof fieldNameOrSelector === "string" 
-            ? fieldNameOrSelector 
-            : getFieldNameFor(fieldNameOrSelector);
-        
+    public withField(fieldName: Field<T>): IVectorField {
         return new VectorField(fieldName);
     }
 }
+
+// get rid of selector in field name (withText etc etc.)

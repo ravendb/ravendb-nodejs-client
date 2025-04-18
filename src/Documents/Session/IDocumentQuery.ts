@@ -21,7 +21,7 @@ import { Field } from "../../Types/index.js";
 import { ProjectionBehavior } from "../Queries/ProjectionBehavior.js";
 import { IFilterFactory } from "../Queries/IFilterFactory.js";
 import { IQueryShardedContextBuilder } from "./Querying/Sharding/IQueryShardedContextBuilder.js";
-import { IVectorOptions, VectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
+import { IVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
 import {
     IVectorEmbeddingField,
     IVectorEmbeddingTextField,
@@ -171,13 +171,8 @@ export interface IDocumentQuery<T extends object>
     aggregateUsing(facetSetupDocumentId: string): IAggregationDocumentQuery<T>;
 
     vectorSearch(
-        fieldName: Field<T>,
-        valueFactory: number[] | string,
-        options?: IVectorOptions
-    ): IDocumentQuery<T>;
-    vectorSearch(
-        fieldName: ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
-        valueFactory: ((factory: IVectorFieldValueFactory) => void),
+        fieldName: Field<T> | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
+        valueFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void),
         options?: IVectorOptions
     ): IDocumentQuery<T>;
 }

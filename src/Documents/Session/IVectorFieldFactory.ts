@@ -1,57 +1,32 @@
-import { VectorEmbeddingType } from "../Indexes/VectorSearch/index.js";
+import { VectorEmbeddingType } from "../Queries/VectorSearch/VectorEmbeddingType.js";
+import { Field } from "../../Types/index.js";
 
 export interface IVectorFieldFactory<T> {
     /**
      * Defines the text field that vector search will be performed on
      * @param fieldName Name of the document field containing text data
      */
-    withText(fieldName: string): IVectorEmbeddingTextField;
-
-    /**
-     * Defines the text field that vector search will be performed on
-     * @param propertySelector Path to the document field containing text data
-     */
-    withText(propertySelector: (field: T) => void): IVectorEmbeddingTextField;
+    withText(fieldName: Field<T>): IVectorEmbeddingTextField;
 
     /**
      * Defines the embedding field that vector search will be performed on
      * @param fieldName Name of the document field containing embedding data
      * @param storedEmbeddingQuantization Quantization that was performed on stored embeddings
      */
-    withEmbedding(fieldName: string, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
-
-    /**
-     * Defines the embedding field that vector search will be performed on
-     * @param propertySelector Path to the document field containing embedding data
-     * @param storedEmbeddingQuantization Quantization that was performed on stored embeddings
-     */
-    withEmbedding(propertySelector: (field: T) => string | number[], storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
+    withEmbedding(fieldName: Field<T>, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
 
     /**
      * Defines the embedding field (encoded as base64) that vector search will be performed on
      * @param fieldName Name of the document field containing base64 encoded embedding data
      * @param storedEmbeddingQuantization Quantization of stored embeddings
      */
-    withBase64(fieldName: string, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
-
-    /**
-     * Defines the embedding field (encoded as base64) that vector search will be performed on
-     * @param propertySelector Path to the document field containing base64 encoded embedding data
-     * @param storedEmbeddingQuantization Quantization of stored embeddings
-     */
-    withBase64(propertySelector: (field: T) => void, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
+    withBase64(fieldName: Field<T>, storedEmbeddingQuantization?: VectorEmbeddingType): IVectorEmbeddingField;
 
     /**
      * Defines the field (that's already indexed) that vector search will be performed on
      * @param fieldName Name of the index-field containing indexed data
      */
-    withField(fieldName: string): IVectorField;
-
-    /**
-     * Defines the field (that's already indexed) that vector search will be performed on
-     * @param propertySelector Path to the index-field containing indexed data
-     */
-    withField(propertySelector: (field: T) => void): IVectorField;
+    withField(fieldName: Field<T>): IVectorField;
 }
 
 export interface IVectorEmbeddingTextField {
@@ -85,8 +60,8 @@ export interface IVectorField {
  * Interface for accessing embedding field factory properties
  * @internal
  */
-export interface IVectorEmbeddingFieldFactoryAccessor {
-    fieldName: string;
+export interface IVectorEmbeddingFieldFactoryAccessor<T> {
+    fieldName: Field<T>;
     sourceQuantizationType: VectorEmbeddingType;
     destinationQuantizationType: VectorEmbeddingType;
     isBase64Encoded: boolean;
@@ -118,27 +93,9 @@ export interface IVectorEmbeddingTextFieldValueFactory {
 export interface IVectorEmbeddingFieldValueFactory {
     /**
      * Defines queried embedding.
-     * @param embedding Enumerable containing embedding values
-     */
-    byEmbedding<T extends number>(embedding: Iterable<T>): void;
-
-    // /**
-    //  * Defines queried embeddings.
-    //  * @param embeddings Enumerable containing embeddings values
-    //  */
-    // byEmbedding<T extends number>(embeddings: Iterable<Iterable<T>>): void;
-
-    /**
-     * Defines queried embedding.
      * @param embedding Array containing embedding values
      */
     byEmbedding<T extends number>(embedding: T[]): void;
-
-    /**
-     * Defines queried embedding.
-     * @param embedding Object containing RavenVector
-     */
-    byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
 
     /**
      * Defines queried embeddings.
@@ -151,12 +108,6 @@ export interface IVectorEmbeddingFieldValueFactory {
      * @param base64Embedding Embedding encoded as base64 string
      */
     byBase64(base64Embedding: string): void;
-
-    /**
-     * Defines queried embeddings in base64 format.
-     * @param base64Embeddings Embeddings encoded as base64 strings
-     */
-    byBase64Embeddings(base64Embeddings: string[] | Iterable<string>): void;
 
     /**
      * Defines queried embedding.
@@ -189,14 +140,10 @@ export class VectorEmbeddingFieldValueFactory implements
     public text: string = null;
     public texts: string[] = null;
 
-    /**
-     * Defines queried embedding.
-     * @param embedding Iterable containing embedding values
-     */
     public byEmbedding<T extends number>(embedding: T[]): void;
     public byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
     public byEmbedding(embedding: any): void {
-        this.embeddings = embedding;
+        this.embedding = embedding;
     }
 
     /**
@@ -213,14 +160,6 @@ export class VectorEmbeddingFieldValueFactory implements
      */
     public byBase64(base64Embedding: string): void {
         this.text = base64Embedding;
-    }
-
-    /**
-     * Defines queried embeddings in base64 format.
-     * @param base64Embeddings Embeddings encoded as base64 strings
-     */
-    public byBase64Embeddings(base64Embeddings: string[]): void {
-        this.texts = base64Embeddings
     }
 
     /**

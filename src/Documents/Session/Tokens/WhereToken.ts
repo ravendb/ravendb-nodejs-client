@@ -5,7 +5,7 @@ import { throwError } from "../../../Exceptions/index.js";
 import { TypeUtil } from "../../../Utility/TypeUtil.js";
 import { WhereOperator } from "./WhereOperator.js";
 import { CONSTANTS } from "../../../Constants.js";
-import { IVectorOptions, VectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
+import { IVectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
 export type MethodsType = "CmpXchg";
 

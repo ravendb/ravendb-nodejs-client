@@ -1,4 +1,4 @@
-import { VectorEmbeddingType } from "../../Indexes/VectorSearch/index.js";
+import { VectorEmbeddingType } from "./VectorEmbeddingType.js";
 
 export interface IVectorOptions {
     numberOfCandidates?: number;

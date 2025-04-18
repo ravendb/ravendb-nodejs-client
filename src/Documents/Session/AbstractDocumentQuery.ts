@@ -97,6 +97,7 @@ import {
 } from "./IVectorFieldFactory.js";
 import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
 import { VectorFieldFactory } from "./VectorFieldFactory.js";
+import { Field } from "../../Types/index.js";
 
 /**
  * A query against a Raven index
@@ -2546,25 +2547,26 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * @param options Additional vector search options
      */
     protected _vectorSearch(
-        fieldName: string | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
+        fieldName: Field<T> | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
         valueOrFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void),
         options?: IVectorOptions
     ) {
         this._assertMethodIsCurrentlySupported("vectorSearch");
 
-        const factory = new VectorEmbeddingFieldFactory<T>();
-
+        const vectorFactory = new VectorEmbeddingFieldFactory<T>();
+        let fieldAccessor: IVectorEmbeddingFieldFactoryAccessor<T>;
+    
         if (typeof fieldName === "string") {
-            factory.fieldName = fieldName;
+            fieldAccessor = vectorFactory.withField(fieldName) as IVectorEmbeddingFieldFactoryAccessor<T>;
         } else if (typeof fieldName === "function") {
-            fieldName(factory);
+            fieldAccessor = fieldName(vectorFactory) as IVectorEmbeddingFieldFactoryAccessor<T>;
         } else {
             throwError("InvalidArgumentException",
                 "fieldName must be either a string or a function that selects a vector field");
         }
-
+    
         const whereParams = new WhereParams();
-        whereParams.fieldName = (factory as IVectorEmbeddingFieldFactoryAccessor).fieldName;
+        whereParams.fieldName = fieldAccessor.fieldName;
 
         // Handle value or valueFactory
         if (typeof valueOrFactory === "function") {
@@ -2573,6 +2575,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
             if (fieldValueFactory.embeddings) {
                 whereParams.value = fieldValueFactory.embeddings;
+            } else if (fieldValueFactory.embedding) {
+                whereParams.value = fieldValueFactory.embedding;
             } else if (fieldValueFactory.text) {
                 whereParams.value = fieldValueFactory.text;
             } else if (fieldValueFactory.texts) {
