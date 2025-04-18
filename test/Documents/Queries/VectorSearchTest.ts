@@ -1,6 +1,14 @@
 import assert from "node:assert";
-import {IDocumentStore} from "../../../src/index.js";
+import {
+    AbstractJavaScriptIndexCreationTask,
+    GetIndexesOperation,
+    IDocumentStore,
+    IndexDefinition,
+    PutIndexesOperation
+} from "../../../src/index.js";
 import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil.js";
+import {assertThat} from "../../Utils/AssertExtensions.js";
+import {PutIndexesCommand} from "../../../src/Documents/Operations/Indexes/PutIndexesOperation";
 
 
 describe("RDBC-899", function () {
@@ -177,8 +185,8 @@ describe("RDBC-899", function () {
 
         const query = session.query<Dto>({collection: "Dtos"})
             .vectorSearch(x => x.withText(dto => dto.TextualValue)
-                .usingTask("openai-embeddings")
-                .targetQuantization("Binary"),
+                    .usingTask("openai-embeddings")
+                    .targetQuantization("Binary"),
                 factory => factory.byText("query text"))
             .toString();
 
@@ -252,6 +260,41 @@ describe("RDBC-899", function () {
 
         assert.strictEqual(query, "from 'Dtos' where exact(vector.search(embedding.text(TextualValue), $p0, 0.8, null))");
     });
+
+    it("should create index with vector search field using index definition", async () => {
+        await setupIndexDefinition(store);
+
+        const indexDefinitions: IndexDefinition[] = await store.maintenance.send(new GetIndexesOperation(0, 10));
+
+
+        assert.strictEqual(indexDefinitions[0].name, "Dtos/ByEmbeddingSingles");
+        assert.strictEqual(indexDefinitions[0].indexType, "Map");
+        assert.strictEqual(indexDefinitions[0].configuration["Indexing.Static.SearchEngineType"], "Corax");
+
+        const vectorField = indexDefinitions[0].fields["FirstName"].vector;
+        assert.strictEqual(vectorField.sourceEmbeddingType, "Text");
+        assert.strictEqual(vectorField.destinationEmbeddingType, "Single");
+        assert.strictEqual(vectorField.numberOfEdges, "23");
+        assert.strictEqual(vectorField.numberOfCandidatesForIndexing, "20");
+    });
+
+    it("should create index with vector search using classes", async () => {
+        await setupIndexClass(store);
+        const indexDefinitions: IndexDefinition[] = await store.maintenance.send(new GetIndexesOperation(0, 10));
+
+        assert.strictEqual(indexDefinitions.length, 1);
+        const indexDefinition = indexDefinitions[0];
+
+        assert.strictEqual(indexDefinition.name, "Dtos/ByEmbeddingSingles");
+        assert.strictEqual(indexDefinition.indexType, "JavaScriptMap");
+        assert.strictEqual(indexDefinition.configuration["Indexing.Static.SearchEngineType"], "Corax");
+
+        const vectorField = indexDefinition.fields["vectorField"].vector;
+        assert.strictEqual(vectorField.sourceEmbeddingType, "Text");
+        assert.strictEqual(vectorField.destinationEmbeddingType, "Single");
+        assert.strictEqual(vectorField.numberOfEdges, "33");
+        assert.strictEqual(vectorField.numberOfCandidatesForIndexing, "43");
+    })
 });
 
 class Dto {
@@ -262,3 +305,58 @@ class Dto {
     public TextualValue: string;
 }
 
+class Dtos_ByEmbeddingSingles extends AbstractJavaScriptIndexCreationTask<Dto> {
+    constructor() {
+        super();
+
+        this.map("Dtos", p => {
+            return {
+                "EmbeddingSingles": p.EmbeddingSingles,
+            };
+        });
+
+        this.vectorField("vectorField", {
+            numberOfEdges: 33,
+            numberOfCandidatesForIndexing: 43,
+            sourceEmbeddingType: "Text",
+            destinationEmbeddingType: "Single"
+        })
+
+    }
+}
+
+
+async function setupIndexClass(store: IDocumentStore) {
+    const dtoIndex = new Dtos_ByEmbeddingSingles();
+    await dtoIndex.execute(store);
+}
+
+async function setupIndexDefinition(store: IDocumentStore) {
+    const indexDefinition = new IndexDefinition();
+    indexDefinition.name = "Dtos/ByEmbeddingSingles";
+    indexDefinition.maps = new Set([`
+        from doc in docs.Dtos 
+        select new 
+        { 
+            doc.EmbeddingSingles, 
+            EmbeddingSinglesVector = CreateVector(doc.EmbeddingSingles), 
+         }`]);
+    indexDefinition.fields = {
+        "FirstName": {
+            vector: {
+                numberOfEdges: 23,
+                numberOfCandidatesForIndexing: 20,
+                sourceEmbeddingType: "Text",
+                destinationEmbeddingType: "Single"
+            }
+        }
+    }
+    indexDefinition.configuration = {
+        "Indexing.Static.SearchEngineType": "Corax"
+    }
+    const putIndexesOperation = new PutIndexesOperation(indexDefinition);
+
+    const results = await store.maintenance.send(putIndexesOperation);
+    assertThat(results).hasSize(1);
+    assertThat(results[0].index).isEqualTo(indexDefinition.name);
+}
