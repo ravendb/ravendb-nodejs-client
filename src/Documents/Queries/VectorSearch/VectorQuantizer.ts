@@ -9,27 +9,28 @@ export class VectorQuantizer {
      */
     public static toInt8(rawEmbedding: number[] | Float32Array): number[] {
         const length = rawEmbedding.length;
-        const result = new Int8Array(length + 4); // Extra 4 bytes for the float
+        const result = new Array(length + 4);
 
-        // Find the maximum absolute value
         let maxAbsValue = 0;
         for (let i = 0; i < length; i++) {
             maxAbsValue = Math.max(maxAbsValue, Math.abs(rawEmbedding[i]));
         }
 
-        // Scale factor to fit in int8 range
         const scaleFactor = maxAbsValue === 0 ? 1 : 127 / maxAbsValue;
 
-        // Convert and scale values
         for (let i = 0; i < length; i++) {
             result[i] = Math.round(rawEmbedding[i] * scaleFactor);
         }
 
-        // Append the scale factor as a float32 at the end
-        const scaleFactorView = new DataView(result.buffer, length, 4);
-        scaleFactorView.setFloat32(0, maxAbsValue, true); // true for little-endian
+        const buffer = new ArrayBuffer(4);
+        const dataView = new DataView(buffer);
+        dataView.setFloat32(0, maxAbsValue, true);
 
-        return Array.from(result);
+        for (let i = 0; i < 4; i++) {
+            result[length + i] = dataView.getInt8(i);
+        }
+
+        return result;
     }
 
     /**

@@ -96,7 +96,6 @@ import {
     IVectorFieldFactory, IVectorFieldValueFactory, VectorEmbeddingFieldValueFactory
 } from "./IVectorFieldFactory.js";
 import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
-import { VectorFieldFactory } from "./VectorFieldFactory.js";
 import { Field } from "../../Types/index.js";
 
 /**
