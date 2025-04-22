@@ -32,6 +32,7 @@ export abstract class AbstractGenericTimeSeriesIndexCreationTask extends Abstrac
         this._indexSuggestions = new Set<string>();
         this._termVectorsStrings = {};
         this._spatialOptionsStrings = {};
+        this._vectorOptionsStrings = {};
     }
 
     /**

@@ -6,11 +6,11 @@ import {
     IndexDefinition,
     PutIndexesOperation
 } from "../../../src/index.js";
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Utils/TestUtil.js";
 import {assertThat} from "../../Utils/AssertExtensions.js";
 
 
-describe("RDBC-899", function () {
+(!RavenTestContext.is70Server ? describe.skip : describe)("RDBC-899", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {

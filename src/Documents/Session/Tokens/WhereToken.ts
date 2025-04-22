@@ -305,7 +305,7 @@ export class WhereToken extends QueryToken {
         }
 
         if (!this._writeMethod(writer)) {
-            writer.append(`"${this.parameterName}"`);
+            writer.append("$").append(this.parameterName);
         }
     }
 
@@ -378,8 +378,6 @@ export class WhereToken extends QueryToken {
             case "VectorSearch": {
                 const {vectorSearch} = this.options
                 writer.append(", $").append(this.parameterName);
-
-                // writer.append(", ai.task(").append(this.options.vectorSearch.embeddingsGenerationTaskIdentifier ?? "null").append(")");
 
                 writer.append(", ").append(vectorSearch?.similarity ?? "null");
                 writer.append(", ").append(vectorSearch?.numberOfCandidates ?? "null");

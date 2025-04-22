@@ -196,5 +196,3 @@ export class VectorFieldFactory<T> implements IVectorFieldFactory<T> {
         return new VectorField(fieldName);
     }
 }
-
-// get rid of selector in field name (withText etc etc.)
