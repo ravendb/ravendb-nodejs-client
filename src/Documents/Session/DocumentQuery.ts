@@ -20,7 +20,7 @@ import { FieldsToFetchToken } from "./Tokens/FieldsToFetchToken.js";
 import { SpatialCriteriaFactory } from "../Queries/Spatial/SpatialCriteriaFactory.js";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria.js";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField.js";
-import { SpatialUnits, SpatialRelation } from "../Indexes/Spatial.js";
+import { SpatialRelation, SpatialUnits } from "../Indexes/Spatial.js";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { IFacetBuilder } from "../Queries/Facets/IFacetBuilder.js";
 import { IAggregationDocumentQuery } from "../Queries/Facets/IAggregationDocumentQuery.js";
@@ -57,6 +57,14 @@ import { ProjectionBehavior } from "../Queries/ProjectionBehavior.js";
 import { IFilterFactory } from "../Queries/IFilterFactory.js";
 import { FilterFactory } from "../Queries/FilterFactory.js";
 import { IQueryShardedContextBuilder } from "./Querying/Sharding/IQueryShardedContextBuilder.js";
+import { IVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
+import {
+    IVectorEmbeddingField,
+    IVectorEmbeddingTextField,
+    IVectorField,
+    IVectorFieldFactory,
+    IVectorFieldValueFactory
+} from "./IVectorFieldFactory.js";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 
@@ -897,6 +905,21 @@ export class DocumentQuery<T extends object>
 
     shardContext(action: (builder: IQueryShardedContextBuilder) => void): IDocumentQuery<T> {
         this._shardContext(action);
+        return this;
+    }
+
+    /**
+     * Performs a vector similarity search using the specified field and embedding vector.
+     * @param fieldName Field containing vector values or a function that returns a field using the vector factory
+     * @param valueFactory The vector to compare against as a function, array of numbers, or string
+     * @param options Additional vector search options
+     */
+    public vectorSearch(
+        fieldName: Field<T> | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField),
+        valueFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void),
+        options?: IVectorOptions
+    ): IDocumentQuery<T> {
+        this._vectorSearch(fieldName, valueFactory, options);
         return this;
     }
 }

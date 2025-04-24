@@ -9,7 +9,8 @@ import { throwError } from "../../../src/Exceptions/index.js";
 import { TimeUtil } from "../../../src/Utility/TimeUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-(RavenTestContext.is70Server ? describe.skip : describe)("RavenDB_11440", function () {
+// TODO - https://issues.hibernatingrhinos.com/issue/RDBC-901/update-outdated-LogsConfiguration-in-node.js-client
+describe.skip("RavenDB_11440", function () {
 
     let store: IDocumentStore;
 

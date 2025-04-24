@@ -5,6 +5,7 @@ import { throwError } from "../../../Exceptions/index.js";
 import { TypeUtil } from "../../../Utility/TypeUtil.js";
 import { WhereOperator } from "./WhereOperator.js";
 import { CONSTANTS } from "../../../Constants.js";
+import { IVectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
 export type MethodsType = "CmpXchg";
 
@@ -36,11 +37,16 @@ export interface WhereOptionsMethodTypeRelatedParameters {
     exact: boolean;
 }
 
+export interface WhereOptionsVectorSearchRelatedParameters {
+    vectorSearch: IVectorOptions;
+}
+
 export type WhereOptionsParameters =
     WhereOptionsShapeRelatedParameters
     | WhereOptionsExactFromToRelatedParameters
     | WhereOptionsMethodTypeRelatedParameters
-    | WhereOptionsSearchRelatedParameters;
+    | WhereOptionsSearchRelatedParameters
+    | WhereOptionsVectorSearchRelatedParameters;
 
 export class WhereOptions {
     public searchOperator: SearchOperator;
@@ -53,6 +59,7 @@ export class WhereOptions {
     public method: WhereMethodCall;
     public whereShape: ShapeToken;
     public distanceErrorPct: number;
+    public vectorSearch: IVectorOptions;
 
     public static defaultOptions() {
         return new WhereOptions();
@@ -76,6 +83,10 @@ export class WhereOptions {
             const p = parameters as WhereOptionsShapeRelatedParameters;
             this.whereShape = p.shape;
             this.distanceErrorPct = p.distance;
+        }  else if (parameters["vectorSearch"]) {
+            const vectorSearchParameters = parameters["vectorSearch"] as IVectorOptions;
+            this.vectorSearch = vectorSearchParameters;
+            this.exact = vectorSearchParameters.isExact ?? false;
         } else if (!TypeUtil.isNullOrUndefined(parameters["exact"])
             && !parameters["methodType"]) {
             const p = parameters as WhereOptionsExactFromToRelatedParameters;
@@ -220,6 +231,10 @@ export class WhereToken extends QueryToken {
                 writer.append("regex(");
                 break;
             }
+            case "VectorSearch": {
+                writer.append("vector.search(")
+                break;
+            }
         }
 
         this._writeInnerWhere(writer);
@@ -358,6 +373,16 @@ export class WhereToken extends QueryToken {
                 }
                 writer
                     .append(")");
+                break;
+            }
+            case "VectorSearch": {
+                const {vectorSearch} = this.options
+                writer.append(", $").append(this.parameterName);
+
+                writer.append(", ").append(vectorSearch?.similarity ?? "null");
+                writer.append(", ").append(vectorSearch?.numberOfCandidates ?? "null");
+
+                writer.append(")");
                 break;
             }
             default: {

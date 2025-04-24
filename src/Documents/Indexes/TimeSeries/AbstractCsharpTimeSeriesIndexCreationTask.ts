@@ -20,6 +20,7 @@ export abstract class AbstractCsharpTimeSeriesIndexCreationTask extends Abstract
         indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
         indexDefinitionBuilder.termVectorsStrings = this._termVectorsStrings;
         indexDefinitionBuilder.spatialIndexesStrings = this._spatialOptionsStrings;
+        indexDefinitionBuilder.vectorFieldStrings = this._vectorOptionsStrings;
         indexDefinitionBuilder.outputReduceToCollection = this._outputReduceToCollection;
         indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this._patternForOutputReduceToCollectionReferences;
         indexDefinitionBuilder.patternReferencesCollectionName = this._patternReferencesCollectionName;

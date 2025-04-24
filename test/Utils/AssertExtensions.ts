@@ -94,7 +94,7 @@ export class JavaAssertionBuilder {
         if (this._value instanceof Map) {
             assert.strictEqual(this._value.size, n);
         } else {
-            assert.strictEqual(Object.keys(this._value).length, n);
+            assert.strictEqual(Object.keys(this._value ?? {}).length, n);
         }
 
         return this;

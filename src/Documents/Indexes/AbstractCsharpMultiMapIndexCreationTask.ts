@@ -3,6 +3,7 @@ import { IndexDefinition, IndexDefinitionBuilder } from "./IndexDefinition.js";
 import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { AbstractGenericIndexCreationTask } from "./AbstractGenericIndexCreationTask.js";
 import { INDEXES } from "../../Constants.js";
+import { ObjectUtil } from "../../Utility/ObjectUtil.js";
 
 export class AbstractCsharpMultiMapIndexCreationTask extends AbstractGenericIndexCreationTask {
 
@@ -49,9 +50,12 @@ export class AbstractCsharpMultiMapIndexCreationTask extends AbstractGenericInde
         indexDefinitionBuilder.priority = this.priority;
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
+        indexDefinitionBuilder.vectorFieldStrings = this.vectorOptionsStrings;
 
         if (this.searchEngineType) {
             indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        } else if (!ObjectUtil.isEmpty(this.vectorOptionsStrings)) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = "Corax";
         }
 
         const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);

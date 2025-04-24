@@ -247,6 +247,9 @@ export class ObjectUtil {
         return result;
     }
 
+    public static isEmpty(object: Record<string, unknown>) {
+        return Object.keys(object ?? {}).length === 0;
+    }
 }
 
 /*

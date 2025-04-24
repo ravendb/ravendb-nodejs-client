@@ -19,6 +19,7 @@ export abstract class AbstractCsharpCountersIndexCreationTask extends AbstractGe
         indexDefinitionBuilder.storesStrings = this._storesStrings;
         indexDefinitionBuilder.suggestionsOptions = this._indexSuggestions;
         indexDefinitionBuilder.termVectorsStrings = this._termVectorsStrings;
+        indexDefinitionBuilder.vectorFieldStrings = this._vectorOptionsStrings;
         indexDefinitionBuilder.spatialIndexesStrings = this._spatialOptionsStrings;
         indexDefinitionBuilder.outputReduceToCollection = this._outputReduceToCollection;
         indexDefinitionBuilder.patternForOutputReduceToCollectionReferences = this._patternForOutputReduceToCollectionReferences;

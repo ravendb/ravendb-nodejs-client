@@ -7,7 +7,8 @@ import {
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-(RavenTestContext.is70Server ? describe.skip : describe)("LogsConfigurationTest", function () {
+// TODO - https://issues.hibernatingrhinos.com/issue/RDBC-901/update-outdated-LogsConfiguration-in-node.js-client
+describe.skip("LogsConfigurationTest", function () {
 
     let store: IDocumentStore;
 

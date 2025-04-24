@@ -2,6 +2,7 @@ import { FieldIndexing, FieldStorage, FieldTermVector } from "./Enums.js";
 import { MetadataObject } from "../Session/MetadataObject.js";
 import { AttachmentName, IAttachmentObject } from "../Attachments/index.js";
 import { CapitalizeType } from "../../Types/index.js";
+import { FieldVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
 
 export type IndexingMapDefinition<TInput, TOutput> = (document: TInput) => TOutput | TOutput[];
 
@@ -13,6 +14,7 @@ export interface CreateFieldOptions {
     storage?: boolean;
     indexing?: FieldIndexing;
     termVector?: FieldTermVector;
+    vector?: FieldVectorOptions;
 }
 
 export interface IndexingMapUtils {
