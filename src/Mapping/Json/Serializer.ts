@@ -37,4 +37,8 @@ export class JsonSerializer {
     public static getDefaultForCommandPayload(): JsonSerializer {
         return new JsonSerializer(camelCaseReviver, pascalCaseReplacer);
     }
+
+    public static toPlainObject<T>(obj: T): T {
+        return JSON.parse(JSON.stringify(obj));
+    }
 }
