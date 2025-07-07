@@ -39,6 +39,10 @@ export class JsonSerializer {
     }
 
     public static toPlainObject<T>(obj: T): T {
+        if (obj === undefined) {
+            return undefined as T;
+        }
+        
         return JSON.parse(JSON.stringify(obj));
     }
 }
