@@ -116,6 +116,25 @@ export class DocumentConventions {
         return this._sharding;
     }
 
+    private _returnPlainJsObjects: boolean = false;
+
+    /**
+     * Gets whether all values returned from API will be plain objects (not class instances).
+     * This is useful for environments like Next.js that require serializable results.
+     */
+    public get returnPlainJsObjects(): boolean {
+        return this._returnPlainJsObjects;
+    }
+
+    /**
+     * Sets whether all values returned from API will be plain objects (not class instances).
+     * This is useful for environments like Next.js that require serializable results.
+     */
+    public set returnPlainJsObjects(value: boolean) {
+        this._assertNotFrozen();
+        this._returnPlainJsObjects = value;
+    }
+
     public constructor() {
         this._readBalanceBehavior = "None";
         this._identityPartsSeparator = "/";

@@ -97,6 +97,7 @@ import {
 } from "./IVectorFieldFactory.js";
 import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
 import { Field } from "../../Types/index.js";
+import { JsonSerializer } from "../../Mapping/Json/Serializer.js";
 
 /**
  * A query against a Raven index
@@ -2193,7 +2194,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public async all(): Promise<T[]> {
         const results = await this.iterator();
-        return [...results];
+        const array = [...results];
+
+        if (this.conventions.returnPlainJsObjects) {
+            return array.map(item => JsonSerializer.toPlainObject(item))
+        }
+
+        return array;
     }
 
     public async getQueryResult(): Promise<QueryResult> {
@@ -2208,11 +2215,20 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException", "Expected at least one result.");
         }
 
+        if (this.conventions.returnPlainJsObjects) {
+            return JsonSerializer.toPlainObject(entries[0]);
+        }
+
         return entries[0];
     }
 
     public async firstOrNull(): Promise<T | null> {
         const entries = await this._executeQueryOperation(1);
+
+        if (this.conventions.returnPlainJsObjects) {
+            return JsonSerializer.toPlainObject(entries[0]) || null;
+        }
+
         return entries[0] || null;
     }
 
@@ -2224,6 +2240,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 `Expected single result, but got ${ entries.length ? "more than that" : 0 }.`);
         }
 
+        if (this.conventions.returnPlainJsObjects) {
+            return JsonSerializer.toPlainObject(entries[0]);
+        }
+
         return entries[0];
     }
 
@@ -2233,6 +2253,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidOperationException",
                 `Expected single result, but got more than that.`);
         }
+
+        if (this.conventions.returnPlainJsObjects) {
+            return entries.length === 1 ? JsonSerializer.toPlainObject(entries[0]) : null;
+        }
+
         return entries.length === 1 ? entries[0] : null;
     }
 
