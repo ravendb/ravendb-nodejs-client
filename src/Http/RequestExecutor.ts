@@ -380,8 +380,21 @@ export class RequestExecutor implements IDisposable {
 
     private static async createAgent(options: Agent.Options) {
         try {
-            const { Agent: AgentInstance } = await import(importFix("undici"));
-            return new AgentInstance(options);
+            let UndiciAgent;
+
+            try {
+                const undiciModule = await import(importFix("undici"));
+                UndiciAgent = undiciModule.Agent;
+            } catch (err) {
+                const undiciModule = await import("undici");
+                UndiciAgent = undiciModule.Agent;
+            }
+
+            if (!UndiciAgent) {
+                throw new Error("Agent not found in undici module");
+            }
+
+            return new UndiciAgent(options);
         } catch (err) {
             // If we can't import undici - we might be in cloudflare env - simply return no-agent.
             return null;
