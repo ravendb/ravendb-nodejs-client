@@ -86,7 +86,7 @@ export interface IVectorEmbeddingTextFieldValueFactory {
 
     /**
      * Query by the embedding(s) indexed from the specified document for the quried field.
-     * @param documentId Document id
+     * @param documentId The unique identifier of the document to be processed.
      */
     forDocument(documentId: string): void;
 

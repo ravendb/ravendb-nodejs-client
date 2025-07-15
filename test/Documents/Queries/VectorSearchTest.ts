@@ -6,11 +6,11 @@ import {
     IndexDefinition,
     PutIndexesOperation
 } from "../../../src/index.js";
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Utils/TestUtil.js";
 import {assertThat} from "../../Utils/AssertExtensions.js";
 
 
-describe("RDBC-899", function () {
+(RavenTestContext.is70Server ? describe : describe.skip)("RDBC-899", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -24,7 +24,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingField", "Int8").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingField", "Int8").targetQuantization("Int8"),
                 factory => factory.byEmbedding([2.5, 3.3]), {
                     similarity: 0.65,
                     numberOfCandidates: 12
@@ -38,7 +38,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("VectorField").usingTask("id-for-task-open-ai"),
+            .vectorSearch(field => field.withText("VectorField").usingTask("id-for-task-open-ai"),
                 factory => factory.byText("aaaa"))
             .toString();
 
@@ -49,7 +49,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]))
             .toString();
 
@@ -60,7 +60,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byBase64("aaaa=="))
             .toString();
 
@@ -71,7 +71,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("EmbeddingSingles").targetQuantization("Int8"),
+            .vectorSearch(field => field.withText("EmbeddingSingles").targetQuantization("Int8"),
                 factory => factory.byText("aaaa"))
             .toString();
 
@@ -82,7 +82,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
@@ -93,7 +93,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8"),
                 factory => factory.byEmbedding([1, 2, 3]), {
                     similarity: 0.75
                 })
@@ -106,7 +106,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingBinary", "Binary"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingBinary", "Binary"),
                 factory => factory.byEmbedding([0, 1, 0, 1]))
             .toString();
 
@@ -117,7 +117,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byText("search text"))
             .toString();
 
@@ -128,7 +128,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue").usingTask("taskId-123"),
+            .vectorSearch(field => field.withText("TextualValue").usingTask("taskId-123"),
                 factory => factory.byText("query text"))
             .toString();
 
@@ -139,7 +139,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withBase64("EmbeddingBase64"),
+            .vectorSearch(field => field.withBase64("EmbeddingBase64"),
                 factory => factory.byBase64("aGVsbG8="))
             .toString();
 
@@ -150,7 +150,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles").targetQuantization("Int8"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
@@ -161,7 +161,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles").targetQuantization("Binary"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles").targetQuantization("Binary"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
@@ -172,7 +172,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue").targetQuantization("Int8"),
+            .vectorSearch(field => field.withText("TextualValue").targetQuantization("Int8"),
                 factory => factory.byText("query text"))
             .toString();
 
@@ -183,7 +183,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue")
+            .vectorSearch(field => field.withText("TextualValue")
                     .usingTask("openai-embeddings")
                     .targetQuantization("Binary"),
                 factory => factory.byText("query text"))
@@ -196,7 +196,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("EmbeddingSingles"),
+            .vectorSearch(field => field.withField("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]), {
                     numberOfCandidates: 20
                 })
@@ -209,7 +209,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]), {
                     isExact: true
                 })
@@ -222,7 +222,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]), {
                     similarity: 0.75,
                     numberOfCandidates: 50,
@@ -237,7 +237,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]), {
                     isExact: true
                 })
@@ -250,7 +250,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byText("query text"), {
                     similarity: 0.8,
                     isExact: true
@@ -264,7 +264,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byTexts(["first query", "second query"]), {
                     similarity: 0.75
                 })
@@ -277,7 +277,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("EmbeddingSingles"),
+            .vectorSearch(field => field.withField("EmbeddingSingles"),
                 factory => factory.byEmbeddings([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), {
                     numberOfCandidates: 30
                 })
@@ -290,7 +290,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8").targetQuantization("Int8"),
                 factory => factory.byEmbeddings([[1, 2, 3], [4, 5, 6]]))
             .toString();
 
@@ -301,7 +301,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue")
+            .vectorSearch(field => field.withText("TextualValue")
                     .usingTask("openai-embeddings")
                     .targetQuantization("Binary"),
                 factory => factory.byTexts(["query one", "query two", "query three"]), {
@@ -389,7 +389,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.forDocument("dtos/456"))
             .toString();
 
@@ -400,7 +400,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8"),
                 factory => factory.forDocument("dtos/int8-test"))
             .toString();
 
@@ -412,7 +412,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue").usingTask("openai-task"),
+            .vectorSearch(field => field.withText("TextualValue").usingTask("openai-task"),
                 factory => factory.forDocument("dtos/789"))
             .toString();
 
@@ -423,7 +423,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
                 factory => factory.forDocument("dtos/full-options"), {
                     similarity: 0.75,
                     numberOfCandidates: 100
@@ -438,7 +438,7 @@ describe("RDBC-899", function () {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.forDocument("dtos/candidates-test"), {
                     numberOfCandidates: 50
                 })
