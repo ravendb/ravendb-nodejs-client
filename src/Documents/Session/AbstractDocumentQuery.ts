@@ -94,10 +94,11 @@ import {
     IVectorEmbeddingFieldFactoryAccessor, IVectorEmbeddingTextField,
     IVectorField,
     IVectorFieldFactory, IVectorFieldValueFactory, VectorEmbeddingFieldValueFactory
-} from "./IVectorFieldFactory.js";
+} from "./VectorFieldFactory.js";
 import { VectorEmbeddingFieldFactory } from "../Queries/VectorSearch/VectorEmbeddingFieldFactory.js";
 import { Field } from "../../Types/index.js";
 import { JsonSerializer } from "../../Mapping/Json/Serializer.js";
+import { VectorSearchToken } from "./Tokens/VectorSearchToken.js";
 
 /**
  * A query against a Raven index
@@ -2577,56 +2578,63 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     ) {
         this._assertMethodIsCurrentlySupported("vectorSearch");
 
-        const vectorFactory = new VectorEmbeddingFieldFactory<T>();
-        let fieldAccessor: IVectorEmbeddingFieldFactoryAccessor<T>;
-    
-        if (typeof fieldName === "string") {
-            fieldAccessor = vectorFactory.withField(fieldName) as IVectorEmbeddingFieldFactoryAccessor<T>;
-        } else if (typeof fieldName === "function") {
-            fieldAccessor = fieldName(vectorFactory) as IVectorEmbeddingFieldFactoryAccessor<T>;
-        } else {
-            throwError("InvalidArgumentException",
-                "fieldName must be either a string or a function that selects a vector field");
-        }
-    
-        const whereParams = new WhereParams();
-        whereParams.fieldName = fieldAccessor.fieldName;
+        const fieldAccessor = this._resolveVectorSearchFieldAccessor(fieldName);
+        const {value, isDocumentId} = this._resolveVectorSearchValueFactory(valueOrFactory);
 
-        // Handle value or valueFactory
+        const tokens = this._getCurrentWhereTokens();
+        this._appendOperatorIfNeeded(tokens);
+        this._negateIfNeeded(tokens, fieldAccessor.fieldName);
+
+        const sourceQuantizationType = VectorSearchToken.getSourceQuantizationType(fieldAccessor);
+        const targetQuantizationType = VectorSearchToken.getTargetQuantizationType(fieldAccessor);
+        const taskIdentifier = VectorSearchToken.getTaskIdentifier(fieldAccessor);
+
+        const parameterName = this._addQueryParameter(value);
+
+        const vectorSearchToken = new VectorSearchToken(
+            fieldAccessor.fieldName,
+            parameterName,
+            sourceQuantizationType,
+            targetQuantizationType,
+            options?.similarity || null,
+            options?.numberOfCandidates || null,
+            options?.isExact || VectorSearchToken.DEFAULT_IS_EXACT,
+            isDocumentId,
+            taskIdentifier
+        );
+
+        tokens.push(vectorSearchToken);
+    }
+
+
+    private _resolveVectorSearchFieldAccessor(fieldName: Field<T> | ((factory: IVectorFieldFactory<T>) => IVectorField | IVectorEmbeddingField | IVectorEmbeddingTextField)): IVectorEmbeddingFieldFactoryAccessor<T> {
+        const vectorFactory = new VectorEmbeddingFieldFactory<T>();
+
+        if (typeof fieldName === "string") {
+            return vectorFactory.withField(fieldName) as IVectorEmbeddingFieldFactoryAccessor<T>;
+        } else if (typeof fieldName === "function") {
+            return fieldName(vectorFactory) as IVectorEmbeddingFieldFactoryAccessor<T>;
+        } else {
+            throwError("InvalidArgumentException", "fieldName must be either a string or a function that selects a vector field");
+        }
+    }
+
+    private _resolveVectorSearchValueFactory(valueOrFactory: number[] | string | ((factory: IVectorFieldValueFactory) => void)) {
         if (typeof valueOrFactory === "function") {
             const fieldValueFactory = new VectorEmbeddingFieldValueFactory();
             valueOrFactory(fieldValueFactory);
 
-            if (fieldValueFactory.embeddings) {
-                whereParams.value = fieldValueFactory.embeddings;
-            } else if (fieldValueFactory.embedding) {
-                whereParams.value = fieldValueFactory.embedding;
-            } else if (fieldValueFactory.text) {
-                whereParams.value = fieldValueFactory.text;
-            } else if (fieldValueFactory.texts) {
-                whereParams.value = fieldValueFactory.texts;
-            } else {
+            const value = fieldValueFactory.embedding || fieldValueFactory.embeddings ||
+                fieldValueFactory.text || fieldValueFactory.texts || fieldValueFactory.byId;
+
+            if (!value) {
                 throwError("InvalidOperationException", "No value was provided in the valueFactory");
             }
+
+            return {value, isDocumentId: !!fieldValueFactory.byId};
         } else {
-            whereParams.value = valueOrFactory;
+            return {value: valueOrFactory, isDocumentId: false};
         }
-
-        whereParams.allowWildcards = true;
-        const transformToEqualValue = this._transformValue(whereParams);
-
-        const tokens = this._getCurrentWhereTokens();
-        this._appendOperatorIfNeeded(tokens);
-        this._negateIfNeeded(tokens, whereParams.fieldName);
-
-        const whereToken = WhereToken.create(
-            "VectorSearch",
-            whereParams.fieldName,
-            this._addQueryParameter(transformToEqualValue),
-            new WhereOptions({vectorSearch: options, exact: options?.isExact})
-        );
-
-        tokens.push(whereToken);
     }
 }
 

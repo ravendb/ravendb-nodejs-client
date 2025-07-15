@@ -27,7 +27,7 @@ import {
     IVectorEmbeddingTextField,
     IVectorField,
     IVectorFieldFactory, IVectorFieldValueFactory
-} from "./IVectorFieldFactory.js";
+} from "./VectorFieldFactory.js";
 
 /**
  * A query against a Raven index

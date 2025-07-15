@@ -6,11 +6,11 @@ import {
     IndexDefinition,
     PutIndexesOperation
 } from "../../../src/index.js";
-import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil.js";
 import {assertThat} from "../../Utils/AssertExtensions.js";
 
 
-(!RavenTestContext.is70Server ? describe.skip : describe)("RDBC-899", function () {
+describe("RDBC-899", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -42,7 +42,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("aaaa"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0)");
     });
 
     it("should generate RQL for basic vector search with numeric embedding values", async () => {
@@ -53,7 +53,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with base64 encoded embedding", async () => {
@@ -64,7 +64,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byBase64("aaaa=="))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with text field and Int8 quantization", async () => {
@@ -75,7 +75,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("aaaa"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search using property selector for embedding field", async () => {
@@ -86,7 +86,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, $p0)");
     });
 
     it("should generate RQL for vector search with property selector and explicit Int8 quantization", async () => {
@@ -110,7 +110,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0, 1, 0, 1]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i1(EmbeddingBinary), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i1(EmbeddingBinary), $p0)");
     });
 
     it("should generate RQL for vector search with property selector for text field conversion", async () => {
@@ -121,7 +121,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("search text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), $p0)");
     });
 
     it("should generate RQL for vector search with text field using named AI task", async () => {
@@ -132,7 +132,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0)");
     });
 
     it("should generate RQL for vector search with base64 field using property selector", async () => {
@@ -143,7 +143,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byBase64("aGVsbG8="))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingBase64, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingBase64, $p0)");
     });
 
     it("should generate RQL for vector search with Single to Int8 conversion quantization", async () => {
@@ -154,7 +154,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search with Single to Binary conversion quantization", async () => {
@@ -165,7 +165,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search with text field and Int8 target quantization", async () => {
@@ -176,7 +176,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(TextualValue), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(TextualValue), $p0)");
     });
 
     it("should generate RQL for vector search with text, AI task and Binary quantization", async () => {
@@ -189,7 +189,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0)");
     });
 
     it("should generate RQL for vector search with withField method and property selector", async () => {
@@ -215,7 +215,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0))");
     });
 
     it("should generate RQL for vector search with similarity, candidates and exact parameters", async () => {
@@ -243,7 +243,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(EmbeddingSingles, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(EmbeddingSingles, $p0))");
     });
 
     it("should generate RQL for vector search with exact parameter and text embedding with similarity", async () => {
@@ -294,7 +294,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbeddings([[1, 2, 3], [4, 5, 6]]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), $p0)");
     });
 
     it("should generate RQL for vector search with multiple texts, AI task and Binary quantization", async () => {
@@ -309,7 +309,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0))");
     });
 
     it("should generate RQL for vector search with field name as string", async () => {
@@ -320,7 +320,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with field name as string and options", async () => {
@@ -347,7 +347,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0))");
     });
 
     it("should generate RQL for vector search with field name as string and multiple embeddings", async () => {
@@ -371,8 +371,82 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, $p0)");
     });
+
+    it("should generate RQL for vector search with field name as string and forDocument factory", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch("TextualValue",
+                factory => factory.forDocument("dtos/1"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, embedding.forDoc($p0))");
+    })
+
+    it("should generate RQL for vector search using forDocument with text field", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(x => x.withText("TextualValue"),
+                factory => factory.forDocument("dtos/456"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), embedding.forDoc($p0))");
+    });
+
+    it("should generate RQL for vector search using forDocument with Int8 quantization", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8"),
+                factory => factory.forDocument("dtos/int8-test"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), embedding.forDoc($p0))");
+    });
+
+
+    it("should generate RQL for vector search using forDocument with text field and AI task", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(x => x.withText("TextualValue").usingTask("openai-task"),
+                factory => factory.forDocument("dtos/789"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('openai-task')), embedding.forDoc($p0))");
+    });
+
+    it("should generate RQL for vector search using forDocument with similarity and candidates", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+                factory => factory.forDocument("dtos/full-options"), {
+                    similarity: 0.75,
+                    numberOfCandidates: 100
+                })
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, embedding.forDoc($p0), 0.75, 100)");
+    });
+
+
+    it("should generate RQL for vector search using forDocument with number of candidates", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(x => x.withField("VectorField"),
+                factory => factory.forDocument("dtos/candidates-test"), {
+                    numberOfCandidates: 50
+                })
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, embedding.forDoc($p0), null, 50)");
+    });
+
 
     it("should create index definition with vector search field and proper configuration", async () => {
         await setupIndexDefinition(store);

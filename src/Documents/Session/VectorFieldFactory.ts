@@ -71,7 +71,8 @@ export interface IVectorEmbeddingFieldFactoryAccessor<T> {
 /**
  * Represents a RavenDB vector in TypeScript
  */
-export interface IRavenVector<T> extends Array<T> {}
+export interface IRavenVector<T> extends Array<T> {
+}
 
 /**
  * Factory for providing text field values for vector searches
@@ -82,6 +83,12 @@ export interface IVectorEmbeddingTextFieldValueFactory {
      * @param text Queried text
      */
     byText(text: string): void;
+
+    /**
+     * Query by the embedding(s) indexed from the specified document for the quried field.
+     * @param documentId Document id
+     */
+    forDocument(documentId: string): void;
 
     /**
      * Defines queried texts.
@@ -113,11 +120,16 @@ export interface IVectorEmbeddingFieldValueFactory {
      * Defines queried embedding.
      * @param embedding RavenVector containing embedding values
      */
-    byEmbedding<T extends number>(embedding: {"@vector": IRavenVector<T>}): void;
+    byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
+
+    /**
+     * Query by the embedding(s) indexed from the specified document for the queried field.
+     * @param documentId The unique identifier of the document to be processed.
+     */
+    forDocument(documentId: string): void;
 }
 
-export interface IVectorFieldValueFactory extends
-    IVectorEmbeddingTextFieldValueFactory,
+export interface IVectorFieldValueFactory extends IVectorEmbeddingTextFieldValueFactory,
     IVectorEmbeddingFieldValueFactory {
 }
 
@@ -129,16 +141,18 @@ export interface IVectorFieldValueFactoryAccessor {
     text: string;
 
     texts: string[];
+
+    byId: string;
 }
 
-export class VectorEmbeddingFieldValueFactory implements
-    IVectorEmbeddingFieldValueFactory,
+export class VectorEmbeddingFieldValueFactory implements IVectorEmbeddingFieldValueFactory,
     IVectorFieldValueFactoryAccessor {
 
     public embedding: number[] = null;
     public embeddings: number[][] = null;
     public text: string = null;
     public texts: string[] = null;
+    public byId: string = null;
 
     public byEmbedding<T extends number>(embedding: T[]): void;
     public byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
@@ -176,5 +190,9 @@ export class VectorEmbeddingFieldValueFactory implements
      */
     public byTexts(texts: string[]): void {
         this.texts = texts;
+    }
+
+    public forDocument(documentId: string): void {
+        this.byId = documentId;
     }
 }

@@ -1,30 +1,24 @@
-import { IVectorEmbeddingFieldFactoryAccessor, IVectorEmbeddingTextField } from "../../../Session/IVectorFieldFactory.js";
-import { VectorFieldBase } from "../Common/VectorFieldBase.js";
-import {VectorEmbeddingType} from "../VectorEmbeddingType.js";
+import {
+    IVectorEmbeddingFieldFactoryAccessor,
+    IVectorEmbeddingTextField
+} from "../../../Session/VectorFieldFactory.js";
+import { VectorEmbeddingType } from "../VectorEmbeddingType.js";
 import { Field } from "../../../../Types/index.js";
 
-export class VectorEmbeddingTextField<T> extends VectorFieldBase<T> implements
+export class VectorEmbeddingTextField<T> implements
     IVectorEmbeddingTextField, 
     IVectorEmbeddingFieldFactoryAccessor<T> {
 
+    public fieldName: string;
     public sourceQuantizationType: VectorEmbeddingType = "Text";
     public destinationQuantizationType: VectorEmbeddingType = "Single";
     public isBase64Encoded: boolean = false;
     public embeddingsGenerationTaskIdentifier: string = "";
 
     constructor(fieldName: Field<T>) {
-        super(fieldName);
-        this.updateFieldName();
+        this.fieldName = fieldName;
     }
 
-    private updateFieldName(): void {
-        this.fieldName = this.getFormattedFieldName(
-            this.rawFieldName,
-            this.sourceQuantizationType,
-            this.destinationQuantizationType,
-            this.embeddingsGenerationTaskIdentifier
-        );
-    }
 
     public targetQuantization(targetEmbeddingQuantization: VectorEmbeddingType): IVectorEmbeddingTextField {
         if (targetEmbeddingQuantization === "Text") {
@@ -32,7 +26,6 @@ export class VectorEmbeddingTextField<T> extends VectorFieldBase<T> implements
         }
 
         this.destinationQuantizationType = targetEmbeddingQuantization;
-        this.updateFieldName();
         return this;
     }
 
@@ -42,7 +35,6 @@ export class VectorEmbeddingTextField<T> extends VectorFieldBase<T> implements
         }
 
         this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
-        this.updateFieldName();
         return this;
     }
 }

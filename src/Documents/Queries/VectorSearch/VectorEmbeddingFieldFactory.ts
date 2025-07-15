@@ -3,7 +3,7 @@ import {
     IVectorEmbeddingTextField,
     IVectorField,
     IVectorFieldFactory
-} from "../../Session/IVectorFieldFactory.js";
+} from "../../Session/VectorFieldFactory.js";
 import { VectorField } from "./Fields/VectorField.js";
 import { VectorEmbeddingField } from "./Fields/VectorEmbeddingField.js";
 import { VectorEmbeddingTextField } from "./Fields/VectorEmbeddingTextField.js";
