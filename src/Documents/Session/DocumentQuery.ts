@@ -64,7 +64,7 @@ import {
     IVectorField,
     IVectorFieldFactory,
     IVectorFieldValueFactory
-} from "./IVectorFieldFactory.js";
+} from "./VectorFieldFactory.js";
 
 export const NESTED_OBJECT_TYPES_PROJECTION_FIELD = "__PROJECTED_NESTED_OBJECT_TYPES__";
 

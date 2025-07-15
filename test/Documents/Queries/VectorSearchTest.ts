@@ -10,7 +10,7 @@ import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Uti
 import {assertThat} from "../../Utils/AssertExtensions.js";
 
 
-(!RavenTestContext.is70Server ? describe.skip : describe)("RDBC-899", function () {
+(RavenTestContext.is70Server ? describe : describe.skip)("RDBC-899", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -24,7 +24,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingField", "Int8").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingField", "Int8").targetQuantization("Int8"),
                 factory => factory.byEmbedding([2.5, 3.3]), {
                     similarity: 0.65,
                     numberOfCandidates: 12
@@ -38,62 +38,62 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("VectorField").usingTask("id-for-task-open-ai"),
+            .vectorSearch(field => field.withText("VectorField").usingTask("id-for-task-open-ai"),
                 factory => factory.byText("aaaa"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0)");
     });
 
     it("should generate RQL for basic vector search with numeric embedding values", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with base64 encoded embedding", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byBase64("aaaa=="))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with text field and Int8 quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("EmbeddingSingles").targetQuantization("Int8"),
+            .vectorSearch(field => field.withText("EmbeddingSingles").targetQuantization("Int8"),
                 factory => factory.byText("aaaa"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search using property selector for embedding field", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, $p0)");
     });
 
     it("should generate RQL for vector search with property selector and explicit Int8 quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8"),
                 factory => factory.byEmbedding([1, 2, 3]), {
                     similarity: 0.75
                 })
@@ -106,97 +106,97 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingBinary", "Binary"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingBinary", "Binary"),
                 factory => factory.byEmbedding([0, 1, 0, 1]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i1(EmbeddingBinary), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i1(EmbeddingBinary), $p0)");
     });
 
     it("should generate RQL for vector search with property selector for text field conversion", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byText("search text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), $p0)");
     });
 
     it("should generate RQL for vector search with text field using named AI task", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue").usingTask("taskId-123"),
+            .vectorSearch(field => field.withText("TextualValue").usingTask("taskId-123"),
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0)");
     });
 
     it("should generate RQL for vector search with base64 field using property selector", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withBase64("EmbeddingBase64"),
+            .vectorSearch(field => field.withBase64("EmbeddingBase64"),
                 factory => factory.byBase64("aGVsbG8="))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingBase64, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingBase64, $p0)");
     });
 
     it("should generate RQL for vector search with Single to Int8 conversion quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles").targetQuantization("Int8"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search with Single to Binary conversion quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles").targetQuantization("Binary"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles").targetQuantization("Binary"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0)");
     });
 
     it("should generate RQL for vector search with text field and Int8 target quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue").targetQuantization("Int8"),
+            .vectorSearch(field => field.withText("TextualValue").targetQuantization("Int8"),
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(TextualValue), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i8(TextualValue), $p0)");
     });
 
     it("should generate RQL for vector search with text, AI task and Binary quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue")
+            .vectorSearch(field => field.withText("TextualValue")
                     .usingTask("openai-embeddings")
                     .targetQuantization("Binary"),
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0)");
     });
 
     it("should generate RQL for vector search with withField method and property selector", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("EmbeddingSingles"),
+            .vectorSearch(field => field.withField("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]), {
                     numberOfCandidates: 20
                 })
@@ -209,20 +209,20 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]), {
                     isExact: true
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0))");
     });
 
     it("should generate RQL for vector search with similarity, candidates and exact parameters", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("VectorField"),
+            .vectorSearch(field => field.withField("VectorField"),
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]), {
                     similarity: 0.75,
                     numberOfCandidates: 50,
@@ -237,20 +237,20 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSingles"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
                 factory => factory.byEmbedding([0.1, 0.2, 0.3]), {
                     isExact: true
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(EmbeddingSingles, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(EmbeddingSingles, $p0))");
     });
 
     it("should generate RQL for vector search with exact parameter and text embedding with similarity", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byText("query text"), {
                     similarity: 0.8,
                     isExact: true
@@ -264,7 +264,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue"),
+            .vectorSearch(field => field.withText("TextualValue"),
                 factory => factory.byTexts(["first query", "second query"]), {
                     similarity: 0.75
                 })
@@ -277,7 +277,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withField("EmbeddingSingles"),
+            .vectorSearch(field => field.withField("EmbeddingSingles"),
                 factory => factory.byEmbeddings([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), {
                     numberOfCandidates: 30
                 })
@@ -290,18 +290,18 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withEmbedding("EmbeddingSBytes", "Int8").targetQuantization("Int8"),
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8").targetQuantization("Int8"),
                 factory => factory.byEmbeddings([[1, 2, 3], [4, 5, 6]]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), $p0)");
     });
 
     it("should generate RQL for vector search with multiple texts, AI task and Binary quantization", async () => {
         const session = store.openSession();
 
         const query = session.query<Dto>({collection: "Dtos"})
-            .vectorSearch(x => x.withText("TextualValue")
+            .vectorSearch(field => field.withText("TextualValue")
                     .usingTask("openai-embeddings")
                     .targetQuantization("Binary"),
                 factory => factory.byTexts(["query one", "query two", "query three"]), {
@@ -309,7 +309,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0))");
     });
 
     it("should generate RQL for vector search with field name as string", async () => {
@@ -320,7 +320,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byEmbedding([0.3, 0.4, 0.5]))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, $p0)");
     });
 
     it("should generate RQL for vector search with field name as string and options", async () => {
@@ -347,7 +347,7 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 })
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0, null, null))");
+        assert.strictEqual(query, "from 'Dtos' where exact(vector.search(VectorField, $p0))");
     });
 
     it("should generate RQL for vector search with field name as string and multiple embeddings", async () => {
@@ -371,8 +371,82 @@ import {assertThat} from "../../Utils/AssertExtensions.js";
                 factory => factory.byText("query text"))
             .toString();
 
-        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, $p0, null, null)");
+        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, $p0)");
     });
+
+    it("should generate RQL for vector search with field name as string and forDocument factory", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch("TextualValue",
+                factory => factory.forDocument("dtos/1"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(TextualValue, embedding.forDoc($p0))");
+    })
+
+    it("should generate RQL for vector search using forDocument with text field", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(field => field.withText("TextualValue"),
+                factory => factory.forDocument("dtos/456"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue), embedding.forDoc($p0))");
+    });
+
+    it("should generate RQL for vector search using forDocument with Int8 quantization", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(field => field.withEmbedding("EmbeddingSBytes", "Int8"),
+                factory => factory.forDocument("dtos/int8-test"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.i8(EmbeddingSBytes), embedding.forDoc($p0))");
+    });
+
+
+    it("should generate RQL for vector search using forDocument with text field and AI task", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(field => field.withText("TextualValue").usingTask("openai-task"),
+                factory => factory.forDocument("dtos/789"))
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(embedding.text(TextualValue, ai.task('openai-task')), embedding.forDoc($p0))");
+    });
+
+    it("should generate RQL for vector search using forDocument with similarity and candidates", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(field => field.withEmbedding("EmbeddingSingles"),
+                factory => factory.forDocument("dtos/full-options"), {
+                    similarity: 0.75,
+                    numberOfCandidates: 100
+                })
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(EmbeddingSingles, embedding.forDoc($p0), 0.75, 100)");
+    });
+
+
+    it("should generate RQL for vector search using forDocument with number of candidates", async () => {
+        const session = store.openSession();
+
+        const query = session.query<Dto>({collection: "Dtos"})
+            .vectorSearch(field => field.withField("VectorField"),
+                factory => factory.forDocument("dtos/candidates-test"), {
+                    numberOfCandidates: 50
+                })
+            .toString();
+
+        assert.strictEqual(query, "from 'Dtos' where vector.search(VectorField, embedding.forDoc($p0), null, 50)");
+    });
+
 
     it("should create index definition with vector search field and proper configuration", async () => {
         await setupIndexDefinition(store);
