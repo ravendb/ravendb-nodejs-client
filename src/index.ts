@@ -113,6 +113,11 @@ export * from "./Documents/Operations/OperationAbstractions.js";
 export { CompactDatabaseOperation } from "./Documents/Operations/CompactDatabaseOperation.js";
 export { PutConnectionStringOperation } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation.js";
 export type { PutConnectionStringResult } from "./Documents/Operations/ConnectionStrings/PutConnectionStringOperation.js";
+
+// AI Operations
+export * from "./Documents/AI/index.js";
+export * from "./Documents/Operations/AI/Agents/index.js";
+
 export { PatchOperation } from "./Documents/Operations/PatchOperation.js";
 export { DeleteSorterOperation } from "./Documents/Operations/Sorters/DeleteSorterOperation.js";
 export { PutSortersOperation } from "./Documents/Operations/Sorters/PutSortersOperation.js";
