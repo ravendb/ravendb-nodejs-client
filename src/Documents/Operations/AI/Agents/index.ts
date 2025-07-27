@@ -1,5 +1,5 @@
 export { AiAgentConfiguration } from "./AiAgentConfiguration.js";
-export { AiAgentConfigurationResult } from "./AiAgentConfigurationResult.js";
+export type { AiAgentConfigurationResult } from "./AiAgentConfigurationResult.js";
 export { AiAgentToolAction } from "./AiAgentToolAction.js";
 export { AiAgentToolQuery } from "./AiAgentToolQuery.js";
 export { AiAgentPersistenceConfiguration } from "./AiAgentPersistenceConfiguration.js";
