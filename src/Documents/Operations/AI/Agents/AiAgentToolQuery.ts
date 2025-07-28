@@ -35,11 +35,11 @@ export class AiAgentToolQuery implements IRavenObject {
      * A sample object representing the parameters for this tool.
      * This should be a JSON-formatted string, showing an example of valid parameters.
      */
-    public parametersSampleObject: string;
+    public parametersSampleObject?: string;
 
     /**
      * The JSON schema for the parameters expected by this tool.
      * This schema is used to validate and assist the AI in forming correct tool calls.
      */
-    public parametersSchema: string;
+    public parametersSchema?: string;
 }

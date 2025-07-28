@@ -67,14 +67,14 @@ export class AiConversation<T> implements IAiConversationOperations<T> {
 
     public get id(): string {
         if (!this._conversationId) {
-            throwError("InvalidOperationException", "This is a new conversation, the ID wasn't set yet, you have to call run/runAsync");
+            throwError("InvalidOperationException", "This is a new conversation, the ID wasn't set yet, you have to call run");
         }
         return this._conversationId;
     }
 
     public get answer(): T {
         if (!this._answer) {
-            throwError("InvalidOperationException", "You have to call run/runAsync first");
+            throwError("InvalidOperationException", "You have to call run first");
         }
         return this._answer;
     }
@@ -85,7 +85,7 @@ export class AiConversation<T> implements IAiConversationOperations<T> {
 
     public requiredActions(): AiAgentActionRequest[] {
         if (!this._actionRequests) {
-            throwError("InvalidOperationException", "You have to call run/runAsync first");
+            throwError("InvalidOperationException", "You have to call run first");
         }
         return this._actionRequests;
     }
