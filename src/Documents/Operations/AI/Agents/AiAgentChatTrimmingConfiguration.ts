@@ -19,9 +19,9 @@ export class AiAgentChatTrimmingConfiguration implements IRavenObject {
         }
     }
 
-    public tokens: AiAgentSummarizationByTokens;
-    public truncate: AiAgentTruncateChat;
-    public history: AiAgentHistoryConfiguration;
+    public tokens: AiAgentSummarizationByTokens | null;
+    public truncate: AiAgentTruncateChat | null;
+    public history: AiAgentHistoryConfiguration | null;
 }
 
 /**

@@ -79,7 +79,7 @@ export class AiAgentConfiguration implements IRavenObject {
     /**
      * Configuration for reducing the chat messages list of the AI agent.
      */
-    public chatTrimming: AiAgentChatTrimmingConfiguration;
+    public chatTrimming: AiAgentChatTrimmingConfiguration | null;
 
     public maxModelIterationsPerCall: number;
 }

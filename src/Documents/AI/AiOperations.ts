@@ -106,7 +106,7 @@ export class AiOperations {
     /**
      * Resumes an existing conversation with an AI agent.
      */
-    public resumeConversation<TSchema>(conversationId: string, changeVector: string): IAiConversationOperations<TSchema> {
+    public resumeConversation<TSchema>(conversationId: string, changeVector: string | null = null): IAiConversationOperations<TSchema> {
         return AiConversation.resume<TSchema>(this._executor, conversationId, changeVector);
     }
 }

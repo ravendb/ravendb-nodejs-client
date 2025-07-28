@@ -136,7 +136,7 @@ export class RunConversationCommand<TSchema> extends RavenCommand<ConversationRe
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        let uri = `${node.url}/databases/${node.database}/ai/conversation`;
+        let uri = `${node.url}/databases/${node.database}/ai/agent`;
 
         if (this._conversationId) {
             uri += `?conversationId=${encodeURIComponent(this._conversationId)}`;
@@ -159,7 +159,8 @@ export class RunConversationCommand<TSchema> extends RavenCommand<ConversationRe
         }
 
         const bodyJson = ObjectUtil.transformObjectKeys(requestBody, {
-            defaultTransform: ObjectUtil.pascal
+            defaultTransform: ObjectUtil.pascal,
+            ignorePaths: [/^Parameters\./],
         });
 
         const body = JsonSerializer.getDefault().serialize(bodyJson);
@@ -196,23 +197,23 @@ export class RunConversationCommand<TSchema> extends RavenCommand<ConversationRe
 
     private _convertResult(response: any, conventions: DocumentConventions): ConversationResult<TSchema> {
         const result = new ConversationResult<TSchema>();
-        
+
         if (response.conversationId) {
             result.conversationId = response.conversationId;
         }
-        
+
         if (response.changeVector) {
             result.changeVector = response.changeVector;
         }
-        
+
         if (response.response) {
             result.response = response.response;
         }
-        
+
         if (response.usage) {
             result.usage = response.usage;
         }
-        
+
         if (response.actionRequests && Array.isArray(response.actionRequests)) {
             result.actionRequests = response.actionRequests;
         }
