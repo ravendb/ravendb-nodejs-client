@@ -80,6 +80,10 @@ class GetPeriodicBackupStatusCommand extends RavenCommand<GetPeriodicBackupStatu
 }
 
 export function revivePeriodicBackupStatus(status: ServerResponse<PeriodicBackupStatus>): PeriodicBackupStatus {
+    if (!status) {
+        return null;
+    }
+
     return {
         ...status,
         lastFullBackup: DateUtil.utc.parse(status.lastFullBackup),
