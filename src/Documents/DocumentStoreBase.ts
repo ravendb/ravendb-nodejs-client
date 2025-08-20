@@ -39,6 +39,7 @@ import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask
 import { StringUtil } from "../Utility/StringUtil.js";
 import { IHiLoIdGenerator } from "./Identity/IHiLoIdGenerator.js";
 import { BulkInsertOptions } from "./BulkInsert/BulkInsertOptions.js";
+import { AiOperations } from "./Operations/AI/AiOperations.js";
 
 export abstract class DocumentStoreBase
     extends EventEmitter
@@ -111,6 +112,16 @@ export abstract class DocumentStoreBase
     }
 
     private _conventions: DocumentConventions;
+
+    private _aiOperations: AiOperations;
+
+    public get ai() {
+        if (!this._aiOperations) {
+            this._aiOperations = new AiOperations(this);
+        }
+
+        return this._aiOperations;
+    }
 
     public get conventions() {
         if (!this._conventions) {

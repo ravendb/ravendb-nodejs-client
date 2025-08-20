@@ -265,7 +265,6 @@ export * from "./Documents/Session/Operations/Lazy/LazyGetCompareExchangeValuesO
 export * from "./Documents/Session/Operations/Lazy/LazyConditionalLoadOperation.js";
 export * from "./Documents/Session/Operations/Lazy/LazyRevisionOperation.js";
 export * from "./Documents/Session/Operations/Lazy/LazyRevisionOperations.js";
-
 export * from "./Documents/Session/Operations/LoadOperation.js";
 export * from "./Documents/Session/Operations/LoadStartingWithOperation.js";
 export * from "./Documents/Session/Operations/MultiGetOperation.js";
@@ -332,6 +331,9 @@ export * from "./Documents/Operations/Refresh/ConfigureRefreshOperationResult.js
 export * from "./Documents/Operations/ToggleDatabasesStateOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation.js";
+
+// AI
+export * from "./Documents/Operations/AI/Agents/index.js";
 
 // BACKUP
 export * from "./Documents/Operations/Backups/AmazonSettings.js";
