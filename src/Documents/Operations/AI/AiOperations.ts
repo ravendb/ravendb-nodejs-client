@@ -37,9 +37,9 @@ export class AiOperations {
      */
     public async createAgent<TSchema>(
         configuration: AiAgentConfiguration,
-        schemaType?: TSchema
+        sampleObject?: TSchema
     ): Promise<AiAgentConfigurationResult> {
-        const operation = new AddOrUpdateAiAgentOperation(configuration, schemaType);
+        const operation = new AddOrUpdateAiAgentOperation(configuration, sampleObject);
         return await this._executor.send(operation);
     }
 

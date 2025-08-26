@@ -11,7 +11,7 @@ import { RaftIdGenerator } from "../../../../Utility/RaftIdGenerator.js";
 import { throwError } from "../../../../Exceptions/index.js";
 import { HeadersBuilder } from "../../../../Utility/HttpUtil.js";
 
-function hasNoSampleObjectOrSchema(configuration: AiAgentConfiguration) {
+function hasNoSampleObjectAndSchema(configuration: AiAgentConfiguration) {
     return (!configuration.outputSchema || configuration.outputSchema.trim() === "")
         && (!configuration.sampleObject || configuration.sampleObject.trim() === "");
 }
@@ -20,17 +20,17 @@ export class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
     private readonly _configuration: AiAgentConfiguration;
     private readonly _sampleObject?: unknown;
 
-    public constructor(configuration: AiAgentConfiguration, schemaType?: any) {
+    public constructor(configuration: AiAgentConfiguration, sampleObject?: any) {
         if (!configuration) {
             throwError("InvalidArgumentException", "configuration cannot be null or undefined.");
         }
 
-        if (!configuration.outputSchema && !configuration.sampleObject && !schemaType) {
+        if (!configuration.outputSchema && !configuration.sampleObject && !sampleObject) {
             throwError("InvalidArgumentException", "Please provide a non-empty value for either outputSchema or sampleObject.");
         }
         this._configuration = configuration;
-        if (schemaType) {
-            this._sampleObject = schemaType;
+        if (sampleObject) {
+            this._sampleObject = sampleObject;
         }
     }
 
@@ -51,7 +51,7 @@ class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult>
 
     public constructor(configuration: AiAgentConfiguration, sampleSchema: any, conventions: DocumentConventions) {
         super();
-        if (hasNoSampleObjectOrSchema(configuration)) {
+        if (hasNoSampleObjectAndSchema(configuration)) {
             throwError("InvalidArgumentException", "Please provide a non-empty value for either outputSchema or sampleObject.");
         }
         this._configuration = configuration;

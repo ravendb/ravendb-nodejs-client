@@ -12,6 +12,7 @@ import { HttpRequestParameters } from "../../../../Primitives/Http.js";
 import { throwError } from "../../../../Exceptions/index.js";
 import { JsonSerializer } from "../../../../Mapping/Json/Serializer.js";
 import { ObjectUtil } from "../../../../Utility/ObjectUtil.js";
+import { StringUtil } from "../../../../Utility/StringUtil.js";
 
 export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
     private readonly _agentId: string;
@@ -29,10 +30,10 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         options?: AiConversationCreationOptions,
         changeVector?: string
     ) {
-        if (!agentId) {
+        if (StringUtil.isNullOrEmpty(agentId)) {
             throwError("InvalidArgumentException", "agentId cannot be null or empty.");
         }
-        if (!conversationId) {
+        if (StringUtil.isNullOrEmpty(conversationId)) {
             throwError("InvalidArgumentException", "conversationId cannot be null or empty.");
         }
         this._agentId = agentId;

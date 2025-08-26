@@ -6,6 +6,7 @@ import type { ConversationResult } from "./Agents/ConversationResult.js";
 import type { AiAnswer } from "./AiAnswer.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
 import { throwError } from "../../../Exceptions/index.js";
+import { StringUtil } from "../../../Utility/StringUtil.js";
 
 export enum AiHandleErrorStrategy {
     SendErrorsToModel = "SendErrorsToModel",
@@ -27,9 +28,9 @@ export class AiConversation {
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
         if (!store) throwError("InvalidArgumentException", "store is required");
-        if (!databaseName) throwError("InvalidArgumentException", "databaseName is required");
-        if (!agentId) throwError("InvalidArgumentException", "agentId is required");
-        if (!conversationId) throwError("InvalidArgumentException", "conversationId is required");
+        if (StringUtil.isNullOrEmpty(databaseName)) throwError("InvalidArgumentException", "databaseName is required");
+        if (StringUtil.isNullOrEmpty(agentId)) throwError("InvalidArgumentException", "agentId is required");
+        if (StringUtil.isNullOrEmpty(conversationId)) throwError("InvalidArgumentException", "conversationId is required");
 
         this._store = store;
         this._databaseName = databaseName;
