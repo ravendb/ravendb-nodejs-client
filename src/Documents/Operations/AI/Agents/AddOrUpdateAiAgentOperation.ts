@@ -9,8 +9,6 @@ import { ServerNode } from "../../../../Http/ServerNode.js";
 import { HttpRequestParameters } from "../../../../Primitives/Http.js";
 import { RaftIdGenerator } from "../../../../Utility/RaftIdGenerator.js";
 import { throwError } from "../../../../Exceptions/index.js";
-import { ObjectUtil } from "../../../../Utility/ObjectUtil.js";
-import { JsonSerializer } from "../../../../Mapping/Json/Serializer.js";
 import { HeadersBuilder } from "../../../../Utility/HttpUtil.js";
 
 function hasNoSampleObjectOrSchema(configuration: AiAgentConfiguration) {
@@ -54,7 +52,7 @@ class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult>
     public constructor(configuration: AiAgentConfiguration, sampleSchema: any, conventions: DocumentConventions) {
         super();
         if (hasNoSampleObjectOrSchema(configuration)) {
-            throw new Error("Please provide a non-empty value for either outputSchema or sampleObject.");
+            throwError("InvalidArgumentException", "Please provide a non-empty value for either outputSchema or sampleObject.");
         }
         this._configuration = configuration;
         this._sampleSchema = sampleSchema;
@@ -71,29 +69,18 @@ class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult>
 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/ai/agent";
-        const configToSend = {...this._configuration};
 
-        if (!configToSend.sampleObject && this._sampleSchema) {
-            configToSend.sampleObject = this._sampleSchema;
+        if (!this._configuration && this._sampleSchema) {
+            this._configuration.sampleObject = this._sampleSchema;
         }
 
-        const bodyToSerialize = {
-            ...configToSend,
-            parameters: configToSend.parameters ? Array.from(configToSend.parameters) : []
-        };
-
-        const bodyJson = ObjectUtil.transformObjectKeys(bodyToSerialize, {
-            defaultTransform: ObjectUtil.pascal
-        });
-
-        const body = JsonSerializer.getDefault().serialize(bodyJson);
+        const body = this._serializer.serialize(this._configuration);
 
         const headers = HeadersBuilder
             .create()
             .typeAppJson()
             .build();
 
-        console.log(uri);
         return {
             method: "PUT",
             uri,

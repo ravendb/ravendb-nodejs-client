@@ -55,21 +55,6 @@ class DeleteAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> {
             this._throwInvalidResponse();
         }
 
-        let body: string = "";
-        const result = await this._defaultPipeline()
-            .collectBody(b => body = b)
-            .process(bodyStream);
-
-        this.result = result as AiAgentConfigurationResult;
-        return body;
-        // let body = "";
-        // const data = await this._defaultPipeline<any>(_ => body = _).process(bodyStream);
-        //
-        // this.result = {
-        //     identifier: data?.Identifier ?? data?.identifier,
-        //     raftCommandIndex: data?.RaftCommandIndex ?? data?.raftCommandIndex
-        // } as AiAgentConfigurationResult;
-        //
-        // return body;
+        return this._parseResponseDefaultAsync(bodyStream)
     }
 }

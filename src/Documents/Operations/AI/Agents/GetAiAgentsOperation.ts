@@ -32,19 +32,21 @@ class GetAiAgentsCommand extends RavenCommand<GetAiAgentsResponse> {
         this._conventions = conventions;
     }
 
+    get isReadRequest(): boolean {
+        return true;
+    }
+
     createRequest(node: ServerNode): HttpRequestParameters {
         let uri = `${node.url}/databases/${node.database}/admin/ai/agent`;
+
         if (this._agentId) {
             uri += `?agentId=${encodeURIComponent(this._agentId)}`;
         }
+
         return {
             method: "GET",
             uri
         };
-    }
-
-    get isReadRequest(): boolean {
-        return true;
     }
 
     async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
@@ -52,12 +54,6 @@ class GetAiAgentsCommand extends RavenCommand<GetAiAgentsResponse> {
             this._throwInvalidResponse();
         }
 
-        let body: string = "";
-        const result = await this._defaultPipeline()
-            .collectBody(b => body = b)
-            .process(bodyStream);
-
-        this.result = result as GetAiAgentsResponse;
-        return body;
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 }
