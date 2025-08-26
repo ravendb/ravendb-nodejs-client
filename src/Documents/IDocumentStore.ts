@@ -27,6 +27,7 @@ import { IAbstractIndexCreationTask } from "./Indexes/IAbstractIndexCreationTask
 import { TimeSeriesOperations } from "./TimeSeries/TimeSeriesOperations.js";
 import { IHiLoIdGenerator } from "./Identity/IHiLoIdGenerator.js";
 import { BulkInsertOptions } from "./BulkInsert/BulkInsertOptions.js";
+import { AiOperations } from "./Operations/AI/AiOperations.js";
 
 export interface SessionEventsProxy {
     addSessionListener(eventName: "failedRequest", eventHandler: (eventArgs: FailedRequestEventArgs) => void): this;
@@ -245,6 +246,7 @@ export interface IDocumentStore extends IDisposable,
 
     timeSeries: TimeSeriesOperations;
 
+    ai: AiOperations;
     /**
      * Gets the conventions
      */

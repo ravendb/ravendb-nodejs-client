@@ -24,3 +24,6 @@ old
 test_server_settings.json
 .nyc_output
 coverage
+RavenDB/**/*
+.env
+certs/**/*
