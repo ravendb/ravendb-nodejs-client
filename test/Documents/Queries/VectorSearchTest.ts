@@ -10,7 +10,7 @@ import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Uti
 import {assertThat} from "../../Utils/AssertExtensions.js";
 
 
-(RavenTestContext.is70Server ? describe : describe.skip)("RDBC-899", function () {
+(RavenTestContext.isRavenDbServerVersion("7.0") ? describe : describe.skip)("RDBC-899", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {

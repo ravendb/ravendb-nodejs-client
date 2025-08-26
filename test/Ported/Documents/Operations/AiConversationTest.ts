@@ -1,10 +1,10 @@
 import { IDocumentStore } from "../../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../../../Utils/AssertExtensions.js";
 
 import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/AiConversation.js";
 
-describe("AiConversationTest", function () {
+(RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiConversationTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {

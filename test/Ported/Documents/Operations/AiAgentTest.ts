@@ -4,11 +4,11 @@ import {
     PutConnectionStringOperation,
     RavenConnectionString
 } from "../../../../src/index.js";
-import {disposeTestDocumentStore, testContext} from "../../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
 import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 import {AiAgentConfiguration} from "../../../../src/Documents/Operations/AI/Agents/config/AiAgentConfiguration.js";
 
-describe("AiAgentTest", function () {
+(RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiAgentTest", function () {
 
     let store: IDocumentStore;
 
