@@ -25,7 +25,7 @@ export class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
             throwError("InvalidArgumentException", "configuration cannot be null or undefined.");
         }
 
-        if (!configuration.outputSchema && !configuration.sampleObject && !sampleObject) {
+        if (hasNoSampleObjectAndSchema(configuration) && !sampleObject) {
             throwError("InvalidArgumentException", "Please provide a non-empty value for either outputSchema or sampleObject.");
         }
         this._configuration = configuration;
@@ -93,12 +93,7 @@ class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult>
         if (!bodyStream) {
             this._throwInvalidResponse();
         }
-        let body = "";
-        const data = await this._defaultPipeline<any>(_ => body = _).process(bodyStream);
-        this.result = {
-            identifier: data?.Identifier ?? data?.identifier,
-            raftCommandIndex: data?.RaftCommandIndex ?? data?.raftCommandIndex
-        } as AiAgentConfigurationResult;
-        return body;
+
+        return this._parseResponseDefaultAsync(bodyStream);
     }
 }
