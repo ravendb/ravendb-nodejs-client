@@ -23,7 +23,7 @@ describe("RDBC-942", function () {
         {
             const session = store.openSession(sessionOptions);
             for (let i = 0; i < testNumbers.length; i++) {
-                session.advanced.clusterTransaction.createCompareExchangeValue<number>(`test/number-${i}`, testNumbers[i]);
+                session.advanced.clusterTransaction.createCompareExchangeValue(`test/number-${i}`, testNumbers[i]);
             }
             await session.saveChanges();
         }
@@ -63,7 +63,7 @@ describe("RDBC-942", function () {
         {
             const session = store.openSession(sessionOptions);
             for (let i = 0; i < testStrings.length; i++) {
-                session.advanced.clusterTransaction.createCompareExchangeValue<string>(`test/string-${i}`, testStrings[i]);
+                session.advanced.clusterTransaction.createCompareExchangeValue(`test/string-${i}`, testStrings[i]);
             }
             await session.saveChanges();
         }
@@ -109,7 +109,7 @@ describe("RDBC-942", function () {
         {
             const session = store.openSession(sessionOptions);
             for (let i = 0; i < testArrays.length; i++) {
-                session.advanced.clusterTransaction.createCompareExchangeValue<any[]>(`test/array-${i}`, testArrays[i]);
+                session.advanced.clusterTransaction.createCompareExchangeValue(`test/array-${i}`, testArrays[i]);
             }
             await session.saveChanges();
         }
@@ -157,7 +157,7 @@ describe("RDBC-942", function () {
         {
             const session = store.openSession(sessionOptions);
             for (let i = 0; i < testObjects.length; i++) {
-                session.advanced.clusterTransaction.createCompareExchangeValue<any>(`test/object-${i}`, testObjects[i]);
+                session.advanced.clusterTransaction.createCompareExchangeValue(`test/object-${i}`, testObjects[i]);
             }
             await session.saveChanges();
         }
@@ -206,7 +206,7 @@ describe("RDBC-942", function () {
         {
             const session = store.openSession(sessionOptions);
             for (const item of testValues) {
-                session.advanced.clusterTransaction.createCompareExchangeValue<any>(item.key, item.value);
+                session.advanced.clusterTransaction.createCompareExchangeValue(item.key, item.value);
             }
             await session.saveChanges();
         }

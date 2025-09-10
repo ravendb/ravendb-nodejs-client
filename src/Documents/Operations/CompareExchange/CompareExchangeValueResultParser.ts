@@ -137,7 +137,7 @@ export class CompareExchangeValueResultParser {
                 });
         }
 
-        return TypeUtil.isClass(entityType)
+        return TypeUtil.isClass(entityType) || TypeUtil.isObjectLiteralTypeDescriptor(entityType)
             ? conventions.deserializeEntityFromJson(entityType, value)
             : value;
     }
