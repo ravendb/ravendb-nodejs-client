@@ -1435,7 +1435,7 @@ store.initialize();
 ## Building
 
 ```bash
-npm install
+npm ci
 npm run build
 ```
 
