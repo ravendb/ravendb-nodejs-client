@@ -97,7 +97,6 @@ export class CompareExchangeValueResultParser {
 
         const value = CompareExchangeValueResultParser.deserializeObject(raw, conventions, clazz);
         return new CompareExchangeValue(key, index, value, cv, metadata);
-
     }
 
     public static deserializeObject<T>(raw: object, conventions: DocumentConventions, clazz: CompareExchangeResultClass<T>) {
@@ -137,8 +136,9 @@ export class CompareExchangeValueResultParser {
                     arrayRecursive: true
                 });
         }
-        const entity = conventions.deserializeEntityFromJson(entityType, value);
-        return entity;
 
+        return TypeUtil.isClass(entityType)
+            ? conventions.deserializeEntityFromJson(entityType, value)
+            : value;
     }
 }
