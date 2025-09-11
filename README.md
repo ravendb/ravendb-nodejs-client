@@ -1435,8 +1435,8 @@ store.initialize();
 ## Building
 
 ```bash
-npm ci
-npm run build
+npm install
+npm run prepare
 ```
 
 ## Running tests
