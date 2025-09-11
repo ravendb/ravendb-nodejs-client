@@ -242,4 +242,54 @@ describe("RDBC-942", function () {
             }
         }
     });
+
+    it("canGetCompareExchangeValuesWithClassType", async () => {
+        const sessionOptions: SessionOptions = {
+            transactionMode: "ClusterWide"
+        };
+
+        class Person {
+            constructor(public name: string, public age: number) {}
+        }
+
+        const people = [
+            new Person("Alice", 30),
+            new Person("Bob", 25),
+            new Person("Charlie", 40)
+        ];
+
+        {
+            const session = store.openSession(sessionOptions);
+            for (let i = 0; i < people.length; i++) {
+                session.advanced.clusterTransaction.createCompareExchangeValue(`test/person-${i}`, people[i]);
+            }
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            const keys = people.map((_, i) => `test/person-${i}`);
+            const lazyValues = session.advanced.clusterTransaction.lazily.getCompareExchangeValues(keys, Person as any);
+
+            const values = await lazyValues.getValue();
+
+            assertThat(values)
+                .isNotNull()
+                .hasSize(people.length);
+
+            for (let i = 0; i < people.length; i++) {
+                const key = `test/person-${i}`;
+                assertThat(values)
+                    .containsKey(key);
+
+                const ce = values[key];
+                assertThat(ce)
+                    .isNotNull();
+
+                const p = ce.value as Person;
+                assertThat(p.name).isEqualTo(people[i].name);
+                assertThat(p.age).isEqualTo(people[i].age);
+            }
+        }
+    });
 });
