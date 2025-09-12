@@ -65,7 +65,7 @@ jobs:
     - name: Extract RavenDB Server
       run: tar xjf RavenDB.tar.bz2
 
-    - run: npm install
+    - run: npm ci
 
     - name: Run Linter
       run: npm run lint

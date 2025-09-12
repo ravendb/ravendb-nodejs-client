@@ -1436,7 +1436,7 @@ store.initialize();
 
 ```bash
 npm install
-npm run build
+npm run prepare
 ```
 
 ## Running tests
