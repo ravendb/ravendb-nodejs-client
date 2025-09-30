@@ -101,7 +101,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/bulk_docs?";
+        const uri = node.url + "/databases/" + node.database + "/bulk_docs";
         const headers = HeadersBuilder.create().typeAppJson().build();
 
         if (TypeUtil.isNullOrUndefined(this._supportsAtomicWrites)) {
@@ -172,7 +172,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
 
     protected _appendOptions(): string {
         if (!this._options) {
-            return "";
+            return "?";
         }
 
         return SingleNodeBatchCommand.appendOptions(this._options.indexOptions, this._options.replicationOptions, this._options.shardedOptions);
@@ -180,7 +180,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
     }
 
     protected static appendOptions(indexOptions: IndexBatchOptions, replicationOptions: ReplicationBatchOptions, shardedOptions: ShardedBatchOptions): string {
-        let result = "";
+        let result = "?";
 
         if (replicationOptions) {
             result += `&waitForReplicasTimeout=${TimeUtil.millisToTimeSpan(replicationOptions.timeout)}`;
