@@ -4,6 +4,7 @@ import {
 } from "../../../Session/VectorFieldFactory.js";
 import { VectorEmbeddingType } from "../VectorEmbeddingType.js";
 import { Field } from "../../../../Types/index.js";
+import { throwError } from "../../../../Exceptions/index.js";
 
 export class VectorEmbeddingTextField<T> implements
     IVectorEmbeddingTextField, 
@@ -22,7 +23,7 @@ export class VectorEmbeddingTextField<T> implements
 
     public targetQuantization(targetEmbeddingQuantization: VectorEmbeddingType): IVectorEmbeddingTextField {
         if (targetEmbeddingQuantization === "Text") {
-            throw new Error("Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
+            throwError("InvalidOperationException","Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
         }
 
         this.destinationQuantizationType = targetEmbeddingQuantization;
@@ -31,7 +32,7 @@ export class VectorEmbeddingTextField<T> implements
 
     public usingTask(embeddingsGenerationTaskIdentifier: string): IVectorEmbeddingTextField {
         if (this.sourceQuantizationType !== "Text") {
-            throw new Error("The usingTask method can only be used with text embeddings (withText)");
+            throwError("InvalidOperationException", "The usingTask method can only be used with text embeddings (withText)");
         }
 
         this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
