@@ -22,6 +22,7 @@ npm install --save ravendb
    [Asynchronous call types](#supported-asynchronous-call-types),  
    [Crud example](#crud-example),  
    [Query documents](#query-documents),  
+   [Ai agents](#ai-agents),  
    [Attachments](#attachments),  
    [Time series](#timeseries),  
    [Bulk insert](#bulk-insert),  
@@ -777,6 +778,111 @@ const results = await session.query({ collection: "users" })
 > <small>[query first and single](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/QueryTest.ts#L467)</small>  
 > <small>[query count](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/QueryTest.ts#L834)</small>
 
+## Ai agents
+
+#### Create an AI agent
+```javascript
+const agentConfiguration = {
+    name: "ravendb-ai-agent",
+    connectionStringName: "<Your connection string name>",
+    systemPrompt: `
+        You work for a human experience manager.
+        The manager uses your services to find which employee earned the largest profit
+        for the company and suggest a reward for this employee.
+        The manager provides you with the name of a country, or with the word "everything"
+        to indicate all countries.
+
+        Steps:
+        1. Use a query tool to load all orders sent to the selected country (or all countries).
+        2. Calculate which employee made the largest profit.
+        3. Use a query tool to learn in what region the employee lives.
+        4. Find suitable vacation sites or other rewards based on the employee's region.
+        5. Use an action tool to store the employee's ID, profit, and reward suggestions in the database.
+
+        When you're done, return these details in your answer to the user as well.
+    `,
+    sampleObject: JSON.stringify({
+        employeeID: "the ID of the employee that made the largest profit",
+        profit: "the profit the employee made",
+        suggestedReward: "your suggestions for a reward"
+    }),
+    parameters: [
+        {
+            name: "country",
+            description: "A specific country that orders were shipped to, or 'everywhere' to look at all countries"
+        }
+    ],
+    maxModelIterationsPerCall: 3,
+    chatTrimming: {
+        tokens: {
+            maxTokensBeforeSummarization: 32768,
+            maxTokensAfterSummarization: 1024
+        }
+    },
+    // Queries the agent can use
+    queries: [
+        {
+            name: "retrieve-orders-sent-to-a-specific-country",
+            description: "Retrieve all orders sent to a specific country",
+            query: "from Orders as O where O.ShipTo.Country == $country select O.Employee, O.Lines.Quantity",
+            parametersSampleObject: "{}"
+        },
+        {
+            name: "retrieve-performer-living-region",
+            description: "Retrieve an employee's country, city, and region by employee ID",
+            query: "from Employees as E where id() == $employeeId select E.Address.Country, E.Address.City, E.Address.Region",
+            parametersSampleObject: "{ \"employeeId\": \"embed the employee's ID here\" }"
+        }
+    ],
+    // Actions the agent can perform
+    actions: [
+        {
+            name: "store-performer-details",
+            description: "Store the employee ID, profit, and suggested reward in the database.",
+            parametersSampleObject: "{ \"employeeID\": \"embed the employee's ID here\", \"profit\": \"embed the employee's profit here\", \"suggestedReward\": \"embed your suggestions for a reward here\" }"
+        }
+    ]
+};
+
+const agent = await store.ai.createAgent(agentConfiguration);
+```
+
+>##### Related tests:
+> <small>[create an agent](https://github.com/ravendb/ravendb-nodejs-client/blob/f6a223593d16028f8207d0c3da1808744fe47323/test/Ported/Documents/Operations/AiAgentTest.ts#L22-L66)</small>  
+> <small>[update an agent](https://github.com/ravendb/ravendb-nodejs-client/blob/f6a223593d16028f8207d0c3da1808744fe47323/test/Ported/Documents/Operations/AiAgentTest.ts#L68-L101)</small>  
+
+
+#### Run a Conversation with Tools
+```javascript
+const chat = store.ai.conversation(agent.identifier, "Performers/", {
+    parameters: {
+        country: "France"
+    }
+});
+
+// Register handler for action tool: "store-performer-details"
+chat.handle("store-performer-details", async (req, performer) => {
+    const session = store.openSession();
+    const rewarded = new Performer(performer.employeeID, performer.profit, performer.suggestedReward);
+
+    await session.store(rewarded);
+    await session.saveChanges();
+    session.dispose();
+
+    return "done"; // return indication that the action succeeded
+});
+
+// Ask the agent to suggest a reward
+chat.setUserPrompt("send a few suggestions to reward the employee that made the largest profit");
+
+// Run the conversation
+const llmResponse = await chat.run();
+
+console.log("Agent response:", llmResponse);
+
+if (llmResponse.status === "Done") console.log("Conversation finished.")
+```
+
 ## Attachments
 
 #### Store attachments
@@ -857,7 +963,7 @@ await session.advanced.attachments.getNames(doc);
 >##### Related tests:
 > <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L266)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
-> 
+
 ## TimeSeries
 
 #### Store time series 
