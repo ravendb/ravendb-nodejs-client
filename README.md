@@ -860,7 +860,7 @@ const chat = store.ai.conversation(agent.identifier, "Performers/", {
     }
 });
 
-// Register the action handler: "store-performer-details"
+// Register handler for action tool: "store-performer-details"
 chat.handle("store-performer-details", async (req, performer) => {
     const session = store.openSession();
     const rewarded = new Performer(performer.employeeID, performer.profit, performer.suggestedReward);
