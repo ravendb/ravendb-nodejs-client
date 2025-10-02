@@ -2579,7 +2579,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._assertMethodIsCurrentlySupported("vectorSearch");
 
         const fieldAccessor = this._resolveVectorSearchFieldAccessor(fieldName);
-        const {value, isDocumentId} = this._resolveVectorSearchValueFactory(valueOrFactory);
+        const {value, isDocumentId, embeddingsGenerationTaskIdentifierByValue} = this._resolveVectorSearchValueFactory(valueOrFactory);
 
         const tokens = this._getCurrentWhereTokens();
         this._appendOperatorIfNeeded(tokens);
@@ -2600,7 +2600,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             options?.numberOfCandidates || null,
             options?.isExact || VectorSearchToken.DEFAULT_IS_EXACT,
             isDocumentId,
-            taskIdentifier
+            taskIdentifier,
+            embeddingsGenerationTaskIdentifierByValue
         );
 
         tokens.push(vectorSearchToken);
@@ -2631,9 +2632,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 throwError("InvalidOperationException", "No value was provided in the valueFactory");
             }
 
-            return {value, isDocumentId: !!fieldValueFactory.byId};
+            return {
+                value,
+                isDocumentId: !!fieldValueFactory.byId,
+                embeddingsGenerationTaskIdentifierByValue: fieldValueFactory.embeddingsGenerationTaskIdentifier
+            };
         } else {
-            return {value: valueOrFactory, isDocumentId: false};
+            return {value: valueOrFactory, isDocumentId: false, embeddingsGenerationTaskIdentifierByValue: null};
         }
     }
 }

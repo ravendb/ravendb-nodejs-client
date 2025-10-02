@@ -3,6 +3,7 @@ import { VectorEmbeddingType } from "../../Queries/VectorSearch/VectorEmbeddingT
 import { StringBuilder } from "../../../Utility/StringBuilder.js";
 import { vectorSearchConfigurationToMethodName } from "../../../Utility/VectorSearchUtil.js";
 import { IVectorEmbeddingFieldFactoryAccessor } from "../VectorFieldFactory.js";
+import { throwError } from "../../../Exceptions/index.js";
 
 export class VectorSearchToken extends WhereToken {
     static readonly EMBEDDING_PREFIX = "embedding.";
@@ -25,6 +26,7 @@ export class VectorSearchToken extends WhereToken {
     private readonly _numberOfCandidatesForQuerying: number | null;
     private readonly _isDocumentId: boolean;
     private readonly _embeddingsGenerationTaskIdentifier: string | null;
+    private readonly _embeddingsGenerationTaskIdentifierByValue: string | null;
 
     public constructor(
         fieldName: string,
@@ -35,7 +37,8 @@ export class VectorSearchToken extends WhereToken {
         numberOfCandidatesForQuerying: number | null,
         isExact: boolean,
         isDocumentId: boolean,
-        embeddingsGenerationTaskIdentifier: string | null
+        embeddingsGenerationTaskIdentifier: string | null,
+        embeddingsGenerationTaskIdentifierByValue: string | null
     ) {
         super();
         this.fieldName = fieldName;
@@ -47,6 +50,11 @@ export class VectorSearchToken extends WhereToken {
         this._numberOfCandidatesForQuerying = numberOfCandidatesForQuerying;
         this._isDocumentId = isDocumentId;
         this._embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
+        this._embeddingsGenerationTaskIdentifierByValue = embeddingsGenerationTaskIdentifierByValue;
+
+        if (embeddingsGenerationTaskIdentifier != null && embeddingsGenerationTaskIdentifierByValue != null) {
+            throwError("InvalidOperationException", "Embeddings generation task identifier set in value factory cannot be used with field factory. It solely purpose to use already generated embeddings.");
+        }
 
         this.options = {
             exact: isExact,
@@ -109,11 +117,7 @@ export class VectorSearchToken extends WhereToken {
 
         writer.append(", ");
 
-        if (this._isDocumentId) {
-            writer.append(`${VectorSearchToken.EMBEDDING_FOR_DOCUMENT}($${this.parameterName})`);
-        } else {
-            writer.append(`$${this.parameterName}`);
-        }
+        writer.append(this.getEmbeddingExpression());
 
         const parametersAreDefault = this._similarityThreshold == null &&
             this._numberOfCandidatesForQuerying == null;
@@ -132,5 +136,15 @@ export class VectorSearchToken extends WhereToken {
         if (this.options.boost != null) {
             writer.append(`, ${this.options.boost.toString()})`);
         }
+    }
+
+    private getEmbeddingExpression() {
+        if (this._isDocumentId) {
+            return `${VectorSearchToken.EMBEDDING_FOR_DOCUMENT}($${this.parameterName})`;
+        }
+        if (this._embeddingsGenerationTaskIdentifierByValue != null) {
+            return `${VectorSearchToken.EMBEDDING_TEXT}($${this.parameterName}, ${VectorSearchToken.AI_TASK_METHOD_NAME}('${this._embeddingsGenerationTaskIdentifierByValue}'))`;
+        }
+        return `$${this.parameterName}`;
     }
 }

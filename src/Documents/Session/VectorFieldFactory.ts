@@ -81,8 +81,9 @@ export interface IVectorEmbeddingTextFieldValueFactory {
     /**
      * Defines queried text.
      * @param text Queried text
+     * @param embeddingsGenerationTaskIdentifier Task identifier for embeddings generation
      */
-    byText(text: string): void;
+    byText(text: string, embeddingsGenerationTaskIdentifier?: string): void;
 
     /**
      * Query by the embedding(s) indexed from the specified document for the quried field.
@@ -93,8 +94,9 @@ export interface IVectorEmbeddingTextFieldValueFactory {
     /**
      * Defines queried texts.
      * @param texts Queried texts
+     * @param embeddingsGenerationTaskIdentifier Task identifier for embeddings generation
      */
-    byTexts(texts: string[]): void;
+    byTexts(texts: string[], embeddingsGenerationTaskIdentifier?: string): void;
 }
 
 export interface IVectorEmbeddingFieldValueFactory {
@@ -143,6 +145,8 @@ export interface IVectorFieldValueFactoryAccessor {
     texts: string[];
 
     byId: string;
+
+    embeddingsGenerationTaskIdentifier: string;
 }
 
 export class VectorEmbeddingFieldValueFactory implements IVectorEmbeddingFieldValueFactory,
@@ -153,6 +157,7 @@ export class VectorEmbeddingFieldValueFactory implements IVectorEmbeddingFieldVa
     public text: string = null;
     public texts: string[] = null;
     public byId: string = null;
+    public embeddingsGenerationTaskIdentifier: string = null;
 
     public byEmbedding<T extends number>(embedding: T[]): void;
     public byEmbedding<T extends number>(embedding: { "@vector": IRavenVector<T> }): void;
@@ -179,17 +184,21 @@ export class VectorEmbeddingFieldValueFactory implements IVectorEmbeddingFieldVa
     /**
      * Defines queried text.
      * @param text Queried text
+     * @param embeddingsGenerationTaskIdentifier Task identifier for embeddings generation
      */
-    public byText(text: string): void {
+    public byText(text: string, embeddingsGenerationTaskIdentifier?: string): void {
         this.text = text;
+        this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
     }
 
     /**
      * Defines queried texts.
      * @param texts Queried texts
+     * @param embeddingsGenerationTaskIdentifier Task identifier for embeddings generation
      */
-    public byTexts(texts: string[]): void {
+    public byTexts(texts: string[], embeddingsGenerationTaskIdentifier?: string): void {
         this.texts = texts;
+        this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
     }
 
     public forDocument(documentId: string): void {

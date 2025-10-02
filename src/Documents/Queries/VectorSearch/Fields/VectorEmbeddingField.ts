@@ -1,6 +1,7 @@
 import { IVectorEmbeddingField, IVectorEmbeddingFieldFactoryAccessor } from "../../../Session/VectorFieldFactory.js";
 import {VectorEmbeddingType} from "../VectorEmbeddingType.js";
 import { Field } from "../../../../Types/index.js";
+import { throwError } from "../../../../Exceptions/index.js";
 
 export class VectorEmbeddingField<T> implements
     IVectorEmbeddingField, 
@@ -23,7 +24,7 @@ export class VectorEmbeddingField<T> implements
 
     public targetQuantization(targetEmbeddingQuantization: VectorEmbeddingType): IVectorEmbeddingField {
         if (targetEmbeddingQuantization === "Text") {
-            throw new Error("Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
+            throwError("InvalidOperationException", "Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
         }
 
         this.destinationQuantizationType = targetEmbeddingQuantization;
@@ -31,7 +32,7 @@ export class VectorEmbeddingField<T> implements
         if ((this.sourceQuantizationType === "Int8" ||
              this.sourceQuantizationType === "Binary") &&
              this.destinationQuantizationType !== this.sourceQuantizationType) {
-            throw new Error(`Cannot quantize already quantized embeddings. Source VectorEmbeddingType is ${this.sourceQuantizationType}; however the destination is ${this.destinationQuantizationType}.`);
+            throwError("InvalidOperationException", `Cannot quantize already quantized embeddings. Source VectorEmbeddingType is ${this.sourceQuantizationType}; however the destination is ${this.destinationQuantizationType}.`);
         }
 
         return this;
