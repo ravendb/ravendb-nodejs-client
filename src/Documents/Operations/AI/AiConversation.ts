@@ -4,6 +4,7 @@ import type { AiAgentActionResponse } from "./Agents/AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
 import type { ConversationResult } from "./Agents/ConversationResult.js";
 import type { AiAnswer } from "./AiAnswer.js";
+import type { AiStreamCallback } from "./AiStreamCallback.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
@@ -127,7 +128,54 @@ export class AiConversation {
         }
     }
 
-    private async _runInternal<TAnswer>(): Promise<AiAnswer<TAnswer>> {
+    /**
+     * Executes one "turn" of the conversation with streaming enabled.
+     * Streams the specified property's value in real-time by invoking the callback with each chunk.
+     *
+     * @param streamPropertyPath - The property path of the answer to stream (e.g., "suggestedReward")
+     * @param streamCallback - Callback invoked with each streamed chunk
+     * @returns A promise that resolves to the full answer after streaming completes
+     *
+     * @example
+     * ```typescript
+     * const answer = await chat.stream<TAnswer>("propertyName", async (chunk) => {
+     *     console.log("Received chunk:", chunk);
+     * });
+     * ```
+     */
+    public async stream<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
+        if (StringUtil.isNullOrEmpty(streamPropertyPath)) {
+            throwError("InvalidArgumentException", "streamPropertyPath cannot be empty");
+        }
+        if (!streamCallback) {
+            throwError("InvalidArgumentException", "streamCallback cannot be null");
+        }
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const r = await this._runInternal<TAnswer>(streamPropertyPath, streamCallback);
+            if (r.status === "Done") {
+                return r;
+            }
+
+            if (!this._actionRequests || this._actionRequests.length === 0) {
+                throwError("InvalidOperationException", `There are no action requests to process, but Status was ${r.status}, should not be possible.`);
+            }
+
+            for (const action of this._actionRequests) {
+                const invocation = this._invocations.get(action.name);
+                if (invocation) {
+                    await invocation(action);
+                }
+            }
+
+            if (this._actionResponses.length === 0) {
+                return r; // ActionsRequired, nothing to send back yet
+            }
+        }
+    }
+
+    private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
         if (this._actionRequests != null && !this._userPrompt && this._actionResponses.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
@@ -138,14 +186,17 @@ export class AiConversation {
             this._userPrompt,
             this._actionResponses,
             this._options,
-            this._changeVector
+            this._changeVector,
+            streamPropertyPath,
+            streamCallback
         );
 
         try {
-            const res = await this._store.maintenance.forDatabase(this._databaseName).send(op) as unknown as ConversationResult<TAnswer>;
+            const res = await this._store.maintenance.send(op) as unknown as ConversationResult<TAnswer>;
+
             this._changeVector = res.changeVector;
             this._conversationId = res.conversationId;
-            this._actionRequests = res.actionRequests ?? [];
+            this._actionRequests = res.actionRequests;
 
             return {
                 answer: res.response,
