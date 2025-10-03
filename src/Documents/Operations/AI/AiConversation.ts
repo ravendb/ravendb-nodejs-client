@@ -6,6 +6,7 @@ import type { ConversationResult } from "./Agents/ConversationResult.js";
 import type { AiAnswer } from "./AiAnswer.js";
 import type { AiStreamCallback } from "./AiStreamCallback.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
+import type { UnhandledActionEventArgs } from "./UnhandledActionEventArgs.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
 
@@ -26,6 +27,8 @@ export class AiConversation {
     private readonly _actionResponses: AiAgentActionResponse[] = [];
     private _userPrompt?: string;
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
+
+    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
         if (!store) throwError("InvalidArgumentException", "store is required");
@@ -119,6 +122,16 @@ export class AiConversation {
                 const invocation = this._invocations.get(action.name);
                 if (invocation) {
                     await invocation(action);
+                } else if (this.onUnhandledAction) {
+                    await this.onUnhandledAction({
+                        sender: this,
+                        action: action
+                    });
+                } else {
+                    throwError("InvalidOperationException",
+                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
+                        `but it was invoked by the model with: ${action.arguments}. ` +
+                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
                 }
             }
 
@@ -166,6 +179,16 @@ export class AiConversation {
                 const invocation = this._invocations.get(action.name);
                 if (invocation) {
                     await invocation(action);
+                } else if (this.onUnhandledAction) {
+                    await this.onUnhandledAction({
+                        sender: this,
+                        action: action
+                    });
+                } else {
+                    throwError("InvalidOperationException",
+                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
+                        `but it was invoked by the model with: ${action.arguments}. ` +
+                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
                 }
             }
 

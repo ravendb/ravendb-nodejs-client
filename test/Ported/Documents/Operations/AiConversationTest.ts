@@ -79,4 +79,76 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         // We cannot access private invocation map to trigger the call; this test ensures registration with strategies does not throw.
         // The actual bubbling behavior is covered indirectly by implementation; the important part here is that API accepts strategies.
     });
+
+    it("onUnhandledAction event is called when action has no handler", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/7|") as any;
+
+        let eventFired = false;
+        let capturedAction: any = null;
+        let capturedSender: any = null;
+
+        conv.onUnhandledAction = async (args: any) => {
+            eventFired = true;
+            capturedAction = args.action;
+            capturedSender = args.sender;
+        };
+
+        conv._actionRequests = [{
+            name: "unhandled-action",
+            toolId: "tool-123",
+            arguments: '{"param":"value"}'
+        }];
+
+        assertThat(conv.onUnhandledAction).isNotNull();
+
+        await conv.onUnhandledAction({
+            sender: conv,
+            action: {name: "test", toolId: "t1", arguments: "{}"}
+        });
+
+        assertThat(eventFired).isTrue();
+        assertThat(capturedSender).isSameAs(conv);
+        assertThat(capturedAction).isNotNull();
+    });
+
+    it("error thrown when action undefined and no onUnhandledAction event", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/8|") as any;
+
+        conv._actionRequests = [{
+            name: "unhandled-action",
+            toolId: "tool-456",
+            arguments: '{"test":"data"}'
+        }];
+
+        conv._userPrompt = "test prompt";
+
+        assertThat(conv.onUnhandledAction).isEqualTo(undefined);
+    });
+
+    it("onUnhandledAction receives correct event args structure", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/9|") as any;
+
+        let receivedArgs: any = null;
+
+        conv.onUnhandledAction = async (args: any) => {
+            receivedArgs = args;
+        };
+
+        const testAction = {
+            name: "custom-action",
+            toolId: "tool-789",
+            arguments: '{"key":"value"}'
+        };
+
+        await conv.onUnhandledAction({
+            sender: conv,
+            action: testAction
+        });
+
+        assertThat(receivedArgs).isNotNull();
+        assertThat(receivedArgs.sender).isSameAs(conv);
+        assertThat(receivedArgs.action).isSameAs(testAction);
+        assertThat(receivedArgs.action.name).isSameAs("custom-action");
+        assertThat(receivedArgs.action.toolId).isSameAs("tool-789");
+    });
 });
