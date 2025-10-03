@@ -80,9 +80,44 @@ export class AiConversation {
         this._userPrompt = userPrompt;
     }
 
-    public handle<TArgs = any>(actionName: string, action: (request: AiAgentActionRequest, args: TArgs) => Promise<object> | object, aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel): void {
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (args: TArgs) => Promise<object>,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (args: TArgs) => object,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (request: AiAgentActionRequest, args: TArgs) => Promise<object>,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (request: AiAgentActionRequest, args: TArgs) => object,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void
+
+    // Implementation
+    public handle<TArgs = any>(
+        actionName: string,
+        action: ((args: TArgs) => Promise<object> | object) |
+            ((request: AiAgentActionRequest, args: TArgs) => Promise<object> | object),
+        aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel
+    ) {
+        const wrappedAction = action.length === 1
+            ? (_request: AiAgentActionRequest, args: TArgs) =>
+                (action as (args: TArgs) => Promise<object> | object)(args)
+            : action as (request: AiAgentActionRequest, args: TArgs) => Promise<object> | object;
+
         this.receive<TArgs>(actionName, async (req, args) => {
-            const result = await action(req, args);
+            const result = await wrappedAction(req, args);
             this.addActionResponse(req.toolId, result as any);
         }, aiHandleError);
     }
