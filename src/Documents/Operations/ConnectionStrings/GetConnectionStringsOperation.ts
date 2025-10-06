@@ -6,6 +6,7 @@ import {
     RavenConnectionString,
     OlapConnectionString, ElasticSearchConnectionString, QueueConnectionString
 } from "../Etl/ConnectionString.js";
+import { AiConnectionString } from "../AI/ConnectionStrings/AiConnectionString.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
@@ -17,6 +18,7 @@ export interface GetConnectionStringsResult {
     olapConnectionStrings: Record<string, OlapConnectionString>;
     elasticSearchConnectionStrings: Record<string, ElasticSearchConnectionString>;
     queueConnectionStrings: Record<string, QueueConnectionString>;
+    aiConnectionStrings: Record<string, AiConnectionString>;
 }
 
 export class GetConnectionStringsOperation implements IMaintenanceOperation<GetConnectionStringsResult> {
@@ -112,6 +114,14 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
                     previousValue[currentValue[0]] = Object.assign(new OlapConnectionString(), currentValue[1]);
                     return previousValue;
                 }), {} as Record<string, OlapConnectionString>);
+        }
+
+        if (this.result.aiConnectionStrings) {
+            this.result.aiConnectionStrings = Object.entries(this.result.aiConnectionStrings)
+                .reduce(((previousValue, currentValue) => {
+                    previousValue[currentValue[0]] = Object.assign(new AiConnectionString(), currentValue[1]);
+                    return previousValue;
+                }), {} as Record<string, AiConnectionString>);
         }
 
         return body;

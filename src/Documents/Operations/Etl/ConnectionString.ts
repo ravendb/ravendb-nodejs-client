@@ -13,7 +13,8 @@ export type ConnectionStringType =
     | "Sql"
     | "Olap"
     | "ElasticSearch"
-    | "Queue";
+    | "Queue"
+    | "Ai";
 
 export type QueueBrokerType =
     "None"

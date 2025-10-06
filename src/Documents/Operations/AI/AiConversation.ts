@@ -104,7 +104,6 @@ export class AiConversation {
         aiHandleError?: AiHandleErrorStrategy
     ): void
 
-    // Implementation
     public handle<TArgs = any>(
         actionName: string,
         action: ((args: TArgs) => Promise<object> | object) |
@@ -250,7 +249,7 @@ export class AiConversation {
         );
 
         try {
-            const res = await this._store.maintenance.send(op) as unknown as ConversationResult<TAnswer>;
+            const res = await this._store.maintenance.send(op);
 
             this._changeVector = res.changeVector;
             this._conversationId = res.conversationId;

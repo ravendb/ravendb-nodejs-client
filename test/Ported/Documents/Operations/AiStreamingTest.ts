@@ -2,7 +2,7 @@ import {Readable} from "node:stream";
 import {assertThat} from "../../../Utils/AssertExtensions.js";
 import {DocumentConventions} from "../../../../src/Documents/Conventions/DocumentConventions.js";
 import {RunConversationOperation} from "../../../../src/Documents/Operations/AI/Agents/RunConversationOperation.js";
-import {RavenTestContext} from "../../../Utils/TestUtil";
+import {RavenTestContext} from "../../../Utils/TestUtil.js";
 
 (RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiConversationTest", () => {
     it("should parse streaming response correctly", async () => {

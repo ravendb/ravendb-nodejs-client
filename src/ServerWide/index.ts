@@ -33,6 +33,7 @@ import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEt
 import { DataArchivalConfiguration } from "../Documents/Operations/DataArchival/DataArchivalConfiguration.js";
 import { QueueSinkConfiguration } from "../Documents/Operations/QueueSink/QueueSinkConfiguration.js";
 import { ShardingConfiguration } from "./Sharding/ShardingConfiguration.js";
+import { AiConnectionString } from "../Documents/Operations/AI/index.js";
 
 export interface ScriptResolver {
     script: string;
@@ -79,6 +80,7 @@ export interface DatabaseRecord {
     olapConnectionStrings?: { [key: string]: OlapConnectionString };
     elasticSearchConnectionStrings?: { [key: string]: ElasticSearchConnectionString };
     queueConnectionStrings?: { [key: string]: QueueConnectionString };
+    aiConnectionStrings?: { [key: string]: AiConnectionString };
     ravenEtls?: RavenEtlConfiguration[];
     sqlEtls?: SqlEtlConfiguration[];
     elasticSearchEtls?: ElasticSearchEtlConfiguration[];
