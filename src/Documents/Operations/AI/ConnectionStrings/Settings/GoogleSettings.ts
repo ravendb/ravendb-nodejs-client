@@ -55,7 +55,7 @@ export class GoogleSettings extends AbstractAiSettings {
             errors.push("Value of 'apiKey' field cannot be empty.");
         }
 
-        if (this.dimensions !== undefined && this.dimensions <= 0) {
+        if (this.dimensions != null && this.dimensions <= 0) {
             errors.push("Value of 'dimensions' field must be positive.");
         }
     }

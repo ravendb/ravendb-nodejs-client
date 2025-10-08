@@ -47,7 +47,7 @@ export class OllamaSettings extends AbstractAiSettings {
             errors.push("Value of 'model' field cannot be empty.");
         }
 
-        if (this.temperature !== undefined && this.temperature < 0) {
+        if (this.temperature != null && this.temperature < 0) {
             errors.push("Value of 'temperature' field must be non-negative.");
         }
     }
@@ -71,12 +71,12 @@ export class OllamaSettings extends AbstractAiSettings {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 
-        const hasTemperature = this.temperature !== undefined;
-        const otherHasTemperature = other.temperature !== undefined;
+        const hasTemperature = this.temperature != null;
+        const otherHasTemperature = other.temperature != null;
 
         if (hasTemperature !== otherHasTemperature ||
             (hasTemperature && otherHasTemperature &&
-             Math.abs(this.temperature! - other.temperature!) > 0.0001)) {
+             Math.abs(this.temperature - other.temperature) > 0.0001)) {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 

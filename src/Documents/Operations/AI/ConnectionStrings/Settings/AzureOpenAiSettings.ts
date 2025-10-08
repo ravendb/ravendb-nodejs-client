@@ -22,7 +22,7 @@ export class AzureOpenAiSettings extends OpenAiBaseSettings {
     public validate(errors: string[]): void {
         super.validate(errors);
 
-        if (StringUtil.isNullOrEmpty(this.deploymentName.trim())) {
+        if (StringUtil.isNullOrEmpty(this.deploymentName?.trim())) {
             errors.push("Value for 'deploymentName' field cannot be empty.");
         }
     }
