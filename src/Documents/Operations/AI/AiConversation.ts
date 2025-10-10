@@ -4,7 +4,9 @@ import type { AiAgentActionResponse } from "./Agents/AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
 import type { ConversationResult } from "./Agents/ConversationResult.js";
 import type { AiAnswer } from "./AiAnswer.js";
+import type { AiStreamCallback } from "./AiStreamCallback.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
+import type { UnhandledActionEventArgs } from "./UnhandledActionEventArgs.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
 
@@ -25,6 +27,8 @@ export class AiConversation {
     private readonly _actionResponses: AiAgentActionResponse[] = [];
     private _userPrompt?: string;
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
+
+    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
         if (!store) throwError("InvalidArgumentException", "store is required");
@@ -76,9 +80,43 @@ export class AiConversation {
         this._userPrompt = userPrompt;
     }
 
-    public handle<TArgs = any>(actionName: string, action: (request: AiAgentActionRequest, args: TArgs) => Promise<object> | object, aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel): void {
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (args: TArgs) => Promise<object>,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (args: TArgs) => object,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (request: AiAgentActionRequest, args: TArgs) => Promise<object>,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void;
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: (request: AiAgentActionRequest, args: TArgs) => object,
+        aiHandleError?: AiHandleErrorStrategy
+    ): void
+
+    public handle<TArgs = any>(
+        actionName: string,
+        action: ((args: TArgs) => Promise<object> | object) |
+            ((request: AiAgentActionRequest, args: TArgs) => Promise<object> | object),
+        aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel
+    ) {
+        const wrappedAction = action.length === 1
+            ? (_request: AiAgentActionRequest, args: TArgs) =>
+                (action as (args: TArgs) => Promise<object> | object)(args)
+            : action as (request: AiAgentActionRequest, args: TArgs) => Promise<object> | object;
+
         this.receive<TArgs>(actionName, async (req, args) => {
-            const result = await action(req, args);
+            const result = await wrappedAction(req, args);
             this.addActionResponse(req.toolId, result as any);
         }, aiHandleError);
     }
@@ -118,6 +156,16 @@ export class AiConversation {
                 const invocation = this._invocations.get(action.name);
                 if (invocation) {
                     await invocation(action);
+                } else if (this.onUnhandledAction) {
+                    await this.onUnhandledAction({
+                        sender: this,
+                        action: action
+                    });
+                } else {
+                    throwError("InvalidOperationException",
+                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
+                        `but it was invoked by the model with: ${action.arguments}. ` +
+                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
                 }
             }
 
@@ -127,7 +175,64 @@ export class AiConversation {
         }
     }
 
-    private async _runInternal<TAnswer>(): Promise<AiAnswer<TAnswer>> {
+    /**
+     * Executes one "turn" of the conversation with streaming enabled.
+     * Streams the specified property's value in real-time by invoking the callback with each chunk.
+     *
+     * @param streamPropertyPath - The property path of the answer to stream (e.g., "suggestedReward")
+     * @param streamCallback - Callback invoked with each streamed chunk
+     * @returns A promise that resolves to the full answer after streaming completes
+     *
+     * @example
+     * ```typescript
+     * const answer = await chat.stream<TAnswer>("propertyName", async (chunk) => {
+     *     console.log("Received chunk:", chunk);
+     * });
+     * ```
+     */
+    public async stream<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
+        if (StringUtil.isNullOrEmpty(streamPropertyPath)) {
+            throwError("InvalidArgumentException", "streamPropertyPath cannot be empty");
+        }
+        if (!streamCallback) {
+            throwError("InvalidArgumentException", "streamCallback cannot be null");
+        }
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const r = await this._runInternal<TAnswer>(streamPropertyPath, streamCallback);
+            if (r.status === "Done") {
+                return r;
+            }
+
+            if (!this._actionRequests || this._actionRequests.length === 0) {
+                throwError("InvalidOperationException", `There are no action requests to process, but Status was ${r.status}, should not be possible.`);
+            }
+
+            for (const action of this._actionRequests) {
+                const invocation = this._invocations.get(action.name);
+                if (invocation) {
+                    await invocation(action);
+                } else if (this.onUnhandledAction) {
+                    await this.onUnhandledAction({
+                        sender: this,
+                        action: action
+                    });
+                } else {
+                    throwError("InvalidOperationException",
+                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
+                        `but it was invoked by the model with: ${action.arguments}. ` +
+                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
+                }
+            }
+
+            if (this._actionResponses.length === 0) {
+                return r; // ActionsRequired, nothing to send back yet
+            }
+        }
+    }
+
+    private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
         if (this._actionRequests != null && !this._userPrompt && this._actionResponses.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
@@ -138,14 +243,17 @@ export class AiConversation {
             this._userPrompt,
             this._actionResponses,
             this._options,
-            this._changeVector
+            this._changeVector,
+            streamPropertyPath,
+            streamCallback
         );
 
         try {
-            const res = await this._store.maintenance.forDatabase(this._databaseName).send(op) as unknown as ConversationResult<TAnswer>;
+            const res = await this._store.maintenance.send(op);
+
             this._changeVector = res.changeVector;
             this._conversationId = res.conversationId;
-            this._actionRequests = res.actionRequests ?? [];
+            this._actionRequests = res.actionRequests;
 
             return {
                 answer: res.response,

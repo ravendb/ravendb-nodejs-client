@@ -1,8 +1,10 @@
 import { IMaintenanceOperation, OperationResultType } from "../../OperationAbstractions.js";
-import { Stream } from "node:stream";
+import { Readable, Stream } from "node:stream";
+import { createInterface } from "node:readline";
 import type { AiAgentActionResponse } from "./AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./AiConversationCreationOptions.js";
 import type { ConversationResult } from "./ConversationResult.js";
+import type { AiStreamCallback } from "../AiStreamCallback.js";
 import { RavenCommand } from "../../../../Http/RavenCommand.js";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions.js";
 import { IRaftCommand } from "../../../../Http/IRaftCommand.js";
@@ -21,6 +23,8 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private readonly _actionResponses?: AiAgentActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
+    private readonly _streamPropertyPath?: string;
+    private readonly _streamCallback?: AiStreamCallback;
 
     public constructor(
         agentId: string,
@@ -28,7 +32,9 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         userPrompt?: string,
         actionResponses?: AiAgentActionResponse[],
         options?: AiConversationCreationOptions,
-        changeVector?: string
+        changeVector?: string,
+        streamPropertyPath?: string,
+        streamCallback?: AiStreamCallback
     ) {
         if (StringUtil.isNullOrEmpty(agentId)) {
             throwError("InvalidArgumentException", "agentId cannot be null or empty.");
@@ -36,12 +42,20 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         if (StringUtil.isNullOrEmpty(conversationId)) {
             throwError("InvalidArgumentException", "conversationId cannot be null or empty.");
         }
+
+        // Both streamPropertyPath and streamCallback must be specified together or neither
+        if ((streamPropertyPath != null) !== (streamCallback != null)) {
+            throwError("InvalidOperationException", "Both streamPropertyPath and streamCallback must be specified together or neither.");
+        }
+
         this._agentId = agentId;
         this._conversationId = conversationId;
         this._userPrompt = userPrompt;
         this._actionResponses = actionResponses;
         this._options = options;
         this._changeVector = changeVector;
+        this._streamPropertyPath = streamPropertyPath;
+        this._streamCallback = streamCallback;
     }
 
     public get resultType(): OperationResultType {
@@ -56,7 +70,9 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
             this._actionResponses,
             this._options,
             this._changeVector,
-            conventions
+            conventions,
+            this._streamPropertyPath,
+            this._streamCallback
         );
     }
 }
@@ -70,6 +86,8 @@ class RunConversationCommand<TAnswer>
     private readonly _actionResponses?: AiAgentActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
+    private readonly _streamPropertyPath?: string;
+    private readonly _streamCallback?: AiStreamCallback;
     private _raftId: string;
 
     public constructor(
@@ -79,7 +97,9 @@ class RunConversationCommand<TAnswer>
         actionResponses: AiAgentActionResponse[] | undefined,
         options: AiConversationCreationOptions | undefined,
         changeVector: string | undefined,
-        conventions: DocumentConventions
+        conventions: DocumentConventions,
+        streamPropertyPath?: string,
+        streamCallback?: AiStreamCallback
     ) {
         super();
         this._conversationId = conversationId;
@@ -88,6 +108,13 @@ class RunConversationCommand<TAnswer>
         this._actionResponses = actionResponses;
         this._options = options;
         this._changeVector = changeVector;
+        this._streamPropertyPath = streamPropertyPath;
+        this._streamCallback = streamCallback;
+
+        // When streaming is enabled, we need to handle raw response
+        if (this._streamPropertyPath && this._streamCallback) {
+            this._responseType = "Raw";
+        }
 
         if (this._conversationId && this._conversationId.endsWith("|")) {
             this._raftId = RaftIdGenerator.newId();
@@ -112,12 +139,17 @@ class RunConversationCommand<TAnswer>
             uriParams.append("changeVector", this._changeVector);
         }
 
+        if (this._streamPropertyPath) {
+            uriParams.append("streaming", "true");
+            uriParams.append("streamPropertyPath", this._streamPropertyPath);
+        }
+
         const uri = `${node.url}/databases/${node.database}/ai/agent?${uriParams}`;
 
         const bodyObj = {
             ActionResponses: this._actionResponses,
             UserPrompt: this._prompt,
-            CreationOptions: this._options
+            CreationOptions: this._options ?? {}
         };
 
         const headers = this._headers().typeAppJson().build();
@@ -144,6 +176,43 @@ class RunConversationCommand<TAnswer>
             this._throwInvalidResponse();
         }
 
-        return this._parseResponseDefaultAsync(bodyStream)
+        if (this._streamPropertyPath && this._streamCallback) {
+            return await this._processStreamingResponse(bodyStream as Readable);
+        }
+
+        return await this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    private async _processStreamingResponse(bodyStream: Readable): Promise<string> {
+        const rl = createInterface({
+            input: bodyStream,
+            crlfDelay: Infinity
+        });
+
+        for await (const line of rl) {
+            if (!line || line.trim().length === 0) {
+                continue;
+            }
+
+            if (line.startsWith("{")) {
+                const jsonStream = Readable.from([line]);
+                let body: string = null;
+                this.result = await this._defaultPipeline(_ => body = _).process(jsonStream);
+                return body;
+            }
+
+            try {
+                const unescaped = JSON.parse(line);
+                await this._streamCallback!(unescaped);
+            } catch (err) {
+                await this._streamCallback!(line);
+            }
+        }
+
+        if (!this.result) {
+            throwError("InvalidOperationException", "No final result received in streaming response");
+        }
+
+        return null;
     }
 }

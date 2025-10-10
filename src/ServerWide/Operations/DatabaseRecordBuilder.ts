@@ -43,6 +43,7 @@ import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { ShardingConfiguration } from "../Sharding/ShardingConfiguration.js";
 import { IShardTopologyConfigurationBuilder } from "./Builder/IShardTopologyConfigurationBuilder.js";
 import { ITopologyConfigurationBuilder } from "./Builder/ITopologyConfigurationBuilder.js";
+import { AiConnectionString } from "../../Documents/Operations/AI/index.js";
 
 export class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
     IDatabaseRecordBuilder,
@@ -125,6 +126,16 @@ export class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
 
         this._databaseRecord.queueConnectionStrings ??= {};
         this._databaseRecord.queueConnectionStrings[connectionString.name] = connectionString;
+        return this;
+    }
+
+    addAiConnectionString(connectionString: AiConnectionString): this {
+        if (!connectionString) {
+            throw new Error("ConnectionString cannot be null");
+        }
+
+        this._databaseRecord.aiConnectionStrings ??= {};
+        this._databaseRecord.aiConnectionStrings[connectionString.name] = connectionString;
         return this;
     }
 

@@ -883,6 +883,37 @@ console.log("Agent response:", llmResponse);
 if (llmResponse.status === "Done") console.log("Conversation finished.")
 ```
 
+#### Stream a Conversation Response
+Stream the agent's response in real-time to provide immediate feedback to users.
+
+```javascript
+const chat = store.ai.conversation(agent.identifier, "Performers/", {
+    parameters: {country: "France"}
+});
+
+// Register action handler
+chat.handle("store-performer-details", async (req, performer) => {
+    const session = store.openSession();
+    await session.store(performer);
+    await session.saveChanges();
+    session.dispose();
+    return {success: true};
+});
+
+chat.setUserPrompt("Find the employee with largest profit and suggest rewards");
+
+// Stream the "suggestedReward" property
+let chunkedText = "";
+const answer = await chat.stream("suggestedReward", async (chunk) => {
+    // Called for each streamed chunk
+    chunkedText += chunk;
+});
+
+console.log("chunkedText", chunkedText);
+
+console.log("Final answer:", answer);
+```
+
 ## Attachments
 
 #### Store attachments
