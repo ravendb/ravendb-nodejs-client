@@ -280,7 +280,7 @@ async function extractCertificate(certificateRawData: CertificateRawData) {
         if (entry.path.endsWith(".crt")) {
             const entryText = await readToEnd(entry);
             const lines = entryText.split(/\r?\n/);
-            cert = lines.slice(1, - 2).join("\r\n");
+            cert = lines.slice(1, -1).join("\r\n");
             break;
         } else {
             entry.autodrain();
