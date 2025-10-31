@@ -156,33 +156,19 @@ describe("UniqueValuesTest", function () {
         assert.strictEqual(readValue.value, "Karmel");
     });
 
-    it("tryingToDeleteNonExistingKeyShouldNotThrow", async () => {
-        const res1= await store.operations.send(
+    it("tryingToDeleteNonExistingKeyShouldThrow", async () => {
+        const res1 = await store.operations.send(
             new PutCompareExchangeValueOperation<string>("key/1", "Name", 0));
 
         assert.strictEqual(res1.value, "Name");
         assert.ok(res1.successful);
-
-        const res2 = await store.operations.send(
-            new DeleteCompareExchangeValueOperation<string>("key/2", res1.index));
-
-        assert.ok(res2.successful);
-        assert.equal(res2.value, null);
-        assert.equal(res2.index, res1.index + 1);
-
-        const res3 = await store.operations.send(
-            new DeleteCompareExchangeValueOperation<string>("key/2", 0));
-
-        assert.ok(res3.successful);
-        assert.equal(res3.value, null);
-        assert.equal(res3.index, res2.index + 1);
-
-        const res4 = await store.operations.send(
-            new DeleteCompareExchangeValueOperation<string>("key/2", 999));
-
-        assert.ok(res4.successful);
-        assert.equal(res4.value, null);
-        assert.equal(res4.index, res3.index + 1);
+        try {
+            await store.operations.send(
+                new DeleteCompareExchangeValueOperation<string>("key/2", 0));
+            assert.fail("should have thrown");
+        } catch (e) {
+            assert.strictEqual(e.name, "RavenException")
+        }
     });
 
     it("returnCurrentValueWhenPuttingConcurrently", async () => {
