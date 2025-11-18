@@ -1054,7 +1054,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             "In",
             fieldName,
             this._addQueryParameter(
-                this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values))));
+                this._transformCollection(fieldName, AbstractDocumentQuery._unpackCollection(values))
+            ),
+            new WhereOptions({exact})
+        );
         tokens.push(whereToken);
     }
 

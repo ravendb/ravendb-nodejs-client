@@ -264,6 +264,24 @@ describe("QueryTest", function () {
             assert.strictEqual(results.length, 1);
         });
 
+        // RavenDB-25553 - dynamic queries with exact search in whereIn clause are not working as expected
+        it.skip("query with where in and exact", async () => {
+            const session = store.openSession();
+
+            const user4 = Object.assign(new User(), {name: "tarzan"});
+
+            await session.store(user4, "users/4");
+            await session.saveChanges();
+
+            const resultsExactTarzan = await session.query(User).whereIn("name", ["Tarzan"], true).all()
+            const resultsExactLowercase = await session.query(User).whereIn("name", ["tarzan"], true).all()
+            const resultsNonExact = await session.query(User).whereIn("name", ["tarzan"]).all()
+
+            assert.strictEqual(resultsExactTarzan.length, 1);
+            assert.strictEqual(resultsExactLowercase.length, 1);
+            assert.strictEqual(resultsNonExact.length, 2);
+        });
+
         it("query with where between", async () => {
             const session = store.openSession();
             const results = await session.query(User)
