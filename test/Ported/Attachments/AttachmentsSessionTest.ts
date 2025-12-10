@@ -319,6 +319,66 @@ describe("Attachments Session", function () {
         }
     });
 
+    it("binary attachment preserves all byte values including LF (0x0A)", async () => {
+        // This test verifies that binary attachments are not corrupted.
+        // Previously, LF bytes (0x0A) were being converted to CRLF (0x0D 0x0A)
+        // when FormData.append() received a Buffer without Blob wrapper.
+
+        // Create binary data with all possible byte values (0x00 to 0xFF)
+        const binaryData = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) {
+            binaryData[i] = i;
+        }
+        const originalBuffer = Buffer.from(binaryData);
+
+        {
+            const session = store.openSession();
+            const user = new User();
+            user.name = "BinaryTest";
+            await session.store(user, "users/binary");
+            session.advanced.attachments.store(
+                user,
+                "allbytes.bin",
+                originalBuffer,
+                "application/octet-stream"
+            );
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const result = await session.advanced.attachments.get("users/binary", "allbytes.bin");
+
+            let retrievedBuffer = Buffer.from([]);
+            result.data.pipe(new Writable({
+                write(chunk, enc, cb) {
+                    retrievedBuffer = Buffer.concat([retrievedBuffer, chunk]);
+                    cb();
+                }
+            }));
+
+            await finishedAsync(result.data);
+            result.dispose();
+
+            // Size should be exactly 256 bytes
+            assert.strictEqual(
+                retrievedBuffer.length,
+                originalBuffer.length,
+                `Binary attachment corrupted: expected ${originalBuffer.length} bytes, got ${retrievedBuffer.length} bytes`
+            );
+
+            // Content should be identical
+            assert.ok(
+                Buffer.compare(retrievedBuffer, originalBuffer) === 0,
+                "Binary attachment content was modified during storage/retrieval"
+            );
+
+            // Specifically verify byte 0x0A (LF) was not converted to 0x0D 0x0A (CRLF)
+            assert.strictEqual(retrievedBuffer[10], 0x0A, "Byte at index 10 should be 0x0A (LF)");
+            assert.strictEqual(retrievedBuffer[11], 0x0B, "Byte at index 11 should be 0x0B, not 0x0A from CRLF expansion");
+        }
+    });
+
     it("attachment exists", async () => {
         {
             const session = store.openSession();
