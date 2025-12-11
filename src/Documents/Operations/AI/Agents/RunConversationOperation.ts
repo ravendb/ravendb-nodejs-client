@@ -5,6 +5,7 @@ import type { AiAgentActionResponse } from "./AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./AiConversationCreationOptions.js";
 import type { ConversationResult } from "./ConversationResult.js";
 import type { AiStreamCallback } from "../AiStreamCallback.js";
+import { ContentPart, TextPart } from "../ContentPart.js";
 import { RavenCommand } from "../../../../Http/RavenCommand.js";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions.js";
 import { IRaftCommand } from "../../../../Http/IRaftCommand.js";
@@ -19,7 +20,7 @@ import { StringUtil } from "../../../../Utility/StringUtil.js";
 export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
     private readonly _agentId: string;
     private readonly _conversationId: string;
-    private readonly _userPrompt?: string;
+    private readonly _promptParts: ContentPart[];
     private readonly _actionResponses?: AiAgentActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
@@ -29,7 +30,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     public constructor(
         agentId: string,
         conversationId: string,
-        userPrompt?: string,
+        promptParts: ContentPart[] | string,
         actionResponses?: AiAgentActionResponse[],
         options?: AiConversationCreationOptions,
         changeVector?: string,
@@ -50,7 +51,14 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
 
         this._agentId = agentId;
         this._conversationId = conversationId;
-        this._userPrompt = userPrompt;
+
+        // Backward compatibility: convert string to ContentPart[]
+        if (typeof promptParts === "string") {
+            this._promptParts = promptParts ? [new TextPart(promptParts)] : [];
+        } else {
+            this._promptParts = promptParts || [];
+        }
+
         this._actionResponses = actionResponses;
         this._options = options;
         this._changeVector = changeVector;
@@ -66,7 +74,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         return new RunConversationCommand<TAnswer>(
             this._conversationId,
             this._agentId,
-            this._userPrompt,
+            this._promptParts,
             this._actionResponses,
             this._options,
             this._changeVector,
@@ -82,7 +90,7 @@ class RunConversationCommand<TAnswer>
 
     private readonly _conversationId: string;
     private readonly _agentId: string;
-    private readonly _prompt?: string;
+    private readonly _promptParts: ContentPart[];
     private readonly _actionResponses?: AiAgentActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
@@ -93,7 +101,7 @@ class RunConversationCommand<TAnswer>
     public constructor(
         conversationId: string,
         agentId: string,
-        prompt: string | undefined,
+        promptParts: ContentPart[],
         actionResponses: AiAgentActionResponse[] | undefined,
         options: AiConversationCreationOptions | undefined,
         changeVector: string | undefined,
@@ -104,7 +112,7 @@ class RunConversationCommand<TAnswer>
         super();
         this._conversationId = conversationId;
         this._agentId = agentId;
-        this._prompt = prompt;
+        this._promptParts = promptParts;
         this._actionResponses = actionResponses;
         this._options = options;
         this._changeVector = changeVector;
@@ -148,7 +156,7 @@ class RunConversationCommand<TAnswer>
 
         const bodyObj = {
             ActionResponses: this._actionResponses,
-            UserPrompt: this._prompt,
+            UserPrompt: this._promptParts.length > 0 ? this._promptParts : null,
             CreationOptions: this._options ?? {}
         };
 
@@ -158,7 +166,8 @@ class RunConversationCommand<TAnswer>
         const serialized = ObjectUtil.transformObjectKeys(bodyObj, {
             defaultTransform: ObjectUtil.pascalCase,
             ignorePaths: [
-                new RegExp("^CreationOptions\\.Parameters\\..*$")
+                new RegExp("^CreationOptions\\.Parameters\\..*$"),
+                new RegExp("^UserPrompt\\..*$")
             ]
         });
 
