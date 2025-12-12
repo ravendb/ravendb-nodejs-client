@@ -12,27 +12,36 @@ import { throwError } from "../../../Exceptions/index.js";
 
 export class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
     private readonly _pullReplication: PullReplicationAsSink;
+    private readonly _useServerCertificate: boolean;
 
-    public constructor(pullReplication: PullReplicationAsSink) {
+    public constructor(pullReplication: PullReplicationAsSink, useServerCertificate: boolean = false) {
         if (!pullReplication) {
             throwError("InvalidArgumentException", "PullReplication cannot be null");
         }
-        this._pullReplication = pullReplication;
-    }
 
-    getCommand(conventions: DocumentConventions): RavenCommand<ModifyOngoingTaskResult> {
-        return new UpdatePullEdgeReplication(this._pullReplication);
+        if (pullReplication.certificateWithPrivateKey != null && useServerCertificate) {
+            throwError("InvalidArgumentException",
+                "When useServerCertificate is set to true, certificateWithPrivateKey should be null to use server certificate.");
+        }
+
+        this._pullReplication = pullReplication;
+        this._useServerCertificate = useServerCertificate;
     }
 
     public get resultType(): OperationResultType {
         return "CommandResult";
     }
+
+    getCommand(conventions: DocumentConventions): RavenCommand<ModifyOngoingTaskResult> {
+        return new UpdatePullEdgeReplication(this._pullReplication, this._useServerCertificate);
+    }
 }
 
 class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
     private readonly _pullReplication: PullReplicationAsSink;
+    private readonly _useServerCertificate: boolean;
 
-    public constructor(pullReplication: PullReplicationAsSink) {
+    public constructor(pullReplication: PullReplicationAsSink, useServerCertificate: boolean) {
         super();
 
         if (!pullReplication) {
@@ -40,13 +49,26 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
         }
 
         this._pullReplication = pullReplication;
+        this._useServerCertificate = useServerCertificate;
+    }
+
+    get isReadRequest(): boolean {
+        return false;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/sink-pull-replication";
 
+        const replicationData = {...this._pullReplication};
+
+        // Aligned with ServerStore.UpdatePullReplicationAsSink to not introduce breaking changes
+        // When using server certificate, remove the certificateWithPrivateKey field
+        if (this._pullReplication.certificateWithPrivateKey == null && this._useServerCertificate) {
+            delete replicationData.certificateWithPrivateKey;
+        }
+
         const body = this._serializer.serialize({
-            PullReplicationAsSink: this._pullReplication
+            PullReplicationAsSink: replicationData
         });
 
         return {
@@ -63,10 +85,6 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
-    }
-
-    get isReadRequest(): boolean {
-        return false;
     }
 
     getRaftUniqueRequestId(): string {

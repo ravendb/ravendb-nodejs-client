@@ -6,5 +6,16 @@ export interface ConversationResult<TAnswer> {
     changeVector: string;
     response: TAnswer;
     totalUsage: AiUsage;
+
+    /**
+     * Token usage for this specific turn (not cumulative).
+     */
+    usage?: AiUsage;
+
+    /**
+     * Time elapsed for this specific turn in milliseconds.
+     */
+    elapsed?: number;
+
     actionRequests?: AiAgentActionRequest[];
 }

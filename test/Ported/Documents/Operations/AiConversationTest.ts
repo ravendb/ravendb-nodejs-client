@@ -1,8 +1,9 @@
-import { IDocumentStore } from "../../../../src/index.js";
+import {IDocumentStore} from "../../../../src/index.js";
 import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
-import { assertThat, assertThrows } from "../../../Utils/AssertExtensions.js";
+import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 
-import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/AiConversation.js";
+import {AiHandleErrorStrategy} from "../../../../src/Documents/Operations/AI/AiConversation.js";
+import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js";
 
 (RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiConversationTest", function () {
     let store: IDocumentStore;
@@ -15,7 +16,6 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
 
     it("conversation requires agentId and conversationId", async () => {
         await assertThrows(() => Promise.resolve(store.ai.conversation("", "conv/1|" as any)), err => {
-            // thrown in AiConversation constructor
             assertThat(err.message).contains("agentId is required");
         });
 
@@ -54,27 +54,33 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         // should not throw for string content
         conv.addActionResponse("tool1", "some response");
         // should not throw for object content (will be stringified internally)
-        conv.addActionResponse("tool2", { ok: true, count: 1 });
+        conv.addActionResponse("tool2", {ok: true, count: 1});
     });
 
     it("receive should reject duplicate action names", async () => {
         const conv = store.ai.conversation("agents/1-A", "conversations/4|") as any;
 
-        conv.receive("do-work", async () => { /* no-op */ });
+        conv.receive("do-work", async () => { /* no-op */
+        });
 
-        await assertThrows(() => Promise.resolve(conv.receive("do-work", async () => {  })), err => {
+        await assertThrows(() => Promise.resolve(conv.receive("do-work", async () => {
+        })), err => {
             assertThat(err.message).contains("already exists");
         });
     });
 
     it("receive with RaiseImmediately should bubble errors; default should record to model", async () => {
         const convDefault = store.ai.conversation("agents/1-A", "conversations/5|") as any;
-        convDefault.receive("boom-default", () => { throw new Error("failure-default"); }, AiHandleErrorStrategy.SendErrorsToModel);
+        convDefault.receive("boom-default", () => {
+            throw new Error("failure-default");
+        }, AiHandleErrorStrategy.SendErrorsToModel);
         // Invocation is internal; we simulate by calling the registered invocation via run loop is not possible without server.
         // Instead, we ensure that registering with RaiseImmediately will throw when executed by our bound wrapper.
 
         const convRaise = store.ai.conversation("agents/1-A", "conversations/6|") as any;
-        convRaise.receive("boom-raise", () => { throw new Error("failure-raise"); }, AiHandleErrorStrategy.RaiseImmediately);
+        convRaise.receive("boom-raise", () => {
+            throw new Error("failure-raise");
+        }, AiHandleErrorStrategy.RaiseImmediately);
 
         // We cannot access private invocation map to trigger the call; this test ensures registration with strategies does not throw.
         // The actual bubbling behavior is covered indirectly by implementation; the important part here is that API accepts strategies.
@@ -162,7 +168,7 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         conv.handle("simple-action", async (args: any) => {
             handlerCalled = true;
             capturedArgs = args;
-            return { result: "success", data: args.value };
+            return {result: "success", data: args.value};
         });
 
         // Verify handler was registered
@@ -192,7 +198,7 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         // Register sync handler without request parameter
         conv.handle("sync-action", (args: any) => {
             handlerCalled = true;
-            return { processed: true, input: args.input };
+            return {processed: true, input: args.input};
         });
 
         assertThat(conv._invocations.has("sync-action")).isTrue();
@@ -220,7 +226,7 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
             handlerCalled = true;
             capturedRequest = request;
             capturedArgs = args;
-            return { toolId: request.toolId, data: args.data };
+            return {toolId: request.toolId, data: args.data};
         });
 
         assertThat(conv._invocations.has("action-with-request")).isTrue();
@@ -229,7 +235,7 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         const testRequest = {
             name: "action-with-request",
             toolId: "tool-102",
-            arguments: '{"data":"metadata-test"}'
+            arguments: JSON.stringify({"data":"metadata-test"})
         };
 
         await invocation(testRequest);
@@ -248,14 +254,14 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         // Register sync handler with request parameter
         conv.handle("sync-with-request", (request: any, args: any) => {
             capturedToolId = request.toolId;
-            return { success: true };
+            return {success: true};
         });
 
         const invocation = conv._invocations.get("sync-with-request");
         await invocation({
             name: "sync-with-request",
             toolId: "tool-103",
-            arguments: "{}"
+            arguments: JSON.stringify({})
         });
 
         assertThat(capturedToolId).isSameAs("tool-103");
@@ -265,11 +271,11 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         const conv = store.ai.conversation("agents/1-A", "conversations/16|") as any;
 
         // Single parameter function (args only)
-        const singleParamHandler = (args: any) => ({ result: args });
+        const singleParamHandler = (args: any) => ({result: args});
         assertThat(singleParamHandler.length).isSameAs(1);
 
         // Two parameter function (request, args)
-        const twoParamHandler = (request: any, args: any) => ({ result: args });
+        const twoParamHandler = (request: any, args: any) => ({result: args});
         assertThat(twoParamHandler.length).isSameAs(2);
 
         // Register both
@@ -279,5 +285,282 @@ import { AiHandleErrorStrategy } from "../../../../src/Documents/Operations/AI/A
         // Both should be registered
         assertThat(conv._invocations.has("single-param")).isTrue();
         assertThat(conv._invocations.has("two-param")).isTrue();
+    });
+
+    it("setUserPrompt clears previous prompts and sets new one", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/17|") as any;
+
+        // Add some prompts
+        conv.addUserPrompt("first prompt");
+        conv.addUserPrompt("second prompt");
+        assertThat(conv._promptParts.length).isSameAs(2);
+
+        // setUserPrompt should clear and set a new one
+        conv.setUserPrompt("new prompt");
+        assertThat(conv._promptParts.length).isSameAs(1);
+        assertThat(conv._promptParts[0].text).isSameAs("new prompt");
+        assertThat(conv._promptParts[0].type).isSameAs("text");
+    });
+
+    it("addUserPrompt accepts multiple prompts and builds array", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/18|") as any;
+
+        // Add a single prompt
+        conv.addUserPrompt("first part");
+        assertThat(conv._promptParts.length).isSameAs(1);
+        assertThat(conv._promptParts[0].text).isSameAs("first part");
+
+        // Add multiple prompts at once
+        conv.addUserPrompt("second part", "third part", "fourth part");
+        assertThat(conv._promptParts.length).isSameAs(4);
+        assertThat(conv._promptParts[1].text).isSameAs("second part");
+        assertThat(conv._promptParts[2].text).isSameAs("third part");
+        assertThat(conv._promptParts[3].text).isSameAs("fourth part");
+
+        for (const part of conv._promptParts) {
+            assertThat(part.type).isSameAs("text");
+            assertThat(Object.prototype.hasOwnProperty.call(part, "type")).isTrue();
+            assertThat(Object.prototype.hasOwnProperty.call(part, "text")).isTrue();
+        }
+    });
+
+    it("addUserPrompt validates empty prompts", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/19|") as any;
+
+        await assertThrows(() => Promise.resolve(conv.addUserPrompt("")), err => {
+            assertThat(err.message).contains("prompt cannot be empty");
+        });
+
+        await assertThrows(() => Promise.resolve(conv.addUserPrompt("valid", "", "another")), err => {
+            assertThat(err.message).contains("prompt cannot be empty");
+        });
+    });
+
+    it("AiAnswer should include usage metrics when provided by server", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/20|") as any;
+
+        const originalRunInternal = conv._runInternal.bind(conv);
+        conv._runInternal = async () => {
+            return {
+                answer: {result: "test answer"},
+                status: "Done",
+                usage: {
+                    promptTokens: 100,
+                    completionTokens: 50,
+                    totalTokens: 150,
+                    cachedTokens: 20
+                },
+                elapsed: 1234
+            };
+        };
+
+        const answer = await conv.run();
+
+        assertThat(answer).isNotNull();
+        assertThat(answer.status).isSameAs("Done");
+        assertThat(answer.usage).isNotNull();
+        assertThat(answer.usage.promptTokens).isSameAs(100);
+        assertThat(answer.usage.completionTokens).isSameAs(50);
+        assertThat(answer.usage.totalTokens).isSameAs(150);
+        assertThat(answer.usage.cachedTokens).isSameAs(20);
+        assertThat(answer.elapsed).isSameAs(1234);
+
+        conv._runInternal = originalRunInternal;
+    });
+
+    it("AiAnswer should handle missing usage and elapsed fields gracefully", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/21|") as any;
+
+        const originalRunInternal = conv._runInternal.bind(conv);
+        conv._runInternal = async () => {
+            return {
+                answer: {result: "test answer"},
+                status: "Done"
+                // No usage or elapsed fields
+            };
+        };
+
+        const answer = await conv.run();
+
+        assertThat(answer).isNotNull();
+        assertThat(answer.status).isSameAs("Done");
+        assertThat(answer.answer).isNotNull();
+        assertThat(answer.usage).isEqualTo(undefined);
+        assertThat(answer.elapsed).isEqualTo(undefined);
+
+        conv._runInternal = originalRunInternal;
+    });
+
+    it("AiAnswer usage metrics should reflect per-turn data, not cumulative", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/22|") as any;
+
+        let callCount = 0;
+        const originalRunInternal = conv._runInternal.bind(conv);
+
+        conv._runInternal = async () => {
+            callCount++;
+
+            if (callCount === 1) {
+                return {
+                    answer: {step: 1},
+                    status: "Done",
+                    usage: {
+                        promptTokens: 50,
+                        completionTokens: 25,
+                        totalTokens: 75,
+                        cachedTokens: 10
+                    },
+                    elapsed: 500
+                };
+            }
+
+            return {
+                answer: {step: 2},
+                status: "Done",
+                usage: {
+                    promptTokens: 60,
+                    completionTokens: 30,
+                    totalTokens: 90,
+                    cachedTokens: 15
+                },
+                elapsed: 600
+            };
+        };
+
+        const answer1 = await conv.run();
+        assertThat(answer1.usage.promptTokens).isSameAs(50);
+        assertThat(answer1.usage.totalTokens).isSameAs(75);
+        assertThat(answer1.elapsed).isSameAs(500);
+
+        conv.setUserPrompt("second turn");
+        const answer2 = await conv.run();
+        assertThat(answer2.usage.promptTokens).isSameAs(60);
+        assertThat(answer2.usage.totalTokens).isSameAs(90);
+        assertThat(answer2.elapsed).isSameAs(600);
+
+        conv._runInternal = originalRunInternal;
+    });
+
+    it("AiUsage should support reasoning tokens for o1/o3 models", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/23|") as any;
+
+        const originalRunInternal = conv._runInternal.bind(conv);
+        conv._runInternal = async () => {
+            return {
+                answer: {result: "complex reasoning answer"},
+                status: "Done",
+                usage: {
+                    promptTokens: 100,
+                    completionTokens: 150,
+                    totalTokens: 250,
+                    cachedTokens: 20,
+                    reasoningTokens: 50
+                },
+                elapsed: 2000
+            };
+        };
+
+        const answer = await conv.run();
+
+        assertThat(answer).isNotNull();
+        assertThat(answer.usage).isNotNull();
+        assertThat(answer.usage.reasoningTokens).isSameAs(50);
+        assertThat(answer.usage.completionTokens).isSameAs(150);
+        assertThat(answer.usage.totalTokens).isSameAs(250);
+
+        conv._runInternal = originalRunInternal;
+    });
+
+    it("AiUsage.getUsageDifference should calculate per-turn usage from cumulative totals", async () => {
+        const previous = new AiUsage();
+        previous.promptTokens = 100;
+        previous.completionTokens = 50;
+        previous.reasoningTokens = 10;
+        previous.totalTokens = 150;
+        previous.cachedTokens = 20;
+
+        const current = new AiUsage();
+        current.promptTokens = 180;
+        current.completionTokens = 60;
+        current.reasoningTokens = 15;
+        current.totalTokens = 240;
+        current.cachedTokens = 30;
+
+        const diff = AiUsage.getUsageDifference(current, previous);
+
+        assertThat(diff.promptTokens).isSameAs(40);
+
+        assertThat(diff.totalTokens).isSameAs(100);
+
+        assertThat(diff.completionTokens).isSameAs(60);
+        assertThat(diff.reasoningTokens).isSameAs(15);
+        assertThat(diff.cachedTokens).isSameAs(30);
+    });
+
+    it("AiUsage.getUsageDifference should handle negative differences gracefully", async () => {
+        // Edge case: model returns inconsistent data
+        const previous = new AiUsage();
+        previous.promptTokens = 200;
+        previous.completionTokens = 100;
+        previous.reasoningTokens = 20;
+        previous.totalTokens = 300;
+        previous.cachedTokens = 10;
+
+        const current = new AiUsage();
+        current.promptTokens = 150;
+        current.completionTokens = 50;
+        current.reasoningTokens = 10;
+        current.totalTokens = 200;
+        current.cachedTokens = 5;
+
+        const diff = AiUsage.getUsageDifference(current, previous);
+
+        assertThat(diff.promptTokens).isSameAs(0);
+        assertThat(diff.totalTokens).isSameAs(0);
+
+        assertThat(diff.completionTokens).isSameAs(50);
+        assertThat(diff.reasoningTokens).isSameAs(10);
+        assertThat(diff.cachedTokens).isSameAs(5);
+    });
+
+    it("AiUsage.getUsageDifference should validate required parameters", async () => {
+        await assertThrows(
+            () => Promise.resolve(AiUsage.getUsageDifference(null as any, new AiUsage())),
+            err => {
+                assertThat(err.message).contains("current usage cannot be null");
+            }
+        );
+
+        await assertThrows(
+            () => Promise.resolve(AiUsage.getUsageDifference(new AiUsage(), null as any)),
+            err => {
+                assertThat(err.message).contains("previous usage cannot be null");
+            }
+        );
+    });
+
+    it("AiUsage reasoning tokens calculation in getUsageDifference", async () => {
+        const previous = new AiUsage();
+        previous.promptTokens = 100;
+        previous.completionTokens = 80;
+        previous.reasoningTokens = 30;
+        previous.totalTokens = 180;
+        previous.cachedTokens = 10;
+
+        const current = new AiUsage();
+        current.promptTokens = 200;
+        current.completionTokens = 100;
+        current.reasoningTokens = 40;
+        current.totalTokens = 300;
+        current.cachedTokens = 15;
+
+        const diff = AiUsage.getUsageDifference(current, previous);
+
+        assertThat(diff.promptTokens).isSameAs(50);
+
+        assertThat(diff.totalTokens).isSameAs(150);
+
+        assertThat(diff.reasoningTokens).isSameAs(40);
+        assertThat(diff.completionTokens).isSameAs(100);
     });
 });

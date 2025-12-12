@@ -2,11 +2,11 @@ import { RunConversationOperation } from "./Agents/RunConversationOperation.js";
 import type { AiAgentActionRequest } from "./Agents/AiAgentActionRequest.js";
 import type { AiAgentActionResponse } from "./Agents/AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
-import type { ConversationResult } from "./Agents/ConversationResult.js";
 import type { AiAnswer } from "./AiAnswer.js";
 import type { AiStreamCallback } from "./AiStreamCallback.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
 import type { UnhandledActionEventArgs } from "./UnhandledActionEventArgs.js";
+import { ContentPart, TextPart } from "./ContentPart.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
 
@@ -25,7 +25,7 @@ export class AiConversation {
     private readonly _options?: AiConversationCreationOptions;
     private _actionRequests: AiAgentActionRequest[] | null = null;
     private readonly _actionResponses: AiAgentActionResponse[] = [];
-    private _userPrompt?: string;
+    private readonly _promptParts: ContentPart[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
 
     public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
@@ -75,9 +75,33 @@ export class AiConversation {
         this._actionResponses.push({toolId, content: JSON.stringify(actionResponse)});
     }
 
+    /**
+     * Sets the user prompt for the next conversation turn.
+     * This replaces any previously set prompts.
+     * @param userPrompt - The text of the user's message
+     */
     public setUserPrompt(userPrompt: string): void {
         if (!userPrompt) throwError("InvalidArgumentException", "userPrompt cannot be empty");
-        this._userPrompt = userPrompt;
+        this._promptParts.length = 0;
+        this.addUserPrompt(userPrompt);
+    }
+
+    /**
+     * Adds one or more user prompts to the conversation.
+     * Use this to build multi-part prompts.
+     * @param prompts - One or more text prompts to add
+     *
+     * @example
+     * ```typescript
+     * conversation.addUserPrompt("First part of the question.");
+     * conversation.addUserPrompt("Second part with more context.");
+     * ```
+     */
+    public addUserPrompt(...prompts: string[]): void {
+        for (const prompt of prompts) {
+            if (!prompt) throwError("InvalidArgumentException", "prompt cannot be empty");
+            this._promptParts.push(new TextPart(prompt));
+        }
     }
 
     public handle<TArgs = any>(
@@ -233,14 +257,14 @@ export class AiConversation {
     }
 
     private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
-        if (this._actionRequests != null && !this._userPrompt && this._actionResponses.length === 0) {
+        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
 
         const op = new RunConversationOperation<TAnswer>(
             this._agentId,
             this._conversationId,
-            this._userPrompt,
+            this._promptParts as ContentPart[],
             this._actionResponses,
             this._options,
             this._changeVector,
@@ -257,11 +281,13 @@ export class AiConversation {
 
             return {
                 answer: res.response,
-                status: (this._actionRequests.length > 0) ? "ActionRequired" : "Done"
+                status: (this._actionRequests.length > 0) ? "ActionRequired" : "Done",
+                usage: res.usage,
+                elapsed: res.elapsed
             };
         } finally {
             // clear prompt and responses after running the conversation
-            this._userPrompt = undefined;
+            this._promptParts.length = 0;
             this._actionResponses.length = 0;
         }
     }
