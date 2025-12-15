@@ -1,6 +1,6 @@
 import { RunConversationOperation } from "./Agents/RunConversationOperation.js";
 import type { AiAgentActionRequest } from "./Agents/AiAgentActionRequest.js";
-import type { AiAgentActionResponse } from "./Agents/AiAgentActionResponse.js";
+import type { AiAgentActionResponse, AiAgentArtificialActionResponse } from "./Agents/AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
 import type { AiAnswer } from "./AiAnswer.js";
 import type { AiStreamCallback } from "./AiStreamCallback.js";
@@ -18,6 +18,7 @@ export enum AiHandleErrorStrategy {
 export type ActionInvocation = (request: AiAgentActionRequest) => Promise<void>;
 
 export class AiConversation {
+    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
     private readonly _store: IDocumentStore;
     private readonly _databaseName: string;
     private readonly _agentId: string;
@@ -25,10 +26,9 @@ export class AiConversation {
     private readonly _options?: AiConversationCreationOptions;
     private _actionRequests: AiAgentActionRequest[] | null = null;
     private readonly _actionResponses: AiAgentActionResponse[] = [];
+    private readonly _artificialActions: AiAgentArtificialActionResponse[] = [];
     private readonly _promptParts: ContentPart[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
-
-    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
         if (!store) throwError("InvalidArgumentException", "store is required");
@@ -73,6 +73,49 @@ export class AiConversation {
             return;
         }
         this._actionResponses.push({toolId, content: JSON.stringify(actionResponse)});
+    }
+
+    /**
+     * Inject an artificial tool action and a string response into the conversation context.
+     * The model will "believe" it executed the tool and received this response.
+     */
+    public addArtificialActionWithResponse(toolId: string, actionResponse: string): void {
+        if (!toolId) {
+            throwError("InvalidArgumentException", "toolId cannot be empty");
+        }
+        if (StringUtil.isNullOrEmpty(actionResponse)) {
+            throwError("InvalidArgumentException", "actionResponse cannot be null or empty");
+        }
+
+        this._artificialActions.push({toolId, content: actionResponse});
+    }
+
+    /**
+     * Inject an artificial tool action and a structured response object into the conversation context.
+     * The object will be serialized to JSON before being sent.
+     */
+    public addArtificialActionWithResponseObject<TResponse extends object>(toolId: string, actionResponse: TResponse | string): void {
+        if (!toolId) {
+            throwError("InvalidArgumentException", "toolId cannot be empty");
+        }
+        if (actionResponse == null) {
+            throwError("InvalidArgumentException", `Action response for '${toolId}' cannot be null.`);
+        }
+
+        if (typeof actionResponse === "string") {
+            this.addArtificialActionWithResponse(toolId, actionResponse);
+            return;
+        }
+
+        // Use document conventions' object mapper for serialization if available; otherwise fall back to JSON.stringify.
+        const mapper = this._store.conventions?.objectMapper;
+        if (mapper) {
+            const typeInfo = {};
+            const literal = mapper.toObjectLiteral(actionResponse, (ti) => Object.assign(typeInfo, ti));
+            this.addArtificialActionWithResponse(toolId, JSON.stringify(literal));
+        } else {
+            this.addArtificialActionWithResponse(toolId, JSON.stringify(actionResponse));
+        }
     }
 
     /**
@@ -257,7 +300,7 @@ export class AiConversation {
     }
 
     private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
-        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.length === 0) {
+        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.length === 0 && this._artificialActions.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
 
@@ -266,6 +309,7 @@ export class AiConversation {
             this._conversationId,
             this._promptParts as ContentPart[],
             this._actionResponses,
+            this._artificialActions,
             this._options,
             this._changeVector,
             streamPropertyPath,
@@ -286,9 +330,10 @@ export class AiConversation {
                 elapsed: res.elapsed
             };
         } finally {
-            // clear prompt and responses after running the conversation
+            // clear prompt, responses and artificial actions after running the conversation
             this._promptParts.length = 0;
             this._actionResponses.length = 0;
+            this._artificialActions.length = 0;
         }
     }
 

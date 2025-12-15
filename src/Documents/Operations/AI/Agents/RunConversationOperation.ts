@@ -1,7 +1,7 @@
 import { IMaintenanceOperation, OperationResultType } from "../../OperationAbstractions.js";
 import { Readable, Stream } from "node:stream";
 import { createInterface } from "node:readline";
-import type { AiAgentActionResponse } from "./AiAgentActionResponse.js";
+import type { AiAgentActionResponse, AiAgentArtificialActionResponse } from "./AiAgentActionResponse.js";
 import type { AiConversationCreationOptions } from "./AiConversationCreationOptions.js";
 import type { ConversationResult } from "./ConversationResult.js";
 import type { AiStreamCallback } from "../AiStreamCallback.js";
@@ -22,6 +22,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private readonly _conversationId: string;
     private readonly _promptParts: ContentPart[];
     private readonly _actionResponses?: AiAgentActionResponse[];
+    private readonly _artificialActions?: AiAgentArtificialActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
     private readonly _streamPropertyPath?: string;
@@ -32,6 +33,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         conversationId: string,
         promptParts: ContentPart[] | string,
         actionResponses?: AiAgentActionResponse[],
+        artificialActions?: AiAgentArtificialActionResponse[],
         options?: AiConversationCreationOptions,
         changeVector?: string,
         streamPropertyPath?: string,
@@ -60,6 +62,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         }
 
         this._actionResponses = actionResponses;
+        this._artificialActions = artificialActions;
         this._options = options;
         this._changeVector = changeVector;
         this._streamPropertyPath = streamPropertyPath;
@@ -76,6 +79,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
             this._agentId,
             this._promptParts,
             this._actionResponses,
+            this._artificialActions,
             this._options,
             this._changeVector,
             conventions,
@@ -92,6 +96,7 @@ class RunConversationCommand<TAnswer>
     private readonly _agentId: string;
     private readonly _promptParts: ContentPart[];
     private readonly _actionResponses?: AiAgentActionResponse[];
+    private readonly _artificialActions?: AiAgentArtificialActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
     private readonly _streamPropertyPath?: string;
@@ -103,6 +108,7 @@ class RunConversationCommand<TAnswer>
         agentId: string,
         promptParts: ContentPart[],
         actionResponses: AiAgentActionResponse[] | undefined,
+        artificialActions: AiAgentArtificialActionResponse[] | undefined,
         options: AiConversationCreationOptions | undefined,
         changeVector: string | undefined,
         conventions: DocumentConventions,
@@ -114,6 +120,7 @@ class RunConversationCommand<TAnswer>
         this._agentId = agentId;
         this._promptParts = promptParts;
         this._actionResponses = actionResponses;
+        this._artificialActions = artificialActions;
         this._options = options;
         this._changeVector = changeVector;
         this._streamPropertyPath = streamPropertyPath;
@@ -156,6 +163,7 @@ class RunConversationCommand<TAnswer>
 
         const bodyObj = {
             ActionResponses: this._actionResponses,
+            ArtificialActions: this._artificialActions,
             UserPrompt: this._promptParts.length > 0 ? this._promptParts : null,
             CreationOptions: this._options ?? {}
         };
