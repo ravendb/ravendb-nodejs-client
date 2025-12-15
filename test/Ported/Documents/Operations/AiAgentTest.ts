@@ -8,7 +8,7 @@ import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../
 import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 import {AiAgentConfiguration} from "../../../../src/Documents/Operations/AI/Agents/config/AiAgentConfiguration.js";
 
-(RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiAgentTest", function () {
+((RavenTestContext.isRavenDbServerVersion("7.1") && !RavenTestContext.isPullRequest) ? describe : describe.skip)("AiAgentTest", function () {
 
     let store: IDocumentStore;
 
