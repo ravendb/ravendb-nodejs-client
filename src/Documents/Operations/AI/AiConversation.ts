@@ -18,7 +18,6 @@ export enum AiHandleErrorStrategy {
 export type ActionInvocation = (request: AiAgentActionRequest) => Promise<void>;
 
 export class AiConversation {
-    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
     private readonly _store: IDocumentStore;
     private readonly _databaseName: string;
     private readonly _agentId: string;
@@ -29,6 +28,7 @@ export class AiConversation {
     private readonly _artificialActions: AiAgentArtificialActionResponse[] = [];
     private readonly _promptParts: ContentPart[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
+    public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
         if (!store) throwError("InvalidArgumentException", "store is required");
