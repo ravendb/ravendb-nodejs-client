@@ -8,6 +8,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { IRaftCommand } from "../../../Http/IRaftCommand.js";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
 import { Stream } from "node:stream";
+import { throwError } from "../../../Exceptions/index.js";
 
 export interface UpdateEtlOperationResult {
     raftCommandIndex: number;
@@ -38,7 +39,7 @@ export class UpdateGenAiOperation implements IMaintenanceOperation<UpdateEtlOper
         reset: boolean = false
     ) {
         if (!configuration) {
-            throw new Error("Configuration cannot be null");
+            throwError("ArgumentNullException", "Configuration cannot be null");
         }
 
         this._taskId = taskId;
@@ -67,7 +68,7 @@ class UpdateGenAiCommand extends RavenCommand<UpdateEtlOperationResult> implemen
     private readonly _taskId: number;
     private readonly _configuration: GenAiConfiguration;
     private readonly _startingPoint: StartingPointChangeVector;
-    private readonly _transformationsToReset: string[] | null;
+    private readonly _transformationsToReset?: string[];
 
     public constructor(
         conventions: DocumentConventions,
@@ -79,10 +80,10 @@ class UpdateGenAiCommand extends RavenCommand<UpdateEtlOperationResult> implemen
         super();
 
         if (!conventions) {
-            throw new Error("Conventions cannot be null");
+            throwError("ArgumentNullException", "Conventions cannot be null");
         }
         if (!configuration) {
-            throw new Error("Configuration cannot be null");
+            throwError("ArgumentNullException", "Configuration cannot be null");
         }
 
         this._conventions = conventions;

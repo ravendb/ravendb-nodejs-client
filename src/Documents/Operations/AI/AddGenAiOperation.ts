@@ -9,6 +9,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { IRaftCommand } from "../../../Http/IRaftCommand.js";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
 import { Stream } from "node:stream";
+import { throwError } from "../../../Exceptions/index.js";
 
 /**
  * Operation to add a new GenAI ETL task to the database.
@@ -28,19 +29,19 @@ export class AddGenAiOperation implements IMaintenanceOperation<AddGenAiOperatio
         startingPoint: StartingPointChangeVector = StartingPointChangeVector.LastDocument
     ) {
         if (!configuration) {
-            throw new Error("Configuration cannot be null");
+            throwError("ArgumentNullException", "Configuration cannot be null");
         }
 
         this._configuration = configuration;
         this._startingPoint = startingPoint;
     }
 
-    public getCommand(conventions: DocumentConventions): RavenCommand<AddGenAiOperationResult> {
-        return new AddGenAiCommand(conventions, this._configuration, this._startingPoint);
-    }
-
     public get resultType(): OperationResultType {
         return "CommandResult";
+    }
+
+    public getCommand(conventions: DocumentConventions): RavenCommand<AddGenAiOperationResult> {
+        return new AddGenAiCommand(conventions, this._configuration, this._startingPoint);
     }
 }
 
@@ -57,10 +58,10 @@ class AddGenAiCommand extends RavenCommand<AddGenAiOperationResult> implements I
         super();
 
         if (!conventions) {
-            throw new Error("Conventions cannot be null");
+            throwError("ArgumentNullException", "Conventions cannot be null");
         }
         if (!configuration) {
-            throw new Error("Configuration cannot be null");
+            throwError("ArgumentNullException", "Configuration cannot be null");
         }
 
         this._conventions = conventions;

@@ -5,7 +5,7 @@ export type BuiltinStartingPoints =
 
 export type StartingPointChangeVectorType =
     | BuiltinStartingPoints
-    | (string & {});
+    | (string & NonNullable<unknown>);
 
 /**
  * Represents a starting point for ETL processing, indicating where the ETL task should begin processing documents.

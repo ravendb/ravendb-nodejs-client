@@ -50,7 +50,7 @@ describe("GenAiConfiguration", () => {
             config.collection = "Products";
             config.identifier = "test";
             config.genAiTransformation = new GenAiTransformation();
-            config.genAiTransformation.script = "invalid script without ai.genContext";
+            config.genAiTransformation.script = "invalid script without ai-genContext";
 
             const errors = config.validate(false, false, false);
             assert.ok(errors.length > 0);
