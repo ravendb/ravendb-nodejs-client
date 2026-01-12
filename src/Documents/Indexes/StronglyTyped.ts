@@ -3,6 +3,7 @@ import { MetadataObject } from "../Session/MetadataObject.js";
 import { AttachmentName, IAttachmentObject } from "../Attachments/index.js";
 import { CapitalizeType } from "../../Types/index.js";
 import { FieldVectorOptions } from "../Queries/VectorSearch/VectorSearchOptions.js";
+import { Stream } from "node:stream";
 
 export type IndexingMapDefinition<TInput, TOutput> = (document: TInput) => TOutput | TOutput[];
 
@@ -25,9 +26,17 @@ export interface IndexingMapUtils {
     createSpatialField(wkt: string): SpatialField;
     createSpatialField(lat: number, lng: number): SpatialField;
     createField(name: string, value: any, options: CreateFieldOptions): void;
+    createVector(values: number[]): void;
+    createVector(values: number[][]): void;
+    createVector(value: Stream): void;
+    createVector(values: Stream[]): void;
+    createVector(values: string[]): void;
+    createVector(values: string[][]): void;
     attachmentsFor(document: any): CapitalizeType<AttachmentName>[];
     loadAttachment(document: any, attachmentName: string): IAttachmentObject;
     loadAttachments(document: any): IAttachmentObject[];
+    loadVector(path: string, embeddingsGenerationTaskIdentifier?: string): void;
+    loadVector(path: string, embeddingsGenerationTaskIdentifier?: string, embeddingsSourceDocumentId?: string, embeddingsSourceDocumentCollectionName?: string): void;
     noTracking: NoTrackingUtils;
 }
 
@@ -42,9 +51,11 @@ export class StubMapUtils<T> implements IndexingMapUtils {
     id: (document: any) => string;
     createSpatialField: (wktOrLat: string | number, lng?: number) => void;
     createField: (name: string, value: any, options?: CreateFieldOptions) => void;
+    createVector: (values: number[] | number[][] | Stream[] | string[] | string[][] | Stream) => void;
     attachmentsFor: (document: any) => CapitalizeType<AttachmentName>[];
     loadAttachment: (document: any, attachmentName: string) => IAttachmentObject;
     loadAttachments: (document: any) => IAttachmentObject[];
+    loadVector: (path: string, embeddingsGenerationTaskIdentifier?: string, embeddingsSourceDocumentId?: string, embeddingsSourceDocumentCollectionName?: string) => void;
     noTracking: NoTrackingUtils;
 }
 
