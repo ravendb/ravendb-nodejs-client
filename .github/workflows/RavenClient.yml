@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x, 22.x]
-        serverVersion: ["6.2", "7.0", "7.1"]
+        serverVersion: ["6.2", "7.1", "7.2"]
       fail-fast: false
 
     steps:
