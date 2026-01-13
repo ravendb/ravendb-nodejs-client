@@ -105,7 +105,7 @@ export class AiConnectionString extends ConnectionString {
      * @param newConnectionString The connection string to compare with
      * @returns Flags indicating which settings differ
      */
-    public compare(newConnectionString: AiConnectionString | null | undefined): AiSettingsCompareDifferences {
+    public compare(newConnectionString?: AiConnectionString): AiSettingsCompareDifferences {
         if (!newConnectionString) {
             return AiSettingsCompareDifferences.All;
         }

@@ -6,8 +6,10 @@ export type OngoingTaskType =
     | "OlapEtl"
     | "ElasticSearchEtl"
     | "QueueEtl"
+    | "SnowflakeEtl"
     | "Backup"
     | "Subscription"
     | "PullReplicationAsHub"
     | "PullReplicationAsSink"
-    | "QueueSink";
+    | "QueueSink"
+    | "GenAi";

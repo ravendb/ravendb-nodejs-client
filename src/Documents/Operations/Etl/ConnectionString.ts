@@ -95,4 +95,5 @@ export type EtlType =
     | "Sql"
     | "Olap"
     | "ElasticSearch"
-    | "Queue";
+    | "Queue"
+    | "GenAi";
