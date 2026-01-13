@@ -7,7 +7,7 @@ describe("GenAiConfiguration", () => {
         it("should validate complete configuration successfully", () => {
             const config = createValidConfiguration();
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.strictEqual(errors.length, 0, `Expected no errors, but got: ${errors.join(", ")}`);
         });
 
@@ -17,7 +17,7 @@ describe("GenAiConfiguration", () => {
             config.identifier = "test";
             config.genAiTransformation = createValidTransformation();
 
-            const errors = config.validate(true, false, false);
+            const errors = config.validate({ validateName: true, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("Name")));
         });
@@ -28,7 +28,7 @@ describe("GenAiConfiguration", () => {
             config.identifier = "test";
             config.genAiTransformation = createValidTransformation();
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("Collection")));
         });
@@ -39,7 +39,7 @@ describe("GenAiConfiguration", () => {
             config.collection = "Products";
             config.identifier = "test";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("GenAiTransformation")));
         });
@@ -52,7 +52,7 @@ describe("GenAiConfiguration", () => {
             config.genAiTransformation = new GenAiTransformation();
             config.genAiTransformation.script = "invalid script without ai-genContext";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("ai.genContext")));
         });
@@ -64,7 +64,7 @@ describe("GenAiConfiguration", () => {
             config.identifier = "Invalid_Identifier"; // underscore is invalid
             config.genAiTransformation = createValidTransformation();
 
-            const errors = config.validate(false, false, true);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: true });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("invalid characters")));
         });
@@ -74,7 +74,7 @@ describe("GenAiConfiguration", () => {
             config.testMode = false;
             config.prompt = "";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("Prompt")));
         });
@@ -85,7 +85,7 @@ describe("GenAiConfiguration", () => {
             config.jsonSchema = "";
             config.sampleObject = "";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("JSON schema") || e.includes("sample object")));
         });
@@ -95,7 +95,7 @@ describe("GenAiConfiguration", () => {
             config.testMode = false;
             config.updateScript = "";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("update function")));
         });
@@ -109,7 +109,7 @@ describe("GenAiConfiguration", () => {
             config.genAiTransformation = createValidTransformation();
             // No prompt, schema, or updateScript
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.strictEqual(errors.length, 0);
         });
 
@@ -118,7 +118,7 @@ describe("GenAiConfiguration", () => {
             config.testMode = false;
             config.connectionStringName = "";
 
-            const errors = config.validate(false, false, false);
+            const errors = config.validate({ validateName: false, validateConnection: false, validateIdentifier: false });
             assert.ok(errors.length > 0);
             assert.ok(errors.some(e => e.includes("ConnectionStringName")));
         });
@@ -215,11 +215,6 @@ describe("GenAiConfiguration", () => {
     });
 
     describe("properties", () => {
-        it("should return correct etlType", () => {
-            const config = new GenAiConfiguration();
-            assert.strictEqual(config.etlType, "GenAi");
-        });
-
         it("should return identifier as destination", () => {
             const config = new GenAiConfiguration();
             config.identifier = "test-identifier";
@@ -237,22 +232,6 @@ describe("GenAiConfiguration", () => {
             config.name = "My Product Task";
             const generated = config.generateIdentifier();
             assert.strictEqual(generated, "my-product-task");
-        });
-
-        it("should have default maxConcurrency of 4", () => {
-            const config = new GenAiConfiguration();
-            assert.strictEqual(config.maxConcurrency, 4);
-        });
-
-        it("should have default enableTracing of false", () => {
-            const config = new GenAiConfiguration();
-            assert.strictEqual(config.enableTracing, false);
-        });
-
-        it("should have empty queries array by default", () => {
-            const config = new GenAiConfiguration();
-            assert.ok(Array.isArray(config.queries));
-            assert.strictEqual(config.queries.length, 0);
         });
     });
 

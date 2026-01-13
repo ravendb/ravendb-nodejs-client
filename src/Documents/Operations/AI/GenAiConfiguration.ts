@@ -106,53 +106,52 @@ export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
 
     /**
      * Validates the GenAI configuration.
-     * @param validateName Whether to validate the name field
-     * @param validateConnection Whether to validate the connection string
-     * @param validateIdentifier Whether to validate the identifier
+     * @param options.validateName Whether to validate the name field (default: true)
+     * @param options.validateConnection Whether to validate the connection string (default: true)
+     * @param options.validateIdentifier Whether to validate the identifier (default: true)
      * @returns Array of validation error messages (empty if valid)
      */
-    public validate(
-        validateName: boolean = true,
-        validateConnection: boolean = true,
-        validateIdentifier: boolean = true
-    ): string[] {
+    public validate(options?: {
+        validateName?: boolean;
+        validateConnection?: boolean;
+        validateIdentifier?: boolean;
+    }): string[] {
+        const {
+            validateName = true,
+            validateConnection = true,
+            validateIdentifier = true
+        } = options ?? {};
+
         const errors: string[] = [];
 
-        // Validate identifier
         if (validateIdentifier) {
             const idErrors = AiTaskIdentifierHelper.validateIdentifier(this.identifier);
             errors.push(...idErrors);
         }
 
-        // Validate name
         if (validateName && (!this.name || this.name.trim().length === 0)) {
             errors.push("Name of GenAI configuration cannot be empty");
         }
 
-        // Validate connection string name (non-test mode)
         if (!this.testMode && (!this.connectionStringName || this.connectionStringName.trim().length === 0)) {
             errors.push("ConnectionStringName cannot be empty");
         }
 
-        // Validate connection
         if (validateConnection && !this.testMode) {
             const connectionErrors = this.connection?.validate() ?? [];
             errors.push(...connectionErrors);
         }
 
-        // Validate model type
         if (validateConnection && this.connection) {
             if (this.connection.modelType !== "Chat") {
                 errors.push("ModelType of GenAI configuration must be Chat");
             }
         }
 
-        // Validate collection
         if (!this.collection || this.collection.trim().length === 0) {
             errors.push("Collection must be provided");
         }
 
-        // Validate transformation
         if (!this.genAiTransformation) {
             errors.push("GenAiTransformation must be specified");
         } else {
@@ -162,7 +161,6 @@ export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
             }
         }
 
-        // Validate prompt, schema/sample, and update script (non-test mode)
         if (!this.testMode) {
             if (!this.prompt || this.prompt.trim().length === 0) {
                 errors.push("Prompt must be provided");

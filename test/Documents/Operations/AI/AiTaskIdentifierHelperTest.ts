@@ -36,14 +36,14 @@ describe("AiTaskIdentifierHelper", () => {
 
         it("should reject identifiers with invalid characters", () => {
             const invalidIdentifiers = [
-                { id: "task_name" },
-                { id: "task name" },
-                { id: "task@name" },
-                { id: "task.name" },
-                { id: "task/name" }
+                "task_name",
+                "task name",
+                "task@name",
+                "task.name",
+                "task/name"
             ];
 
-            for (const { id } of invalidIdentifiers) {
+            for (const id of invalidIdentifiers) {
                 const errors = AiTaskIdentifierHelper.validateIdentifier(id);
                 assert.ok(errors.length > 0, `Expected '${id}' to be invalid`);
                 assert.ok(errors.some(e => e.includes("invalid characters")), `Expected error about invalid characters for '${id}'`);
