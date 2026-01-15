@@ -238,7 +238,7 @@ describe("GenAiConfiguration", () => {
     describe("aiConnectorType", () => {
         it("should return None when no connection", () => {
             const config = new GenAiConfiguration();
-            assert.strictEqual(config.aiConnectorType, "None");
+            assert.strictEqual(config.aiConnectorType(), "None");
         });
 
         it("should return connector type from connection", () => {
@@ -247,7 +247,7 @@ describe("GenAiConfiguration", () => {
             connection.openAiSettings = {apiKey: "test"} as any;
             config.connection = connection;
 
-            assert.strictEqual(config.aiConnectorType, "OpenAi");
+            assert.strictEqual(config.aiConnectorType(), "OpenAi");
         });
     });
 });

@@ -2,7 +2,7 @@ import { EtlConfiguration } from "../Etl/EtlConfiguration.js";
 import { AiConnectionString, AiConnectorType } from "./ConnectionStrings/index.js";
 
 export abstract class AbstractAiIntegrationConfiguration extends EtlConfiguration<AiConnectionString> {
-    public get aiConnectorType(): AiConnectorType {
+    public aiConnectorType(): AiConnectorType {
         return this.connection?.getActiveProvider() ?? "None";
     }
 
