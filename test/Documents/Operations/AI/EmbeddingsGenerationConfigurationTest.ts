@@ -8,12 +8,6 @@ import {
 } from "../../../../src/index.js";
 
 describe("EmbeddingsGenerationConfiguration", () => {
-    let conventions: DocumentConventions;
-
-    beforeEach(() => {
-        conventions = new DocumentConventions();
-    });
-
     describe("ChunkingOptions validation", () => {
         it("should validate valid chunking options", () => {
             const options: ChunkingOptions = {
@@ -277,7 +271,7 @@ describe("EmbeddingsGenerationConfiguration", () => {
 
             config.quantization = "Int8";
 
-            const serialized = config.serialize(conventions) as any;
+            const serialized = config.serialize(new DocumentConventions()) as any;
 
             assert.strictEqual(serialized.Identifier, "products-embeddings");
             assert.strictEqual(serialized.Collection, "Products");
@@ -310,7 +304,7 @@ describe("EmbeddingsGenerationConfiguration", () => {
 
             config.quantization = "Single";
 
-            const serialized = config.serialize(conventions) as any;
+            const serialized = config.serialize(new DocumentConventions()) as any;
 
             assert.ok(serialized.EmbeddingsTransformation);
             assert.ok(serialized.EmbeddingsTransformation.Script.includes("embeddings.generate"));
