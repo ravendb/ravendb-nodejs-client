@@ -44,8 +44,8 @@ export function validateEmbeddingsTransformation(transformation: EmbeddingsTrans
     // Validate chunking options
     if (transformation.chunkingOptions) {
         const chunkingErrors = validateChunkingOptions(
-            transformation.chunkingOptions,
-            GENERATE_EMBEDDINGS_FUNCTION_NAME
+            GENERATE_EMBEDDINGS_FUNCTION_NAME,
+            transformation.chunkingOptions
         );
         errors.push(...chunkingErrors);
     } else {
