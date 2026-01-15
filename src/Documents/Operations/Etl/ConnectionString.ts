@@ -96,4 +96,5 @@ export type EtlType =
     | "Olap"
     | "ElasticSearch"
     | "Queue"
-    | "GenAi";
+    | "GenAi"
+    | "EmbeddingsGeneration";
