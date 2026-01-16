@@ -16,3 +16,12 @@ export * from "./AddAiTaskOperationResult.js";
 export * from "./AddGenAiOperation.js";
 export * from "./UpdateGenAiOperation.js";
 
+// Embeddings Generation
+export * from "./ChunkingOptions.js";
+export * from "./EmbeddingPathConfiguration.js";
+export * from "./EmbeddingsTransformation.js";
+export * from "./EmbeddingsGenerationConfiguration.js";
+export * from "./AddEmbeddingsGenerationOperationResult.js";
+export * from "./AddEmbeddingsGenerationOperation.js";
+export * from "./UpdateEmbeddingsGenerationOperation.js";
+
