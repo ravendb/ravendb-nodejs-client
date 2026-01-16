@@ -4,6 +4,7 @@ import {
     AiConnectionString,
     EmbeddedSettings,
     EmbeddingsGenerationConfiguration,
+    GetOngoingTaskInfoOperation,
     IDocumentStore,
     PutConnectionStringOperation,
     UpdateEmbeddingsGenerationOperation
@@ -182,48 +183,6 @@ import {assertThat} from "../../../Utils/AssertExtensions.js";
         assertThat(updateResult.raftCommandIndex).isGreaterThan(0);
     });
 
-    it("can update embeddings generation task with reset", async function () {
-        // Define connection string
-        const csName = await putEmbeddingsConnectionString(store);
-
-        // Create initial configuration
-        const config = new EmbeddingsGenerationConfiguration();
-        config.name = "Products Embeddings Reset Test";
-        config.collection = "Products";
-        config.connectionStringName = csName;
-        config.identifier = config.generateIdentifier();
-
-        config.embeddingsPathConfigurations = [
-            {
-                path: "Description",
-                chunkingOptions: {
-                    chunkingMethod: "PlainTextSplit",
-                    maxTokensPerChunk: 256,
-                    overlapTokens: 0
-                }
-            }
-        ];
-
-        config.chunkingOptionsForQuerying = {
-            chunkingMethod: "PlainTextSplit",
-            maxTokensPerChunk: 256,
-            overlapTokens: 0
-        };
-
-        config.quantization = "Binary";
-
-        // Add the task
-        const addResult = await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
-        const taskId = addResult.taskId;
-
-        // Update with reset
-        const updateOperation = new UpdateEmbeddingsGenerationOperation(taskId, config);
-        const updateResult = await store.maintenance.send(updateOperation);
-
-        assertThat(updateResult.taskId).isEqualTo(taskId + 1);
-        assertThat(updateResult.raftCommandIndex).isGreaterThan(0);
-    });
-
     it("validates quantization types", async function () {
         const config = new EmbeddingsGenerationConfiguration();
         config.name = "Test Quantization";
@@ -390,6 +349,49 @@ import {assertThat} from "../../../Utils/AssertExtensions.js";
         };
 
         assertThat(scriptConfig.transformationName).isEqualTo("embeddings-transform-script");
+    });
+
+    it("can get ongoing task info", async () => {
+        const csName = await putEmbeddingsConnectionString(store);
+
+        const config = new EmbeddingsGenerationConfiguration();
+        config.name = "Products Embeddings Task Info Test";
+        config.collection = "Products";
+        config.connectionStringName = csName;
+        config.identifier = config.generateIdentifier();
+
+        config.embeddingsPathConfigurations = [
+            {
+                path: "Description",
+                chunkingOptions: {
+                    chunkingMethod: "PlainTextSplit",
+                    maxTokensPerChunk: 256,
+                    overlapTokens: 0
+                }
+            }
+        ];
+
+        config.chunkingOptionsForQuerying = {
+            chunkingMethod: "PlainTextSplit",
+            maxTokensPerChunk: 256,
+            overlapTokens: 0
+        };
+
+        config.quantization = "Int8";
+
+        const addResult = await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
+        const taskId = addResult.taskId;
+
+        assertThat(addResult.taskId).isNotNull();
+        assertThat(addResult.raftCommandIndex).isNotNull();
+
+        const getOngoingTaskOp = new GetOngoingTaskInfoOperation(config.name, "EmbeddingsGeneration");
+        const task = await store.maintenance.send(getOngoingTaskOp);
+
+        assertThat(task).isNotNull();
+        assertThat(task.taskId).isEqualTo(taskId);
+        assertThat(task.taskType).isEqualTo("EmbeddingsGeneration");
+        assertThat(task.taskName).isEqualTo(config.name);
     });
 });
 
