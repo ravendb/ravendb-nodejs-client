@@ -33,7 +33,12 @@ import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEt
 import { DataArchivalConfiguration } from "../Documents/Operations/DataArchival/DataArchivalConfiguration.js";
 import { QueueSinkConfiguration } from "../Documents/Operations/QueueSink/QueueSinkConfiguration.js";
 import { ShardingConfiguration } from "./Sharding/ShardingConfiguration.js";
-import { AiConnectionString } from "../Documents/Operations/AI/index.js";
+import {
+    AiConnectionString,
+    EmbeddingsGenerationConfiguration,
+    GenAiConfiguration
+} from "../Documents/Operations/AI/index.js";
+import { AiAgentConfiguration } from "../Documents/Operations/AI/Agents/config/AiAgentConfiguration.js";
 
 export interface ScriptResolver {
     script: string;
@@ -87,6 +92,9 @@ export interface DatabaseRecord {
     olapEtls?: OlapEtlConfiguration[];
     queueEtls?: QueueEtlConfiguration[];
     queueSinks?: QueueSinkConfiguration[];
+    aiAgents?: AiAgentConfiguration[];
+    genAis?: GenAiConfiguration[];
+    embeddingsGenerations?: EmbeddingsGenerationConfiguration[];
     client?: ClientConfiguration;
     studio?: StudioConfiguration;
     truncatedClusterTransactionIndex?: number;
