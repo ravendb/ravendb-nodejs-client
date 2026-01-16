@@ -12,4 +12,5 @@ export type OngoingTaskType =
     | "PullReplicationAsHub"
     | "PullReplicationAsSink"
     | "QueueSink"
+    | "EmbeddingsGeneration"
     | "GenAi";
