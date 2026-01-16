@@ -196,9 +196,10 @@ describe("EmbeddingsGenerationConfiguration", () => {
             };
 
             const errors = config.validate();
-            assert.ok(errors.length > 0, "Expected validation errors");
-            assert.ok(
-                errors.some(e => e.includes("EmbeddingsPathConfigurations") || e.includes("EmbeddingsTransformation")),
+            assert.strictEqual(errors.length, 1, "Expected exactly one validation error");
+            assert.strictEqual(
+                errors[0],
+                "Configuration must have either EmbeddingsPathConfigurations or EmbeddingsTransformation script specified",
                 "Should require either paths or transformation"
             );
         });

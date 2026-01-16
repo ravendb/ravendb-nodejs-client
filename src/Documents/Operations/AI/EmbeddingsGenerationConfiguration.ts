@@ -6,6 +6,7 @@ import { VectorEmbeddingType } from "../../Queries/VectorSearch/VectorEmbeddingT
 import { AiTaskIdentifierHelper } from "./AiTaskIdentifierHelper.js";
 import { EtlType } from "../Etl/ConnectionString.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
+import { TimeUtil } from "../../../Utility/TimeUtil.js";
 
 const PATHS_TRANSFORMATION_NAME = "embeddings-from-paths";
 const SCRIPT_TRANSFORMATION_NAME = "embeddings-transform-script";
@@ -247,8 +248,8 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
             : null;
         result.Quantization = this.quantization;
         result.ChunkingOptionsForQuerying = this._serializeChunkingOptions(this.chunkingOptionsForQuerying);
-        result.EmbeddingsCacheExpiration = this._millisecondsToTimeSpan(this.embeddingsCacheExpiration);
-        result.EmbeddingsCacheForQueryingExpiration = this._millisecondsToTimeSpan(
+        result.EmbeddingsCacheExpiration = TimeUtil.millisToTimeSpan(this.embeddingsCacheExpiration);
+        result.EmbeddingsCacheForQueryingExpiration = TimeUtil.millisToTimeSpan(
             this.embeddingsCacheForQueryingExpiration
         );
 
@@ -344,21 +345,6 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
             MaxTokensPerChunk: options.maxTokensPerChunk,
             OverlapTokens: options.overlapTokens
         };
-    }
-
-    /**
-     * Converts milliseconds to TimeSpan format expected by server.
-     * @param milliseconds Time in milliseconds
-     * @returns TimeSpan string (e.g., "90.00:00:00")
-     */
-    private _millisecondsToTimeSpan(milliseconds: number): string {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const days = Math.floor(totalSeconds / 86400);
-        const hours = Math.floor((totalSeconds % 86400) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        return `${days}.${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 }
 
