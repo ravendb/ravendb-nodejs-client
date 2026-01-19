@@ -81,7 +81,7 @@ describe("SubscriptionsBasicTest", function () {
         try {
 
             subscription.on("batch", (batch, cb) => cb()); // this triggers subscription to run
-            const error = await new Promise<Error>((resolve, reject) => {
+            const error = await new Promise<Error>((resolve) => {
                 subscription.on("error", err => {
                     resolve(err);
                 });
@@ -509,20 +509,16 @@ describe("SubscriptionsBasicTest", function () {
 
             subscriptionWorker = store.subscriptions.getSubscriptionWorker(options1);
 
-            const mre = new Semaphore(1);
-            mre.take(TypeUtil.NOOP); // block by default
-
-            await putUserDoc(store);
-
-            subscriptionWorker.on("error", TypeUtil.NOOP);
+            const batches = new AsyncQueue<SubscriptionBatch<User>>();
 
             subscriptionWorker.on("batch", (batch, callback) => {
-                mre.leave(1);
+                batches.push(batch);
                 callback();
             });
 
-            await acquireSemaphore(mre, { timeout: _reasonableWaitTime }).promise;
-            mre.leave();
+            await putUserDoc(store);
+
+            await batches.poll(_reasonableWaitTime);
 
             const options2 = {
                 subscriptionName: id,
@@ -532,32 +528,38 @@ describe("SubscriptionsBasicTest", function () {
 
             throwingSubscriptionWorker = store.subscriptions.getSubscriptionWorker(options2);
 
+            throwingSubscriptionWorker.on("batch", (batch, callback) => {
+                callback();
+            });
+
             await new Promise<void>(resolve => {
                 throwingSubscriptionWorker.on("error", error => {
                     assert.strictEqual(error.name, "SubscriptionInUseException");
                     resolve();
                 });
-
-                throwingSubscriptionWorker.on("batch", (batch, callback) => {
-                    callback();
-                });
             });
 
             await store.subscriptions.dropConnection(id);
 
-            notThrowingSubscriptionWorker = store.subscriptions.getSubscriptionWorker({
+            const options3 = {
                 subscriptionName: id,
-                maxErroneousPeriod: 3000
-            });
+                strategy: "WaitForFree",
+                maxErroneousPeriod: 3000,
+                timeToWaitBeforeConnectionRetry: 1000
+            } as SubscriptionWorkerOptions<User>;
+
+            notThrowingSubscriptionWorker = store.subscriptions.getSubscriptionWorker(options3);
+
+            const batches2 = new AsyncQueue<SubscriptionBatch<User>>();
 
             notThrowingSubscriptionWorker.on("batch", (batch, callback) => {
-                mre.leave(1);
+                batches2.push(batch);
                 callback();
             });
 
             await putUserDoc(store);
 
-            await acquireSemaphore(mre, { timeout: _reasonableWaitTime });
+            await batches2.poll(_reasonableWaitTime)
         } finally {
             if (subscriptionWorker) {
                 subscriptionWorker.dispose();
