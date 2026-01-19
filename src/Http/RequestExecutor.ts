@@ -49,6 +49,7 @@ import { Semaphore } from "../Utility/Semaphore.js";
 import { Dispatcher, Agent } from "undici-types";
 import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
+import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -336,6 +337,10 @@ export class RequestExecutor implements IDisposable {
 
     public async getHttpAgent(): Promise<Dispatcher> {
         if (this.conventions.customFetch) {
+            return null;
+        }
+
+        if (RuntimeUtil.isBun()) {
             return null;
         }
 
@@ -1949,6 +1954,10 @@ export class RequestExecutor implements IDisposable {
         this._defaultRequestOptions = Object.assign(
             DEFAULT_REQUEST_OPTIONS,
             this._customHttpRequestOptions);
+
+        if (RuntimeUtil.isBun() && this._certificate) {
+            this._defaultRequestOptions.tls = this._certificate.toBunTlsOptions();
+        }
     }
 
     public dispose(): void {

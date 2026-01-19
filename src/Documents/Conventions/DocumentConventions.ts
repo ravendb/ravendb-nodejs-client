@@ -20,6 +20,7 @@ import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSe
 import { ShardingConventions } from "./ShardingConventions.js";
 import { plural } from "../../ext/pluralize/pluralize.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
+import {RuntimeUtil} from "../../Utility/RuntimeUtil.js";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
 export type IValueForQueryConverter<T> =
@@ -458,6 +459,10 @@ export class DocumentConventions {
      * Can accept compressed HTTP response content and will use decompression methods
      */
     public get useHttpDecompression() {
+        if (RuntimeUtil.isBun() && this._useHttpDecompression === null) {
+            return false;
+        }
+
         if (this._useHttpDecompression === null) {
             return true;
         }
