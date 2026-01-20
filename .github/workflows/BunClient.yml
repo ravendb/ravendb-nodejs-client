@@ -1,0 +1,78 @@
+name: tests/bun
+
+on:
+  push:
+    branches: [ v7.1 ]
+  pull_request:
+    branches: [ v7.1 ]
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      ravendb_version:
+        description: 'RavenDB Version'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
+      RAVENDB_TEST_SERVER_CERTIFICATE_PATH: ./certs/server.pfx
+      RAVENDB_TEST_CLIENT_CERT_PASSPHRASE: client11
+      RAVENDB_TEST_CLIENT_CERT_PATH: ./certs/nodejs.pem
+      RAVENDB_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
+      RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
+      RAVENDB_BUILD_TYPE: nightly
+      RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+      RAVENDB_SERVER_VERSION: ${{ matrix.serverVersion }}
+
+    strategy:
+      matrix:
+        bun-version: [latest]
+        serverVersion: ["6.2", "7.1", "7.2"]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4.1.4
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ matrix.bun-version }}
+
+    - name: Download RavenDB Server
+      run: |
+        if [[ -n "${{ inputs.ravendb_version }}" ]]; then
+          wget -O RavenDB.tar.bz2 "https://daily-builds.s3.amazonaws.com/RavenDB-${{ inputs.ravendb_version }}-linux-x64.tar.bz2"
+        else
+          wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
+        fi
+
+    - run: mkdir certs
+    - run: openssl genrsa -out certs/ca.key 2048
+    - run: openssl req -new -x509 -key certs/ca.key -out certs/ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
+    - run: openssl genrsa -traditional -out certs/localhost.key 2048
+    - run: openssl req -new  -key certs/localhost.key -out certs/localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com" -addext "subjectAltName = DNS:localhost"
+    - run: openssl x509 -req -extensions ext -extfile test/Assets/test_cert.conf -in certs/localhost.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/localhost.crt
+    - run: cat certs/localhost.key certs/localhost.crt > certs/nodejs.pem
+    - run: openssl pkcs12 -passout pass:"" -export -out certs/server.pfx -inkey certs/localhost.key -in certs/localhost.crt
+    - run: sudo cp certs/ca.crt /usr/local/share/ca-certificates/ca.crt
+    - run: sudo update-ca-certificates
+
+    - name: Extract RavenDB Server
+      run: tar xjf RavenDB.tar.bz2
+
+    - name: Install dependencies
+      run: bun install
+
+    - name: Run Linter
+      run: bun run lint
+
+    - name: Check exports
+      run: bun run check-exports
+
+    - name: Run Tests
+      run: bun run test

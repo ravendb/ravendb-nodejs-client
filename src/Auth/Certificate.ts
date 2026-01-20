@@ -4,6 +4,7 @@ import { throwError } from "../Exceptions/index.js";
 import { ClientOptions } from "ws";
 import { Agent } from "undici-types";
 import { ConnectionOptions } from "node:tls";
+import { BunTlsOptions } from "../Types/BunTypes.js";
 
 export type CertificateType = "pem" | "pfx";
 
@@ -11,6 +12,7 @@ export interface ICertificate {
     toAgentOptions(): Agent.Options;
     toSocketOptions(): ConnectionOptions;
     toWebSocketOptions(): ClientOptions;
+    toBunTlsOptions(): BunTlsOptions;
 }
 
 export abstract class Certificate implements ICertificate {
@@ -91,6 +93,14 @@ export abstract class Certificate implements ICertificate {
 
         return {};
     }
+
+    public toBunTlsOptions(): BunTlsOptions {
+        if (this._passphrase) {
+            return { passphrase: this._passphrase };
+        }
+
+        return {};
+    }
 }
 
 export class PemCertificate extends Certificate {
@@ -143,6 +153,16 @@ export class PemCertificate extends Certificate {
             key: this._key,
             ca: this._ca
         });
+    }
+
+    public toBunTlsOptions(): BunTlsOptions {
+        const options = super.toBunTlsOptions();
+        return {
+            ...options,
+            cert: this._certificate,
+            key: this._key,
+            ca: this._ca
+        };
     }
 
     protected _fetchPart(token: string): string {
@@ -202,5 +222,20 @@ export class PfxCertificate extends Certificate {
             pfx: this._certificate as Buffer,
             ca: this._ca
         });
+    }
+
+    public toBunTlsOptions(): BunTlsOptions {
+        const options = super.toBunTlsOptions();
+
+        console.warn(
+            "WARNING: PFX certificates are not currently supported in Bun runtime. " +
+            "The connection may fail. Please use PEM certificates instead. "
+        );
+
+        return {
+            ...options,
+            pfx: this._certificate as Buffer,
+            ca: this._ca
+        };
     }
 }

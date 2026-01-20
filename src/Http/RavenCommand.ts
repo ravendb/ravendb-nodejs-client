@@ -14,9 +14,10 @@ import { DocumentConventions } from "../Documents/Conventions/DocumentConvention
 import { ObjectTypeDescriptor } from "../Types/index.js";
 import { ObjectUtil } from "../Utility/ObjectUtil.js";
 import { Dispatcher } from "undici-types";
-import { RequestInit } from "undici";
 import { HEADERS } from "../Constants.js";
 import { DefaultCommandResponseBehavior } from "./Behaviors/DefaultCommandResponseBehavior.js";
+import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
+import { BunFetchRequestInit } from "../Types/BunTypes.js";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -154,13 +155,18 @@ export abstract class RavenCommand<TResult> {
 
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
-        if (requestOptions.dispatcher) { // support for fiddler
-            agent = requestOptions.dispatcher;
-        }
-
         const bodyToUse = fetcher ? RavenCommand.maybeWrapBody(body) : body;
 
-        const optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
+        let optionsToUse: RequestInit | BunFetchRequestInit;
+
+        if (RuntimeUtil.isBun()) {
+            optionsToUse = { body: bodyToUse, ...restOptions } as BunFetchRequestInit;
+        } else {
+            if (requestOptions.dispatcher) { // support for fiddler
+                agent = requestOptions.dispatcher;
+            }
+            optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
+        }
 
         const passthrough = new PassThrough();
         passthrough.pause();
