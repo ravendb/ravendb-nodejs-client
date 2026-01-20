@@ -2,8 +2,7 @@
 
 [![NPM](https://nodei.co/npm/ravendb.png?compact=true)](https://nodei.co/npm/ravendb/)
 
-[![build status](https://github.com/ravendb/ravendb-nodejs-client/actions/workflows/RavenClient.yml/badge.svg?branch=v7.0)](https://github.com/ravendb/ravendb-nodejs-client/actions) [![Known Vulnerabilities](https://snyk.io/test/github/ravendb/ravendb-nodejs-client/badge.svg)](https://snyk.io/test/github/ravendb/ravendb-nodejs-client)
-
+[![build status](https://github.com/ravendb/ravendb-nodejs-client/actions/workflows/RavenClient.yml/badge.svg)](https://github.com/ravendb/ravendb-nodejs-client/actions/workflows/RavenClient.yml) [![Known Vulnerabilities](https://snyk.io/test/github/ravendb/ravendb-nodejs-client/badge.svg)](https://snyk.io/test/github/ravendb/ravendb-nodejs-client)
 
 ## Installation
 
