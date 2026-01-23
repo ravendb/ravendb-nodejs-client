@@ -1,4 +1,5 @@
 import { AttachmentName, AttachmentData } from "../Attachments/index.js";
+import { StoreAttachmentParameters } from "../Operations/Attachments/StoreAttachmentParameters.js";
 
 export interface IAttachmentsSessionOperationsBase {
     /**
@@ -15,6 +16,14 @@ export interface IAttachmentsSessionOperationsBase {
      * Stores attachment to be sent in the session.
      */
     store(documentId: string, name: string, stream: AttachmentData, contentType: string): void;
+
+    /**
+     * Stores attachment to be sent in the session using the provided parameters.
+     * This overload provides a convenient way to store an attachment using a StoreAttachmentParameters object,
+     * which encapsulates all attachment properties including optional settings like content type,
+     * change vector for concurrency control, and remote parameters for scheduling remote cloud storage uploads.
+     */
+    store(documentId: string, parameters: StoreAttachmentParameters): void;
 
     /**
      * Stores attachment to be sent in the session.

@@ -694,8 +694,20 @@ export * from "./Documents/Queries/Suggestions/SuggestionSortMode.js";
 
 // ATTACHMENTS
 export * from "./Documents/Attachments/index.js";
+export * from "./Documents/Attachments/RemoteAttachmentFlags.js";
+export * from "./Documents/Attachments/IRemoteAttachmentsSettings.js";
+export * from "./Documents/Attachments/RemoteAttachmentsAzureSettings.js";
+export * from "./Documents/Attachments/RemoteAttachmentsS3Settings.js";
+export * from "./Documents/Attachments/RemoteAttachmentsDestinationConfiguration.js";
+export * from "./Documents/Attachments/RemoteAttachmentsConfiguration.js";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation.js";
 export * from "./Documents/Operations/Attachments/AttachmentRequest.js";
+export * from "./Documents/Operations/Attachments/RemoteAttachmentParameters.js";
+export * from "./Documents/Operations/Attachments/IStoreAttachmentParameters.js";
+export * from "./Documents/Operations/Attachments/StoreAttachmentParameters.js";
+export * from "./Documents/Operations/Attachments/Remote/ConfigureRemoteAttachmentsOperation.js";
+export * from "./Documents/Operations/Attachments/Remote/ConfigureRemoteAttachmentsOperationResult.js";
+export * from "./Documents/Operations/Attachments/Remote/GetRemoteAttachmentsConfigurationOperation.js";
 
 // ANALYZERS
 export * from "./Documents/Operations/Analyzers/DeleteAnalyzerOperation.js";

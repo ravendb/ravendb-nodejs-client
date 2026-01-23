@@ -28,4 +28,6 @@ export type DatabaseRecordItemType =
     | "IndexesHistory"
     | "Refresh"
     | "QueueSinks"
-    | "DataArchival";
+    | "DataArchival"
+    | "RemoteAttachments"
+    | "SchemaValidation";
