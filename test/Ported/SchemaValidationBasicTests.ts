@@ -1,4 +1,4 @@
-import {disposeTestDocumentStore, testContext} from "../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../Utils/TestUtil.js";
 import {
     ConfigureSchemaValidationOperation,
     GetSchemaValidationConfiguration,
@@ -8,30 +8,15 @@ import {
 import {assertThat} from "../Utils/AssertExtensions.js";
 
 
-describe("SchemaValidationBasicTests", function () {
+(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("SchemaValidationBasicTests", () => {
     let store: IDocumentStore;
 
-    beforeEach(async function () {
+    beforeEach(async () => {
         store = await testContext.getDocumentStore();
     });
 
     afterEach(async () =>
         await disposeTestDocumentStore(store));
-
-    function getUserSchema(): string {
-        return JSON.stringify({
-            type: "object",
-            properties: {
-                age: {
-                    type: "integer",
-                    minimum: 21,
-                    maximum: 67
-                }
-            },
-            required: ["age"]
-        });
-    }
-
 
     it("store - Users collection", async () => {
         const schemaData = getUserSchema();
@@ -478,4 +463,18 @@ class ComplexUser {
         this.age = age;
         this.address = address;
     }
+}
+
+function getUserSchema(): string {
+    return JSON.stringify({
+        type: "object",
+        properties: {
+            age: {
+                type: "integer",
+                minimum: 21,
+                maximum: 67
+            }
+        },
+        required: ["age"]
+    });
 }

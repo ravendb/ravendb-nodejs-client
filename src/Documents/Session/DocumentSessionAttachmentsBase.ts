@@ -48,7 +48,6 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         stream?: AttachmentData,
         contentType: string = null): void {
 
-        // Handle StoreAttachmentParameters overload
         if (typeof documentIdOrEntity === "string" && typeof nameOrParameters === "object" && "name" in nameOrParameters) {
             const params = nameOrParameters as StoreAttachmentParameters;
             return this._storeInternal(
@@ -60,7 +59,6 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             );
         }
 
-        // Handle entity-based calls
         if (typeof documentIdOrEntity === "object") {
             return this._storeAttachmentByEntity(
                 documentIdOrEntity,
@@ -70,7 +68,6 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             );
         }
 
-        // Handle documentId-based calls
         return this._storeInternal(
             documentIdOrEntity,
             nameOrParameters as string,

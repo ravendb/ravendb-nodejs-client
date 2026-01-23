@@ -1,5 +1,6 @@
 import { RemoteAttachmentsAzureSettings } from "./RemoteAttachmentsAzureSettings.js";
 import { RemoteAttachmentsS3Settings } from "./RemoteAttachmentsS3Settings.js";
+import { throwError } from "../../Exceptions/index.js";
 
 /**
  * Configuration for a single remote attachment storage destination.
@@ -48,15 +49,11 @@ export class RemoteAttachmentsDestinationConfiguration {
         const azureConfigured = this.azureSettings?.isConfigured() ?? false;
 
         if (!s3Configured && !azureConfigured) {
-            throw new Error(
-                `Exactly one uploader for RemoteAttachmentsDestinationConfiguration '${key}'${databaseStr} must be configured.`
-            );
+            throwError("InvalidOperationException", `Exactly one uploader for RemoteAttachmentsDestinationConfiguration '${key}'${databaseStr} must be configured.`);
         }
 
         if (s3Configured && azureConfigured) {
-            throw new Error(
-                `Only one uploader for RemoteAttachmentsDestinationConfiguration '${key}'${databaseStr} can be configured.`
-            );
+            throwError("InvalidOperationException", `Only one uploader for RemoteAttachmentsDestinationConfiguration '${key}'${databaseStr} can be configured.`);
         }
     }
 }

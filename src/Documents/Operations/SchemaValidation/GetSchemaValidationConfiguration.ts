@@ -25,10 +25,14 @@ export class GetSchemaValidationConfigurationCommand extends RavenCommand<Schema
         super();
     }
 
+    public get isReadRequest() {
+        return true;
+    }
+
     public createRequest(node: ServerNode): HttpRequestParameters {
         const uri = `${node.url}/databases/${node.database}/schema-validation/config`;
 
-        return { uri };
+        return {uri};
     }
 
     public async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
@@ -36,7 +40,7 @@ export class GetSchemaValidationConfigurationCommand extends RavenCommand<Schema
             this._throwInvalidResponse();
         }
 
-                let body: string = null;
+        let body: string = null;
 
         this.result = await RavenCommandResponsePipeline.create<SchemaValidationConfiguration>()
             .collectBody(_ => body = _)
@@ -53,9 +57,5 @@ export class GetSchemaValidationConfigurationCommand extends RavenCommand<Schema
             .process(bodyStream);
 
         return body;
-    }
-
-    public get isReadRequest() {
-        return true;
     }
 }

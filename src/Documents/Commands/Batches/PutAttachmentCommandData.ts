@@ -5,6 +5,21 @@ import { StringUtil } from "../../../Utility/StringUtil.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 
+interface DocumentAttachmentDto {
+    Id: string;
+    ChangeVector: string;
+    Name: string;
+    ContentType: string;
+    Type: CommandType;
+    RemoteParameters?: RemoteParametersDto;
+}
+
+interface RemoteParametersDto {
+    Identifier: string;
+    Flags: number;
+    At?: string;
+}
+
 export class PutAttachmentCommandData implements ICommandData {
     public id: string;
     public name: string;
@@ -39,7 +54,7 @@ export class PutAttachmentCommandData implements ICommandData {
     }
 
     public serialize(conventions: DocumentConventions): object {
-        const result: AttachmentData = {
+        const result: DocumentAttachmentDto = {
             Id: this.id,
             Name: this.name,
             ChangeVector: this.changeVector,

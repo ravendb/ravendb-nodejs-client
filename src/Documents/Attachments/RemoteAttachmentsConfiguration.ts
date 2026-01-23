@@ -1,4 +1,5 @@
 import { RemoteAttachmentsDestinationConfiguration } from "./RemoteAttachmentsDestinationConfiguration.js";
+import { throwError } from "../../Exceptions/index.js";
 
 /**
  * Configuration for remote attachments functionality, including destinations, frequency, and upload settings.
@@ -67,15 +68,15 @@ export class RemoteAttachmentsConfiguration {
         const databaseStr = databaseName ? ` for database '${databaseName}'` : "";
 
         if (this.checkFrequencyInSec !== undefined && this.checkFrequencyInSec <= 0) {
-            throw new Error(`Remote attachments check frequency${databaseStr} must be greater than 0.`);
+            throwError("InvalidOperationException", `Remote attachments check frequency${databaseStr} must be greater than 0.`);
         }
 
         if (this.maxItemsToProcess !== undefined && this.maxItemsToProcess <= 0) {
-            throw new Error(`Max items to process${databaseStr} must be greater than 0.`);
+            throwError("InvalidOperationException", `Max items to process${databaseStr} must be greater than 0.`);
         }
 
         if (this.concurrentUploads !== undefined && this.concurrentUploads <= 0) {
-            throw new Error(`Concurrent attachments uploads${databaseStr} must be greater than 0.`);
+            throwError("InvalidOperationException", `Concurrent attachments uploads${databaseStr} must be greater than 0.`);
         }
 
         if (!this.destinations || Object.keys(this.destinations).length === 0) {
@@ -87,17 +88,14 @@ export class RemoteAttachmentsConfiguration {
         for (const key of Object.keys(this.destinations)) {
             const destination = this.destinations[key];
 
-            // Check for case-insensitive duplicates
             const lowerKey = key.toLowerCase();
             if (keys.has(lowerKey)) {
-                throw new Error(
-                    `Destination key '${key}' is duplicate. Duplicate keys are not allowed in remote attachments configuration${databaseStr}.`
-                );
+                throwError("InvalidOperationException", `Destination key '${key}' is duplicate. Duplicate keys are not allowed in remote attachments configuration${databaseStr}.`);
             }
             keys.add(lowerKey);
 
             if (!destination) {
-                throw new Error(`Destination configuration for key ${key} is null${databaseStr}.`);
+                throwError("InvalidOperationException", `Destination configuration for key ${key} is null${databaseStr}.`);
             }
 
             destination.assertConfiguration(key, databaseName);

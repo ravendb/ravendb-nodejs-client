@@ -317,7 +317,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                     this._operation._writeString(id);
                     this._operation._writer.write(`","Type":"AttachmentPUT","Name":"`);
                     this._operation._writeString(name);
-                    this._operation._writer.write(`"`); // Close the Name value
+                    this._operation._writer.write(`"`);
 
                     if (contentType) {
                         this._operation._writer.write(`,"ContentType":"`);

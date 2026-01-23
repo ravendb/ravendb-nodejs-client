@@ -1,4 +1,4 @@
-import {disposeTestDocumentStore, testContext} from "../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Utils/TestUtil.js";
 import {
     ConfigureRemoteAttachmentsOperation,
     IDocumentStore,
@@ -17,8 +17,7 @@ interface Order {
     shipVia?: string;
 }
 
-describe("BulkInsertRemoteAttachmentsTests", () => {
-
+(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("BulkInsertRemoteAttachmentsTests", () => {
     let store: IDocumentStore;
 
     beforeEach(async () => {

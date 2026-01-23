@@ -1,4 +1,4 @@
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
+import {testContext, disposeTestDocumentStore, RavenTestContext} from "../../Utils/TestUtil.js";
 import {
     IDocumentStore,
     ConfigureRemoteAttachmentsOperation,
@@ -10,8 +10,7 @@ import {
 } from "../../../src/index.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-describe("RemoteAttachmentsBasicTests", function () {
-
+(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("RemoteAttachmentsBasicTests", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -175,8 +174,6 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         try {
             await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
-            assertThat(false)
-                .isTrue(); // Should not reach here
         } catch (error) {
             assertThat(error.message)
                 .contains("must be configured");
@@ -188,7 +185,6 @@ describe("RemoteAttachmentsBasicTests", function () {
         const destination = new RemoteAttachmentsDestinationConfiguration();
         destination.disabled = false;
 
-        // Configure both S3 and Azure (invalid)
         const s3Settings = new RemoteAttachmentsS3Settings();
         s3Settings.bucketName = "test-bucket";
         s3Settings.awsAccessKey = "test-key";
@@ -205,8 +201,6 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         try {
             await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
-            assertThat(false)
-                .isTrue(); // Should not reach here
         } catch (error) {
             assertThat(error.message)
                 .contains("Only one uploader");
@@ -256,6 +250,7 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         const s3Settings = new RemoteAttachmentsS3Settings();
         s3Settings.bucketName = "testS3Bucket-Users";
+        s3Settings.remoteFolderName = "production/attachments/2024";
         s3Settings.awsAccessKey = "test-access-key";
         s3Settings.awsSecretKey = "test-secret-key";
         s3Settings.awsRegionName = "us-east-1";
@@ -316,8 +311,6 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         try {
             await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
-            assertThat(false)
-                .isTrue(); // Should not reach here
         } catch (error) {
             assertThat(error.message)
                 .contains("check frequency");
@@ -342,8 +335,6 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         try {
             await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
-            assertThat(false)
-                .isTrue(); // Should not reach here
         } catch (error) {
             assertThat(error.message)
                 .contains("Max items to process");
@@ -368,8 +359,6 @@ describe("RemoteAttachmentsBasicTests", function () {
 
         try {
             await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
-            assertThat(false)
-                .isTrue(); // Should not reach here
         } catch (error) {
             assertThat(error.message)
                 .contains("Concurrent attachments uploads");

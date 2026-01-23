@@ -1,4 +1,4 @@
-import {testContext, disposeTestDocumentStore} from "../../Utils/TestUtil.js";
+import {testContext, disposeTestDocumentStore, RavenTestContext} from "../../Utils/TestUtil.js";
 import {
     IDocumentStore,
     ConfigureRemoteAttachmentsOperation,
@@ -18,7 +18,7 @@ interface User {
     email?: string;
 }
 
-describe("DocumentSessionRemoteAttachmentsTests", function () {
+(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("DocumentSessionRemoteAttachmentsTests", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
@@ -166,9 +166,6 @@ describe("DocumentSessionRemoteAttachmentsTests", function () {
     });
 
     it("can store multiple attachments with different remote destinations", async () => {
-        const identifier1 = await setupRemoteAttachmentsConfig("S3-Primary");
-
-        // Setup second destination
         const configuration = new RemoteAttachmentsConfiguration();
         const destination = new RemoteAttachmentsDestinationConfiguration();
         destination.disabled = false;
