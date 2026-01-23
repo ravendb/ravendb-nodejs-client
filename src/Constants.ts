@@ -51,6 +51,13 @@ export const CONSTANTS = {
             SHARD_CONTEXT_PARAMETER_NAME: "__shardContext",
         },
 
+        JavaScript: {
+            VectorPropertyName: "$vector",
+            LoadVectorPropertyName: "$loadvector",
+            LoadVectorEmbeddingSourceDocumentId: "$embeddingSourceDocumentId",
+            LoadVectorEmbeddingSourceDocumentCollectionName: "$embeddingSourceDocumentCollectionName"
+        },
+
         PeriodicBackup: {
             FULL_BACKUP_EXTENSION: "ravendb-full-backup",
             SNAPSHOT_EXTENSION: "ravendb-snapshot",
