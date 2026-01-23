@@ -328,6 +328,12 @@ export * from "./Documents/Operations/OngoingTasks/ToggleOngoingTaskStateOperati
 export * from "./Documents/Operations/Refresh/ConfigureRefreshOperation.js";
 export * from "./Documents/Operations/Refresh/RefreshConfiguration.js";
 export * from "./Documents/Operations/Refresh/ConfigureRefreshOperationResult.js";
+export * from "./Documents/Operations/SchemaValidation/SchemaValidationConfiguration.js";
+export * from "./Documents/Operations/SchemaValidation/SchemaValidationCollectionConfiguration.js";
+export * from "./Documents/Operations/SchemaValidation/ConfigureSchemaValidationOperation.js";
+export * from "./Documents/Operations/SchemaValidation/ConfigureSchemaValidationOperationResult.js";
+export * from "./Documents/Operations/SchemaValidation/GetSchemaValidationConfiguration.js";
+
 export * from "./Documents/Operations/ToggleDatabasesStateOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation.js";
