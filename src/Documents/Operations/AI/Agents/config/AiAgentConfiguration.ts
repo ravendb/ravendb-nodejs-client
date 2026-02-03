@@ -8,6 +8,7 @@ export interface AiAgentConfiguration {
     name: string;
     connectionStringName: string;
     systemPrompt: string;
+    disabled?: boolean;
     sampleObject: string; // JSON string sample for output
     outputSchema?: string; // JSON schema for output
     queries?: AiAgentToolQuery[];
