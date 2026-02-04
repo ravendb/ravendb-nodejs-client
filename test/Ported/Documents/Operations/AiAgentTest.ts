@@ -1,32 +1,36 @@
 import {
     AddOrUpdateAiAgentOperation,
+    AiConnectionString,
     IDocumentStore,
-    PutConnectionStringOperation,
-    RavenConnectionString
+    OpenAiSettings,
+    PutConnectionStringOperation
 } from "../../../../src/index.js";
 import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
 import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 import {AiAgentConfiguration} from "../../../../src/Documents/Operations/AI/Agents/config/AiAgentConfiguration.js";
 
 ((RavenTestContext.isRavenDbServerVersion("7.1") && !RavenTestContext.isPullRequest) ? describe : describe.skip)("AiAgentTest", function () {
-
     let store: IDocumentStore;
 
-    beforeEach(async function () {
-        store = await testContext.getDocumentStore();
-    });
+    beforeEach(async () => store = await testContext.getDocumentStore());
 
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
+    async function putAiConnectionString() {
+        const csName = `ai-agents-${Date.now()}`;
+        const aiConnectionString = new AiConnectionString();
+        aiConnectionString.name = csName;
+        aiConnectionString.identifier = "openai-test";
+        aiConnectionString.modelType = "Chat";
+        aiConnectionString.openAiSettings = new OpenAiSettings("test-api-key", "https://api.openai.example", "gpt-test");
+
+        await store.maintenance.send(new PutConnectionStringOperation(aiConnectionString));
+        return csName;
+    }
+
     it("canCreateAiAgent", async () => {
-        const csName = `r1-${Date.now()}`;
-        const ravenConnectionString = Object.assign(new RavenConnectionString(), {
-            database: store.database,
-            topologyDiscoveryUrls: ["http://localhost:8080"],
-            name: csName
-        });
-        await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString));
+        const csName = await putAiConnectionString();
 
         const agentConfiguration: AiAgentConfiguration = {
             name: `TestAgent-${Date.now()}`,
@@ -66,13 +70,7 @@ import {AiAgentConfiguration} from "../../../../src/Documents/Operations/AI/Agen
     });
 
     it("canUpdateAiAgent", async () => {
-        const csName = `r1-${Date.now()}`;
-        const ravenConnectionString = Object.assign(new RavenConnectionString(), {
-            database: store.database,
-            topologyDiscoveryUrls: ["http://localhost:8080"],
-            name: csName
-        });
-        await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString));
+        const csName = await putAiConnectionString();
 
         const name = `Agent-${Date.now()}`;
         const initialConfig: AiAgentConfiguration = {
@@ -101,13 +99,7 @@ import {AiAgentConfiguration} from "../../../../src/Documents/Operations/AI/Agen
     });
 
     it("canListAndDeleteAiAgent", async () => {
-        const csName = `r1-${Date.now()}`;
-        const ravenConnectionString = Object.assign(new RavenConnectionString(), {
-            database: store.database,
-            topologyDiscoveryUrls: ["http://localhost:8080"],
-            name: csName
-        });
-        await store.maintenance.send(new PutConnectionStringOperation(ravenConnectionString));
+        const csName = await putAiConnectionString();
 
         const name = `agent-${Date.now()}`;
         const config: AiAgentConfiguration = {

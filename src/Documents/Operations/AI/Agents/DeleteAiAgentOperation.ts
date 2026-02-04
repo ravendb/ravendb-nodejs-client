@@ -7,6 +7,7 @@ import { ServerNode } from "../../../../Http/ServerNode.js";
 import { HttpRequestParameters } from "../../../../Primitives/Http.js";
 import { StringUtil } from "../../../../Utility/StringUtil.js";
 import { throwError } from "../../../../Exceptions/index.js";
+import { RaftIdGenerator } from "../../../../Utility/RaftIdGenerator.js";
 
 export class DeleteAiAgentOperation implements IMaintenanceOperation<AiAgentConfigurationResult> {
     private readonly _identifier: string;
@@ -56,5 +57,9 @@ class DeleteAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> {
         }
 
         return this._parseResponseDefaultAsync(bodyStream)
+    }
+
+    public getRaftUniqueRequestId(): string {
+        return RaftIdGenerator.newId();
     }
 }
