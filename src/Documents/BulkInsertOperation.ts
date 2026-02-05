@@ -328,8 +328,11 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                     if (remoteParameters) {
                         this._operation._writer.write(`,"RemoteParameters":{"Identifier":"`);
                         this._operation._writeString(remoteParameters.identifier);
-                        this._operation._writer.write(`","Flags":`);
-                        this._operation._writer.write(remoteParameters.flags.toString());
+                        this._operation._writer.write(`"`)
+
+                        this._operation._writer.write(`,"Flags":"`);
+                        this._operation._writeString(remoteParameters.flags);
+                        this._operation._writer.write(`"`)
 
                         if (remoteParameters.at) {
                             this._operation._writer.write(`,"At":"`);

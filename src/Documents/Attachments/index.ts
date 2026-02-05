@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import { HttpResponse } from "../../Primitives/Http.js";
 import { closeHttpResponse } from "../../Utility/HttpUtil.js";
 import { CapitalizeType } from "../../Types/index.js";
-import { RemoteAttachmentFlags } from "./RemoteAttachmentFlags.js";
+import { RemoteAttachmentParameters } from "../Operations/Attachments/RemoteAttachmentParameters.js";
 
 export type AttachmentType = "Document" | "Revision";
 
@@ -11,7 +11,7 @@ export interface AttachmentName {
     hash: string;
     contentType: string;
     size: number;
-    remoteParameters?: RemoteAttachmentFlags;
+    remoteParameters?: RemoteAttachmentParameters;
 }
 
 export interface AttachmentNameWithCount extends AttachmentName {

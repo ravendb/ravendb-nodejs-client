@@ -4,6 +4,7 @@ import { RemoteAttachmentParameters } from "../../Operations/Attachments/RemoteA
 import { StringUtil } from "../../../Utility/StringUtil.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
+import { RemoteAttachmentFlags } from "../../Attachments/RemoteAttachmentFlags.js";
 
 interface DocumentAttachmentDto {
     Id: string;
@@ -16,8 +17,8 @@ interface DocumentAttachmentDto {
 
 interface RemoteParametersDto {
     Identifier: string;
-    Flags: number;
-    At?: string;
+    Flags: RemoteAttachmentFlags;
+    At?: Date;
 }
 
 export class PutAttachmentCommandData implements ICommandData {
@@ -66,7 +67,7 @@ export class PutAttachmentCommandData implements ICommandData {
             result.RemoteParameters = {
                 Identifier: this.remoteParameters.identifier,
                 Flags: this.remoteParameters.flags,
-                At: this.remoteParameters.at?.toISOString()
+                At: this.remoteParameters.at
             };
         }
 

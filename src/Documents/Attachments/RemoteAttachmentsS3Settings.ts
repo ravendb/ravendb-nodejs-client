@@ -1,5 +1,3 @@
-import { IRemoteAttachmentsSettings } from "./IRemoteAttachmentsSettings.js";
-
 /**
  * Configuration settings for storing remote attachments in Amazon S3 or S3-compatible storage.
  *
@@ -10,7 +8,7 @@ import { IRemoteAttachmentsSettings } from "./IRemoteAttachmentsSettings.js";
  * for temporary credentials. It also allows customization of storage class, server URL, and path style options
  * for compatibility with various S3-compatible storage providers.
  */
-export class RemoteAttachmentsS3Settings implements IRemoteAttachmentsSettings {
+export class RemoteAttachmentsS3Settings {
     /**
      * AWS access key ID used for authentication with Amazon S3.
      *

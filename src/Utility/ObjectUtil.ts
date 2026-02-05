@@ -128,15 +128,19 @@ export class ObjectUtil {
 
         for (const [key, value] of Object.entries(metadata)) {
             if (key === CONSTANTS.Documents.Metadata.ATTACHMENTS) {
-                result[CONSTANTS.Documents.Metadata.ATTACHMENTS] = value ? value.map(x => ObjectUtil.mapAttachmentDetailsToLocalObject(x)) : null
-            } else if (key[0] === "@" || key === "Raven-Node-Type") {
+                result[CONSTANTS.Documents.Metadata.ATTACHMENTS] = ObjectUtil.transformAttachments(value, conventions);
+                continue;
+            }
+
+            if (ObjectUtil.isSystemMetadataKey(key)) {
                 result[key] = value;
+                continue;
+            }
+
+            if (needsCaseTransformation) {
+                userMetadataFieldsToTransform[key] = value;
             } else {
-                if (needsCaseTransformation) {
-                    userMetadataFieldsToTransform[key] = value;
-                } else {
-                    result[key] = value;
-                }
+                result[key] = value;
             }
         }
 
@@ -151,6 +155,16 @@ export class ObjectUtil {
         return result;
     }
 
+    private static transformAttachments(attachments: any[], conventions: DocumentConventions): any[] {
+        return attachments?.map(x => ObjectUtil.transformObjectKeys(x, {
+            defaultTransform: conventions.serverToLocalFieldNameConverter ?? ObjectUtil.camelCase
+        })) ?? null;
+    }
+
+    private static isSystemMetadataKey(key: string): boolean {
+        return key[0] === "@" || key === "Raven-Node-Type";
+    }
+
     public static mapAttachmentDetailsToLocalObject(json: any): AttachmentDetails {
         return {
             changeVector: json.ChangeVector,
@@ -158,7 +172,8 @@ export class ObjectUtil {
             documentId: json.DocumentId,
             hash: json.Hash,
             name: json.Name,
-            size: json.Size
+            size: json.Size,
+            remoteParameters: json.RemoteParameters,
         };
     }
 

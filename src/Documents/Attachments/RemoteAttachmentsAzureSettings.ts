@@ -1,5 +1,3 @@
-import { IRemoteAttachmentsSettings } from "./IRemoteAttachmentsSettings.js";
-
 /**
  * Configuration settings for storing attachments in Azure Blob Storage as part of the remote attachments feature.
  *
@@ -11,7 +9,7 @@ import { IRemoteAttachmentsSettings } from "./IRemoteAttachmentsSettings.js";
  * - Account Key: Using accountName and accountKey
  * - Shared Access Signature (SAS): Using accountName and sasToken
  */
-export class RemoteAttachmentsAzureSettings implements IRemoteAttachmentsSettings {
+export class RemoteAttachmentsAzureSettings {
     /**
      * The name of the Azure Blob Storage container where attachments will be stored.
      *

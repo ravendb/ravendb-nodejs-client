@@ -1,16 +1,18 @@
-import {testContext, disposeTestDocumentStore, RavenTestContext} from "../../Utils/TestUtil.js";
+import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../Utils/TestUtil.js";
 import {
-    IDocumentStore,
     ConfigureRemoteAttachmentsOperation,
+    DateUtil,
+    IDocumentStore,
+    RemoteAttachmentParameters,
     RemoteAttachmentsConfiguration,
     RemoteAttachmentsDestinationConfiguration,
     RemoteAttachmentsS3Settings,
-    RemoteAttachmentParameters,
     StoreAttachmentParameters
 } from "../../../src/index.js";
 import {assertThat} from "../../Utils/AssertExtensions.js";
 import {Readable} from "node:stream";
 import {Buffer} from "node:buffer";
+import {addHours, addMinutes, format} from "date-fns";
 
 interface User {
     id?: string;
@@ -49,6 +51,7 @@ interface User {
     it("can store attachment with remote parameters using StoreAttachmentParameters", async () => {
         const identifier = await setupRemoteAttachmentsConfig();
         const userId = "users/1";
+        const remoteAt = new Date();
 
         {
             const session = store.openSession();
@@ -60,7 +63,7 @@ interface User {
         {
             const session = store.openSession();
             const attachmentData = Buffer.from([1, 2, 3, 4, 5]);
-            const remoteAt = new Date(Date.now() + 60000); // 1 minute from now
+
 
             const parameters = new StoreAttachmentParameters(
                 "profile.png",
@@ -84,12 +87,19 @@ interface User {
                 .isEqualTo("profile.png");
             assertThat(attachment.details.contentType)
                 .isEqualTo("image/png");
+            assertThat(format(attachment.details.remoteParameters.at, DateUtil.DEFAULT_DATE_TZ_FORMAT))
+                .isEqualTo(format(remoteAt, DateUtil.DEFAULT_DATE_TZ_FORMAT));
+            assertThat(attachment.details.remoteParameters.identifier)
+                .isEqualTo(identifier);
+            assertThat(attachment.details.remoteParameters.flags)
+                .isEqualTo("None");
         }
     });
 
     it("can store attachment with remote parameters using direct method", async () => {
         const identifier = await setupRemoteAttachmentsConfig();
         const userId = "users/2";
+            const remoteAt = new Date();
 
         {
             const session = store.openSession();
@@ -101,7 +111,6 @@ interface User {
         {
             const session = store.openSession();
             const attachmentData = Buffer.from([10, 20, 30]);
-            const remoteAt = new Date(Date.now() + 120000); // 2 minutes from now
 
             const parameters = new StoreAttachmentParameters(
                 "document.pdf",
@@ -126,6 +135,12 @@ interface User {
                 .isEqualTo(1);
             assertThat(names[0].name)
                 .isEqualTo("document.pdf");
+            assertThat(format(names[0].remoteParameters.at, DateUtil.DEFAULT_DATE_TZ_FORMAT))
+                .isEqualTo(format(remoteAt, DateUtil.DEFAULT_DATE_TZ_FORMAT));
+            assertThat(names[0].remoteParameters.identifier)
+                .isEqualTo(identifier);
+            assertThat(names[0].remoteParameters.flags)
+                .isEqualTo("None");
         }
     });
 
@@ -160,6 +175,8 @@ interface User {
 
             assertThat(attachment)
                 .isNotNull();
+            assertThat(attachment.details.remoteParameters)
+                .isUndefined();
             assertThat(attachment.details.name)
                 .isEqualTo("local-file.txt");
         }
@@ -206,7 +223,7 @@ interface User {
                 Readable.from(data1),
                 "application/octet-stream",
                 null,
-                new RemoteAttachmentParameters("S3-Primary", new Date(Date.now() + 60000))
+                new RemoteAttachmentParameters("S3-Primary", addMinutes(new Date(), 1))
             );
             session.advanced.attachments.store(userId, params1);
 
@@ -217,7 +234,7 @@ interface User {
                 Readable.from(data2),
                 "application/octet-stream",
                 null,
-                new RemoteAttachmentParameters("S3-Secondary", new Date(Date.now() + 120000))
+                new RemoteAttachmentParameters("S3-Secondary", addMinutes(new Date(), 2))
             );
             session.advanced.attachments.store(userId, params2);
 
@@ -237,6 +254,18 @@ interface User {
                 .isEqualTo("primary.dat");
             assertThat(namesList[1])
                 .isEqualTo("secondary.dat");
+
+            const attachment1 = await session.advanced.attachments.get(userId, "primary.dat");
+            assertThat(attachment1.details.remoteParameters.identifier)
+                .isEqualTo("S3-Primary");
+            assertThat(attachment1.details.remoteParameters.flags)
+                .isEqualTo("None");
+
+            const attachment2 = await session.advanced.attachments.get(userId, "secondary.dat");
+            assertThat(attachment2.details.remoteParameters.identifier)
+                .isEqualTo("S3-Secondary");
+            assertThat(attachment2.details.remoteParameters.flags)
+                .isEqualTo("None");
         }
     });
 
@@ -324,7 +353,7 @@ interface User {
             await session.saveChanges();
         }
 
-        const scheduledTime = new Date(Date.now() + 3600000); // 1 hour from now
+        const scheduledTime = addHours(new Date(), 1);
 
         {
             const session = store.openSession();
@@ -350,6 +379,12 @@ interface User {
                 .isNotNull();
             assertThat(attachment.details.name)
                 .isEqualTo("scheduled.dat");
+            assertThat(format(attachment.details.remoteParameters.at, DateUtil.DEFAULT_DATE_TZ_FORMAT))
+                .isEqualTo(format(scheduledTime, DateUtil.DEFAULT_DATE_TZ_FORMAT));
+            assertThat(attachment.details.remoteParameters.identifier)
+                .isEqualTo(identifier);
+            assertThat(attachment.details.remoteParameters.flags)
+                .isEqualTo("None");
         }
     });
 });

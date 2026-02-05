@@ -701,7 +701,6 @@ export * from "./Documents/Queries/Suggestions/SuggestionSortMode.js";
 // ATTACHMENTS
 export * from "./Documents/Attachments/index.js";
 export * from "./Documents/Attachments/RemoteAttachmentFlags.js";
-export * from "./Documents/Attachments/IRemoteAttachmentsSettings.js";
 export * from "./Documents/Attachments/RemoteAttachmentsAzureSettings.js";
 export * from "./Documents/Attachments/RemoteAttachmentsS3Settings.js";
 export * from "./Documents/Attachments/RemoteAttachmentsDestinationConfiguration.js";

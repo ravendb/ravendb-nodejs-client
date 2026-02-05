@@ -1,8 +1,7 @@
 import { IOperation, OperationResultType } from "../OperationAbstractions.js";
-import { AttachmentDetails } from "../../Attachments/index.js";
+import { AttachmentDetails, AttachmentResult, AttachmentType } from "../../Attachments/index.js";
 import { getEtagHeader } from "../../../Utility/HttpUtil.js";
 import { HttpRequestParameters, HttpResponse } from "../../../Primitives/Http.js";
-import { AttachmentResult, AttachmentType } from "../../Attachments/index.js";
 import { RavenCommand, ResponseDisposeHandling } from "../../../Http/RavenCommand.js";
 import { HttpCache } from "../../../Http/HttpCache.js";
 import { IDocumentStore } from "../../IDocumentStore.js";
@@ -11,6 +10,10 @@ import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
 import { Readable } from "node:stream";
+import { HEADERS } from "../../../Constants.js";
+import { RemoteAttachmentFlags } from "../../Attachments/RemoteAttachmentFlags.js";
+import { RemoteAttachmentParameters } from "./RemoteAttachmentParameters.js";
+import { DateUtil } from "../../../Utility/DateUtil.js";
 
 export class GetAttachmentOperation implements IOperation<AttachmentResult> {
     private readonly _documentId: string;
@@ -35,6 +38,12 @@ export class GetAttachmentOperation implements IOperation<AttachmentResult> {
             this._documentId, this._name, this._type, this._changeVector);
     }
 
+}
+
+interface InternalRemoteAttachmentParameters {
+    identifier: string;
+    flags: RemoteAttachmentFlags;
+    at: Date;
 }
 
 export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
@@ -91,6 +100,10 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
         const hash = response.headers.get("attachment-hash") as string;
         let size = 0;
         const sizeHeader = response.headers.get("attachment-size") as string;
+        const remoteParametersIdentifier = response.headers.get(HEADERS.ATTACHMENT_REMOTE_PARAMETERS_IDENTIFIER) as string;
+        const remoteParametersAt = response.headers.get(HEADERS.ATTACHMENT_REMOTE_PARAMETERS_AT) as string; // iso date
+        const remoteParametersFlags = response.headers.get(HEADERS.ATTACHMENT_REMOTE_PARAMETERS_FLAGS) as RemoteAttachmentFlags;
+
         if (sizeHeader) {
             size = Number.parseInt(sizeHeader, 10);
         }
@@ -103,6 +116,17 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
             changeVector,
             size
         };
+
+        if (remoteParametersIdentifier && remoteParametersAt && remoteParametersFlags) {
+            const remoteParameters: InternalRemoteAttachmentParameters = {
+                at: DateUtil.utc.parse(remoteParametersAt),
+                identifier: remoteParametersIdentifier,
+                flags: remoteParametersFlags,
+            }
+
+            details.remoteParameters = remoteParameters as RemoteAttachmentParameters
+        }
+
 
         this.result = new AttachmentResult(bodyStream, details, response);
         return "Manually";

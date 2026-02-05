@@ -26,7 +26,7 @@ export class RemoteAttachmentParameters {
 
     constructor(identifier: string, at?: Date) {
         this.identifier = identifier;
-        this._flags = RemoteAttachmentFlags.None; // Always set to None for user-created instances
+        this._flags = "None"; // Always set to None for user-created instances
         this.at = at;
     }
 
@@ -38,3 +38,4 @@ export class RemoteAttachmentParameters {
         return this._flags;
     }
 }
+
