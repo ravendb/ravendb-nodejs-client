@@ -163,4 +163,9 @@ export class JavaAssertionBuilder {
         assert.ok(satisfy, "None of items satisfy condition");
         return this;
     }
+
+    public isUndefined() {
+        assert.ok(this._value === undefined);
+        return this;
+    }
 }

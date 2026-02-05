@@ -35,6 +35,7 @@ import { BulkInsertOperationBase } from "./BulkInsert/BulkInsertOperationBase.js
 import { BulkInsertOptions } from "./BulkInsert/BulkInsertOptions.js";
 import { BulkInsertWriter } from "./BulkInsert/BulkInsertWriter.js";
 import { HttpCompressionAlgorithm } from "../Http/HttpCompressionAlgorithm.js";
+import { RemoteAttachmentParameters } from "./Operations/Attachments/RemoteAttachmentParameters.js";
 
 export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
@@ -284,8 +285,8 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
         public store(name: string, bytes: Buffer): Promise<void>;
         public store(name: string, bytes: Buffer, contentType: string): Promise<void>;
-        public store(name: string, bytes: Buffer, contentType?: string): Promise<void> {
-            return this._operation._attachmentsOperation.store(this._id, name, bytes, contentType);
+        public store(name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
+            return this._operation._attachmentsOperation.store(this._id, name, bytes, contentType, remoteParameters);
         }
     }
 
@@ -298,7 +299,8 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
         public async store(id: string, name: string, bytes: Buffer): Promise<void>;
         public async store(id: string, name: string, bytes: Buffer, contentType: string): Promise<void>;
-        public async store(id: string, name: string, bytes: Buffer, contentType?: string): Promise<void> {
+        public async store(id: string, name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
+        public async store(id: string, name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
             const check = await this._operation._concurrencyCheck();
 
             try {
@@ -315,13 +317,33 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                     this._operation._writeString(id);
                     this._operation._writer.write(`","Type":"AttachmentPUT","Name":"`);
                     this._operation._writeString(name);
+                    this._operation._writer.write(`"`);
 
                     if (contentType) {
-                        this._operation._writer.write(`","ContentType":"`);
+                        this._operation._writer.write(`,"ContentType":"`);
                         this._operation._writeString(contentType);
+                        this._operation._writer.write(`"`);
                     }
 
-                    this._operation._writer.write(`","ContentLength":`);
+                    if (remoteParameters) {
+                        this._operation._writer.write(`,"RemoteParameters":{"Identifier":"`);
+                        this._operation._writeString(remoteParameters.identifier);
+                        this._operation._writer.write(`"`)
+
+                        this._operation._writer.write(`,"Flags":"`);
+                        this._operation._writeString(remoteParameters.flags);
+                        this._operation._writer.write(`"`)
+
+                        if (remoteParameters.at) {
+                            this._operation._writer.write(`,"At":"`);
+                            this._operation._writeString(remoteParameters.at.toISOString());
+                            this._operation._writer.write(`"`);
+                        }
+
+                        this._operation._writer.write(`}`);
+                    }
+
+                    this._operation._writer.write(`,"ContentLength":`);
                     this._operation._writer.write(bytes.length.toString());
                     this._operation._writer.write("}");
 
@@ -946,6 +968,7 @@ export interface ITypedTimeSeriesBulkInsert<T extends object> extends IDisposabl
 export interface IAttachmentsBulkInsert {
     store(name: string, bytes: Buffer): Promise<void>;
     store(name: string, bytes: Buffer, contentType: string): Promise<void>;
+    store(name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
 }
 
 export class BulkInsertCommand extends RavenCommand<void> {

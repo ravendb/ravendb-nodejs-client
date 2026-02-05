@@ -1,5 +1,7 @@
 import { AdvancedSessionExtensionBase } from "./AdvancedSessionExtensionBase.js";
 import { AttachmentName, AttachmentData } from "./../Attachments/index.js";
+import { RemoteAttachmentParameters } from "../Operations/Attachments/RemoteAttachmentParameters.js";
+import { StoreAttachmentParameters } from "../Operations/Attachments/StoreAttachmentParameters.js";
 import { CONSTANTS } from "./../../Constants.js";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations.js";
 import { StringUtil } from "../../Utility/StringUtil.js";
@@ -37,19 +39,52 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     public store(documentId: string, name: string, stream: AttachmentData): void;
     public store(documentId: string, name: string, stream: AttachmentData, contentType: string): void;
+    public store(documentId: string, parameters: StoreAttachmentParameters): void;
     public store(entity: object, name: string, stream: AttachmentData): void;
     public store(entity: object, name: string, stream: AttachmentData, contentType: string): void;
     public store(
         documentIdOrEntity: string | object,
-        name: string,
-        stream: AttachmentData,
+        nameOrParameters: string | StoreAttachmentParameters,
+        stream?: AttachmentData,
         contentType: string = null): void {
 
-        if (typeof documentIdOrEntity === "object") {
-            return this._storeAttachmentByEntity(documentIdOrEntity, name, stream, contentType);
+        if (typeof documentIdOrEntity === "string" && typeof nameOrParameters === "object" && "name" in nameOrParameters) {
+            const params = nameOrParameters as StoreAttachmentParameters;
+            return this._storeInternal(
+                documentIdOrEntity,
+                params.name,
+                params.stream,
+                params.contentType,
+                params.remoteParameters
+            );
         }
 
-        if (StringUtil.isNullOrWhitespace(documentIdOrEntity)) {
+        if (typeof documentIdOrEntity === "object") {
+            return this._storeAttachmentByEntity(
+                documentIdOrEntity,
+                nameOrParameters as string,
+                stream,
+                contentType
+            );
+        }
+
+        return this._storeInternal(
+            documentIdOrEntity,
+            nameOrParameters as string,
+            stream,
+            contentType,
+            null
+        );
+    }
+
+    private _storeInternal(
+        documentId: string,
+        name: string,
+        stream: AttachmentData,
+        contentType: string,
+        remoteParameters: RemoteAttachmentParameters): void {
+
+        if (StringUtil.isNullOrWhitespace(documentId)) {
             throwError("InvalidArgumentException", "DocumentId cannot be null");
         }
 
@@ -57,33 +92,33 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throwError("InvalidArgumentException", "Name cannot be null");
         }
 
-        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentIdOrEntity, "DELETE", null))) {
+        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentId, "DELETE", null))) {
             DocumentSessionAttachmentsBase._throwOtherDeferredCommandException(
-                documentIdOrEntity, name, "store", "delete");
+                documentId, name, "store", "delete");
         }
 
-        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentIdOrEntity, "AttachmentPUT", name))) {
+        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentId, "AttachmentPUT", name))) {
             DocumentSessionAttachmentsBase._throwOtherDeferredCommandException(
-                documentIdOrEntity, name, "store", "create");
+                documentId, name, "store", "create");
         }
 
-        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentIdOrEntity, "AttachmentDELETE", name))) {
+        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentId, "AttachmentDELETE", name))) {
             DocumentSessionAttachmentsBase._throwOtherDeferredCommandException(
-                documentIdOrEntity, name, "store", "delete");
+                documentId, name, "store", "delete");
         }
 
-        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentIdOrEntity, "AttachmentMOVE", name))) {
+        if (this._deferredCommandsMap.has(IdTypeAndName.keyFor(documentId, "AttachmentMOVE", name))) {
            DocumentSessionAttachmentsBase._throwOtherDeferredCommandException(
-               documentIdOrEntity, name, "store", "rename");
+               documentId, name, "store", "rename");
         }
 
-        const documentInfo: DocumentInfo = this._documentsById.getValue(documentIdOrEntity);
+        const documentInfo: DocumentInfo = this._documentsById.getValue(documentId);
         if (documentInfo && this._session.deletedEntities.contains(documentInfo.entity)) {
             DocumentSessionAttachmentsBase._throwDocumentAlreadyDeleted(
-                documentIdOrEntity, name, "store", null, documentIdOrEntity);
+                documentId, name, "store", null, documentId);
         }
 
-        this.defer(new PutAttachmentCommandData(documentIdOrEntity, name, stream, contentType, null));
+        this.defer(new PutAttachmentCommandData(documentId, name, stream, contentType, null, remoteParameters));
     }
 
     private _storeAttachmentByEntity(
@@ -93,7 +128,7 @@ export abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             this._throwEntityNotInSessionOrMissingId(entity);
         }
 
-        return this.store(document.id, name, stream, contentType);
+        return this._storeInternal(document.id, name, stream, contentType, null);
     }
 
     protected _throwEntityNotInSessionOrMissingId(entity: object): never {

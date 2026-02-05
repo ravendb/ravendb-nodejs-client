@@ -148,7 +148,7 @@ export class RequestExecutor implements IDisposable {
 
     private _log: ILogger;
 
-    public static readonly CLIENT_VERSION = "7.1.5";
+    public static readonly CLIENT_VERSION = "7.2.0";
 
     private _updateDatabaseTopologySemaphore = new Semaphore();
     private _updateClientConfigurationSemaphore = new Semaphore();
