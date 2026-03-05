@@ -23,6 +23,7 @@ npm install --save ravendb
    [Query documents](#query-documents),  
    [Ai agents](#ai-agents),  
    [Attachments](#attachments),  
+   [Remote Attachments](#remote-attachments),  
    [Time series](#timeseries),  
    [Bulk insert](#bulk-insert),  
    [Changes API](#changes-api),  
@@ -996,6 +997,152 @@ await session.advanced.attachments.getNames(doc);
 >##### Related tests:
 > <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L266)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
+
+## Remote Attachments
+
+Store attachments in external cloud storage (S3, Azure) while keeping document metadata in RavenDB.
+
+#### Configure remote attachments with S3
+
+```javascript
+// Create remote attachments configuration for S3
+const configuration = new RemoteAttachmentsConfiguration();
+const destination = new RemoteAttachmentsDestinationConfiguration();
+destination.disabled = false;
+
+const s3Settings = new RemoteAttachmentsS3Settings();
+s3Settings.bucketName = "my-bucket";
+s3Settings.awsAccessKey = "your-access-key";
+s3Settings.awsSecretKey = "your-secret-key";
+s3Settings.awsRegionName = "us-east-1";
+s3Settings.remoteFolderName = "production/attachments/2024";  // Optional
+destination.s3Settings = s3Settings;
+
+configuration.destinations["S3-Backup"] = destination;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Configure remote attachments with Azure
+
+```javascript
+// Create remote attachments configuration for Azure Blob Storage
+const configuration = new RemoteAttachmentsConfiguration();
+const destination = new RemoteAttachmentsDestinationConfiguration();
+destination.disabled = false;
+
+const azureSettings = new RemoteAttachmentsAzureSettings();
+azureSettings.storageContainer = "attachments-container";
+azureSettings.accountName = "mystorageaccount";
+azureSettings.accountKey = "your-account-key";
+destination.azureSettings = azureSettings;
+
+configuration.destinations["Azure-Archive"] = destination;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Configure multiple destinations
+
+```javascript
+// Configure both S3 and Azure destinations
+const configuration = new RemoteAttachmentsConfiguration();
+
+// S3 destination
+const s3Destination = new RemoteAttachmentsDestinationConfiguration();
+s3Destination.disabled = false;
+const s3Settings = new RemoteAttachmentsS3Settings();
+s3Settings.bucketName = "s3-bucket";
+s3Settings.awsAccessKey = "test-key";
+s3Settings.awsSecretKey = "test-secret";
+s3Destination.s3Settings = s3Settings;
+
+// Azure destination
+const azureDestination = new RemoteAttachmentsDestinationConfiguration();
+azureDestination.disabled = false;
+const azureSettings = new RemoteAttachmentsAzureSettings();
+azureSettings.storageContainer = "azure-container";
+azureSettings.accountName = "azureaccount";
+azureSettings.accountKey = "azure-key";
+azureDestination.azureSettings = azureSettings;
+
+configuration.destinations["S3-Backup"] = s3Destination;
+configuration.destinations["Azure-Archive"] = azureDestination;
+
+// Optional: configure processing settings
+configuration.checkFrequencyInSec = 300;
+configuration.maxItemsToProcess = 1000;
+configuration.concurrentUploads = 5;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Bulk insert with remote attachments
+
+```javascript
+// Bulk insert documents with remote attachments
+const bulkInsert = store.bulkInsert();
+
+for (let i = 0; i < 5; i++) {
+    const order = {
+        company: `Company ${i}`,
+        orderedAt: new Date(2024, 0, i + 1)
+    };
+    await bulkInsert.store(order, `orders/${i + 1}`);
+}
+
+// Upload attachments to remote storage
+const remoteAt = new Date(Date.now() + 60000);
+for (let i = 0; i < 5; i++) {
+    const orderId = `orders/${i + 1}`;
+    const attachmentData = Buffer.from(`Attachment data for order ${i + 1}`);
+    const remoteParams = new RemoteAttachmentParameters(
+        "S3-Backup",  // destination identifier
+        remoteAt      // upload time
+    );
+
+    await bulkInsert.attachmentsFor(orderId)
+        .store(`invoice-${i + 1}.pdf`, attachmentData, "application/pdf", remoteParams);
+}
+
+await bulkInsert.finish();
+```
+
+#### Mixed local and remote attachments
+
+```javascript
+// Bulk insert with both local and remote attachments
+const bulkInsert = store.bulkInsert();
+const remoteAt = new Date(Date.now() + 120000);
+
+for (let i = 0; i < 4; i++) {
+    const order = { company: `Company ${i}`, orderedAt: new Date() };
+    await bulkInsert.store(order, `orders/${i}`);
+
+    const attachmentData = Buffer.from(`Attachment ${i}`);
+
+    if (i % 2 === 0) {
+        // Store in remote storage
+        const remoteParams = new RemoteAttachmentParameters("S3-Backup", remoteAt);
+        await bulkInsert.attachmentsFor(`orders/${i}`)
+            .store(`remote-${i}.dat`, attachmentData, "application/octet-stream", remoteParams);
+    } else {
+        // Store locally in RavenDB
+        await bulkInsert.attachmentsFor(`orders/${i}`)
+            .store(`local-${i}.dat`, attachmentData, "application/octet-stream");
+    }
+}
+
+await bulkInsert.finish();
+```
+
+>##### Related tests:
+> <small>[configure S3 remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L21)</small>  
+> <small>[configure Azure remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L57)</small>  
+> <small>[configure multiple destinations](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L217)</small>  
+> <small>[configure with frequency and upload settings](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L283)</small>  
+> <small>[bulk insert with remote parameters](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/BulkInsertRemoteAttachmentsTests.ts#L46)</small>  
+> <small>[mixed local and remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/BulkInsertRemoteAttachmentsTests.ts#L100)</small>  
 
 ## TimeSeries
 
