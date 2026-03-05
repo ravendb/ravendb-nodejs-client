@@ -30,6 +30,7 @@ npm install --save ravendb
    [Revisions](#revisions),  
    [Suggestions](#suggestions),  
    [Vector Search](#vector-search),  
+   [Embeddings Generation](#embeddings-generation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
    [Using object literals](#using-object-literals-for-entities),  
@@ -1398,6 +1399,134 @@ await dtoIndex.execute(store);
 > <small>[vector search with Int8 quantization](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L103)</small>  
 > <small>[vector search using forDocument](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L382)</small>  
 > <small>[create index with vector search configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L471)</small>  
+
+## Embeddings Generation
+
+Automatically generate and maintain vector embeddings for your documents using AI models.
+
+#### Configure connection string
+
+```javascript
+// Create AI connection string for embeddings
+const aiConnectionString = new AiConnectionString();
+aiConnectionString.name = "openai-embeddings";
+aiConnectionString.modelType = "TextEmbeddings";
+aiConnectionString.embeddedSettings = new EmbeddedSettings();
+
+await store.maintenance.send(new PutConnectionStringOperation(aiConnectionString));
+```
+
+#### Path-based embeddings configuration
+
+```javascript
+// Generate embeddings from specific document fields
+const config = new EmbeddingsGenerationConfiguration();
+config.name = "Products Embeddings";
+config.collection = "Products";
+config.connectionStringName = "openai-embeddings";
+config.identifier = config.generateIdentifier();
+
+// Define which paths to generate embeddings for
+config.embeddingsPathConfigurations = [
+    {
+        path: "Description",
+        chunkingOptions: {
+            chunkingMethod: "PlainTextSplitParagraphs",
+            maxTokensPerChunk: 256,
+            overlapTokens: 32
+        }
+    },
+    {
+        path: "Details",
+        chunkingOptions: {
+            chunkingMethod: "MarkDownSplitParagraphs",
+            maxTokensPerChunk: 512,
+            overlapTokens: 64
+        }
+    }
+];
+
+config.chunkingOptionsForQuerying = {
+    chunkingMethod: "PlainTextSplit",
+    maxTokensPerChunk: 256,
+    overlapTokens: 0
+};
+
+config.quantization = "Int8";
+
+// Add the embeddings generation task
+const result = await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
+```
+
+#### Script-based embeddings configuration
+
+```javascript
+// Use custom script to combine multiple fields
+const config = new EmbeddingsGenerationConfiguration();
+config.name = "Articles Embeddings";
+config.collection = "Articles";
+config.connectionStringName = "openai-embeddings";
+config.identifier = config.generateIdentifier();
+
+config.embeddingsTransformation = {
+    script: `
+        var title = this.Title || "";
+        var body = this.Body || "";
+        var combined = title + "\\n\\n" + body;
+        
+        embeddings.generate({
+            text: combined,
+            field: "ContentEmbedding"
+        });
+    `,
+    chunkingOptions: {
+        chunkingMethod: "MarkDownSplitParagraphs",
+        maxTokensPerChunk: 512,
+        overlapTokens: 64
+    }
+};
+
+config.chunkingOptionsForQuerying = {
+    chunkingMethod: "PlainTextSplit",
+    maxTokensPerChunk: 256,
+    overlapTokens: 0
+};
+
+config.quantization = "Single";
+
+const result = await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
+```
+
+#### Update embeddings configuration
+
+```javascript
+// Update existing embeddings generation task
+const config = new EmbeddingsGenerationConfiguration();
+// ... configure settings ...
+
+config.quantization = "Single";
+config.embeddingsCacheExpiration = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+const updateOperation = new UpdateEmbeddingsGenerationOperation(taskId, config);
+const updateResult = await store.maintenance.send(updateOperation);
+```
+
+#### Supported quantization types
+
+```javascript
+// Quantization reduces memory usage
+config.quantization = "Int8";    // 8-bit integers
+config.quantization = "Single";  // 32-bit floats (default)
+config.quantization = "Binary";  // 1-bit binary
+```
+
+>##### Related tests:
+> <small>[path-based embeddings configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L37)</small>  
+> <small>[script-based embeddings configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L89)</small>  
+> <small>[update embeddings generation task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L141)</small>  
+> <small>[validate quantization types](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L186)</small>  
+> <small>[validate chunking methods](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L225)</small>  
+> <small>[get ongoing task info](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L359)</small>  
 
 ## Advanced patching
 
