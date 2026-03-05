@@ -23,6 +23,7 @@ npm install --save ravendb
    [Query documents](#query-documents),  
    [Ai agents](#ai-agents),  
    [Attachments](#attachments),  
+   [Remote Attachments](#remote-attachments),  
    [Time series](#timeseries),  
    [Bulk insert](#bulk-insert),  
    [Changes API](#changes-api),  
@@ -32,6 +33,7 @@ npm install --save ravendb
    [Vector Search](#vector-search),  
    [Embeddings Generation](#embeddings-generation),  
    [GenAI](#genai),  
+   [Schema Validation](#schema-validation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
    [Using object literals](#using-object-literals-for-entities),  
@@ -997,6 +999,152 @@ await session.advanced.attachments.getNames(doc);
 > <small>[get attachment names](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L266)</small>  
 > <small>[get attachment names 2](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Attachments/AttachmentsSessionTest.ts#L288)</small>
 
+## Remote Attachments
+
+Store attachments in external cloud storage (S3, Azure) while keeping document metadata in RavenDB.
+
+#### Configure remote attachments with S3
+
+```javascript
+// Create remote attachments configuration for S3
+const configuration = new RemoteAttachmentsConfiguration();
+const destination = new RemoteAttachmentsDestinationConfiguration();
+destination.disabled = false;
+
+const s3Settings = new RemoteAttachmentsS3Settings();
+s3Settings.bucketName = "my-bucket";
+s3Settings.awsAccessKey = "your-access-key";
+s3Settings.awsSecretKey = "your-secret-key";
+s3Settings.awsRegionName = "us-east-1";
+s3Settings.remoteFolderName = "production/attachments/2024";  // Optional
+destination.s3Settings = s3Settings;
+
+configuration.destinations["S3-Backup"] = destination;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Configure remote attachments with Azure
+
+```javascript
+// Create remote attachments configuration for Azure Blob Storage
+const configuration = new RemoteAttachmentsConfiguration();
+const destination = new RemoteAttachmentsDestinationConfiguration();
+destination.disabled = false;
+
+const azureSettings = new RemoteAttachmentsAzureSettings();
+azureSettings.storageContainer = "attachments-container";
+azureSettings.accountName = "mystorageaccount";
+azureSettings.accountKey = "your-account-key";
+destination.azureSettings = azureSettings;
+
+configuration.destinations["Azure-Archive"] = destination;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Configure multiple destinations
+
+```javascript
+// Configure both S3 and Azure destinations
+const configuration = new RemoteAttachmentsConfiguration();
+
+// S3 destination
+const s3Destination = new RemoteAttachmentsDestinationConfiguration();
+s3Destination.disabled = false;
+const s3Settings = new RemoteAttachmentsS3Settings();
+s3Settings.bucketName = "s3-bucket";
+s3Settings.awsAccessKey = "test-key";
+s3Settings.awsSecretKey = "test-secret";
+s3Destination.s3Settings = s3Settings;
+
+// Azure destination
+const azureDestination = new RemoteAttachmentsDestinationConfiguration();
+azureDestination.disabled = false;
+const azureSettings = new RemoteAttachmentsAzureSettings();
+azureSettings.storageContainer = "azure-container";
+azureSettings.accountName = "azureaccount";
+azureSettings.accountKey = "azure-key";
+azureDestination.azureSettings = azureSettings;
+
+configuration.destinations["S3-Backup"] = s3Destination;
+configuration.destinations["Azure-Archive"] = azureDestination;
+
+// Optional: configure processing settings
+configuration.checkFrequencyInSec = 300;
+configuration.maxItemsToProcess = 1000;
+configuration.concurrentUploads = 5;
+
+await store.maintenance.send(new ConfigureRemoteAttachmentsOperation(configuration));
+```
+
+#### Bulk insert with remote attachments
+
+```javascript
+// Bulk insert documents with remote attachments
+const bulkInsert = store.bulkInsert();
+
+for (let i = 0; i < 5; i++) {
+    const order = {
+        company: `Company ${i}`,
+        orderedAt: new Date(2024, 0, i + 1)
+    };
+    await bulkInsert.store(order, `orders/${i + 1}`);
+}
+
+// Upload attachments to remote storage
+const remoteAt = new Date(Date.now() + 60000);
+for (let i = 0; i < 5; i++) {
+    const orderId = `orders/${i + 1}`;
+    const attachmentData = Buffer.from(`Attachment data for order ${i + 1}`);
+    const remoteParams = new RemoteAttachmentParameters(
+        "S3-Backup",  // destination identifier
+        remoteAt      // upload time
+    );
+
+    await bulkInsert.attachmentsFor(orderId)
+        .store(`invoice-${i + 1}.pdf`, attachmentData, "application/pdf", remoteParams);
+}
+
+await bulkInsert.finish();
+```
+
+#### Mixed local and remote attachments
+
+```javascript
+// Bulk insert with both local and remote attachments
+const bulkInsert = store.bulkInsert();
+const remoteAt = new Date(Date.now() + 120000);
+
+for (let i = 0; i < 4; i++) {
+    const order = { company: `Company ${i}`, orderedAt: new Date() };
+    await bulkInsert.store(order, `orders/${i}`);
+
+    const attachmentData = Buffer.from(`Attachment ${i}`);
+
+    if (i % 2 === 0) {
+        // Store in remote storage
+        const remoteParams = new RemoteAttachmentParameters("S3-Backup", remoteAt);
+        await bulkInsert.attachmentsFor(`orders/${i}`)
+            .store(`remote-${i}.dat`, attachmentData, "application/octet-stream", remoteParams);
+    } else {
+        // Store locally in RavenDB
+        await bulkInsert.attachmentsFor(`orders/${i}`)
+            .store(`local-${i}.dat`, attachmentData, "application/octet-stream");
+    }
+}
+
+await bulkInsert.finish();
+```
+
+>##### Related tests:
+> <small>[configure S3 remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L21)</small>  
+> <small>[configure Azure remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L57)</small>  
+> <small>[configure multiple destinations](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L217)</small>  
+> <small>[configure with frequency and upload settings](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/RemoteAttachmentsBasicTests.ts#L283)</small>  
+> <small>[bulk insert with remote parameters](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/BulkInsertRemoteAttachmentsTests.ts#L46)</small>  
+> <small>[mixed local and remote attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Attachments/BulkInsertRemoteAttachmentsTests.ts#L100)</small>  
+
 ## TimeSeries
 
 #### Store time series 
@@ -1639,6 +1787,251 @@ const errors = config.validate();
 > <small>[add GenAI ETL task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L53)</small>  
 > <small>[update GenAI task and change starting point](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L71)</small>  
 > <small>[validation requires schema or sample object](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L109)</small>  
+
+## Schema Validation
+
+Validate documents against JSON schemas before storing them in the database.
+
+#### Basic schema validation
+
+```javascript
+// Define JSON schema for validation
+const userSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        age: {
+            type: "integer",
+            minimum: 21,
+            maximum: 67
+        }
+    },
+    required: ["age"]
+});
+
+// Configure validation for Users collection
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Try to store invalid document (age < 21)
+const session = store.openSession();
+await session.store({ age: 17 }, "users/1");
+
+try {
+    await session.saveChanges();  // Will throw validation error
+} catch (error) {
+    console.log(error.message);
+}
+
+// Store valid document (age within range)
+const session2 = store.openSession();
+await session2.store({ age: 39 }, "users/2");
+await session2.saveChanges();  // Success
+```
+
+#### Disable and enable validation
+
+```javascript
+// Configure schema with disabled flag
+const configuration = {
+    validatorsPerCollection: {
+        Users: {
+            schema: userSchema,
+            disabled: true  // Validation disabled initially
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Invalid document will be accepted when disabled
+const session = store.openSession();
+await session.store({ age: 17 }, "users/1");
+await session.saveChanges();  // Success despite invalid age
+
+// Enable validation
+configuration.validatorsPerCollection["Users"].disabled = false;
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Now validation is active
+const session2 = store.openSession();
+await session2.store({ age: 80 }, "users/2");
+
+try {
+    await session2.saveChanges();  // Will throw validation error
+} catch (error) {
+    console.log(error.message);
+}
+```
+
+#### Complex schema with nested objects
+
+```javascript
+// Define complex schema with nested properties and patterns
+const complexSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 100
+        },
+        email: {
+            type: "string",
+            pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        age: {
+            type: "integer",
+            minimum: 21,
+            maximum: 67
+        },
+        address: {
+            type: "object",
+            properties: {
+                street: { type: "string" },
+                city: { type: "string" },
+                zipCode: { type: "string" }
+            },
+            required: ["city"]
+        }
+    },
+    required: ["name", "email", "age"]
+});
+
+const configuration = {
+    validatorsPerCollection: {
+        "ComplexUsers": {
+            schema: complexSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Invalid: missing required email field
+const session1 = store.openSession();
+await session1.store({
+    name: "John Doe",
+    age: 30
+}, "users/1");
+
+try {
+    await session1.saveChanges();  // Will fail
+} catch (error) {
+    console.log(error.message);
+}
+
+// Valid: all required fields present
+const session2 = store.openSession();
+await session2.store({
+    name: "John Doe",
+    email: "john@example.com",
+    age: 30,
+    address: {
+        street: "123 Main St",
+        city: "New York",
+        zipCode: "10001"
+    }
+}, "users/2");
+await session2.saveChanges();  // Success
+```
+
+#### Configure multiple collections
+
+```javascript
+// Define schemas for different collections
+const userSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        age: { type: "integer", minimum: 21, maximum: 67 }
+    },
+    required: ["age"]
+});
+
+const productSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        name: { type: "string", minLength: 1 },
+        price: { type: "number", minimum: 0 }
+    },
+    required: ["name", "price"]
+});
+
+// Configure validation for multiple collections
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        },
+        "Products": {
+            schema: productSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+```
+
+#### Get and update configuration
+
+```javascript
+// Get current schema validation configuration
+const config = await store.maintenance.send(new GetSchemaValidationConfiguration());
+
+console.log(Object.keys(config.validatorsPerCollection));  // ["Users", "Orders"]
+console.log(config.validatorsPerCollection["Users"].disabled);  // false
+console.log(config.validatorsPerCollection["Orders"].disabled);  // true
+
+// Modify existing configuration
+config.validatorsPerCollection["Companies"] = {
+    schema: companySchema
+};
+config.validatorsPerCollection["Users"].disabled = true;
+
+// Update configuration
+await store.maintenance.send(new ConfigureSchemaValidationOperation(config));
+```
+
+#### Cluster-wide transactions with validation
+
+```javascript
+// Schema validation works with cluster-wide transactions
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Open cluster-wide session
+const session = store.openSession({ transactionMode: "ClusterWide" });
+await session.store({ age: 17 }, "users/1");
+
+try {
+    await session.saveChanges();  // Validation error in cluster-wide transaction
+} catch (error) {
+    console.log(error.message);
+}
+```
+
+>##### Related tests:
+> <small>[basic schema validation for Users collection](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L20)</small>  
+> <small>[disable schema after creation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L166)</small>  
+> <small>[can start with disabled schema](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L206)</small>  
+> <small>[complex schema validation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L351)</small>  
+> <small>[configure multiple collections](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L319)</small>  
+> <small>[get schema validation configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L250)</small>  
+> <small>[update schema validation configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L278)</small>  
+> <small>[cluster-wide transaction validation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L96)</small>  
 
 ## Advanced patching
 
