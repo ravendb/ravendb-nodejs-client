@@ -31,6 +31,7 @@ npm install --save ravendb
    [Suggestions](#suggestions),  
    [Vector Search](#vector-search),  
    [Embeddings Generation](#embeddings-generation),  
+   [GenAI](#genai),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
    [Using object literals](#using-object-literals-for-entities),  
@@ -1527,6 +1528,117 @@ config.quantization = "Binary";  // 1-bit binary
 > <small>[validate quantization types](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L186)</small>  
 > <small>[validate chunking methods](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L225)</small>  
 > <small>[get ongoing task info](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/EmbeddingsGenerationEtlTest.ts#L359)</small>  
+
+## GenAI
+
+Use GenAI ETL to enrich documents with AI-generated content from language models.
+
+#### Configure AI connection string
+
+```javascript
+// Create AI connection string for GenAI
+const aiConnectionString = new AiConnectionString();
+aiConnectionString.name = "openai-genai";
+aiConnectionString.identifier = "openai-test";
+aiConnectionString.modelType = "Chat";
+aiConnectionString.openAiSettings = new OpenAiSettings(
+    "your-api-key",
+    "https://api.openai.com",
+    "gpt-5"
+);
+
+await store.maintenance.send(new PutConnectionStringOperation(aiConnectionString));
+```
+
+#### Add GenAI ETL task
+
+```javascript
+// Create GenAI configuration
+const config = new GenAiConfiguration();
+config.name = "Users GenAI Task";
+config.connectionStringName = "openai-genai";
+config.collection = "Users";
+config.identifier = "users-genai";
+
+// Define transformation script
+const transformation = new GenAiTransformation();
+transformation.script = "ai.genContext({ name: this.Name });";
+config.genAiTransformation = transformation;
+
+// Configure prompt and output
+config.prompt = "Enrich user document: {{context}}";
+config.sampleObject = JSON.stringify({ result: "sample" });
+config.updateScript = "function update(doc, result) { doc.genai = result; return doc; }";
+
+// Validate configuration
+const errors = config.validate();
+if (errors.length > 0) {
+    console.error("Validation errors:", errors);
+}
+
+// Add the task
+const operation = new AddGenAiOperation(config, StartingPointChangeVector.LastDocument);
+const result = await store.maintenance.send(operation);
+
+// result.taskId, result.identifier, result.raftCommandIndex
+```
+
+#### Update GenAI ETL task
+
+```javascript
+// Update existing GenAI task configuration
+const updatedConfig = new GenAiConfiguration();
+updatedConfig.name = "Users GenAI Task";
+updatedConfig.connectionStringName = "openai-genai";
+updatedConfig.collection = "Users";
+updatedConfig.identifier = "users-genai";
+updatedConfig.prompt = "Updated prompt: {{context}}";
+updatedConfig.sampleObject = JSON.stringify({ result: "updated" });
+updatedConfig.updateScript = "function update(doc, result) { doc.genai = result; return doc; }";
+
+// Updated transformation script
+const updatedTransformation = new GenAiTransformation();
+updatedTransformation.script = "ai.genContext({ name: this.Name, updated: true });";
+updatedConfig.genAiTransformation = updatedTransformation;
+
+// Update with reset option
+const updateOperation = new UpdateGenAiOperation(
+    taskId,
+    updatedConfig,
+    StartingPointChangeVector.BeginningOfTime,
+    true  // reset processing
+);
+
+const updateResult = await store.maintenance.send(updateOperation);
+```
+
+#### GenAI configuration requirements
+
+```javascript
+// Must provide either JSON schema OR sample object
+const config = new GenAiConfiguration();
+config.prompt = "Generate content";
+config.updateScript = "function update(doc, result) { return doc; }";
+
+// Option 1: Provide sample object
+config.sampleObject = JSON.stringify({ key: "value" });
+
+// Option 2: Provide JSON schema
+config.jsonSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        key: { type: "string" }
+    }
+});
+
+// Without either, validation will fail
+const errors = config.validate();
+```
+
+>##### Related tests:
+> <small>[add GenAI ETL task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L53)</small>  
+> <small>[update GenAI task and change starting point](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L71)</small>  
+> <small>[validation requires schema or sample object](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L109)</small>  
 
 ## Advanced patching
 
