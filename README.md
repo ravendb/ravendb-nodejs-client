@@ -29,6 +29,7 @@ npm install --save ravendb
    [Streaming](#streaming),  
    [Revisions](#revisions),  
    [Suggestions](#suggestions),  
+   [Vector Search](#vector-search),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
    [Using object literals](#using-object-literals-for-entities),  
@@ -1143,6 +1144,124 @@ const suggestedNameTerms = await session.query(User, UsersIndex)
 > <small>[can suggest using linq](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Suggestions/SuggestionsTest.ts#L39)</small>  
 > <small>[can suggest using multiple words](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Suggestions/SuggestionsTest.ts#L78)</small>  
 > <small>[can get suggestions with options](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Suggestions/SuggestionsTest.ts#L125)</small>  
+
+## Vector Search
+
+Perform similarity searches using vector embeddings to find documents based on semantic similarity.
+
+#### Basic vector search
+
+```javascript
+// Query using numeric embedding values
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withField("VectorField"),
+        factory => factory.byEmbedding([0.3, 0.4, 0.5])
+    )
+    .all();
+```
+
+#### Vector search with similarity and number of candidates
+
+```javascript
+// Search with similarity threshold and candidate limits
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withField("VectorField"),
+        factory => factory.byEmbedding([0.3, 0.4, 0.5]),
+        {
+            similarity: 0.75,
+            numberOfCandidates: 50
+        }
+    )
+    .all();
+```
+
+#### Vector search with text embeddings
+
+```javascript
+// Search using text that will be converted to embeddings
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withText("TextualValue"),
+        factory => factory.byText("search text")
+    )
+    .all();
+```
+
+#### Vector search with AI task
+
+```javascript
+// Use AI task for text embedding conversion
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withText("TextualValue").usingTask("openai-task"),
+        factory => factory.byText("query text")
+    )
+    .all();
+```
+
+#### Vector search with quantization
+
+```javascript
+// Search with Int8 quantization for reduced memory footprint
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withEmbedding("EmbeddingSBytes", "Int8"),
+        factory => factory.byEmbedding([1, 2, 3]),
+        { similarity: 0.75 }
+    )
+    .all();
+```
+
+#### Vector search using document reference
+
+```javascript
+// Search for similar documents using an existing document's embeddings
+await session.query({ collection: "Dtos" })
+    .vectorSearch(
+        field => field.withField("VectorField"),
+        factory => factory.forDocument("dtos/1")
+    )
+    .all();
+```
+
+#### Create index with vector search
+
+```javascript
+// Define index with vector search configuration
+class Dtos_ByEmbeddingSingles extends AbstractJavaScriptIndexCreationTask {
+    constructor() {
+        super();
+
+        this.map("Dtos", p => {
+            return {
+                "EmbeddingSingles": p.EmbeddingSingles,
+            };
+        });
+
+        this.vectorField("vectorField", {
+            numberOfEdges: 33,
+            numberOfCandidatesForIndexing: 43,
+            sourceEmbeddingType: "Text",
+            destinationEmbeddingType: "Single"
+        });
+    }
+}
+
+// Execute the index
+const dtoIndex = new Dtos_ByEmbeddingSingles();
+await dtoIndex.execute(store);
+```
+
+>##### Related tests:
+> <small>[basic vector search with numeric embedding](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L60)</small>  
+> <small>[vector search with similarity and candidates](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L221)</small>  
+> <small>[vector search with text field](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L139)</small>  
+> <small>[vector search with AI task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L44)</small>  
+> <small>[vector search with Int8 quantization](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L103)</small>  
+> <small>[vector search using forDocument](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L382)</small>  
+> <small>[create index with vector search configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Documents/Queries/VectorSearchTest.ts#L471)</small>  
 
 ## Advanced patching
 
