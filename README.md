@@ -33,6 +33,7 @@ npm install --save ravendb
    [Vector Search](#vector-search),  
    [Embeddings Generation](#embeddings-generation),  
    [GenAI](#genai),  
+   [Schema Validation](#schema-validation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
    [Using object literals](#using-object-literals-for-entities),  
@@ -1786,6 +1787,251 @@ const errors = config.validate();
 > <small>[add GenAI ETL task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L53)</small>  
 > <small>[update GenAI task and change starting point](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L71)</small>  
 > <small>[validation requires schema or sample object](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L109)</small>  
+
+## Schema Validation
+
+Validate documents against JSON schemas before storing them in the database.
+
+#### Basic schema validation
+
+```javascript
+// Define JSON schema for validation
+const userSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        age: {
+            type: "integer",
+            minimum: 21,
+            maximum: 67
+        }
+    },
+    required: ["age"]
+});
+
+// Configure validation for Users collection
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Try to store invalid document (age < 21)
+const session = store.openSession();
+await session.store({ age: 17 }, "users/1");
+
+try {
+    await session.saveChanges();  // Will throw validation error
+} catch (error) {
+    console.log(error.message);
+}
+
+// Store valid document (age within range)
+const session2 = store.openSession();
+await session2.store({ age: 39 }, "users/2");
+await session2.saveChanges();  // Success
+```
+
+#### Disable and enable validation
+
+```javascript
+// Configure schema with disabled flag
+const configuration = {
+    validatorsPerCollection: {
+        Users: {
+            schema: userSchema,
+            disabled: true  // Validation disabled initially
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Invalid document will be accepted when disabled
+const session = store.openSession();
+await session.store({ age: 17 }, "users/1");
+await session.saveChanges();  // Success despite invalid age
+
+// Enable validation
+configuration.validatorsPerCollection["Users"].disabled = false;
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Now validation is active
+const session2 = store.openSession();
+await session2.store({ age: 80 }, "users/2");
+
+try {
+    await session2.saveChanges();  // Will throw validation error
+} catch (error) {
+    console.log(error.message);
+}
+```
+
+#### Complex schema with nested objects
+
+```javascript
+// Define complex schema with nested properties and patterns
+const complexSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        name: {
+            type: "string",
+            minLength: 1,
+            maxLength: 100
+        },
+        email: {
+            type: "string",
+            pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        age: {
+            type: "integer",
+            minimum: 21,
+            maximum: 67
+        },
+        address: {
+            type: "object",
+            properties: {
+                street: { type: "string" },
+                city: { type: "string" },
+                zipCode: { type: "string" }
+            },
+            required: ["city"]
+        }
+    },
+    required: ["name", "email", "age"]
+});
+
+const configuration = {
+    validatorsPerCollection: {
+        "ComplexUsers": {
+            schema: complexSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Invalid: missing required email field
+const session1 = store.openSession();
+await session1.store({
+    name: "John Doe",
+    age: 30
+}, "users/1");
+
+try {
+    await session1.saveChanges();  // Will fail
+} catch (error) {
+    console.log(error.message);
+}
+
+// Valid: all required fields present
+const session2 = store.openSession();
+await session2.store({
+    name: "John Doe",
+    email: "john@example.com",
+    age: 30,
+    address: {
+        street: "123 Main St",
+        city: "New York",
+        zipCode: "10001"
+    }
+}, "users/2");
+await session2.saveChanges();  // Success
+```
+
+#### Configure multiple collections
+
+```javascript
+// Define schemas for different collections
+const userSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        age: { type: "integer", minimum: 21, maximum: 67 }
+    },
+    required: ["age"]
+});
+
+const productSchema = JSON.stringify({
+    type: "object",
+    properties: {
+        name: { type: "string", minLength: 1 },
+        price: { type: "number", minimum: 0 }
+    },
+    required: ["name", "price"]
+});
+
+// Configure validation for multiple collections
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        },
+        "Products": {
+            schema: productSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+```
+
+#### Get and update configuration
+
+```javascript
+// Get current schema validation configuration
+const config = await store.maintenance.send(new GetSchemaValidationConfiguration());
+
+console.log(Object.keys(config.validatorsPerCollection));  // ["Users", "Orders"]
+console.log(config.validatorsPerCollection["Users"].disabled);  // false
+console.log(config.validatorsPerCollection["Orders"].disabled);  // true
+
+// Modify existing configuration
+config.validatorsPerCollection["Companies"] = {
+    schema: companySchema
+};
+config.validatorsPerCollection["Users"].disabled = true;
+
+// Update configuration
+await store.maintenance.send(new ConfigureSchemaValidationOperation(config));
+```
+
+#### Cluster-wide transactions with validation
+
+```javascript
+// Schema validation works with cluster-wide transactions
+const configuration = {
+    validatorsPerCollection: {
+        "Users": {
+            schema: userSchema
+        }
+    }
+};
+
+await store.maintenance.send(new ConfigureSchemaValidationOperation(configuration));
+
+// Open cluster-wide session
+const session = store.openSession({ transactionMode: "ClusterWide" });
+await session.store({ age: 17 }, "users/1");
+
+try {
+    await session.saveChanges();  // Validation error in cluster-wide transaction
+} catch (error) {
+    console.log(error.message);
+}
+```
+
+>##### Related tests:
+> <small>[basic schema validation for Users collection](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L20)</small>  
+> <small>[disable schema after creation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L166)</small>  
+> <small>[can start with disabled schema](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L206)</small>  
+> <small>[complex schema validation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L351)</small>  
+> <small>[configure multiple collections](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L319)</small>  
+> <small>[get schema validation configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L250)</small>  
+> <small>[update schema validation configuration](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L278)</small>  
+> <small>[cluster-wide transaction validation](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/SchemaValidationBasicTests.ts#L96)</small>  
 
 ## Advanced patching
 
