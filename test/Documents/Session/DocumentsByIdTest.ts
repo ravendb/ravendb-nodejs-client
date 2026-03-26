@@ -18,16 +18,14 @@ describe("DocumentsById.getTrackedEntities", function () {
         doc2.entity = { name: "Bob" };
         docsById.add(doc2);
 
-        // Minimal session mock with isDeleted
         const fakeSession = {
             isDeleted: () => false,
         } as any;
 
         const tracked = docsById.getTrackedEntities(fakeSession);
 
-        // The result should be a proper Map with accessible entries
         assert.strictEqual(tracked.size, 2,
-            "Map.size should be 2 (entries added via Map.set, not bracket notation). Got: " + tracked.size);
+            "Map.size should be 2. Got: " + tracked.size);
 
         const entry1 = tracked.get("users/1-A");
         assert.ok(entry1, "Should find users/1-A via Map.get()");
@@ -36,9 +34,13 @@ describe("DocumentsById.getTrackedEntities", function () {
         const entry2 = tracked.get("users/2-A");
         assert.ok(entry2, "Should find users/2-A via Map.get()");
         assert.strictEqual(entry2.id, "users/2-A");
+
+        // Bracket notation should also work via the Proxy
+        assert.ok(tracked["users/1-A"], "Should find users/1-A via bracket notation");
+        assert.ok(tracked["users/2-A"], "Should find users/2-A via bracket notation");
     });
 
-    it("should support case-insensitive key lookup", function () {
+    it("should support case-insensitive key lookup via both Map.get() and bracket notation", function () {
         const docsById = new DocumentsById();
 
         const doc = new DocumentInfo();
@@ -49,7 +51,9 @@ describe("DocumentsById.getTrackedEntities", function () {
         const fakeSession = { isDeleted: () => false } as any;
         const tracked = docsById.getTrackedEntities(fakeSession);
 
-        assert.ok(tracked.get("users/1-a"), "Should find via lowercase key");
-        assert.ok(tracked.get("USERS/1-A"), "Should find via uppercase key");
+        assert.ok(tracked.get("users/1-a"), "Map.get() lowercase");
+        assert.ok(tracked.get("USERS/1-A"), "Map.get() uppercase");
+        assert.ok(tracked["users/1-a"], "bracket notation lowercase");
+        assert.ok(tracked["USERS/1-A"], "bracket notation uppercase");
     });
 });

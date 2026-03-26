@@ -101,7 +101,7 @@ export class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation 
         } else {
             pathBuilder = new StringBuilder("?");
 
-            if (StringUtil.isNullOrEmpty(this._startsWith) == false) {
+            if (!StringUtil.isNullOrEmpty(this._startsWith)) {
                 pathBuilder.append("&startsWith=").append(encodeURIComponent(this._startsWith));
             }
 
