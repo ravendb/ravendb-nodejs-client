@@ -19,7 +19,7 @@ export class Highlightings {
    }
 
    public get resultIndents(): string[] {
-       return Object.keys(this._highlightings);
+       return Array.from(this._highlightings.keys());
    }
    
    /**
