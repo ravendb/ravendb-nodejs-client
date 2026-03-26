@@ -45,6 +45,11 @@ export class VectorOptions implements IVectorOptions {
     public destinationEmbeddingType?: VectorEmbeddingType;
 
     /**
+     * Number of dimensions in the vector
+     */
+    public dimensions?: number;
+
+    /**
      * Number of candidates to consider during indexing
      */
     public numberOfCandidates?: number;
@@ -71,19 +76,23 @@ export class VectorOptions implements IVectorOptions {
     }
 
     protected static fromJson(json: IVectorOptionsJson): VectorOptions {
-        return new VectorOptions(
+        const result = new VectorOptions(
             json.SourceEmbeddingType,
             json.DestinationEmbeddingType,
-            json.Dimensions,
             json.NumberOfEdges,
             json.NumberOfCandidates,
+            json.Similarity,
+            json.IsExact,
         );
+        result.dimensions = json.Dimensions;
+        return result;
     }
 
     protected toJson(): IVectorOptionsJson {
         return {
             SourceEmbeddingType: this.sourceEmbeddingType,
             DestinationEmbeddingType: this.destinationEmbeddingType,
+            Dimensions: this.dimensions,
             NumberOfCandidates: this.numberOfCandidates,
             NumberOfEdges: this.numberOfEdges,
             Similarity: this.similarity
@@ -105,10 +114,10 @@ export class AutoVectorOptions extends VectorOptions {
         super(
             sourceEmbeddingType,
             destinationEmbeddingType,
-            dimensions,
             numberOfEdges,
             numberOfCandidates
         );
+        this.dimensions = dimensions;
         this.sourceFieldName = sourceFieldName;
     }
 
@@ -116,6 +125,7 @@ export class AutoVectorOptions extends VectorOptions {
         return new AutoVectorOptions(
             vectorOptions.sourceEmbeddingType,
             vectorOptions.destinationEmbeddingType,
+            vectorOptions.dimensions,
             vectorOptions.numberOfEdges,
             vectorOptions.numberOfCandidates
         );
