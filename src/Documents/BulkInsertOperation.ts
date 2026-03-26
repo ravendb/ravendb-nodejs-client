@@ -104,7 +104,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                     await this._operation.flushIfNeeded();
 
                 } catch (e) {
-                    this._operation._handleErrors(this._id, e);
+                    await this._operation._handleErrors(this._id, e);
                 }
             } finally {
                 check.dispose();
@@ -202,7 +202,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     await this._operation.flushIfNeeded();
                 } catch (e) {
-                    this._operation._handleErrors(this._id, e);
+                    await this._operation._handleErrors(this._id, e);
                 }
             } finally {
                 check.dispose();
@@ -640,7 +640,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                 this._writeToStream(entity, id, metadata, "PUT");
                 await this.flushIfNeeded();
             } catch (e) {   
-                this._handleErrors(id, e);
+                await this._handleErrors(id, e);
             }
         } finally {
             check.dispose();
@@ -691,11 +691,11 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         this._writer.write(`","Type":"PUT","Document":${jsonString}}`);
     }
 
-    private _handleErrors(documentId: string, e: Error) {
+    private async _handleErrors(documentId: string, e: Error) {
         if (e.name === "BulkInsertClientException") {
             throw e;
         }
-        const error = this._getExceptionFromOperation();
+        const error = await this._getExceptionFromOperation();
         if (error) {
             throw error;
         }
