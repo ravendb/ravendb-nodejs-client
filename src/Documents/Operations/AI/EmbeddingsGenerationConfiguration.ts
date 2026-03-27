@@ -118,14 +118,20 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
         validateName?: boolean;
         validateConnection?: boolean;
         validateIdentifier?: boolean;
+        existingConfiguration?: EmbeddingsGenerationConfiguration;
     }): string[] {
         const {
             validateName = true,
             validateConnection = true,
-            validateIdentifier = true
+            validateIdentifier = true,
+            existingConfiguration
         } = options ?? {};
 
         const errors: string[] = [];
+
+        if (existingConfiguration?.name && existingConfiguration.name !== this.name) {
+            errors.push("Changing Name of ETL is not supported.");
+        }
 
         if (validateIdentifier) {
             const idErrors = AiTaskIdentifierHelper.validateIdentifier(this.identifier);

@@ -14,6 +14,8 @@ const TRANSFORMATION_NAME = "GenAi-transform-script";
  * and updates documents based on AI responses.
  */
 export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
+    public version?: number;
+
     /**
      * Unique normalized identifier for this GenAI task.
      * Must be lowercase, alphanumeric with hyphens only.
@@ -115,14 +117,20 @@ export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
         validateName?: boolean;
         validateConnection?: boolean;
         validateIdentifier?: boolean;
+        existingConfiguration?: GenAiConfiguration;
     }): string[] {
         const {
             validateName = true,
             validateConnection = true,
-            validateIdentifier = true
+            validateIdentifier = true,
+            existingConfiguration
         } = options ?? {};
 
         const errors: string[] = [];
+
+        if (existingConfiguration?.name && existingConfiguration.name !== this.name) {
+            errors.push("Changing Name of ETL is not supported.");
+        }
 
         if (validateIdentifier) {
             const idErrors = AiTaskIdentifierHelper.validateIdentifier(this.identifier);
@@ -205,6 +213,9 @@ export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
         result.Queries = this.queries ? this.queries.map(q => this._serializeQuery(q)) : null;
         result.EnableTracing = this.enableTracing;
         result.ExpirationInSec = this.expirationInSec;
+        if (this.version != null) {
+            result.Version = this.version;
+        }
 
         return result;
     }

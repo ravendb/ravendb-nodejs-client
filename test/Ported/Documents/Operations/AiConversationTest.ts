@@ -57,6 +57,17 @@ import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js
         conv.addActionResponse("tool2", {ok: true, count: 1});
     });
 
+    it("addActionResponse should throw on duplicate toolId", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/3a|") as any;
+
+        conv.addActionResponse("tool1", "first response");
+
+        await assertThrows(() => Promise.resolve(conv.addActionResponse("tool1", "second response")), err => {
+            assertThat(err.message).contains("already added");
+            assertThat(err.message).contains("tool1");
+        });
+    });
+
     it("receive should reject duplicate action names", async () => {
         const conv = store.ai.conversation("agents/1-A", "conversations/4|") as any;
 
@@ -187,7 +198,7 @@ import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js
         assertThat(capturedArgs.value).isSameAs("test-data");
 
         // Verify response was added
-        assertThat(conv._actionResponses.length).isGreaterThan(0);
+        assertThat(conv._actionResponses.size).isGreaterThan(0);
     });
 
     it("handle method works without request parameter (backward compat, sync)", async () => {
@@ -211,7 +222,7 @@ import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js
         });
 
         assertThat(handlerCalled).isTrue();
-        assertThat(conv._actionResponses.length).isGreaterThan(0);
+        assertThat(conv._actionResponses.size).isGreaterThan(0);
     });
 
     it("handle method works with request parameter (with metadata, async)", async () => {
