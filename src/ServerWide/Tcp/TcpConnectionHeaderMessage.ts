@@ -40,6 +40,9 @@ export const SUBSCRIPTION_COUNTER_INCLUDES = 50_000;
 export const SUBSCRIPTION_TIME_SERIES_INCLUDES = 51_000;
 export const TCP_CONNECTIONS_WITH_COMPRESSION = 53_000;
 export const TEST_CONNECTION_BASE_LINE = 50;
+export const REPLICATION_WITH_REMOTE_ATTACHMENTS = 72_000;
+export const REPLICATION_WITH_TIME_SERIES_DOCUMENT_CHANGE_VECTOR = 72_001;
+export const REPLICATION_TCP_VERSION = REPLICATION_WITH_TIME_SERIES_DOCUMENT_CHANGE_VECTOR;
 
 export const HEARTBEATS_TCP_VERSION = HEARTBEATS_WITH_TCP_COMPRESSION;
 export const SUBSCRIPTION_TCP_VERSION = TCP_CONNECTIONS_WITH_COMPRESSION;
@@ -74,6 +77,21 @@ export class TestConnectionFeatures {
     public baseLine = true;
 }
 
+export class ReplicationFeatures {
+    public baseLine = true;
+    public missingAttachments = false;
+    public countersBatch = false;
+    public pullReplication = false;
+    public timeSeries = false;
+    public caseInsensitiveCounters = false;
+    public clusterTransaction = false;
+    public incrementalTimeSeries = false;
+    public deduplicatedAttachments = false;
+    public revisionTombstonesWithId = false;
+    public remoteAttachments = false;
+    public timeSeriesWithDocumentChangeVector = false;
+}
+
 export class SupportedFeatures {
     public readonly protocolVersion: number;
 
@@ -92,6 +110,7 @@ export class SupportedFeatures {
         this.subscription = source.subscription;
         this.heartbeats = source.heartbeats;
         this.testConnection = source.testConnection;
+        this.replication = source.replication;
         this.dataCompression = source.dataCompression;
     }
 
@@ -102,6 +121,7 @@ export class SupportedFeatures {
     public subscription: SubscriptionFeatures;
     public heartbeats: HeartbeatsFeatures;
     public testConnection: TestConnectionFeatures;
+    public replication: ReplicationFeatures;
 
     public dataCompression: boolean;
 }
@@ -124,6 +144,10 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
         HEARTBEATS_BASE_LINE
     ]);
     operationsToSupportedProtocolVersions.set("TestConnection", [TEST_CONNECTION_BASE_LINE]);
+    operationsToSupportedProtocolVersions.set("Replication", [
+        REPLICATION_WITH_TIME_SERIES_DOCUMENT_CHANGE_VECTOR,
+        REPLICATION_WITH_REMOTE_ATTACHMENTS
+    ]);
 
     const pingFeaturesMap = new Map<number, SupportedFeatures>();
     supportedFeaturesByProtocol.set("Ping", pingFeaturesMap);
@@ -204,6 +228,40 @@ const supportedFeaturesByProtocol = new Map<OperationTypes, Map<number, Supporte
     const testConnectionFeatures = new SupportedFeatures(TEST_CONNECTION_BASE_LINE);
     testConnectionFeatures.testConnection = new TestConnectionFeatures();
     testConnectionFeaturesMap.set(TEST_CONNECTION_BASE_LINE, testConnectionFeatures);
+
+    const replicationFeaturesMap = new Map<number, SupportedFeatures>();
+    supportedFeaturesByProtocol.set("Replication", replicationFeaturesMap);
+
+    const replication72000Features = new SupportedFeatures(REPLICATION_WITH_REMOTE_ATTACHMENTS);
+    replication72000Features.dataCompression = true;
+    replication72000Features.replication = new ReplicationFeatures();
+    replication72000Features.replication.missingAttachments = true;
+    replication72000Features.replication.countersBatch = true;
+    replication72000Features.replication.pullReplication = true;
+    replication72000Features.replication.timeSeries = true;
+    replication72000Features.replication.caseInsensitiveCounters = true;
+    replication72000Features.replication.clusterTransaction = true;
+    replication72000Features.replication.incrementalTimeSeries = true;
+    replication72000Features.replication.deduplicatedAttachments = true;
+    replication72000Features.replication.revisionTombstonesWithId = true;
+    replication72000Features.replication.remoteAttachments = true;
+    replicationFeaturesMap.set(REPLICATION_WITH_REMOTE_ATTACHMENTS, replication72000Features);
+
+    const replication72001Features = new SupportedFeatures(REPLICATION_WITH_TIME_SERIES_DOCUMENT_CHANGE_VECTOR);
+    replication72001Features.dataCompression = true;
+    replication72001Features.replication = new ReplicationFeatures();
+    replication72001Features.replication.missingAttachments = true;
+    replication72001Features.replication.countersBatch = true;
+    replication72001Features.replication.pullReplication = true;
+    replication72001Features.replication.timeSeries = true;
+    replication72001Features.replication.caseInsensitiveCounters = true;
+    replication72001Features.replication.clusterTransaction = true;
+    replication72001Features.replication.incrementalTimeSeries = true;
+    replication72001Features.replication.deduplicatedAttachments = true;
+    replication72001Features.replication.revisionTombstonesWithId = true;
+    replication72001Features.replication.remoteAttachments = true;
+    replication72001Features.replication.timeSeriesWithDocumentChangeVector = true;
+    replicationFeaturesMap.set(REPLICATION_WITH_TIME_SERIES_DOCUMENT_CHANGE_VECTOR, replication72001Features);
 }
 
 export type SupportedStatus = "OutOfRange" | "NotSupported" | "Supported";

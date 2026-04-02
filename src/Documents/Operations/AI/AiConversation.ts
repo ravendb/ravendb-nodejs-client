@@ -24,7 +24,7 @@ export class AiConversation {
     private _conversationId: string;
     private readonly _options?: AiConversationCreationOptions;
     private _actionRequests: AiAgentActionRequest[] | null = null;
-    private readonly _actionResponses: AiAgentActionResponse[] = [];
+    private readonly _actionResponses: Map<string, AiAgentActionResponse> = new Map();
     private readonly _artificialActions: AiAgentArtificialActionResponse[] = [];
     private readonly _promptParts: ContentPart[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
@@ -68,11 +68,16 @@ export class AiConversation {
         if (!toolId) throwError("InvalidArgumentException", "toolId cannot be empty");
         if (actionResponse == null) throwError("InvalidArgumentException", `Action response for '${toolId}' cannot be null.`);
 
-        if (typeof actionResponse === "string") {
-            this._actionResponses.push({toolId, content: actionResponse});
-            return;
+        if (this._actionResponses.has(toolId)) {
+            throwError("InvalidOperationException",
+                `An action response for tool-id '${toolId}' was already added. Each tool call must have exactly one response. ` +
+                `If you're using handle(), return the value from the handler (don't call addActionResponse() manually).`);
         }
-        this._actionResponses.push({toolId, content: JSON.stringify(actionResponse)});
+
+        const content = typeof actionResponse === "string"
+            ? actionResponse
+            : JSON.stringify(actionResponse);
+        this._actionResponses.set(toolId, { toolId, content });
     }
 
     /**
@@ -147,9 +152,9 @@ export class AiConversation {
         }
     }
 
-    public handle<TArgs = any>(
+    public handle<TArgs = any, TResult extends object = object>(
         actionName: string,
-        action: (args: TArgs) => Promise<object>,
+        action: (args: TArgs) => Promise<TResult>,
         aiHandleError?: AiHandleErrorStrategy
     ): void;
 
@@ -159,9 +164,9 @@ export class AiConversation {
         aiHandleError?: AiHandleErrorStrategy
     ): void;
 
-    public handle<TArgs = any>(
+    public handle<TArgs = any, TResult extends object = object>(
         actionName: string,
-        action: (request: AiAgentActionRequest, args: TArgs) => Promise<object>,
+        action: (request: AiAgentActionRequest, args: TArgs) => Promise<TResult>,
         aiHandleError?: AiHandleErrorStrategy
     ): void;
 
@@ -171,10 +176,10 @@ export class AiConversation {
         aiHandleError?: AiHandleErrorStrategy
     ): void
 
-    public handle<TArgs = any>(
+    public handle<TArgs = any, TResult extends object = object>(
         actionName: string,
-        action: ((args: TArgs) => Promise<object> | object) |
-            ((request: AiAgentActionRequest, args: TArgs) => Promise<object> | object),
+        action: ((args: TArgs) => Promise<TResult> | object) |
+            ((request: AiAgentActionRequest, args: TArgs) => Promise<TResult> | object),
         aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel
     ) {
         const wrappedAction = action.length === 1
@@ -236,7 +241,7 @@ export class AiConversation {
                 }
             }
 
-            if (this._actionResponses.length === 0) {
+            if (this._actionResponses.size === 0) {
                 return r; // ActionsRequired, nothing to send back yet
             }
         }
@@ -293,14 +298,14 @@ export class AiConversation {
                 }
             }
 
-            if (this._actionResponses.length === 0) {
+            if (this._actionResponses.size === 0) {
                 return r; // ActionsRequired, nothing to send back yet
             }
         }
     }
 
     private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
-        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.length === 0 && this._artificialActions.length === 0) {
+        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.size === 0 && this._artificialActions.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
 
@@ -308,7 +313,7 @@ export class AiConversation {
             this._agentId,
             this._conversationId,
             this._promptParts as ContentPart[],
-            this._actionResponses,
+            [...this._actionResponses.values()],
             this._artificialActions,
             this._options,
             this._changeVector,
@@ -332,7 +337,7 @@ export class AiConversation {
         } finally {
             // clear prompt, responses and artificial actions after running the conversation
             this._promptParts.length = 0;
-            this._actionResponses.length = 0;
+            this._actionResponses.clear();
             this._artificialActions.length = 0;
         }
     }
