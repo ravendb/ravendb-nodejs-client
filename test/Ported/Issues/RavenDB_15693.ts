@@ -13,6 +13,29 @@ describe("RavenDB_15693", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
+    it("nestedSubclauseBoostDoesNotCorruptOuterBoost", async () => {
+        const s = store.openSession();
+        const q = s.query(Doc)
+            .openSubclause()
+                .openSubclause()
+                    .search("strVal1", "a")
+                    .orElse()
+                    .search("strVal2", "b")
+                .closeSubclause()
+                .boost(0.5)
+                .orElse()
+                .search("strVal3", "c")
+            .closeSubclause()
+            .boost(0.2);
+
+        const queryBoost = q.toString();
+
+        // The outer boost (0.2) should wrap the entire outer subclause,
+        // and the inner boost (0.5) should only wrap the inner subclause.
+        assertThat(queryBoost)
+            .contains("boost(boost(search(strVal1, $p0) or search(strVal2, $p1), $p2) or search(strVal3, $p3), $p4)");
+    });
+
     it("canQueryOnComplexBoost", async () => {
         const s = store.openSession();
         const q = s.query(Doc)

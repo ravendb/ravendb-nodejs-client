@@ -213,7 +213,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _explanationToken: ExplanationToken;
 
     protected isFilterActive(): boolean {
-        return this._filterModeStack.length && this._filterModeStack[0];
+        return this._filterModeStack.length && this._filterModeStack.at(-1);
     }
 
 
@@ -1139,9 +1139,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         endParams.fieldName = fieldName;
 
         const fromParameterName = this._addQueryParameter(
-            !start ? "*" : this._transformValue(startParams, true));
+            start == null ? "*" : this._transformValue(startParams, true));
         const toParameterName = this._addQueryParameter(
-            !end ? "NULL" : this._transformValue(endParams, true));
+            end == null ? "NULL" : this._transformValue(endParams, true));
 
         const whereToken = WhereToken.create(
             "Between", fieldName, null, new WhereOptions({
@@ -1174,7 +1174,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.fieldName = fieldName;
 
         const parameter = this._addQueryParameter(
-            !value ? "*" : this._transformValue(whereParams, true));
+            value == null ? "*" : this._transformValue(whereParams, true));
 
         const whereToken = WhereToken.create(
             "GreaterThan", fieldName, parameter, new WhereOptions({ exact }));
@@ -1203,7 +1203,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.fieldName = fieldName;
 
         const parameter = this._addQueryParameter(
-            !value ? "*" : this._transformValue(whereParams, true));
+            value == null ? "*" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
             "GreaterThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
@@ -1223,7 +1223,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.fieldName = fieldName;
 
         const parameter = this._addQueryParameter(
-            !value ? "NULL" : this._transformValue(whereParams, true));
+            value == null ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
             "LessThan", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
@@ -1242,7 +1242,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.fieldName = fieldName;
 
         const parameter = this._addQueryParameter(
-            !value ? "NULL" : this._transformValue(whereParams, true));
+            value == null ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
             "LessThanOrEqual", fieldName, parameter, new WhereOptions({ exact }));
         tokens.push(whereToken);
@@ -1295,7 +1295,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      */
     public _orElse(): void {
         const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
+        if (!tokens || !tokens.length) {
             return;
         }
 
@@ -1358,6 +1358,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                 } else if (last instanceof OpenSubclauseToken) {
                     last.boostParameterName = parameter;
                     close.boostParameterName = parameter;
+                    return;
                 }
             }
         } else {
@@ -1376,7 +1377,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._assertMethodIsCurrentlySupported("fuzzy");
 
         const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
+        if (!tokens || !tokens.length) {
             throwError("InvalidOperationException", "Fuzzy can only be used right after where clause.");
         }
 
@@ -1405,7 +1406,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     public _proximity(proximity: number): void {
         this._assertMethodIsCurrentlySupported("proximity");
         const tokens = this._getCurrentWhereTokens();
-        if (!tokens && !tokens.length) {
+        if (!tokens || !tokens.length) {
             throwError("InvalidOperationException", "Proximity can only be used right after search clause.");
         }
 
