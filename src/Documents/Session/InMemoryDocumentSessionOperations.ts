@@ -2497,10 +2497,9 @@ export class DeletedEntitiesHolder implements Iterable<DeletedEntitiesEnumerator
     public prepareEntitiesDeletes(): IDisposable {
         this._prepareEntitiesDeletes = true;
 
+        const turnOff = () => this._prepareEntitiesDeletes = false;
         return {
-            dispose(): void {
-                this._prepareEntitiesDeletes = false;
-            }
+            dispose: turnOff
         }
     }
 }

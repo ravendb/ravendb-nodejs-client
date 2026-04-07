@@ -46,7 +46,7 @@ export class DocumentsById {
             entityInfo.id = keyValue[0];
             entityInfo.entity = keyValue[1].entity;
             entityInfo.isDeleted = session.isDeleted(keyValue[0]);
-            result[keyValue[0]] = entityInfo;
+            result.set(keyValue[0], entityInfo);
         }
 
         return result;

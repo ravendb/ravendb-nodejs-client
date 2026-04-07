@@ -10,6 +10,14 @@ function validateKey(key) {
     throw new Error("Key must be a string.");
 }
 
+/**
+ * Creates a Map<string, TValue> with case-insensitive key lookup.
+ *
+ * Bracket notation (map[key]) is also routed through the case-insensitive
+ * lookup via a Proxy, matching the behavior of C#'s
+ * Dictionary<string, V>(StringComparer.OrdinalIgnoreCase) where both
+ * dict.TryGetValue("key") and dict["Key"] use the same comparer.
+ */
 export class CaseInsensitiveKeysMap {
 
     public static create<TValue>(): Map<string, TValue> {
@@ -64,7 +72,30 @@ export class CaseInsensitiveKeysMap {
                     return [...reduced, [actualKey, next[1]]];
                 }, [])[Symbol.iterator]();
         };
-            
-        return result;
+
+        // Proxy so bracket notation (map["Key"]) goes through the same
+        // case-insensitive get/set/has as the Map API methods.
+        return new Proxy(result, {
+            get(target, prop) {
+                const value = Reflect.get(target, prop, target);
+                if (typeof prop === "symbol" || typeof value === "function") {
+                    if (typeof value === "function") {
+                        return value.bind(target);
+                    }
+                    return value;
+                }
+                if (typeof prop === "string" && target.has(prop)) {
+                    return target.get(prop);
+                }
+                return value;
+            },
+            set(target, prop, value) {
+                if (typeof prop === "string" && prop !== "keysCaseSensitive") {
+                    target.set(prop, value);
+                    return true;
+                }
+                return Reflect.set(target, prop, value, target);
+            },
+        }) as Map<string, TValue>;
     }
 }
