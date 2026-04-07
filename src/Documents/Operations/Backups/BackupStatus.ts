@@ -6,7 +6,7 @@ export interface BackupStatus {
     lastFullBackup: Date;
     lastIncrementalBackup: Date;
     fullBackupDurationInMs: number;
-    incrementalBackupDurationIsMs: number;
+    incrementalBackupDurationInMs: number;
     exception: string;
 }
 
@@ -26,7 +26,7 @@ export interface UploadToAzure extends CloudUploadStatus {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface UpdateToGoogleCloud extends CloudUploadStatus {
+export interface UploadToGoogleCloud extends CloudUploadStatus {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
