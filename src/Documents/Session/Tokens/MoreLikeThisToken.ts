@@ -17,10 +17,14 @@ export class MoreLikeThisToken extends WhereToken {
         writer.append("moreLikeThis(");
 
         if (!this.documentParameterName) {
-            for (let i = 0; i < this.whereTokens.length; i++) {
-                DocumentQueryHelper.addSpaceIfNeeded(
-                    i > 0 ? this.whereTokens[i - 1] : null, this.whereTokens[i], writer);
-                this.whereTokens[i].writeTo(writer);
+            if (this.whereTokens.length === 0) {
+                writer.append("true");
+            } else {
+                for (let i = 0; i < this.whereTokens.length; i++) {
+                    DocumentQueryHelper.addSpaceIfNeeded(
+                        i > 0 ? this.whereTokens[i - 1] : null, this.whereTokens[i], writer);
+                    this.whereTokens[i].writeTo(writer);
+                }
             }
         } else {
             writer.append("$").append(this.documentParameterName);
