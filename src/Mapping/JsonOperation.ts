@@ -44,6 +44,14 @@ export class JsonOperation {
         const removedFields = oldJsonProps.filter(x => !newJsonProps.includes(x));
 
         for (const field of removedFields) {
+            if (CONSTANTS.Documents.Metadata.LAST_MODIFIED === field ||
+                CONSTANTS.Documents.Metadata.COLLECTION === field ||
+                CONSTANTS.Documents.Metadata.CHANGE_VECTOR === field ||
+                CONSTANTS.Documents.Metadata.ID === field ||
+                CONSTANTS.Documents.Metadata.KEY === field) {
+                continue;
+            }
+
             if (!changes) {
                 return true;
             }
