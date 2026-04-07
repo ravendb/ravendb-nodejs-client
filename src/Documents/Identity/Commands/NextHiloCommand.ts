@@ -64,7 +64,7 @@ export class NextHiloCommand extends RavenCommand<HiLoResult> {
         if (this._identityPartsSeparator) {
             uri += "&identityPartsSeparator=" + this._identityPartsSeparator;
         }
-        if (this._lastRangeMax) {
+        if (this._lastRangeMax != null) {
             uri += "&lastMax=" + this._lastRangeMax;
         }
         return { uri };

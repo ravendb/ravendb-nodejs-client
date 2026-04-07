@@ -41,7 +41,7 @@ export class LazyStartsWithOperation<T extends object> implements ILazyOperation
         const request = new GetRequest();
         request.url = "/docs";
         request.query =
-            `?startsWith=${enc(this._idPrefix)}&matches=${enc(this._matches) || ""}&exclude=${enc(this._exclude) || ""}&start=${this._start}&pageSize=${this._pageSize}&startAfter=${enc(this._startAfter)}`;
+            `?startsWith=${enc(this._idPrefix)}&matches=${enc(this._matches ?? "")}&exclude=${enc(this._exclude ?? "")}&start=${this._start}&pageSize=${this._pageSize}&startAfter=${enc(this._startAfter ?? "")}`;
         return request;
     }
 
