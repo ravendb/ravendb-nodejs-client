@@ -43,12 +43,16 @@ export class JsonOperation {
         const newFields = new Set(newJsonProps.filter(x => !oldJsonProps.includes(x)));
         const removedFields = oldJsonProps.filter(x => !newJsonProps.includes(x));
 
+        const ignoredMetadataFields: string[] = [
+            CONSTANTS.Documents.Metadata.LAST_MODIFIED,
+            CONSTANTS.Documents.Metadata.COLLECTION,
+            CONSTANTS.Documents.Metadata.CHANGE_VECTOR,
+            CONSTANTS.Documents.Metadata.ID,
+            CONSTANTS.Documents.Metadata.KEY,
+        ];
+
         for (const field of removedFields) {
-            if (CONSTANTS.Documents.Metadata.LAST_MODIFIED === field ||
-                CONSTANTS.Documents.Metadata.COLLECTION === field ||
-                CONSTANTS.Documents.Metadata.CHANGE_VECTOR === field ||
-                CONSTANTS.Documents.Metadata.ID === field ||
-                CONSTANTS.Documents.Metadata.KEY === field) {
+            if (ignoredMetadataFields.includes(field)) {
                 continue;
             }
 
@@ -61,11 +65,7 @@ export class JsonOperation {
 
         for (const prop of newJsonProps) {
 
-            if (CONSTANTS.Documents.Metadata.LAST_MODIFIED === prop ||
-                CONSTANTS.Documents.Metadata.COLLECTION === prop ||
-                CONSTANTS.Documents.Metadata.CHANGE_VECTOR === prop ||
-                CONSTANTS.Documents.Metadata.ID === prop ||
-                CONSTANTS.Documents.Metadata.KEY === prop) {
+            if (ignoredMetadataFields.includes(prop)) {
                 continue;
             }
 
