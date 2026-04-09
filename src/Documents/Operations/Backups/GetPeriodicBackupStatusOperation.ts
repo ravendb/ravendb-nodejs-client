@@ -10,7 +10,7 @@ import { ServerResponse } from "../../../Types/index.js";
 import {
     BackupStatus,
     LocalBackup,
-    UpdateToGoogleCloud,
+    UploadToGoogleCloud,
     UploadToAzure,
     UploadToFtp, UploadToGlacier,
     UploadToS3
@@ -99,7 +99,7 @@ export function revivePeriodicBackupStatus(status: ServerResponse<PeriodicBackup
         } : null,
         uploadToS3: reviveUploadStatus<UploadToS3>(status.uploadToS3),
         uploadToFtp: reviveUploadStatus<UploadToFtp>(status.uploadToFtp),
-        updateToGoogleCloud: reviveUploadStatus<UpdateToGoogleCloud>(status.updateToGoogleCloud),
+        uploadToGoogleCloud: reviveUploadStatus<UploadToGoogleCloud>(status.uploadToGoogleCloud),
         uploadToAzure: reviveUploadStatus<UploadToAzure>(status.uploadToAzure),
         uploadToGlacier: reviveUploadStatus<UploadToGlacier>(status.uploadToGlacier)
     }

@@ -17,9 +17,9 @@ export class ObjectUtil {
 
     // WARNING: some methods are assigned below dynamically
 
-    static camelCase = (input: string, locale?: string) => locale ? input[0].toLocaleUpperCase(locale)  + input.slice(1) : input[0].toLowerCase() + input.slice(1);
+    static camelCase = (input: string, locale?: string) => locale ? input[0].toLocaleLowerCase(locale)  + input.slice(1) : input[0].toLowerCase() + input.slice(1);
     static camel = ObjectUtil.camelCase;
-    static pascalCase = (input: string, locale?: string) => locale ? input[0].toLocaleLowerCase(locale) + input.slice(1) : input[0].toUpperCase() + input.slice(1);
+    static pascalCase = (input: string, locale?: string) => locale ? input[0].toLocaleUpperCase(locale) + input.slice(1) : input[0].toUpperCase() + input.slice(1);
     static pascal = ObjectUtil.pascalCase;
 
 

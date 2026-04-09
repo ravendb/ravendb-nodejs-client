@@ -2,7 +2,7 @@ import { IDatabaseTaskStatus } from "../../../ServerWide/IDatabaseTaskStatus.js"
 import { BackupType } from "./Enums.js";
 import {
     LocalBackup,
-    UpdateToGoogleCloud,
+    UploadToGoogleCloud,
     UploadToAzure,
     UploadToFtp,
     UploadToGlacier,
@@ -25,7 +25,7 @@ export interface PeriodicBackupStatus extends IDatabaseTaskStatus {
     uploadToS3: UploadToS3;
     uploadToGlacier: UploadToGlacier;
     uploadToAzure: UploadToAzure;
-    updateToGoogleCloud: UpdateToGoogleCloud;
+    uploadToGoogleCloud: UploadToGoogleCloud;
     uploadToFtp: UploadToFtp;
     lastEtag: number;
     lastDatabaseChangeVector: string;
