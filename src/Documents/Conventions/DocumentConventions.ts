@@ -568,7 +568,7 @@ export class DocumentConventions {
     public set identityPartsSeparator(value: string) {
         this._assertNotFrozen();
 
-        if (this.identityPartsSeparator === "|") {
+        if (value === "|") {
             throwError("InvalidArgumentException", "Cannot set identity parts separator to '|'");
         }
 

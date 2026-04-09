@@ -174,7 +174,7 @@ export class TimeValue {
         }
 
         const myBounds = TimeValue._getBoundsInSeconds(this);
-        const otherBounds = TimeValue._getBoundsInSeconds(this);
+        const otherBounds = TimeValue._getBoundsInSeconds(other);
 
         if (otherBounds[1] < myBounds[0]) {
             return 1;
@@ -224,12 +224,12 @@ export class TimeValue {
         }
 
         if (TimeValue._isMin(current)) {
-            resultSetter(TimeValue._isMax(other) ? 0 : -1);
+            resultSetter(TimeValue._isMin(other) ? 0 : -1);
             return true;
         }
 
         if (TimeValue._isMin(other)) {
-            resultSetter(TimeValue._isMax(current) ? 0 : 1);
+            resultSetter(TimeValue._isMin(current) ? 0 : 1);
             return true;
         }
 

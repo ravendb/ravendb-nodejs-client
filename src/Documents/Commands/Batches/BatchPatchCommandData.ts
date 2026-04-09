@@ -57,10 +57,12 @@ export class BatchPatchCommandData implements ICommandData {
             throwError("InvalidArgumentException", "Value cannot be null or whitespace.");
         }
 
-        if (!this._seenIds.add(id)) {
+        if (this._seenIds.has(id)) {
             throwError("InvalidOperationException",
                 "Could not add ID '" + id + "' because item with the same ID was already added");
         }
+
+        this._seenIds.add(id);
 
         this._ids.push({ id, changeVector });
     }

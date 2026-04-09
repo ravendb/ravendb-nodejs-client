@@ -110,6 +110,7 @@ export class JsonOperation {
                     }
 
                     JsonOperation._newChange(fieldPath, prop, newProp, oldProp, docChanges, "FieldChanged");
+                    continue;
                 }
 
                 changed = JsonOperation._compareJsonArray(
