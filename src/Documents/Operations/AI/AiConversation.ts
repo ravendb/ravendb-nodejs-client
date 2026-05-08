@@ -9,6 +9,22 @@ import type { UnhandledActionEventArgs } from "./UnhandledActionEventArgs.js";
 import { ContentPart, TextPart } from "./ContentPart.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
+import type { Readable } from "node:stream";
+
+type PutAttachmentCommand = {
+    kind: "put";
+    name: string;
+    stream: Readable | Buffer;
+    contentType: string;
+};
+
+type CopyAttachmentCommand = {
+    kind: "copy";
+    sourceDocumentId: string;
+    fileName: string;
+};
+
+export type AiAttachmentCommand = PutAttachmentCommand | CopyAttachmentCommand;
 
 export enum AiHandleErrorStrategy {
     SendErrorsToModel = "SendErrorsToModel",
@@ -27,6 +43,7 @@ export class AiConversation {
     private readonly _actionResponses: Map<string, AiAgentActionResponse> = new Map();
     private readonly _artificialActions: AiAgentArtificialActionResponse[] = [];
     private readonly _promptParts: ContentPart[] = [];
+    private readonly _attachmentCommands: AiAttachmentCommand[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
     public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
@@ -150,6 +167,35 @@ export class AiConversation {
             if (!prompt) throwError("InvalidArgumentException", "prompt cannot be empty");
             this._promptParts.push(new TextPart(prompt));
         }
+    }
+
+    /**
+     * Adds a file attachment as a stream to the next conversation turn.
+     * Use a descriptive name — the LLM uses the filename for context.
+     *
+     * @param name Descriptive filename (e.g. "monthly_budget.pdf")
+     * @param stream The file data as a Node.js Readable stream or Buffer
+     * @param contentType MIME type (e.g. "image/png", "application/pdf")
+     */
+    public addAttachment(name: string, stream: Readable | Buffer, contentType: string): void {
+        if (!stream) throwError("InvalidArgumentException", "stream cannot be null");
+        if (!name) throwError("InvalidArgumentException", "name cannot be empty");
+        if (!contentType) throwError("InvalidArgumentException", "contentType cannot be empty");
+        this._attachmentCommands.push({ kind: "put", name, stream, contentType });
+    }
+
+    /**
+     * Copies an existing attachment from a RavenDB document into the conversation context.
+     *
+     * @param sourceDocumentId The ID of the document containing the attachment
+     * @param fileName The name of the attachment to copy
+     */
+    public copyAttachmentFrom(sourceDocumentId: string, fileName: string): void {
+        if (StringUtil.isNullOrEmpty(sourceDocumentId))
+            throwError("InvalidArgumentException", "sourceDocumentId cannot be empty");
+        if (StringUtil.isNullOrEmpty(fileName))
+            throwError("InvalidArgumentException", "fileName cannot be empty");
+        this._attachmentCommands.push({ kind: "copy", sourceDocumentId, fileName });
     }
 
     public handle<TArgs = any, TResult extends object = object>(
@@ -305,7 +351,7 @@ export class AiConversation {
     }
 
     private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
-        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.size === 0 && this._artificialActions.length === 0) {
+        if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.size === 0 && this._artificialActions.length === 0 && this._attachmentCommands.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
 
@@ -317,6 +363,7 @@ export class AiConversation {
             this._artificialActions,
             this._options,
             this._changeVector,
+            this._attachmentCommands.length > 0 ? [...this._attachmentCommands] : undefined,
             streamPropertyPath,
             streamCallback
         );
@@ -335,10 +382,11 @@ export class AiConversation {
                 elapsed: res.elapsed
             };
         } finally {
-            // clear prompt, responses and artificial actions after running the conversation
+            // clear prompt, responses, artificial actions and attachment commands after running the conversation
             this._promptParts.length = 0;
             this._actionResponses.clear();
             this._artificialActions.length = 0;
+            this._attachmentCommands.length = 0;
         }
     }
 

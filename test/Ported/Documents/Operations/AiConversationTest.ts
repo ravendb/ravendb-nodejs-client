@@ -4,6 +4,7 @@ import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 
 import {AiHandleErrorStrategy} from "../../../../src/Documents/Operations/AI/AiConversation.js";
 import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js";
+import { AiConversationCreationOptions } from "../../../../src/Documents/Operations/AI/Agents/AiConversationCreationOptions.js";
 
 (RavenTestContext.isRavenDbServerVersion("7.1") ? describe : describe.skip)("AiConversationTest", function () {
     let store: IDocumentStore;
@@ -573,5 +574,86 @@ import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js
 
         assertThat(diff.reasoningTokens).isSameAs(40);
         assertThat(diff.completionTokens).isSameAs(100);
+    });
+
+    it("addAttachment_validatesName", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/att1|") as any;
+        const buf = Buffer.from("data");
+
+        await assertThrows(() => Promise.resolve(conv.addAttachment("", buf, "image/png")), err => {
+            assertThat(err.message).contains("name cannot be empty");
+        });
+    });
+
+    it("addAttachment_validatesStream", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/att2|") as any;
+
+        await assertThrows(() => Promise.resolve(conv.addAttachment("file.png", null, "image/png")), err => {
+            assertThat(err.message).contains("stream cannot be null");
+        });
+    });
+
+    it("addAttachment_validatesContentType", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/att3|") as any;
+        const buf = Buffer.from("data");
+
+        await assertThrows(() => Promise.resolve(conv.addAttachment("file.png", buf, "")), err => {
+            assertThat(err.message).contains("contentType cannot be empty");
+        });
+    });
+
+    it("copyAttachmentFrom_validatesSourceDocumentId", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/att4|") as any;
+
+        await assertThrows(() => Promise.resolve(conv.copyAttachmentFrom("", "file.png")), err => {
+            assertThat(err.message).contains("sourceDocumentId cannot be empty");
+        });
+    });
+
+    it("copyAttachmentFrom_validatesFileName", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/att5|") as any;
+
+        await assertThrows(() => Promise.resolve(conv.copyAttachmentFrom("docs/1", "")), err => {
+            assertThat(err.message).contains("fileName cannot be empty");
+        });
+    });
+
+    it("addParameter_fluent_returnsOptions", () => {
+        const options = new AiConversationCreationOptions();
+        const returned = options.addParameter("key", "value");
+
+        assertThat(returned).isSameAs(options);
+    });
+
+    it("addParameter_withSendToModel_false_storesFlag", () => {
+        const options = new AiConversationCreationOptions();
+        options.addParameter("key", "value", { sendToModel: false });
+
+        assertThat(options.parameters["key"].sendToModel).isFalse();
+        assertThat(options.parameters["key"].value).isEqualTo("value");
+    });
+
+    it("addParameter_withSendToModel_default_isTrue", () => {
+        const options = new AiConversationCreationOptions();
+        options.addParameter("key", "value");
+
+        assertThat(options.parameters["key"].sendToModel).isTrue();
+        assertThat(options.parameters["key"].value).isEqualTo("value");
+    });
+
+    it("legacyConstructor_withPlainRecord_wrapsValues", () => {
+        const options = new AiConversationCreationOptions({ userId: "users/1" } as any);
+
+        assertThat(options.parameters["userId"].value).isEqualTo("users/1");
+        assertThat(options.parameters["userId"].sendToModel).isTrue();
+    });
+
+    it("legacyConstructor_withStructuredRecord_passesThrough", () => {
+        const options = new AiConversationCreationOptions({
+            userId: { value: "users/1", sendToModel: false }
+        } as any);
+
+        assertThat(options.parameters["userId"].value).isEqualTo("users/1");
+        assertThat(options.parameters["userId"].sendToModel).isFalse();
     });
 });

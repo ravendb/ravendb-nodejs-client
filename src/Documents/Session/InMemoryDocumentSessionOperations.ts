@@ -52,7 +52,7 @@ import { CounterTracking } from "./CounterInternalTypes.js";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap.js";
 import { CaseInsensitiveStringSet } from "../../Primitives/CaseInsensitiveStringSet.js";
 import { DocumentStore } from "../DocumentStore.js";
-import { SessionOptions } from "./SessionOptions.js";
+import { SessionOptions, OptimisticConcurrencyMode } from "./SessionOptions.js";
 import { ClusterTransactionOperationsBase } from "./ClusterTransactionOperationsBase.js";
 import { BatchCommandResult } from "./Operations/BatchCommandResult.js";
 import { SessionOperationExecutor } from "../Operations/SessionOperationExecutor.js";
@@ -206,6 +206,8 @@ export abstract class InMemoryDocumentSessionOperations
 
     public useOptimisticConcurrency: boolean;
 
+    private _optimisticConcurrencyMode: OptimisticConcurrencyMode;
+
     protected _deferredCommands: ICommandData[] = [];
 
     // keys are produced with IdTypeAndName.keyFor() method
@@ -252,7 +254,9 @@ export abstract class InMemoryDocumentSessionOperations
 
         this.noTracking = options.noTracking;
 
-        this.useOptimisticConcurrency = this._requestExecutor.conventions.isUseOptimisticConcurrency();
+        this._optimisticConcurrencyMode = options.optimisticConcurrencyMode
+            ?? this._requestExecutor.conventions.optimisticConcurrencyMode;
+        this.useOptimisticConcurrency = this._optimisticConcurrencyMode !== "None";
         this.maxNumberOfRequestsPerSession = this._requestExecutor.conventions.maxNumberOfRequestsPerSession;
         this._generateEntityIdOnTheClient =
             new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
@@ -273,6 +277,15 @@ export abstract class InMemoryDocumentSessionOperations
                 indexOptions: null
             }
         }
+    }
+
+    public get optimisticConcurrencyMode(): OptimisticConcurrencyMode {
+        return this._optimisticConcurrencyMode;
+    }
+
+    public set optimisticConcurrencyMode(value: OptimisticConcurrencyMode) {
+        this._optimisticConcurrencyMode = value;
+        this.useOptimisticConcurrency = value !== "None";
     }
 
     protected abstract _generateId(entity: object): Promise<string>;
@@ -1503,6 +1516,29 @@ export abstract class InMemoryDocumentSessionOperations
         for (const deferredCommand of result.deferredCommands) {
             if (deferredCommand.onBeforeSaveChanges) {
                 deferredCommand.onBeforeSaveChanges(this);
+            }
+        }
+
+        // WritesAndReads: send change vectors for all tracked docs not already in batch
+        if (this._optimisticConcurrencyMode === "WritesAndReads") {
+            const trackedEntities: Record<string, string> = {};
+            const idsInBatch = new Set(result.sessionCommands.map(c => c.id?.toLowerCase()));
+            for (const [id, docInfo] of this.documentsById.entries()) {
+                if (!idsInBatch.has(id.toLowerCase()) && docInfo.changeVector) {
+                    trackedEntities[id] = docInfo.changeVector;
+                }
+            }
+            if (Object.keys(trackedEntities).length > 0) {
+                result.sessionCommands.push({
+                    id: null,
+                    name: null,
+                    changeVector: null,
+                    type: "BatchTrackChanges",
+                    serialize: (_conventions) => ({
+                        Type: "BatchTrackChanges",
+                        TrackedEntities: trackedEntities
+                    })
+                } as ICommandData);
             }
         }
 

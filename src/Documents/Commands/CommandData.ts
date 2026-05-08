@@ -28,6 +28,7 @@ export type CommandType =
     | "TimeSeriesCopy"
     | "JsonPatch"
     | "HeartBeat"
+    | "BatchTrackChanges"
     ;
 
 export interface ICommandData {

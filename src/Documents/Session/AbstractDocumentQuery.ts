@@ -53,6 +53,7 @@ import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField.js";
 import { SpatialCriteria } from "../Queries/Spatial/SpatialCriteria.js";
 import { SessionBeforeQueryEventArgs } from "./SessionEvents.js";
 import { CmpXchg } from "./CmpXchg.js";
+import { RavenDateMethodCall } from "./RavenDateMethodCall.js";
 import { ValueCallback } from "../../Types/Callbacks.js";
 import { DocumentQueryCustomization } from "./DocumentQueryCustomization.js";
 import { FacetBase } from "../Queries/Facets/FacetBase.js";
@@ -195,6 +196,8 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     protected _disableEntitiesTracking: boolean;
 
     protected _disableCaching: boolean;
+
+    protected _queryTag: string | undefined;
 
     protected projectionBehavior: ProjectionBehavior;
 
@@ -961,8 +964,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             }
 
             let token: WhereToken;
-            const type = mc.constructor.name;
-            if (CmpXchg.name === type) {
+            if (mc instanceof CmpXchg) {
                 token = WhereToken.create(
                     op,
                     whereParams.fieldName,
@@ -973,8 +975,19 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                         property: mc.accessPath,
                         exact: whereParams.exact
                     }));
+            } else if (mc instanceof RavenDateMethodCall) {
+                token = WhereToken.create(
+                    op,
+                    whereParams.fieldName,
+                    null,
+                    new WhereOptions({
+                        methodType: mc.dateMethodType,
+                        parameters: args,
+                        property: mc.accessPath,
+                        exact: whereParams.exact
+                    }));
             } else {
-                throwError("InvalidArgumentException", `Unknown method ${type}.`);
+                throwError("InvalidArgumentException", `Unknown method ${mc.constructor.name}.`);
             }
 
             tokens.push(token);
@@ -1173,6 +1186,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.value = value;
         whereParams.fieldName = fieldName;
 
+        if (this._ifValueIsMethod("GreaterThan", whereParams, tokens)) {
+            return;
+        }
+
         const parameter = this._addQueryParameter(
             value == null ? "*" : this._transformValue(whereParams, true));
 
@@ -1202,6 +1219,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.value = value;
         whereParams.fieldName = fieldName;
 
+        if (this._ifValueIsMethod("GreaterThanOrEqual", whereParams, tokens)) {
+            return;
+        }
+
         const parameter = this._addQueryParameter(
             value == null ? "*" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
@@ -1222,6 +1243,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         whereParams.value = value;
         whereParams.fieldName = fieldName;
 
+        if (this._ifValueIsMethod("LessThan", whereParams, tokens)) {
+            return;
+        }
+
         const parameter = this._addQueryParameter(
             value == null ? "NULL" : this._transformValue(whereParams, true));
         const whereToken = WhereToken.create(
@@ -1240,6 +1265,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         const whereParams = new WhereParams();
         whereParams.value = value;
         whereParams.fieldName = fieldName;
+
+        if (this._ifValueIsMethod("LessThanOrEqual", whereParams, tokens)) {
+            return;
+        }
 
         const parameter = this._addQueryParameter(
             value == null ? "NULL" : this._transformValue(whereParams, true));
@@ -1521,6 +1550,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         indexQuery.disableCaching = this._disableCaching;
         indexQuery.projectionBehavior = this.projectionBehavior;
         indexQuery.skipStatistics = !this._queryStats.requestedByUser;
+        indexQuery.tag = this._queryTag;
         return indexQuery;
     }
 
@@ -1939,6 +1969,14 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
     public _noCaching(): void {
         this._disableCaching = true;
+    }
+
+    public withTag(tag: string): this {
+        if (!tag || !tag.trim()) {
+            throwError("InvalidArgumentException", "Query tag cannot be null or whitespace.");
+        }
+        this._queryTag = tag;
+        return this;
     }
 
     public _includeTimings(timingsCallback: (timings: QueryTimings) => void): void {
