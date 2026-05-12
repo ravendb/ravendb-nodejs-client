@@ -79,8 +79,8 @@ export class DocumentConventions {
 
     private _useOptimisticConcurrency: boolean;
     private _optimisticConcurrencyMode: OptimisticConcurrencyMode = "None";
-    private _useOptimisticConcurrencyWasSet: boolean = false;
-    private _optimisticConcurrencyModeWasSet: boolean = false;
+    private _useOptimisticConcurrencyWasSet: boolean;
+    private _optimisticConcurrencyModeWasSet: boolean;
     private _maxNumberOfRequestsPerSession: number;
 
     private _requestTimeout: number | undefined;
