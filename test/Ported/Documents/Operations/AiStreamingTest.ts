@@ -25,6 +25,7 @@ import {RavenTestContext} from "../../../Utils/TestUtil.js";
             [],
             undefined,
             undefined,
+            undefined,
             "message",
             streamCallback
         );
@@ -87,6 +88,7 @@ import {RavenTestContext} from "../../../Utils/TestUtil.js";
             "Test",
             [],
             [],
+            undefined,
             undefined,
             undefined,
             "text",
