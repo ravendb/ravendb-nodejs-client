@@ -20,7 +20,7 @@ interface User {
     email?: string;
 }
 
-(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("DocumentSessionRemoteAttachmentsTests", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("DocumentSessionRemoteAttachmentsTests", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {

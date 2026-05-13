@@ -10,7 +10,7 @@ import {
 } from "../../../src/index.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("RemoteAttachmentsBasicTests", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RemoteAttachmentsBasicTests", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {
