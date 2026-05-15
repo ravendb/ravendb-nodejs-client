@@ -111,6 +111,9 @@ export class BatchOperation {
                     this._handleCompareExchangeDelete(batchResult);
                     break;
                 }
+                case "BatchTrackChanges": {
+                    break;
+                }
                 default: {
                     throwError("InvalidOperationException", `Command '${type}' is not supported.`);
                 }
@@ -170,7 +173,8 @@ export class BatchOperation {
                 case "TimeSeriesCopy": {
                     break;
                 }
-                case "BatchPATCH": {
+                case "BatchPATCH":
+                case "BatchTrackChanges": {
                     break;
                 }
                 default: {

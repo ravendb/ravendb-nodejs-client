@@ -17,7 +17,7 @@ interface Order {
     shipVia?: string;
 }
 
-(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("BulkInsertRemoteAttachmentsTests", () => {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("BulkInsertRemoteAttachmentsTests", () => {
     let store: IDocumentStore;
 
     beforeEach(async () => {

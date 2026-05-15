@@ -8,6 +8,7 @@ import { EntityToJson } from "./EntityToJson.js";
 import { IMetadataDictionary } from "./IMetadataDictionary.js";
 import { SessionEventsEmitter } from "./SessionEvents.js";
 import { TransactionMode } from "./TransactionMode.js";
+import { OptimisticConcurrencyMode } from "./SessionOptions.js";
 import { IEagerSessionOperations } from "./Operations/Lazy/IEagerSessionOperations.js";
 import { ILazySessionOperations } from "./Operations/Lazy/ILazySessionOperations.js";
 import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations.js";
@@ -243,6 +244,13 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * and raise ConcurrencyException
      */
     useOptimisticConcurrency: boolean;
+
+    /**
+     * The optimistic concurrency mode for this session.
+     * "None": no concurrency checks; "Writes": checks only modified documents;
+     * "WritesAndReads": checks all tracked documents.
+     */
+    optimisticConcurrencyMode: OptimisticConcurrencyMode;
 
     /**
      * Clears this instance.

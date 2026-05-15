@@ -17,6 +17,7 @@ import { ObjectUtil, FieldNameConversion } from "../../Utility/ObjectUtil.js";
 import { LoadBalanceBehavior } from "../../Http/LoadBalanceBehavior.js";
 import { BulkInsertConventions } from "./BulkInsertConventions.js";
 import { InMemoryDocumentSessionOperations } from "../Session/InMemoryDocumentSessionOperations.js";
+import { OptimisticConcurrencyMode } from "../Session/SessionOptions.js";
 import { ShardingConventions } from "./ShardingConventions.js";
 import { plural } from "../../ext/pluralize/pluralize.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
@@ -77,6 +78,9 @@ export class DocumentConventions {
     private _findJsType: (id: string, doc: object) => ObjectTypeDescriptor;
 
     private _useOptimisticConcurrency: boolean;
+    private _optimisticConcurrencyMode: OptimisticConcurrencyMode = "None";
+    private _useOptimisticConcurrencyWasSet: boolean;
+    private _optimisticConcurrencyModeWasSet: boolean;
     private _maxNumberOfRequestsPerSession: number;
 
     private _requestTimeout: number | undefined;
@@ -395,11 +399,33 @@ export class DocumentConventions {
 
     public set useOptimisticConcurrency(val: boolean) {
         this._assertNotFrozen();
+        if (this._optimisticConcurrencyModeWasSet) {
+            throwError("InvalidOperationException",
+                "useOptimisticConcurrency cannot be set when optimisticConcurrencyMode was already set. " +
+                "Use optimisticConcurrencyMode instead.");
+        }
+        this._useOptimisticConcurrencyWasSet = true;
+        this._optimisticConcurrencyMode = val ? "Writes" : "None";
         this._useOptimisticConcurrency = val;
     }
 
     public get useOptimisticConcurrency() {
-        return this._useOptimisticConcurrency;
+        return this._optimisticConcurrencyMode !== "None";
+    }
+
+    public get optimisticConcurrencyMode(): OptimisticConcurrencyMode {
+        return this._optimisticConcurrencyMode;
+    }
+
+    public set optimisticConcurrencyMode(value: OptimisticConcurrencyMode) {
+        this._assertNotFrozen();
+        if (this._useOptimisticConcurrencyWasSet) {
+            throwError("InvalidOperationException",
+                "optimisticConcurrencyMode cannot be set when useOptimisticConcurrency was already set. " +
+                "Use optimisticConcurrencyMode instead.");
+        }
+        this._optimisticConcurrencyModeWasSet = true;
+        this._optimisticConcurrencyMode = value;
     }
 
     public deserializeEntityFromJson(documentType: ObjectTypeDescriptor, document: object): object {
@@ -505,7 +531,7 @@ export class DocumentConventions {
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
      */
     public isUseOptimisticConcurrency(): boolean {
-        return this._useOptimisticConcurrency;
+        return this._optimisticConcurrencyMode !== "None";
     }
 
     /**
@@ -513,7 +539,14 @@ export class DocumentConventions {
      */
     public setUseOptimisticConcurrency(useOptimisticConcurrency: boolean): void {
         this._assertNotFrozen();
+        if (this._optimisticConcurrencyModeWasSet) {
+            throwError("InvalidOperationException",
+                "useOptimisticConcurrency cannot be set when optimisticConcurrencyMode was already set. " +
+                "Use optimisticConcurrencyMode instead.");
+        }
+        this._useOptimisticConcurrencyWasSet = true;
         this._useOptimisticConcurrency = useOptimisticConcurrency;
+        this._optimisticConcurrencyMode = useOptimisticConcurrency ? "Writes" : "None";
     }
 
     public get identityProperty() {

@@ -63,4 +63,11 @@ export interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> extends Query
      * Add a named parameter to the query
      */
     addParameter(name: string, value: any): TSelf;
+
+    /**
+     * Attaches a user-defined tag that is forwarded to the server as the `tag`
+     * query-string parameter. Useful for identifying query sources in server logs
+     * and monitoring dashboards. The tag does not affect query results or caching.
+     */
+    withTag(tag: string): TSelf;
 }

@@ -35,12 +35,20 @@ export abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
      */
     public temperature?: number;
 
+    /**
+     * When true, enables server-side prompt caching for eligible requests.
+     * Reduces cost and latency by reusing the KV cache from previous requests
+     * with shared prefixes.
+     */
+    public enablePromptCache?: boolean;
+
     protected constructor(
         apiKey: string,
         endpoint: string,
         model: string,
         dimensions?: number,
-        temperature?: number
+        temperature?: number,
+        enablePromptCache?: boolean
     ) {
         super();
         this.apiKey = apiKey;
@@ -48,6 +56,7 @@ export abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
         this.model = model;
         this.dimensions = dimensions;
         this.temperature = temperature;
+        this.enablePromptCache = enablePromptCache;
     }
 
     public getBaseEndpointUri(): string {
@@ -109,6 +118,10 @@ export abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
         if (hasTemperature !== otherHasTemperature ||
             (hasTemperature && otherHasTemperature &&
              Math.abs(this.temperature - other.temperature) > 0.0001)) {
+            differences |= AiSettingsCompareDifferences.EndpointConfiguration;
+        }
+
+        if (this.enablePromptCache !== other.enablePromptCache) {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 

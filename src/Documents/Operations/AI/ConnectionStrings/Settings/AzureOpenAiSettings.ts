@@ -14,9 +14,10 @@ export class AzureOpenAiSettings extends OpenAiBaseSettings {
         model: string,
         public deploymentName: string,
         dimensions?: number,
-        temperature?: number
+        temperature?: number,
+        enablePromptCache?: boolean
     ) {
-        super(apiKey, endpoint, model, dimensions, temperature);
+        super(apiKey, endpoint, model, dimensions, temperature, enablePromptCache);
     }
 
     public validate(errors: string[]): void {

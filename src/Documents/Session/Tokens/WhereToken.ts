@@ -7,7 +7,7 @@ import { WhereOperator } from "./WhereOperator.js";
 import { CONSTANTS } from "../../../Constants.js";
 import { IVectorOptions } from "../../Queries/VectorSearch/VectorSearchOptions.js";
 
-export type MethodsType = "CmpXchg";
+export type MethodsType = "CmpXchg" | "Now" | "Today";
 
 export class WhereMethodCall {
     public methodType: MethodsType;
@@ -142,6 +142,26 @@ export class WhereToken extends QueryToken {
     private _writeMethod(writer): boolean {
         if (this.options.method) {
             switch (this.options.method.methodType) {
+                case "Now": {
+                    if (this.options.method.parameters && this.options.method.parameters.length > 0) {
+                        writer.append("now($");
+                        writer.append(this.options.method.parameters[0]);
+                        writer.append(")");
+                    } else {
+                        writer.append("now()");
+                    }
+                    if (this.options.method.property) {
+                        writer.append(".").append(this.options.method.property);
+                    }
+                    return true;
+                }
+                case "Today": {
+                    writer.append("today()");
+                    if (this.options.method.property) {
+                        writer.append(".").append(this.options.method.property);
+                    }
+                    return true;
+                }
                 case "CmpXchg": {
                     writer.append("cmpxchg(");
                     break;

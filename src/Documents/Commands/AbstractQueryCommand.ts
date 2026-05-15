@@ -9,6 +9,7 @@ export abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
     private readonly _metadataOnly: boolean;
     private readonly _indexEntriesOnly: boolean;
     private readonly _ignoreLimit: boolean;
+    private readonly _tag: string | undefined;
 
     protected constructor(indexQuery: IndexQuery, canCache: boolean, metadataOnly: boolean, indexEntriesOnly: boolean, ignoreLimit: boolean) {
         super();
@@ -16,6 +17,7 @@ export abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
         this._metadataOnly = metadataOnly;
         this._indexEntriesOnly = indexEntriesOnly;
         this._ignoreLimit = ignoreLimit;
+        this._tag = indexQuery.tag;
 
         this._canCache = canCache;
 
@@ -50,6 +52,10 @@ export abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
 
         if (this._ignoreLimit) {
             path.append("&ignoreLimit=true");
+        }
+
+        if (this._tag) {
+            path.append("&tag=").append(encodeURIComponent(this._tag));
         }
 
         path.append("&addTimeSeriesNames=true");

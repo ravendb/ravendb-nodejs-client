@@ -3,6 +3,12 @@ import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
 
 /**
+ * Controls the amount of internal reasoning the model performs.
+ * Lower values reduce latency; higher values improve response quality for complex tasks.
+ */
+export type OpenAiReasoningEffort = "Minimal" | "Low" | "Medium" | "High";
+
+/**
  * The configuration for the OpenAI API client.
  */
 export class OpenAiSettings extends OpenAiBaseSettings {
@@ -23,6 +29,18 @@ export class OpenAiSettings extends OpenAiBaseSettings {
      */
     public projectId?: string;
 
+    /**
+     * Controls the reasoning depth used by supported models (e.g. GPT-5 family).
+     * Lower values reduce internal reasoning, improving latency.
+     */
+    public reasoningEffort?: OpenAiReasoningEffort;
+
+    /**
+     * Optional seed for more reproducible sampling across requests.
+     * Does not guarantee fully deterministic results.
+     */
+    public seed?: number;
+
     private static readonly OPENAI_BASE_URI = "https://api.openai.com/";
 
     public constructor(
@@ -32,11 +50,16 @@ export class OpenAiSettings extends OpenAiBaseSettings {
         organizationId?: string,
         projectId?: string,
         dimensions?: number,
-        temperature?: number
+        temperature?: number,
+        enablePromptCache?: boolean,
+        reasoningEffort?: OpenAiReasoningEffort,
+        seed?: number
     ) {
-        super(apiKey, endpoint, model, dimensions, temperature);
+        super(apiKey, endpoint, model, dimensions, temperature, enablePromptCache);
         this.organizationId = organizationId;
         this.projectId = projectId;
+        this.reasoningEffort = reasoningEffort;
+        this.seed = seed;
     }
 
     public getBaseEndpointUri(): string {
@@ -59,6 +82,11 @@ export class OpenAiSettings extends OpenAiBaseSettings {
         if (this.organizationId !== other.organizationId ||
             this.projectId !== other.projectId) {
             differences |= AiSettingsCompareDifferences.AuthenticationSettings;
+        }
+
+        if (this.reasoningEffort !== other.reasoningEffort ||
+            this.seed !== other.seed) {
+            differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 
         return differences;

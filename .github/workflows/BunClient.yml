@@ -2,9 +2,9 @@ name: tests/bun
 
 on:
   push:
-    branches: [ v7.1 ]
+    branches: [ v7.2 ]
   pull_request:
-    branches: [ v7.1 ]
+    branches: [ v7.2 ]
   schedule:
     - cron: '0 10 * * *'
   workflow_dispatch:

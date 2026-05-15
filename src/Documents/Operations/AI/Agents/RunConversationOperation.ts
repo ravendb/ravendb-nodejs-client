@@ -5,17 +5,20 @@ import type { AiAgentActionResponse, AiAgentArtificialActionResponse } from "./A
 import type { AiConversationCreationOptions } from "./AiConversationCreationOptions.js";
 import type { ConversationResult } from "./ConversationResult.js";
 import type { AiStreamCallback } from "../AiStreamCallback.js";
+import type { AiAttachmentCommand } from "../AiConversation.js";
 import { ContentPart, TextPart } from "../ContentPart.js";
 import { RavenCommand } from "../../../../Http/RavenCommand.js";
 import { DocumentConventions } from "../../../Conventions/DocumentConventions.js";
 import { IRaftCommand } from "../../../../Http/IRaftCommand.js";
 import { RaftIdGenerator } from "../../../../Utility/RaftIdGenerator.js";
 import { ServerNode } from "../../../../Http/ServerNode.js";
-import { HttpRequestParameters } from "../../../../Primitives/Http.js";
+import { HttpRequestParameters, HttpResponse } from "../../../../Primitives/Http.js";
 import { throwError } from "../../../../Exceptions/index.js";
 import { JsonSerializer } from "../../../../Mapping/Json/Serializer.js";
 import { ObjectUtil } from "../../../../Utility/ObjectUtil.js";
 import { StringUtil } from "../../../../Utility/StringUtil.js";
+import { readToBuffer } from "../../../../Utility/StreamUtil.js";
+import { Dispatcher } from "undici-types";
 
 export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
     private readonly _agentId: string;
@@ -25,6 +28,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private readonly _artificialActions?: AiAgentArtificialActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
+    private readonly _attachmentCommands?: AiAttachmentCommand[];
     private readonly _streamPropertyPath?: string;
     private readonly _streamCallback?: AiStreamCallback;
 
@@ -36,6 +40,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         artificialActions?: AiAgentArtificialActionResponse[],
         options?: AiConversationCreationOptions,
         changeVector?: string,
+        attachmentCommands?: AiAttachmentCommand[],
         streamPropertyPath?: string,
         streamCallback?: AiStreamCallback
     ) {
@@ -65,6 +70,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         this._artificialActions = artificialActions;
         this._options = options;
         this._changeVector = changeVector;
+        this._attachmentCommands = attachmentCommands;
         this._streamPropertyPath = streamPropertyPath;
         this._streamCallback = streamCallback;
     }
@@ -82,6 +88,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
             this._artificialActions,
             this._options,
             this._changeVector,
+            this._attachmentCommands,
             conventions,
             this._streamPropertyPath,
             this._streamCallback
@@ -99,6 +106,7 @@ class RunConversationCommand<TAnswer>
     private readonly _artificialActions?: AiAgentArtificialActionResponse[];
     private readonly _options?: AiConversationCreationOptions;
     private readonly _changeVector?: string;
+    private readonly _attachmentCommands?: AiAttachmentCommand[];
     private readonly _streamPropertyPath?: string;
     private readonly _streamCallback?: AiStreamCallback;
     private _raftId: string;
@@ -111,6 +119,7 @@ class RunConversationCommand<TAnswer>
         artificialActions: AiAgentArtificialActionResponse[] | undefined,
         options: AiConversationCreationOptions | undefined,
         changeVector: string | undefined,
+        attachmentCommands: AiAttachmentCommand[] | undefined,
         conventions: DocumentConventions,
         streamPropertyPath?: string,
         streamCallback?: AiStreamCallback
@@ -123,6 +132,7 @@ class RunConversationCommand<TAnswer>
         this._artificialActions = artificialActions;
         this._options = options;
         this._changeVector = changeVector;
+        this._attachmentCommands = attachmentCommands;
         this._streamPropertyPath = streamPropertyPath;
         this._streamCallback = streamCallback;
 
@@ -161,31 +171,98 @@ class RunConversationCommand<TAnswer>
 
         const uri = `${node.url}/databases/${node.database}/ai/agent?${uriParams}`;
 
+        const creationOptions = this._options ?? {};
         const bodyObj = {
             ActionResponses: this._actionResponses,
             ArtificialActions: this._artificialActions,
             UserPrompt: this._promptParts.length > 0 ? this._promptParts : null,
-            CreationOptions: this._options ?? {}
+            CreationOptions: creationOptions
         };
 
         const headers = this._headers().typeAppJson().build();
 
-        // Serialize properties to PascalCase, except "parameters" in CreationOptions, which must keep user-provided, case-sensitive keys unchanged.
+        // Serialize properties to PascalCase, except user-provided parameter keys in
+        // CreationOptions.Parameters which must stay case-sensitive (e.g. "userId", "locale").
+        // Sub-properties of each parameter (Value, SendToModel) are still PascalCased.
         const serialized = ObjectUtil.transformObjectKeys(bodyObj, {
             defaultTransform: ObjectUtil.pascalCase,
             ignorePaths: [
-                new RegExp("^CreationOptions\\.Parameters\\..*$"),
+                new RegExp("^CreationOptions\\.Parameters\\.[^.]+$"),
                 new RegExp("^UserPrompt\\..*$")
             ]
         });
 
+        const attachments = this._attachmentCommands;
+        if (!attachments || attachments.length === 0) {
+            return {
+                method: "POST",
+                uri,
+                headers,
+                body: JsonSerializer.getDefault().serialize(serialized)
+            };
+        }
+
+        // Server parses multipart positionally (AbstractAiAgentProcessor.ParseMultipartAsync):
+        // part 0 = JSON body, part 1 = { "Commands": [...] }, parts 2+ = raw attachment streams.
+        // Field names in multipart/form-data are ignored; order is what matters.
+        const commands = attachments.map(cmd => {
+            if (cmd.kind === "put") {
+                return {
+                    Type: "AttachmentPUT",
+                    Id: "__this__",
+                    Name: cmd.name,
+                    ContentType: cmd.contentType,
+                    ChangeVector: null
+                };
+            } else {
+                return {
+                    Type: "AttachmentCOPY",
+                    Id: cmd.sourceDocumentId,
+                    Name: cmd.fileName,
+                    DestinationId: "__this__",
+                    DestinationName: cmd.fileName,
+                    ChangeVector: null
+                };
+            }
+        });
+
+        const form = new FormData();
+        form.append("main", new Blob([JsonSerializer.getDefault().serialize(serialized)], { type: "application/json" }));
+        form.append("attachmentCommands", new Blob([JSON.stringify({ Commands: commands })], { type: "application/json" }));
+
+        // NOTE: Buffer data is appended here; Readable streams are appended in send()
+        for (const cmd of attachments) {
+            if (cmd.kind === "put" && Buffer.isBuffer(cmd.stream)) {
+                form.append("attachment", new Blob([cmd.stream], { type: cmd.contentType }));
+            }
+        }
 
         return {
             method: "POST",
             uri,
-            headers,
-            body: JsonSerializer.getDefault().serialize(serialized)
+            // strip content-type header so the browser/fetch can set correct multipart boundary
+            body: form
         };
+    }
+
+    async send(agent: Dispatcher, requestOptions: HttpRequestParameters): Promise<{
+        response: HttpResponse;
+        bodyStream: Readable
+    }> {
+        const { body } = requestOptions;
+        if (body instanceof FormData && this._attachmentCommands) {
+            // NOTE: Readable streams are single-consumption. If the request is retried on
+            // node failover, an already-drained Readable will produce an empty Blob.
+            // Only Buffer inputs are safe for retries. This limitation is consistent with
+            // how SingleNodeBatchCommand handles the same scenario.
+            for (const cmd of this._attachmentCommands) {
+                if (cmd.kind === "put" && !Buffer.isBuffer(cmd.stream)) {
+                    const buf = await readToBuffer(cmd.stream as Readable);
+                    body.append("attachment", new Blob([buf], { type: cmd.contentType }));
+                }
+            }
+        }
+        return super.send(agent, requestOptions);
     }
 
     async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {

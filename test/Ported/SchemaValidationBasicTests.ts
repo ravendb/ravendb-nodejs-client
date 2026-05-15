@@ -8,7 +8,7 @@ import {
 import {assertThat} from "../Utils/AssertExtensions.js";
 
 
-(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("SchemaValidationBasicTests", () => {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("SchemaValidationBasicTests", () => {
     let store: IDocumentStore;
 
     beforeEach(async () => {

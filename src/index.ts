@@ -461,6 +461,7 @@ export * from "./Documents/Subscriptions/SubscriptionUpdateOptions.js";
 // SESSION
 export * from "./Documents/Session/AbstractDocumentQuery.js";
 export * from "./Documents/Session/CmpXchg.js";
+export * from "./Documents/Session/RavenDateMethodCall.js";
 export * from "./Documents/Session/DocumentInfo.js";
 export * from "./Documents/Session/DocumentQuery.js";
 export * from "./Documents/Session/DocumentQueryHelper.js";
@@ -626,6 +627,7 @@ export * from "./Types/Contracts.js";
 export * from "./Types/index.js";
 
 // QUERIES
+export * from "./Documents/Queries/RavenQuery.js";
 export * from "./Documents/Queries/IndexQuery.js";
 export * from "./Documents/Queries/GroupBy.js";
 export * from "./Documents/Queries/QueryOperator.js";
