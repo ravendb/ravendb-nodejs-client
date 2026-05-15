@@ -1538,7 +1538,7 @@ export abstract class InMemoryDocumentSessionOperations
                         Type: "BatchTrackChanges",
                         TrackedEntities: trackedEntities
                     })
-                } as ICommandData);
+                } satisfies ICommandData);
             }
         }
 
