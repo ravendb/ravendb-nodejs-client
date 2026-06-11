@@ -1,4 +1,3 @@
-import { safeMemoryCache } from "safe-memory-cache";
 import { IDisposable } from "../Types/Contracts.js";
 
 export interface CachedItemMetadata {
@@ -8,23 +7,30 @@ export interface CachedItemMetadata {
 
 const NOT_FOUND_RESPONSE = "404 Response";
 
+// approximate cost of a cache entry beyond its payload (key, change vector, bookkeeping)
+const ITEM_OVERHEAD = 20;
+
 export class HttpCache implements IDisposable {
 
-    private _items: safeMemoryCache;
+    private _items: Map<string, HttpCacheItem>;
+    private _totalSize: number;
+    private readonly _maxSize: number;
 
-    constructor(maxKeysSize: number = 500) {
-        this._items = safeMemoryCache({
-            limit: maxKeysSize
-        });
+    constructor(maxSize: number = 128 * 1024 * 1024) {
+        this._items = new Map();
+        this._totalSize = 0;
+        this._maxSize = maxSize;
     }
 
     public dispose(): void {
         this._items.clear();
         this._items = null;
+        this._totalSize = 0;
     }
 
     public clear() {
         this._items.clear();
+        this._totalSize = 0;
     }
 
     public set(url: string, changeVector: string, result: string) {
@@ -33,7 +39,7 @@ export class HttpCache implements IDisposable {
         httpCacheItem.payload = result;
         httpCacheItem.cache = this;
 
-        this._items.set(url, httpCacheItem);
+        this._putItem(url, httpCacheItem);
     }
 
     public get<TResult>(
@@ -41,6 +47,10 @@ export class HttpCache implements IDisposable {
         itemInfoCallback?: ({ changeVector, response }: CachedItemMetadata) => void): ReleaseCacheItem {
         const item: HttpCacheItem = this._items.get(url);
         if (item) {
+            // re-insert to mark as most recently used
+            this._items.delete(url);
+            this._items.set(url, item);
+
             if (itemInfoCallback) {
                 itemInfoCallback({
                     changeVector: item.changeVector,
@@ -66,13 +76,39 @@ export class HttpCache implements IDisposable {
         httpCacheItem.changeVector = NOT_FOUND_RESPONSE;
         httpCacheItem.cache = this;
 
-        this._items.set(url, httpCacheItem);
+        this._putItem(url, httpCacheItem);
     }
 
     public get numberOfItems(): number {
-        return this._items["_get_buckets"]().reduce((result, next: Map<string, string>) => {
-            return result + next.size;
-        }, 0);
+        return this._items.size;
+    }
+
+    private _putItem(url: string, item: HttpCacheItem): void {
+        const existing = this._items.get(url);
+        if (existing) {
+            this._items.delete(url);
+            this._totalSize -= HttpCache._weigh(existing);
+        }
+
+        // an item that can never fit within the budget is not cached at all
+        // instead of evicting everything else in a futile attempt to make room
+        if (HttpCache._weigh(item) > this._maxSize) {
+            return;
+        }
+
+        this._items.set(url, item);
+        this._totalSize += HttpCache._weigh(item);
+
+        // evict least recently used items until back within the size budget
+        while (this._totalSize > this._maxSize && this._items.size > 0) {
+            const [oldestUrl, oldestItem] = this._items.entries().next().value;
+            this._items.delete(oldestUrl);
+            this._totalSize -= HttpCache._weigh(oldestItem);
+        }
+    }
+
+    private static _weigh(item: HttpCacheItem): number {
+        return (item.payload ? item.payload.length : 0) + ITEM_OVERHEAD;
     }
 
     public getMightHaveBeenModified(): boolean {

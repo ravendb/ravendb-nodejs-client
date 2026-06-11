@@ -82,7 +82,6 @@
     "@types/node": "^20.14.14",
     "@types/ws": "^8.5.12",
     "date-fns": "^3.6.0",
-    "safe-memory-cache": "^2.0.0",
     "undici": "^6.19.5",
     "ws": "^8.18.0"
   },
