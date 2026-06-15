@@ -45,6 +45,7 @@ export class AiConversation {
     private readonly _promptParts: ContentPart[] = [];
     private readonly _attachmentCommands: AiAttachmentCommand[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
+    private _dispatchedToolIds = new Set<string>();
     public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
@@ -259,6 +260,7 @@ export class AiConversation {
     }
 
     public async run<TAnswer>(): Promise<AiAnswer<TAnswer>> {
+        this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const r = await this._runInternal<TAnswer>();
@@ -271,6 +273,11 @@ export class AiConversation {
             }
 
             for (const action of this._actionRequests) {
+                if (this._dispatchedToolIds.has(action.toolId)) {
+                    continue;
+                }
+                this._dispatchedToolIds.add(action.toolId);
+
                 const invocation = this._invocations.get(action.name);
                 if (invocation) {
                     await invocation(action);
@@ -316,6 +323,7 @@ export class AiConversation {
             throwError("InvalidArgumentException", "streamCallback cannot be null");
         }
 
+        this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const r = await this._runInternal<TAnswer>(streamPropertyPath, streamCallback);
@@ -328,6 +336,11 @@ export class AiConversation {
             }
 
             for (const action of this._actionRequests) {
+                if (this._dispatchedToolIds.has(action.toolId)) {
+                    continue;
+                }
+                this._dispatchedToolIds.add(action.toolId);
+
                 const invocation = this._invocations.get(action.name);
                 if (invocation) {
                     await invocation(action);

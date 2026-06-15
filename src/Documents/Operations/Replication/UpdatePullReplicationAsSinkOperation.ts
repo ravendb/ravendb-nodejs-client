@@ -9,6 +9,7 @@ import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { Stream } from "node:stream";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
 import { throwError } from "../../../Exceptions/index.js";
+import { normalizePaths } from "./PullReplicationPathFilterUtils.js";
 
 export class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
     private readonly _pullReplication: PullReplicationAsSink;
@@ -59,7 +60,11 @@ class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> im
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/sink-pull-replication";
 
-        const replicationData = {...this._pullReplication};
+        const replicationData = {
+            ...this._pullReplication,
+            allowedHubToSinkPaths: normalizePaths(this._pullReplication.allowedHubToSinkPaths),
+            allowedSinkToHubPaths: normalizePaths(this._pullReplication.allowedSinkToHubPaths),
+        };
 
         // Aligned with ServerStore.UpdatePullReplicationAsSink to not introduce breaking changes
         // When using server certificate, remove the certificateWithPrivateKey field

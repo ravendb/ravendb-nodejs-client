@@ -44,7 +44,7 @@ import { IntersectMarkerToken } from "./Tokens/IntersectMarkerToken.js";
 import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { CONSTANTS, TIME_SERIES } from "../../Constants.js";
 import { WhereOperator } from "./Tokens/WhereOperator.js";
-import { OrderingType } from "./OrderingType.js";
+import { NullsOrdering, OrderingType } from "./OrderingType.js";
 import { SearchOperator } from "../Queries/SearchOperator.js";
 import { DocumentQueryHelper } from "./DocumentQueryHelper.js";
 import { SpatialRelation, SpatialUnits } from "../Indexes/Spatial.js";
@@ -1468,23 +1468,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderBy(field: string, ordering: OrderingType): void;
-    public _orderBy(field: string, options: { sorterName: string });
-    public _orderBy(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
-        if (TypeUtil.isString(orderingOrOptions)) {
-            this._assertNoRawQuery();
-            const f = this._ensureValidFieldName(field, false);
-            this._orderByTokens.push(OrderByToken.createAscending(f, { ordering: orderingOrOptions }));
-        } else {
-            const sorterName = orderingOrOptions.sorterName;
-            if (StringUtil.isNullOrEmpty(sorterName)) {
-                throwError("InvalidArgumentException", "SorterName cannot be null or empty");
-            }
-
-            this._assertNoRawQuery();
-            const f = this._ensureValidFieldName(field, false);
-            this._orderByTokens.push(OrderByToken.createAscending(f, orderingOrOptions));
-        }
-
+    public _orderBy(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
+    public _orderBy(field: string, options: { sorterName: string }): void;
+    public _orderBy(field: string, orderingOrNullsOrOptions: OrderingType | NullsOrdering | { sorterName: string } = "String", ordering?: OrderingType): void {
+        this._assertNoRawQuery();
+        const f = this._ensureValidFieldName(field, false);
+        this._orderByTokens.push(OrderByToken.createAscending(f, this._resolveOrderByOptions(orderingOrNullsOrOptions, ordering)));
     }
 
     /**
@@ -1499,22 +1488,28 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderByDescending(field: string, ordering: OrderingType): void;
-    public _orderByDescending(field: string, options: { sorterName: string });
-    public _orderByDescending(field: string, orderingOrOptions: OrderingType | { sorterName: string } = "String"): void {
-        if (TypeUtil.isString(orderingOrOptions)) {
-            this._assertNoRawQuery();
-            const f = this._ensureValidFieldName(field, false);
-            this._orderByTokens.push(OrderByToken.createDescending(f, { ordering: orderingOrOptions }));
-        } else {
-            const sorterName = orderingOrOptions.sorterName;
-            if (StringUtil.isNullOrEmpty(sorterName)) {
+    public _orderByDescending(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
+    public _orderByDescending(field: string, options: { sorterName: string }): void;
+    public _orderByDescending(field: string, orderingOrNullsOrOptions: OrderingType | NullsOrdering | { sorterName: string } = "String", ordering?: OrderingType): void {
+        this._assertNoRawQuery();
+        const f = this._ensureValidFieldName(field, false);
+        this._orderByTokens.push(OrderByToken.createDescending(f, this._resolveOrderByOptions(orderingOrNullsOrOptions, ordering)));
+    }
+
+    private _resolveOrderByOptions(
+        orderingOrNullsOrOptions: OrderingType | NullsOrdering | { sorterName: string },
+        ordering?: OrderingType
+    ): { sorterName: string } | { ordering: OrderingType; nullsOrdering?: NullsOrdering } {
+        if (typeof orderingOrNullsOrOptions === "object") {
+            if (StringUtil.isNullOrEmpty(orderingOrNullsOrOptions.sorterName)) {
                 throwError("InvalidArgumentException", "SorterName cannot be null or empty");
             }
-
-            this._assertNoRawQuery();
-            const f = this._ensureValidFieldName(field, false);
-            this._orderByTokens.push(OrderByToken.createDescending(f, orderingOrOptions));
+            return orderingOrNullsOrOptions;
         }
+        if (orderingOrNullsOrOptions === "Default" || orderingOrNullsOrOptions === "First" || orderingOrNullsOrOptions === "Last") {
+            return { ordering: ordering ?? "String", nullsOrdering: orderingOrNullsOrOptions };
+        }
+        return { ordering: orderingOrNullsOrOptions };
     }
 
     public _orderByScore(): void {
@@ -2105,29 +2100,51 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
     public _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
+    public _orderByDistance(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
     public _orderByDistance(fieldName: string, shapeWkt: string): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
     public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
     public _orderByDistance(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
+        fieldNameOrField: string | DynamicSpatialField,
+        shapeWktOrLatitude: string | number,
+        longitudeOrRoundFactorOrNulls?: number | NullsOrdering,
+        roundFactorOrNulls?: number | NullsOrdering,
+        nulls?: NullsOrdering): void {
+
+        const isNullsOrdering = (v: unknown): v is NullsOrdering =>
+            v === "Default" || v === "First" || v === "Last";
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
-                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
-                this._orderByTokens.push(
-                    OrderByToken.createDistanceAscending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
-
-            } else {
+                // (fieldName, shapeWkt, roundFactor?, nulls?)
+                const roundFactor = typeof longitudeOrRoundFactorOrNulls === "number" ? longitudeOrRoundFactorOrNulls : null;
+                const nullsOrdering: NullsOrdering = roundFactor !== null
+                    ? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default")
+                    : (isNullsOrdering(longitudeOrRoundFactorOrNulls) ? longitudeOrRoundFactorOrNulls : "Default");
                 const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
-                    OrderByToken.createDistanceAscending(
+                    OrderByToken.createDistanceAscendingWkt(
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName, nullsOrdering));
+            } else {
+                // (fieldName, latitude, longitude, roundFactor?, nulls?)
+                const roundFactor = typeof roundFactorOrNulls === "number" ? roundFactorOrNulls : null;
+                const nullsOrdering: NullsOrdering = nulls ?? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default");
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceAscendingLatLng(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
+                        this._addQueryParameter(shapeWktOrLatitude),
+                        this._addQueryParameter(longitudeOrRoundFactorOrNulls as number),
+                        roundFactorParameterName,
+                        nullsOrdering));
             }
-
             return;
         }
 
@@ -2139,39 +2156,66 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (TypeUtil.isString(shapeWktOrLatitude)) {
+            const nullsOrdering: NullsOrdering = isNullsOrdering(longitudeOrRoundFactorOrNulls) ? longitudeOrRoundFactorOrNulls : "Default";
             this._orderByDistance(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string, nullsOrdering);
         } else {
+            const nullsOrdering: NullsOrdering = isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : nulls ?? "Default";
             this._orderByDistance(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'",
+                shapeWktOrLatitude as number,
+                longitudeOrRoundFactorOrNulls as number,
+                field.roundFactor,
+                nullsOrdering);
         }
     }
 
     public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
+    public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
     public _orderByDistanceDescending(
-        fieldNameOrField: string | DynamicSpatialField, shapeWktOrLatitude: string | number, longitudeOrRoundFactor?: number, roundFactor?: number): void {
+        fieldNameOrField: string | DynamicSpatialField,
+        shapeWktOrLatitude: string | number,
+        longitudeOrRoundFactorOrNulls?: number | NullsOrdering,
+        roundFactorOrNulls?: number | NullsOrdering,
+        nulls?: NullsOrdering): void {
+
+        const isNullsOrdering = (v: unknown): v is NullsOrdering =>
+            v === "Default" || v === "First" || v === "Last";
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
-                const roundFactorParameterName = longitudeOrRoundFactor ? this._addQueryParameter(longitudeOrRoundFactor) : null;
-                this._orderByTokens.push(
-                    OrderByToken.createDistanceDescending(
-                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName));
-            } else {
+                const roundFactor = typeof longitudeOrRoundFactorOrNulls === "number" ? longitudeOrRoundFactorOrNulls : null;
+                const nullsOrdering: NullsOrdering = roundFactor !== null
+                    ? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default")
+                    : (isNullsOrdering(longitudeOrRoundFactorOrNulls) ? longitudeOrRoundFactorOrNulls : "Default");
                 const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
                 this._orderByTokens.push(
-                    OrderByToken.createDistanceDescending(
+                    OrderByToken.createDistanceDescendingWkt(
+                        fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName, nullsOrdering));
+            } else {
+                const roundFactor = typeof roundFactorOrNulls === "number" ? roundFactorOrNulls : null;
+                const nullsOrdering: NullsOrdering = nulls ?? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default");
+                const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
+                this._orderByTokens.push(
+                    OrderByToken.createDistanceDescendingLatLng(
                         fieldNameOrField as string,
-                        this._addQueryParameter(shapeWktOrLatitude), this._addQueryParameter(longitudeOrRoundFactor), roundFactorParameterName));
+                        this._addQueryParameter(shapeWktOrLatitude),
+                        this._addQueryParameter(longitudeOrRoundFactorOrNulls as number),
+                        roundFactorParameterName,
+                        nullsOrdering));
             }
-
             return;
         }
 
@@ -2183,13 +2227,19 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         }
 
         if (TypeUtil.isString(shapeWktOrLatitude)) {
+            const nullsOrdering: NullsOrdering = isNullsOrdering(longitudeOrRoundFactorOrNulls) ? longitudeOrRoundFactorOrNulls : "Default";
             this._orderByDistanceDescending(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as string, nullsOrdering);
         } else {
+            const nullsOrdering: NullsOrdering = isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : nulls ?? "Default";
             this._orderByDistanceDescending(
                 "'" + field.toField((f, isNestedPath) =>
-                    this._ensureValidFieldName(f, isNestedPath)) + "'", shapeWktOrLatitude as number, longitudeOrRoundFactor, field.roundFactor);
+                    this._ensureValidFieldName(f, isNestedPath)) + "'",
+                shapeWktOrLatitude as number,
+                longitudeOrRoundFactorOrNulls as number,
+                field.roundFactor,
+                nullsOrdering);
         }
     }
 

@@ -6,6 +6,7 @@ import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
 import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { Stream } from "node:stream";
+import { throwError } from "../../../Exceptions/index.js";
 
 export class EnforceRevisionsConfigurationOperation implements IOperation<OperationIdResult> {
     private readonly _parameters: EnforceRevisionsParameters;
@@ -17,6 +18,9 @@ export class EnforceRevisionsConfigurationOperation implements IOperation<Operat
             collections: null,
             includeForceCreated: false
         };
+        if (this._parameters.maxOpsPerSecond != null && this._parameters.maxOpsPerSecond <= 0) {
+            throwError("InvalidOperationException", "maxOpsPerSecond must be greater than 0");
+        }
     }
 
     public get resultType(): OperationResultType {
@@ -31,6 +35,12 @@ export class EnforceRevisionsConfigurationOperation implements IOperation<Operat
 export interface EnforceRevisionsParameters {
     includeForceCreated: boolean;
     collections?: string[];
+    /**
+     * Limits the number of documents processed per second.
+     * Use this to throttle the operation on large datasets.
+     * Must be greater than 0. Default: no throttling.
+     */
+    maxOpsPerSecond?: number;
 }
 
 class EnforceRevisionsConfigurationCommand extends RavenCommand<OperationIdResult> {

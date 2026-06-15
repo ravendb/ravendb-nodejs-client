@@ -1,5 +1,5 @@
 import { SearchOperator } from "../Queries/SearchOperator.js";
-import { OrderingType } from "./OrderingType.js";
+import { NullsOrdering, OrderingType } from "./OrderingType.js";
 import { MethodCall } from "./MethodCall.js";
 import { WhereParams } from "./WhereParams.js";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField.js";
@@ -281,9 +281,13 @@ export interface IAbstractDocumentQuery<T> {
      */
     _orderBy(field: string, options: { sorterName: string }): void;
 
+    _orderBy(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
+
     _orderByDescending(field: string): void;
 
     _orderByDescending(field: string, ordering: OrderingType): void;
+
+    _orderByDescending(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
 
     _orderByDescending(field: string, options: { sorterName: string }): void;
 
@@ -348,28 +352,40 @@ export interface IAbstractDocumentQuery<T> {
     _spatial(fieldName: string, criteria: SpatialCriteria): void;
 
     _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
 
     _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
+    _orderByDistance(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
 
     _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+    _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
 
     _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
+    _orderByDistance(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
 
     _orderByDistance(fieldName: string, shapeWkt: string): void;
+    _orderByDistance(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
 
     _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
+    _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
+    _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
+    _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
+    _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
+    _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
+    _orderByDistanceDescending(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
 
     _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
+    _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
 
     _moreLikeThis(): MoreLikeThisScope;
 
