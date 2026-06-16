@@ -1,10 +1,8 @@
 import assert from "node:assert";
-import { describe, it, beforeEach, afterEach } from "node:test";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 import { IDocumentStore } from "../../../src/index.js";
 
 describe("AbstractDocumentQuery - range queries with falsy values", function () {
-
     let store: IDocumentStore;
 
     beforeEach(async function () {

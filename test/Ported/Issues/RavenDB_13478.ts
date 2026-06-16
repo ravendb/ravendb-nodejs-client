@@ -36,6 +36,7 @@ describe("RavenDB_13478", function () {
         let name = await store.subscriptions.create(options);
 
         await assertSubscription(store, name, 0);
+        await store.subscriptions.delete(name);
 
         options = {
             includes: builder => builder.includeAllCounters(),
@@ -45,6 +46,7 @@ describe("RavenDB_13478", function () {
         name = await store.subscriptions.create(options);
 
         await assertSubscription(store, name, 0);
+        await store.subscriptions.delete(name);
 
         options = {
             includes: builder => builder.includeCounter("likes"),
@@ -54,10 +56,12 @@ describe("RavenDB_13478", function () {
         name = await store.subscriptions.create(options);
 
         await assertSubscription(store, name, 1);
+        await store.subscriptions.delete(name);
 
         name = await store.subscriptions.create(Product);
 
         await assertSubscription(store, name, 2);
+        await store.subscriptions.delete(name);
     });
 });
 

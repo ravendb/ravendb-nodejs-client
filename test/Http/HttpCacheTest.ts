@@ -4,7 +4,7 @@ import { CachedItemMetadata, HttpCache } from "../../src/Http/HttpCache.js";
 
 describe("HttpCache", function () {
 
-    it("caches items until the size budget is exceeded", function () {
+    it("retains all items when the size budget is not exceeded", function () {
         const cache = new HttpCache(10_000);
 
         for (let i = 0; i < 50; i++) {
