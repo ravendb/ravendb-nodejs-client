@@ -1468,7 +1468,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderBy(field: string, ordering: OrderingType): void;
-    public _orderBy(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
+    public _orderBy(field: string, nullsOrdering: NullsOrdering, ordering?: OrderingType): void;
     public _orderBy(field: string, options: { sorterName: string }): void;
     public _orderBy(field: string, orderingOrNullsOrOptions: OrderingType | NullsOrdering | { sorterName: string } = "String", ordering?: OrderingType): void {
         this._assertNoRawQuery();
@@ -1488,7 +1488,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
     public _orderByDescending(field: string, ordering: OrderingType): void;
-    public _orderByDescending(field: string, nulls: NullsOrdering, ordering?: OrderingType): void;
+    public _orderByDescending(field: string, nullsOrdering: NullsOrdering, ordering?: OrderingType): void;
     public _orderByDescending(field: string, options: { sorterName: string }): void;
     public _orderByDescending(field: string, orderingOrNullsOrOptions: OrderingType | NullsOrdering | { sorterName: string } = "String", ordering?: OrderingType): void {
         this._assertNoRawQuery();
@@ -2100,17 +2100,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): void;
-    public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
+    public _orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(field: DynamicSpatialField, shapeWkt: string): void;
-    public _orderByDistance(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
+    public _orderByDistance(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number): void;
-    public _orderByDistance(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
-    public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
+    public _orderByDistance(fieldName: string, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(fieldName: string, shapeWkt: string): void;
-    public _orderByDistance(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number): void;
-    public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
+    public _orderByDistance(fieldName: string, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistance(
         fieldNameOrField: string | DynamicSpatialField,
         shapeWktOrLatitude: string | number,
@@ -2123,7 +2123,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         if (TypeUtil.isString(fieldNameOrField)) {
             if (TypeUtil.isString(shapeWktOrLatitude)) {
-                // (fieldName, shapeWkt, roundFactor?, nulls?)
+                // (fieldName, shapeWkt, roundFactor?, nullsOrdering?)
                 const roundFactor = typeof longitudeOrRoundFactorOrNulls === "number" ? longitudeOrRoundFactorOrNulls : null;
                 const nullsOrdering: NullsOrdering = roundFactor !== null
                     ? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default")
@@ -2133,7 +2133,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
                     OrderByToken.createDistanceAscendingWkt(
                         fieldNameOrField as string, this._addQueryParameter(shapeWktOrLatitude), roundFactorParameterName, nullsOrdering));
             } else {
-                // (fieldName, latitude, longitude, roundFactor?, nulls?)
+                // (fieldName, latitude, longitude, roundFactor?, nullsOrdering?)
                 const roundFactor = typeof roundFactorOrNulls === "number" ? roundFactorOrNulls : null;
                 const nullsOrdering: NullsOrdering = nulls ?? (isNullsOrdering(roundFactorOrNulls) ? roundFactorOrNulls : "Default");
                 const roundFactorParameterName = roundFactor ? this._addQueryParameter(roundFactor) : null;
@@ -2173,17 +2173,17 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
     }
 
     public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): void;
-    public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): void;
-    public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number): void;
-    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number): void;
-    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(fieldName: string, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string): void;
-    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number): void;
-    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number, nulls: NullsOrdering): void;
+    public _orderByDistanceDescending(fieldName: string, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): void;
     public _orderByDistanceDescending(
         fieldNameOrField: string | DynamicSpatialField,
         shapeWktOrLatitude: string | number,
