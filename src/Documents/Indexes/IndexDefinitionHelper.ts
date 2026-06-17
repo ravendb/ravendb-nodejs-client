@@ -3,7 +3,7 @@ import { throwError } from "../../Exceptions/index.js";
 import { StringUtil } from "../../Utility/StringUtil.js";
 import { IndexSourceType } from "./IndexSourceType.js";
 
-const COMMENT_REGEX = new RegExp("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)", "gm");
+const COMMENT_REGEX = /\/\*[^*]*(?:\*(?!\/)[^*]*)*\*\/|\/\/.*/gm;
 
 export class IndexDefinitionHelper {
     public static detectStaticIndexType(map: string, reduce: string): IndexType {

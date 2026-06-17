@@ -1,5 +1,8 @@
 name: tests/bun
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ v7.2 ]

@@ -55,7 +55,7 @@ export class TimeUtil {
 
     public static timeSpanToDuration(text: string) {
         const hasDays = !!/^\d+\./.test(text);
-        const hasMillis = !!/.*\.\d+/.test(text);
+        const hasMillis = !!/\.\d+/.test(text);
 
         if (hasDays && hasMillis) {
             const tokens = text.split(".");
