@@ -350,7 +350,7 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
             ChunkingMethod: options.chunkingMethod,
             MaxTokensPerChunk: options.maxTokensPerChunk,
             OverlapTokens: options.overlapTokens,
-            ContextPrefix: options?.contextPrefix
+            ContextPrefix: options.contextPrefix
         };
     }
 }

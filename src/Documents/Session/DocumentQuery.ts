@@ -7,7 +7,7 @@ import { LoadToken } from "./Tokens/LoadToken.js";
 import { throwError } from "../../Exceptions/index.js";
 import { CONSTANTS } from "../../Constants.js";
 import { QueryData } from "../Queries/QueryData.js";
-import { OrderingType } from "./OrderingType.js";
+import { NullsOrdering, OrderingType } from "./OrderingType.js";
 import { SearchOperator } from "../Queries/SearchOperator.js";
 import { QueryStatistics } from "./QueryStatistics.js";
 import { QueryOperator } from "../Queries/QueryOperator.js";
@@ -543,6 +543,7 @@ export class DocumentQuery<T extends object>
 
     public orderBy(field: Field<T>): IDocumentQuery<T>;
     public orderBy(field: Field<T>, ordering: OrderingType): IDocumentQuery<T>;
+    public orderBy(field: Field<T>, nullsOrdering: NullsOrdering, ordering?: OrderingType): IDocumentQuery<T>;
     public orderBy(field: Field<T>, options: { sorterName: string }): IDocumentQuery<T>;
     public orderBy(...args: any[]): IDocumentQuery<T> {
         (this._orderBy as any)(...args);
@@ -551,6 +552,7 @@ export class DocumentQuery<T extends object>
 
     public orderByDescending(field: Field<T>): IDocumentQuery<T>;
     public orderByDescending(field: Field<T>, ordering: OrderingType): IDocumentQuery<T>;
+    public orderByDescending(field: Field<T>, nullsOrdering: NullsOrdering, ordering?: OrderingType): IDocumentQuery<T>;
     public orderByDescending(field: Field<T>, options: { sorterName: string }): IDocumentQuery<T>;
     public orderByDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDescending as any)(...args);

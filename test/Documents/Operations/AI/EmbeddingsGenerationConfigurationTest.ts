@@ -523,7 +523,7 @@ describe("EmbeddingsGenerationConfiguration", () => {
                 `Expected ContextPrefix to be 'Product: ', got: ${chunkingOpts.ContextPrefix}`);
         });
 
-        it("should serialize contextPrefix as null when not set", () => {
+        it("should not include contextPrefix in serialized output when not set", () => {
             const config = new EmbeddingsGenerationConfiguration();
             config.name = "Test";
             config.collection = "Items";
