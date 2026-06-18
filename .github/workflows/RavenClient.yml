@@ -1,5 +1,8 @@
 name: tests/node
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ v7.2 ]
