@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, it } from "node:test";
 import { assertThrows } from "../Utils/AssertExtensions.js";
-import { EnforceRevisionsConfigurationOperation } from "../../src/Documents/Operations/Revisions/EnforceRevisionsConfigurationOperation.js";
+import { EnforceRevisionsConfigurationOperation } from "../../src/index.js";
 
 describe("RavenDB_21780", () => {
     it("should throw for maxOpsPerSecond of 0", async () => {
