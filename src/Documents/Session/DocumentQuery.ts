@@ -801,21 +801,32 @@ export class DocumentQuery<T extends object>
     }
 
     public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistance(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistance as any)(...args);
         return this;
     }
 
-    public orderByDistanceDescending(
-        field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistanceDescending as any)(...args);
         return this;
