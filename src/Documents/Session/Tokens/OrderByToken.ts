@@ -1,11 +1,12 @@
 import { QueryToken } from "./QueryToken.js";
-import { OrderingType } from "../OrderingType.js";
+import { NullsOrdering, OrderingType } from "../OrderingType.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { CONSTANTS } from "../../../Constants.js";
 
 type OrderByTokenOptions = {
     ordering?: OrderingType;
     sorterName?: string;
+    nullsOrdering?: NullsOrdering;
 }
 
 export class OrderByToken extends QueryToken {
@@ -14,6 +15,7 @@ export class OrderByToken extends QueryToken {
     private readonly _descending: boolean;
     private readonly _sorterName: string;
     private readonly _ordering: OrderingType;
+    private readonly _nullsOrdering: NullsOrdering;
     private readonly _isMethodField: boolean;
 
     private constructor(fieldName: string, descending: boolean, options: OrderByTokenOptions, isMethodField: boolean) {
@@ -22,6 +24,7 @@ export class OrderByToken extends QueryToken {
         this._descending = descending;
         this._ordering = options.ordering;
         this._sorterName = options.sorterName;
+        this._nullsOrdering = options.nullsOrdering ?? "Default";
         this._isMethodField = isMethodField;
     }
 
@@ -31,58 +34,32 @@ export class OrderByToken extends QueryToken {
 
     public static scoreDescending = new OrderByToken("score()", true, { ordering: "String" }, true);
 
-    public static createDistanceAscending(
-        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName: string): OrderByToken;
-    public static createDistanceAscending(fieldName: string, shapeWktParameterName: string, roundFactorParameterName: string): OrderByToken;
-    public static createDistanceAscending(
-        fieldName: string, shapeWktOrLatitudeParameterName: string, longitudeParameterName?: string, roundFactorParameterName?: string): OrderByToken {
-        if (longitudeParameterName) {
-            return this._createDistanceAscendingLatLng(
-                fieldName, shapeWktOrLatitudeParameterName, longitudeParameterName, roundFactorParameterName);
-        } else {
-            return this._createDistanceAscendingWkt(fieldName, shapeWktOrLatitudeParameterName, roundFactorParameterName);
-        }
-    }
-
-    private static _createDistanceAscendingLatLng(
-        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName: string): OrderByToken {
+    public static createDistanceAscendingLatLng(
+        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName?: string, nulls: NullsOrdering = "Default"): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName +
             ", spatial.point($" + latitudeParameterName
-            + ", $" + longitudeParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", false, { ordering: "String" }, true);
+            + ", $" + longitudeParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", false, { ordering: "String", nullsOrdering: nulls }, true);
     }
 
-    private static _createDistanceAscendingWkt(fieldName: string, shapeWktParameterName: string, roundFactorParameterName: string): OrderByToken {
+    public static createDistanceAscendingWkt(fieldName: string, shapeWktParameterName: string, roundFactorParameterName?: string, nulls: NullsOrdering = "Default"): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName
-            + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", false, { ordering: "String" }, true);
+            + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", false, { ordering: "String", nullsOrdering: nulls }, true);
     }
 
-    private static _createDistanceDescendingLatLng(
-        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName: string): OrderByToken {
+    public static createDistanceDescendingLatLng(
+        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName?: string, nulls: NullsOrdering = "Default"): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName
             + ", spatial.point($" + latitudeParameterName
-            + ", $" + longitudeParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", true, { ordering: "String" }, true);
+            + ", $" + longitudeParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", true, { ordering: "String", nullsOrdering: nulls }, true);
     }
 
-    private static _createDistanceDescendingWkt(fieldName: string, shapeWktParameterName: string, roundFactorParameterName: string): OrderByToken {
+    public static createDistanceDescendingWkt(fieldName: string, shapeWktParameterName: string, roundFactorParameterName?: string, nulls: NullsOrdering = "Default"): OrderByToken {
         return new OrderByToken(
             "spatial.distance(" + fieldName
-            + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", true, { ordering: "String" }, true);
-    }
-
-    public static createDistanceDescending(
-        fieldName: string, latitudeParameterName: string, longitudeParameterName: string, roundFactorParameterName: string): OrderByToken;
-    public static createDistanceDescending(fieldName: string, shapeWktParameterName: string, roundFactorParameterName: string): OrderByToken;
-    public static createDistanceDescending(
-        fieldName: string, shapeWktOrLatitudeParameterName: string, longitudeParameterName?: string, roundFactorParameterName?: string): OrderByToken {
-        if (longitudeParameterName) {
-            return this._createDistanceDescendingLatLng(
-                fieldName, shapeWktOrLatitudeParameterName, longitudeParameterName, roundFactorParameterName);
-        } else {
-            return this._createDistanceDescendingWkt(fieldName, shapeWktOrLatitudeParameterName, roundFactorParameterName);
-        }
+            + ", spatial.wkt($" + shapeWktParameterName + ")" + (roundFactorParameterName ? ", $" + roundFactorParameterName : "") + ")", true, { ordering: "String", nullsOrdering: nulls }, true);
     }
 
     public static createRandom(seed: string): OrderByToken {
@@ -133,6 +110,12 @@ export class OrderByToken extends QueryToken {
         if (this._descending) { // we only add this if we have to, ASC is the default and reads nicer
             writer.append(" desc");
         }
+
+        if (this._nullsOrdering === "First") {
+            writer.append(" nulls first");
+        } else if (this._nullsOrdering === "Last") {
+            writer.append(" nulls last");
+        }
     }
 
     public addAlias(alias: string): OrderByToken {
@@ -149,7 +132,7 @@ export class OrderByToken extends QueryToken {
         if (this._sorterName) {
             return new OrderByToken(aliasedName, this._descending, { sorterName: this._sorterName }, false);
         } else {
-            return new OrderByToken(aliasedName, this._descending, { ordering: this._ordering }, false);
+            return new OrderByToken(aliasedName, this._descending, { ordering: this._ordering, nullsOrdering: this._nullsOrdering }, false);
         }
     }
 }

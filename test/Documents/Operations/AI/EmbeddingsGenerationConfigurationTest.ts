@@ -59,6 +59,93 @@ describe("EmbeddingsGenerationConfiguration", () => {
 
             assert.strictEqual(areChunkingOptionsEqual(options1, options2), true);
         });
+
+        it("should reject whitespace-only contextPrefix", () => {
+            const options: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: "   "
+            };
+
+            const errors = validateChunkingOptions("Description", options);
+            assert.ok(errors.length > 0, "Expected validation errors");
+            assert.ok(errors.some(e => e.includes("contextPrefix")), "Should mention contextPrefix");
+        });
+
+        it("should reject empty-string contextPrefix", () => {
+            const options: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: ""
+            };
+
+            const errors = validateChunkingOptions("Description", options);
+            assert.ok(errors.length > 0, "Expected validation errors");
+            assert.ok(errors.some(e => e.includes("contextPrefix")), "Should mention contextPrefix");
+        });
+
+        it("should accept valid non-empty contextPrefix", () => {
+            const options: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: "Product description: "
+            };
+
+            const errors = validateChunkingOptions("Description", options);
+            assert.strictEqual(errors.length, 0, `Expected no errors, but got: ${errors.join(", ")}`);
+        });
+
+        it("areChunkingOptionsEqual returns false when contextPrefix differs", () => {
+            const options1: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: "prefix A"
+            };
+            const options2: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: "prefix B"
+            };
+
+            assert.strictEqual(areChunkingOptionsEqual(options1, options2), false);
+        });
+
+        it("areChunkingOptionsEqual returns true when both contextPrefix are undefined", () => {
+            const options1: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32
+            };
+            const options2: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32
+            };
+
+            assert.strictEqual(areChunkingOptionsEqual(options1, options2), true);
+        });
+
+        it("areChunkingOptionsEqual returns false when one has contextPrefix and other does not", () => {
+            const withPrefix: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32,
+                contextPrefix: "some prefix"
+            };
+            const withoutPrefix: ChunkingOptions = {
+                chunkingMethod: "PlainTextSplitParagraphs",
+                maxTokensPerChunk: 256,
+                overlapTokens: 32
+            };
+
+            assert.strictEqual(areChunkingOptionsEqual(withPrefix, withoutPrefix), false);
+            assert.strictEqual(areChunkingOptionsEqual(withoutPrefix, withPrefix), false);
+        });
     });
 
     describe("Path-based configuration", () => {
@@ -406,6 +493,59 @@ describe("EmbeddingsGenerationConfiguration", () => {
             };
 
             assert.strictEqual(config.transformationName, "embeddings-transform-script");
+        });
+    });
+
+    describe("ChunkingOptions serialization", () => {
+        it("should include contextPrefix in serialized output", () => {
+            const config = new EmbeddingsGenerationConfiguration();
+            config.name = "Test";
+            config.collection = "Items";
+            config.identifier = "test-embeddings";
+
+            config.embeddingsPathConfigurations = [
+                {
+                    path: "Description",
+                    chunkingOptions: {
+                        chunkingMethod: "PlainTextSplitParagraphs",
+                        maxTokensPerChunk: 256,
+                        overlapTokens: 32,
+                        contextPrefix: "Product: "
+                    }
+                }
+            ];
+
+            const serialized = config.serialize(new DocumentConventions()) as any;
+            const chunkingOpts = serialized?.EmbeddingsPathConfigurations?.[0]?.ChunkingOptions;
+
+            assert.ok(chunkingOpts, "Expected ChunkingOptions to be present in serialized output");
+            assert.strictEqual(chunkingOpts.ContextPrefix, "Product: ",
+                `Expected ContextPrefix to be 'Product: ', got: ${chunkingOpts.ContextPrefix}`);
+        });
+
+        it("should not include contextPrefix in serialized output when not set", () => {
+            const config = new EmbeddingsGenerationConfiguration();
+            config.name = "Test";
+            config.collection = "Items";
+            config.identifier = "test-embeddings";
+
+            config.embeddingsPathConfigurations = [
+                {
+                    path: "Description",
+                    chunkingOptions: {
+                        chunkingMethod: "PlainTextSplitParagraphs",
+                        maxTokensPerChunk: 256,
+                        overlapTokens: 32
+                    }
+                }
+            ];
+
+            const serialized = config.serialize(new DocumentConventions()) as any;
+            const chunkingOpts = serialized?.EmbeddingsPathConfigurations?.[0]?.ChunkingOptions;
+
+            assert.ok(chunkingOpts, "Expected ChunkingOptions to be present in serialized output");
+            assert.strictEqual(chunkingOpts.ContextPrefix, undefined,
+                `Expected ContextPrefix to be undefined when not set, got: ${chunkingOpts.ContextPrefix}`);
         });
     });
 });

@@ -11,6 +11,7 @@ import { HttpRequestParameters, HttpResponse } from "../../../Primitives/Http.js
 import { HttpCache } from "../../../Http/HttpCache.js";
 import { Readable } from "node:stream";
 import { StatusCodes } from "../../../Http/StatusCode.js";
+import { normalizePaths } from "./PullReplicationPathFilterUtils.js";
 
 export class RegisterReplicationHubAccessOperation implements IMaintenanceOperation<void> {
     private readonly _hubName: string;
@@ -67,8 +68,14 @@ class RegisterReplicationHubAccessCommand extends RavenCommand<void> implements 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/admin/tasks/pull-replication/hub/access?name=" + this._urlEncode(this._hubName);
 
+        const access = {
+            ...this._access,
+            allowedHubToSinkPaths: normalizePaths(this._access.allowedHubToSinkPaths),
+            allowedSinkToHubPaths: normalizePaths(this._access.allowedSinkToHubPaths),
+        };
+
         const headers = this._headers().typeAppJson().build();
-        const body = this._serializer.serialize(this._access);
+        const body = this._serializer.serialize(access);
 
         return {
             uri,

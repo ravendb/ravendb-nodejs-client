@@ -45,6 +45,7 @@ export class AiConversation {
     private readonly _promptParts: ContentPart[] = [];
     private readonly _attachmentCommands: AiAttachmentCommand[] = [];
     private readonly _invocations: Map<string, ActionInvocation> = new Map();
+    private _dispatchedToolIds = new Set<string>();
     public onUnhandledAction?: (args: UnhandledActionEventArgs) => Promise<void> | void;
 
     public constructor(store: IDocumentStore, databaseName: string, agentId: string, conversationId: string, options?: AiConversationCreationOptions, changeVector?: string) {
@@ -259,36 +260,12 @@ export class AiConversation {
     }
 
     public async run<TAnswer>(): Promise<AiAnswer<TAnswer>> {
+        this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const r = await this._runInternal<TAnswer>();
-            if (r.status === "Done") {
+            if (r.status === "Done" || !await this._dispatchPendingActions(r)) {
                 return r;
-            }
-
-            if (!this._actionRequests || this._actionRequests.length === 0) {
-                throwError("InvalidOperationException", `There are no action requests to process, but Status was ${r.status}, should not be possible.`);
-            }
-
-            for (const action of this._actionRequests) {
-                const invocation = this._invocations.get(action.name);
-                if (invocation) {
-                    await invocation(action);
-                } else if (this.onUnhandledAction) {
-                    await this.onUnhandledAction({
-                        sender: this,
-                        action: action
-                    });
-                } else {
-                    throwError("InvalidOperationException",
-                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
-                        `but it was invoked by the model with: ${action.arguments}. ` +
-                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
-                }
-            }
-
-            if (this._actionResponses.size === 0) {
-                return r; // ActionsRequired, nothing to send back yet
             }
         }
     }
@@ -316,38 +293,44 @@ export class AiConversation {
             throwError("InvalidArgumentException", "streamCallback cannot be null");
         }
 
+        this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const r = await this._runInternal<TAnswer>(streamPropertyPath, streamCallback);
-            if (r.status === "Done") {
+            if (r.status === "Done" || !await this._dispatchPendingActions(r)) {
                 return r;
             }
+        }
+    }
 
-            if (!this._actionRequests || this._actionRequests.length === 0) {
-                throwError("InvalidOperationException", `There are no action requests to process, but Status was ${r.status}, should not be possible.`);
+    private async _dispatchPendingActions<TAnswer>(r: AiAnswer<TAnswer>) {
+        if (!this._actionRequests || this._actionRequests.length === 0) {
+            throwError("InvalidOperationException", `There are no action requests to process, but Status was ${r.status}, should not be possible.`);
+        }
+
+        for (const action of this._actionRequests) {
+            if (this._dispatchedToolIds.has(action.toolId)) {
+                continue;
             }
+            this._dispatchedToolIds.add(action.toolId);
 
-            for (const action of this._actionRequests) {
-                const invocation = this._invocations.get(action.name);
-                if (invocation) {
-                    await invocation(action);
-                } else if (this.onUnhandledAction) {
-                    await this.onUnhandledAction({
-                        sender: this,
-                        action: action
-                    });
-                } else {
-                    throwError("InvalidOperationException",
-                        `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
-                        `but it was invoked by the model with: ${action.arguments}. ` +
-                        `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
-                }
-            }
-
-            if (this._actionResponses.size === 0) {
-                return r; // ActionsRequired, nothing to send back yet
+            const invocation = this._invocations.get(action.name);
+            if (invocation) {
+                await invocation(action);
+            } else if (this.onUnhandledAction) {
+                await this.onUnhandledAction({
+                    sender: this,
+                    action: action
+                });
+            } else {
+                throwError("InvalidOperationException",
+                    `There is no action defined for action '${action.name}' on agent '${this._agentId}' (${this._conversationId}), ` +
+                    `but it was invoked by the model with: ${action.arguments}. ` +
+                    `Did you forget to call receive() or handle()? You can also handle unexpected action invocations using the onUnhandledAction event.`);
             }
         }
+
+        return this._actionResponses.size > 0; // false = ActionsRequired, nothing to send back yet
     }
 
     private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {

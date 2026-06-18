@@ -1,6 +1,6 @@
 import { IQueryBase } from "./IQueryBase.js";
 import { IFilterDocumentQueryBase } from "./IFilterDocumentQueryBase.js";
-import { OrderingType } from "./OrderingType.js";
+import { NullsOrdering, OrderingType } from "./OrderingType.js";
 import { DynamicSpatialField } from "../Queries/Spatial/DynamicSpatialField.js";
 import { ValueCallback } from "../../Types/Callbacks.js";
 import { Explanations } from "../Queries/Explanation/Explanations.js";
@@ -93,6 +93,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     orderBy(field: string, ordering: OrderingType): TSelf;
 
     /**
+     * Order by field with explicit null placement.
+     * Null placement ("First" / "Last") is supported only by the Corax indexing engine.
+     */
+    orderBy(field: string, nullsOrdering: NullsOrdering, ordering?: OrderingType): TSelf;
+
+    /**
      * Order the results by the specified fields
      * The field is the name of the field to sort using sorterName
      */
@@ -111,6 +117,12 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * The field is the name of the field to sort, defaulting to sorting by descending.
      */
     orderByDescending(field: string, ordering: OrderingType): TSelf;
+
+    /**
+     * Order descending by field with explicit null placement.
+     * Null placement ("First" / "Last") is supported only by the Corax indexing engine.
+     */
+    orderByDescending(field: string, nullsOrdering: NullsOrdering, ordering?: OrderingType): TSelf;
 
     /**
      * Order the results by the specified fields
@@ -153,11 +165,13 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
+    orderByDistance(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field,
     //     double latitude, double longitude);
 
     orderByDistance(field: DynamicSpatialField, shapeWkt: string): TSelf;
+    orderByDistance(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
@@ -168,11 +182,13 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistance(fieldName: Field<T>, latitude: number, longitude: number): TSelf;
+    orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, nullsOrdering: NullsOrdering): TSelf;
 
     /**
      * Sorts the query results by distance.
      */
     orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): TSelf;
+    orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
@@ -180,16 +196,20 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistance(fieldName: Field<T>, shapeWkt: string): TSelf;
+    orderByDistance(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
+    orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 
     /**
      * Sorts the query results by distance.
      */
     orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number): TSelf;
+    orderByDistanceDescending(field: DynamicSpatialField, latitude: number, longitude: number, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>,
     //     DynamicSpatialField> field, double latitude, double longitude);
 
     orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string): TSelf;
+    orderByDistanceDescending(field: DynamicSpatialField, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>,
     //     DynamicSpatialField> field, string shapeWkt);
@@ -201,11 +221,13 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, nullsOrdering: NullsOrdering): TSelf;
 
     /**
      * Sorts the query results by distance.
      */
     orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 
     //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
@@ -213,4 +235,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      * Sorts the query results by distance.
      */
     orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 }

@@ -30,6 +30,14 @@ export interface ChunkingOptions {
      * @default 0
      */
     overlapTokens: number;
+
+    /**
+     * Optional constant text prepended to every produced chunk before it is sent to the embedding model.
+     * Useful for adding broader document context (e.g. title) to isolated chunks.
+     * Its tokens count against maxTokensPerChunk.
+     * Must be non-empty if provided.
+     */
+    contextPrefix?: string;
 }
 
 /**
@@ -52,6 +60,10 @@ export function validateChunkingOptions(source: string, options: ChunkingOptions
     if (!options) {
         errors.push(`'${source}': ChunkingOptions must be provided.`);
         return errors;
+    }
+
+    if (options.contextPrefix != null && options.contextPrefix.trim() === "") {
+        errors.push(`'${source}': contextPrefix cannot be empty or whitespace-only. Either provide a non-empty value or omit it.`);
     }
 
     if (options.maxTokensPerChunk <= 0) {
@@ -97,7 +109,8 @@ export function areChunkingOptionsEqual(
     return (
         left.chunkingMethod === right.chunkingMethod &&
         left.maxTokensPerChunk === right.maxTokensPerChunk &&
-        left.overlapTokens === right.overlapTokens
+        left.overlapTokens === right.overlapTokens &&
+        left.contextPrefix === right.contextPrefix
     );
 }
 
