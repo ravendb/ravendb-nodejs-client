@@ -4,18 +4,12 @@ import { assertThat } from "../Utils/AssertExtensions.js";
 
 describe("CustomEntityName", function () {
 
-    const getChars = () => {
-        const basicChars = [...new Array(31).keys()].map(x => {
-            return String.fromCodePoint(x + 1);
-        });
-
-        const extraChars = [ "a", "-", "'", "\"", "\\", "\b", "\f", "\n", "\r", "\t" ];
-
-        return [...basicChars, ...extraChars];
-    };
-
     const getCharactersToTestWithSpecial = () => {
-        const basicChars = getChars();
+        // RavenDB-25738: the server rejects control characters in a collection name
+        // unconditionally (the SupportedFeatures opt-out only relaxes document IDs).
+        // These chars are therefore everything the server allows in a collection name
+        // and match the C# CustomEntityName test's GetChars().
+        const basicChars = [ "a", "-", "'", "\"", "\\", "\b", "\f", "\n", "\r", "\t" ];
         const specialChars = [ "Ā", "Ȁ", "Ѐ", "Ԁ", "؀", "܀", "ऀ", "ਅ", "ଈ", "అ", "ഊ", "ข", "ဉ", "ᄍ", "ሎ", "ጇ", "ᐌ", "ᔎ", "ᘀ", "ᜩ", "ᢹ", "ᥤ", "ᨇ" ];
         return [...basicChars, ...specialChars];
     }
@@ -29,11 +23,6 @@ describe("CustomEntityName", function () {
 
         const store = await testContext.getDocumentStore();
         try {
-
-            if (c.charCodeAt(0) >= 14 && c.charCodeAt(0) <= 31) {
-                return;
-            }
-
             {
                 const session = store.openSession();
                 const car = new Car();
