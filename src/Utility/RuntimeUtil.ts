@@ -18,13 +18,17 @@ export class RuntimeUtil {
     /**
      * Detects if the code is running in the Cloudflare Workers (workerd) runtime.
      *
-     * workerd exposes the Web `navigator.userAgent` as the fixed string
+     * workerd exposes the Web `navigator.userAgent` as the string
      * "Cloudflare-Workers", which is the officially documented way to detect it.
+     * We match by prefix so a future version suffix (e.g. "Cloudflare-Workers/1")
+     * still resolves to workerd instead of failing closed into the Node path
+     * (which would then crash trying to build an undici agent that workerd lacks).
      */
     public static isWorkerd(): boolean {
         if (this._isWorkerd === null) {
             const nav = (globalThis as unknown as { navigator?: { userAgent?: string } }).navigator;
-            this._isWorkerd = !!nav && nav.userAgent === "Cloudflare-Workers";
+            this._isWorkerd = !!nav && typeof nav.userAgent === "string"
+                && nav.userAgent.startsWith("Cloudflare-Workers");
         }
         return this._isWorkerd;
     }

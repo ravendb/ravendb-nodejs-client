@@ -57,6 +57,17 @@ for (const [subpath, entry] of Object.entries(pkg.exports)) {
     patched++;
 }
 
+// Fail the build loudly if nothing was patched. tshy rewrites the whole "exports"
+// map on every build, so if its output shape ever changes (e.g. the "import"
+// condition is renamed or nested differently) this script would silently produce a
+// package.json without the workerd/worker conditions and ship a broken package.
+if (patched === 0) {
+    throw new Error(
+        "addWorkerCondition: patched 0 export entries -- no entry exposed an 'import' condition to mirror. "
+        + "tshy's 'exports' shape likely changed; the workerd/worker conditions were NOT injected. "
+        + "Refusing to leave package.json without them.");
+}
+
 writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + "\n");
 // Log to stderr so it never pollutes stdout of `npm pack --silent` (which is
 // parsed to obtain the tarball filename in CI).

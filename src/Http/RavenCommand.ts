@@ -151,7 +151,10 @@ export abstract class RavenCommand<TResult> {
     public async send(agent: Dispatcher,
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: Readable }> {
 
-        const { body, uri, fetcher, ...restOptions } = requestOptions;
+        // `dispatcher` is pulled out here so it never leaks into `restOptions`: the
+        // normal path re-adds it explicitly (see below), while the Bun and workerd
+        // paths must not carry an undici dispatcher into their fetch init.
+        const { body, uri, fetcher, dispatcher, ...restOptions } = requestOptions;
 
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
@@ -167,8 +170,8 @@ export abstract class RavenCommand<TResult> {
             // dispatcher here is meaningless and can confuse the runtime.
             optionsToUse = { body: bodyToUse, ...restOptions } as RequestInit;
         } else {
-            if (requestOptions.dispatcher) { // support for fiddler
-                agent = requestOptions.dispatcher;
+            if (dispatcher) { // support for fiddler
+                agent = dispatcher;
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         }
@@ -184,13 +187,20 @@ export abstract class RavenCommand<TResult> {
         const fetchFn = fetcher ?? fetch; // support for custom fetcher
         const response = await fetchFn(uri, optionsToUse);
 
-        const effectiveStream: Stream =
-            response.body
-                ? Readable.fromWeb(response.body)
-                : new Stream();
+        // `Readable.fromWeb` / `new Stream()` / `.pipe` are all `node:stream` APIs,
+        // so an incomplete edge polyfill (Nitro/unenv) can throw here just like
+        // `new PassThrough()` above. Guard them so the actionable error is raised.
+        try {
+            const effectiveStream: Stream =
+                response.body
+                    ? Readable.fromWeb(response.body)
+                    : new Stream();
 
-        effectiveStream
-            .pipe(passthrough);
+            effectiveStream
+                .pipe(passthrough);
+        } catch (err) {
+            throw RavenCommand._maybeNodeStreamUnavailableError(err as Error);
+        }
 
         return {
             response,
