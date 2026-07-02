@@ -4,7 +4,7 @@ import { StatusCodes } from "./StatusCode.js";
 import { Stream, Readable, PassThrough } from "node:stream";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http.js";
 import { getLogger } from "../Utility/LogUtil.js";
-import { throwError } from "../Exceptions/index.js";
+import { getError, throwError } from "../Exceptions/index.js";
 import { IRavenObject } from "../Types/IRavenObject.js";
 import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil.js";
 import { TypeInfo } from "../Mapping/ObjectMapper.js";
@@ -161,6 +161,11 @@ export abstract class RavenCommand<TResult> {
 
         if (RuntimeUtil.isBun()) {
             optionsToUse = { body: bodyToUse, ...restOptions } as BunFetchRequestInit;
+        } else if (RuntimeUtil.isWorkerd()) {
+            // Cloudflare Workers' fetch has no undici `dispatcher` concept; mTLS is
+            // handled by the custom fetch (an mtls_certificate binding). Passing a
+            // dispatcher here is meaningless and can confuse the runtime.
+            optionsToUse = { body: bodyToUse, ...restOptions } as RequestInit;
         } else {
             if (requestOptions.dispatcher) { // support for fiddler
                 agent = requestOptions.dispatcher;
@@ -168,7 +173,12 @@ export abstract class RavenCommand<TResult> {
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         }
 
-        const passthrough = new PassThrough();
+        let passthrough: PassThrough;
+        try {
+            passthrough = new PassThrough();
+        } catch (err) {
+            throw RavenCommand._maybeNodeStreamUnavailableError(err as Error);
+        }
         passthrough.pause();
 
         const fetchFn = fetcher ?? fetch; // support for custom fetcher
@@ -186,6 +196,23 @@ export abstract class RavenCommand<TResult> {
             response,
             bodyStream: passthrough
         };
+    }
+
+    private static _maybeNodeStreamUnavailableError(err: Error): Error {
+        // Some edge bundlers ship an incomplete `node:stream` where PassThrough throws
+        // "not implemented" (e.g. Nitro/unenv, used by TanStack Start & Nuxt). Turn that
+        // cryptic stub error into an actionable one pointing at the real fix.
+        if (RuntimeUtil.isWorkerd()) {
+            return getError(
+                "InvalidOperationException",
+                "The RavenDB client requires a working node:stream on Cloudflare Workers, but this "
+                + "runtime provided an incomplete polyfill. Enable Node.js compatibility by adding "
+                + `compatibility_flags = ["nodejs_compat"] (and a recent compatibility_date) to your `
+                + "wrangler configuration. For framework bundlers such as Nitro / TanStack Start / Nuxt "
+                + "this makes node: built-ins resolve to the workerd runtime instead of unenv stubs.",
+                err);
+        }
+        return err;
     }
 
     private static maybeWrapBody(body: any) {

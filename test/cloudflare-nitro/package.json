@@ -1,0 +1,19 @@
+{
+  "name": "ravendb-nitro-cf-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Nitro (TanStack Start-style) Cloudflare example + tests for the RavenDB client (RDBC-1083).",
+  "scripts": {
+    "build": "nitro build",
+    "smoke": "node smoke.mjs",
+    "e2e": "node e2e.mjs"
+  },
+  "dependencies": {
+    "ravendb": "file:../.."
+  },
+  "devDependencies": {
+    "nitropack": "^2.10.0",
+    "wrangler": "^4.106.0"
+  }
+}

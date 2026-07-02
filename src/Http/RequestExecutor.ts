@@ -344,6 +344,12 @@ export class RequestExecutor implements IDisposable {
             return null;
         }
 
+        if (RuntimeUtil.isWorkerd()) {
+            // Cloudflare Workers has no undici Agent / Node https agent.
+            // mTLS is provided via conventions.customFetch (an mtls_certificate binding).
+            return null;
+        }
+
         if (this._httpAgent) {
             return this._httpAgent;
         }

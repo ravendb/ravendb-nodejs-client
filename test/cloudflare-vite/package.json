@@ -1,0 +1,19 @@
+{
+  "name": "ravendb-vite-cf-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Vite + @cloudflare/vite-plugin (Rollup) Cloudflare example + load test for the RavenDB client (RDBC-1083).",
+  "scripts": {
+    "build": "vite build",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "ravendb": "file:../.."
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.0.0",
+    "vite": "^6.0.0",
+    "wrangler": "^4.106.0"
+  }
+}
