@@ -10,6 +10,10 @@ export class RuntimeUtil {
      */
     public static isBun(): boolean {
         if (this._isBun === null) {
+            // `process` is absent on some edge runtimes (e.g. Cloudflare Workers/workerd),
+            // where a bare reference would throw a ReferenceError at module-load time and
+            // crash the very load path this detection protects. Keep the `typeof` guard --
+            // do not "simplify" it away. See isWorkerd().
             this._isBun = typeof process !== "undefined" && !!process.versions?.bun;
         }
         return this._isBun;
@@ -31,5 +35,19 @@ export class RuntimeUtil {
                 && nav.userAgent.startsWith("Cloudflare-Workers");
         }
         return this._isWorkerd;
+    }
+
+    /**
+     * Whether the current runtime can accept an undici `Dispatcher` (Node's undici
+     * Agent) in a `fetch` init. Node can; Bun and Cloudflare Workers (workerd) cannot --
+     * their `fetch` has no dispatcher concept, so building or passing one is meaningless.
+     *
+     * Centralized here so the two consumers -- request send (RavenCommand.send) and http
+     * agent creation (RequestExecutor.getHttpAgent) -- stay in lockstep: if they drift
+     * (an agent is built but the dispatcher is dropped on send, or vice versa) the
+     * original workerd failure returns. A future dispatcher-less runtime is added once.
+     */
+    public static supportsUndiciDispatcher(): boolean {
+        return !this.isBun() && !this.isWorkerd();
     }
 }
