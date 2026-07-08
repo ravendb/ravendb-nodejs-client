@@ -8,7 +8,7 @@ import { DocumentConventions } from "../../../Documents/Conventions/DocumentConv
 import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { IRaftCommand } from "../../../Http/IRaftCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
-import { CertificateDefinition } from "./CertificateDefinition.js";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer.js";
 
 export class EditClientCertificateOperation implements IServerOperation<void> {
     private readonly _thumbprint: string;
@@ -74,14 +74,18 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/admin/certificates/edit";
 
+        // Field names are PascalCased explicitly here (rather than via the default command-payload
+        // serializer) so the casing-preserving serializer can be used: the default one would also
+        // PascalCase the first letter of every `permissions` key (database names), breaking
+        // case-sensitive permission matching (RDBC-1085).
         const definition = {
-            thumbprint: this._thumbprint,
-            permissions: this._permissions,
-            securityClearance: this._clearance,
-            name: this._name
-        } as CertificateDefinition;
+            Thumbprint: this._thumbprint,
+            Permissions: this._permissions,
+            SecurityClearance: this._clearance,
+            Name: this._name
+        };
 
-        const body = this._serializer.serialize(definition);
+        const body = JsonSerializer.getDefault().serialize(definition);
 
         return {
             method: "POST",
