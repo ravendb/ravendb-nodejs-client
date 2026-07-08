@@ -6,6 +6,7 @@ import { IServerOperation, OperationResultType } from "../../../Documents/Operat
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
+import { CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM } from "./CertificateResponseKeyCaseTransform.js";
 
 export class GetCertificateOperation implements IServerOperation<CertificateDefinition> {
     private readonly _thumbprint: string;
@@ -60,7 +61,9 @@ class GetCertificateCommand extends RavenCommand<CertificateDefinition> {
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        const results = await this._defaultPipeline(_ => body = _)
+            .objectKeysTransform(CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM)
+            .process(bodyStream);
         const mapped = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateDefinition[] }>(results, {
             nestedTypes: {
                 "results[].notAfter": "date",
