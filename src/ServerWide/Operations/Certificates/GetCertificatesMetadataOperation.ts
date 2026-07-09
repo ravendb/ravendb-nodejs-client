@@ -5,6 +5,7 @@ import { IServerOperation, OperationResultType } from "../../../Documents/Operat
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
+import { CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM } from "./CertificateResponseKeyCaseTransform.js";
 import { Stream } from "node:stream";
 
 export class GetCertificatesMetadataOperation implements IServerOperation<CertificateMetadata[]> {
@@ -59,7 +60,9 @@ class GetCertificatesMetadataCommand extends RavenCommand<CertificateMetadata[]>
         }
 
         let body: string = null;
-        const results = await this._defaultPipeline(_ => body = _).process(bodyStream);
+        const results = await this._defaultPipeline<{ results: CertificateMetadata[] }>(_ => body = _)
+            .objectKeysTransform(CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM)
+            .process(bodyStream);
         this.result = this._conventions.objectMapper.fromObjectLiteral<{ results: CertificateMetadata[] }>(results, {
             nestedTypes: {
                 "results[].notAfter": "date",

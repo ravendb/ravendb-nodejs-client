@@ -9,6 +9,7 @@ import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
 import { IRaftCommand } from "../../../Http/IRaftCommand.js";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
+import { JsonSerializer } from "../../../Mapping/Json/Serializer.js";
 
 export class PutClientCertificateOperation implements IServerOperation<void> {
     private readonly _certificate: string;
@@ -82,7 +83,10 @@ class PutClientCertificateCommand extends RavenCommand<void> implements IRaftCom
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/admin/certificates";
 
-        const body = this._serializer
+        // Field names are already PascalCased here, so use the casing-preserving serializer:
+        // the default command-payload serializer would also PascalCase the first letter of every
+        // `permissions` key (database names), breaking case-sensitive permission matching (RDBC-1085).
+        const body = JsonSerializer.getDefault()
             .serialize({
                 Name: this._name,
                 Certificate: this._certificate,
