@@ -88,6 +88,12 @@
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.20.0"
   },
+  "overrides": {
+    "mocha": {
+      "diff": "^8.0.3",
+      "serialize-javascript": "^7.0.5"
+    }
+  },
   "tshy": {
     "exports": {
       "./package.json": "./package.json",
