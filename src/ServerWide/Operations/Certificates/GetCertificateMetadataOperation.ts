@@ -8,6 +8,7 @@ import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
 import { ServerResponse } from "../../../Types/index.js";
 import { DateUtil } from "../../../Utility/DateUtil.js";
+import { CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM } from "./CertificateResponseKeyCaseTransform.js";
 
 export class GetCertificateMetadataOperation implements IServerOperation<CertificateMetadata> {
     private readonly _thumbprint: string;
@@ -61,7 +62,9 @@ class GetCertificateMetadataCommand extends RavenCommand<CertificateMetadata> {
         }
 
         let body: string = null;
-        const response = await this._defaultPipeline<ServerResponse<{ results: CertificateMetadata[] }>>(_ => body = _).process(bodyStream);
+        const response = await this._defaultPipeline<ServerResponse<{ results: CertificateMetadata[] }>>(_ => body = _)
+            .objectKeysTransform(CERTIFICATE_RESPONSE_KEY_CASE_TRANSFORM)
+            .process(bodyStream);
 
         const resultsMapped: CertificateMetadata[] = response.results.map(cert => {
             const { notAfter, notBefore } = cert;
