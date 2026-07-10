@@ -12,4 +12,6 @@ export interface IDatabaseSmugglerOptions {
     skipRevisionCreation: boolean;
     collections: string[];
     operateOnDatabaseRecordType: DatabaseRecordItemType[];
+    maxReadOpsPerSecond?: number;
+    skipCorruptedData?: boolean;
 }

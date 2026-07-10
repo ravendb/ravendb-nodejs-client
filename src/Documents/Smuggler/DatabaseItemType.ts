@@ -17,4 +17,5 @@ export type DatabaseItemType =
     | "Subscriptions"
     | "CompareExchangeTombstones"
     | "TimeSeries"
-    | "ReplicationHubCertificates";
+    | "ReplicationHubCertificates"
+    | "TimeSeriesDeletedRanges";

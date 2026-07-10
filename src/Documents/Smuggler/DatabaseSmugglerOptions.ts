@@ -5,7 +5,7 @@ import { DatabaseRecordItemType } from "./DatabaseRecordItemType.js";
 export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     public static readonly DEFAULT_OPERATE_ON_TYPES: DatabaseItemType[] = [
         "Indexes", "Documents", "RevisionDocuments", "Conflicts", "DatabaseRecord", "ReplicationHubCertificates", "Identities",
-        "CompareExchange", "Attachments", "CounterGroups", "Subscriptions", "TimeSeries"
+        "CompareExchange", "Attachments", "CounterGroups", "Subscriptions", "TimeSeries", "TimeSeriesDeletedRanges"
     ];
 
     public static readonly DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES: DatabaseRecordItemType[] = [
@@ -31,6 +31,7 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public encryptionKey: string;
     public collections: string[];
+    public maxReadOpsPerSecond?: number;
     /**
      * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
      */
