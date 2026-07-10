@@ -83,11 +83,19 @@
     "@types/ws": "^8.5.12",
     "date-fns": "^3.6.0",
     "safe-memory-cache": "^2.0.0",
-    "undici": "^6.19.5",
-    "ws": "^8.18.0"
+    "undici": "^6.27.0",
+    "ws": "^8.21.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.20.0"
+  },
+  "overrides": {
+    "eslint": {
+      "brace-expansion@1": "^1.1.13"
+    },
+    "mocha": {
+      "serialize-javascript": "^7.0.5"
+    }
   },
   "tshy": {
     "exports": {
