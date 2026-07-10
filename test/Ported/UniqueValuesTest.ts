@@ -1,5 +1,5 @@
 import assert from "node:assert"
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
+import {testContext, disposeTestDocumentStore, RavenTestContext} from "../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
@@ -167,7 +167,7 @@ describe("UniqueValuesTest", function () {
                 new DeleteCompareExchangeValueOperation<string>("key/2", 0));
             assert.fail("should have thrown");
         } catch (e) {
-            assert.strictEqual(e.name, "RavenException")
+            assert.strictEqual(e.name, RavenTestContext.isRavenDbServerVersion("6.2") ? "RavenException" : "AssertionError")
         }
     });
 

@@ -1,5 +1,5 @@
 import assert from "node:assert"
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
+import {testContext, disposeTestDocumentStore, RavenTestContext} from "../Utils/TestUtil.js";
 
 import {
     CertificateRawData,
@@ -280,7 +280,7 @@ async function extractCertificate(certificateRawData: CertificateRawData) {
         if (entry.path.endsWith(".crt")) {
             const entryText = await readToEnd(entry);
             const lines = entryText.split(/\r?\n/);
-            cert = lines.slice(1, -1).join("\r\n");
+            cert = lines.slice(1, RavenTestContext.isRavenDbServerVersion("6.2") ? -1 : -2).join("\r\n");
             break;
         } else {
             entry.autodrain();
