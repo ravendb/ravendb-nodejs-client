@@ -9,7 +9,7 @@ import { throwError } from "../../../src/Exceptions/index.js";
 import { TimeUtil } from "../../../src/Utility/TimeUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-(RavenTestContext.is70Server ? describe.skip : describe)("RavenDB_11440", function () {
+(RavenTestContext.isRavenDbServerVersion("7.0") ? describe.skip : describe)("RavenDB_11440", function () {
 
     let store: IDocumentStore;
 
