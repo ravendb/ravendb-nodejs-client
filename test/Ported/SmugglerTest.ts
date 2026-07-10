@@ -79,6 +79,45 @@ describe("SmugglerTest", function () {
         }
     });
 
+    it("can export and import with maxReadOpsPerSecond, skipCorruptedData and timeSeriesDeletedRanges", async () => {
+        const exportFile = path.join(temporaryDirContext.tempDir, "exported-db-3." + CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+
+        const sourceStore = await testContext.getDocumentStore();
+
+        try {
+            await addUsers(sourceStore);
+
+            const options = new DatabaseSmugglerExportOptions();
+            options.maxReadOpsPerSecond = 1000;
+            options.skipCorruptedData = true;
+
+            assertThat(options.operateOnTypes)
+                .contains("TimeSeriesDeletedRanges");
+
+            const operation = await sourceStore.smuggler.export(options, exportFile);
+            await operation.waitForCompletion();
+        } finally {
+            sourceStore.dispose();
+        }
+
+        const dstStore = await testContext.getDocumentStore();
+
+        try {
+            const options = new DatabaseSmugglerImportOptions();
+            options.maxReadOpsPerSecond = 1000;
+            options.skipCorruptedData = true;
+
+            const operation = await dstStore.smuggler.import(options, exportFile);
+            await operation.waitForCompletion();
+
+            const stats = await dstStore.maintenance.send(new GetStatisticsOperation());
+            assertThat(stats.countOfDocuments)
+                .isEqualTo(3);
+        } finally {
+            dstStore.dispose();
+        }
+    });
+
     it("can sort files", () => {
         const files = [
             "2018-11-08-10-47.ravendb-incremental-backup",
