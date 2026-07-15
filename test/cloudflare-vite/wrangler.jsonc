@@ -1,0 +1,6 @@
+{
+  "name": "ravendb-vite-cf-example",
+  "main": "src/worker.ts",
+  "compatibility_date": "2024-12-30",
+  "compatibility_flags": ["nodejs_compat"]
+}

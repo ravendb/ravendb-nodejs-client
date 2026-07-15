@@ -13,6 +13,14 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "workerd": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "worker": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
@@ -25,7 +33,7 @@
   },
   "scripts": {
     "test": "mocha \"test/**/*.ts\"",
-    "prepare": "tshy",
+    "prepare": "tshy && node scripts/addWorkerCondition.mjs",
     "watch": "tsc --watch",
     "lint": "eslint {src,test}/**/*.ts",
     "check-exports": "node ./scripts/reportMissingTopLevelExports.js",

@@ -4,7 +4,7 @@ import { StatusCodes } from "./StatusCode.js";
 import { Stream, Readable, PassThrough } from "node:stream";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http.js";
 import { getLogger } from "../Utility/LogUtil.js";
-import { throwError } from "../Exceptions/index.js";
+import { getError, throwError } from "../Exceptions/index.js";
 import { IRavenObject } from "../Types/IRavenObject.js";
 import { getEtagHeader, HeadersBuilder, closeHttpResponse } from "../Utility/HttpUtil.js";
 import { TypeInfo } from "../Mapping/ObjectMapper.js";
@@ -151,7 +151,10 @@ export abstract class RavenCommand<TResult> {
     public async send(agent: Dispatcher,
         requestOptions: HttpRequestParameters): Promise<{ response: HttpResponse, bodyStream: Readable }> {
 
-        const { body, uri, fetcher, ...restOptions } = requestOptions;
+        // `dispatcher` is pulled out here so it never leaks into `restOptions`: the
+        // normal path re-adds it explicitly (see below), while the Bun and workerd
+        // paths must not carry an undici dispatcher into their fetch init.
+        const { body, uri, fetcher, dispatcher, ...restOptions } = requestOptions;
 
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
@@ -159,33 +162,84 @@ export abstract class RavenCommand<TResult> {
 
         let optionsToUse: RequestInit | BunFetchRequestInit;
 
-        if (RuntimeUtil.isBun()) {
-            optionsToUse = { body: bodyToUse, ...restOptions } as BunFetchRequestInit;
-        } else {
-            if (requestOptions.dispatcher) { // support for fiddler
-                agent = requestOptions.dispatcher;
+        if (RuntimeUtil.supportsUndiciDispatcher()) {
+            if (dispatcher) { // support for fiddler
+                agent = dispatcher;
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
+        } else {
+            // Bun and Cloudflare Workers (workerd) have no undici `dispatcher` concept, so
+            // one must never leak into their fetch init. On workerd mTLS is handled by the
+            // custom fetch (an mtls_certificate binding); Bun manages TLS itself.
+            optionsToUse = { body: bodyToUse, ...restOptions } as RequestInit;
         }
 
-        const passthrough = new PassThrough();
-        passthrough.pause();
+        // `new PassThrough()`, `Readable.fromWeb`, `new Stream()` and `.pipe` are all
+        // `node:stream` APIs; an incomplete edge polyfill (Nitro/unenv) can throw from any
+        // of them. `_guardNodeStream` turns those into an actionable error. PassThrough is
+        // built BEFORE the fetch on purpose: on a broken polyfill we fail fast without
+        // issuing the (possibly state-mutating) request.
+        const passthrough = RavenCommand._guardNodeStream(() => {
+            const pt = new PassThrough();
+            pt.pause();
+            return pt;
+        });
 
         const fetchFn = fetcher ?? fetch; // support for custom fetcher
         const response = await fetchFn(uri, optionsToUse);
 
-        const effectiveStream: Stream =
-            response.body
-                ? Readable.fromWeb(response.body)
-                : new Stream();
+        RavenCommand._guardNodeStream(() => {
+            const effectiveStream: Stream =
+                response.body
+                    ? Readable.fromWeb(response.body)
+                    : new Stream();
 
-        effectiveStream
-            .pipe(passthrough);
+            effectiveStream
+                .pipe(passthrough);
+        });
 
         return {
             response,
             bodyStream: passthrough
         };
+    }
+
+    // Runs a `node:stream` operation, translating an incomplete-polyfill failure into an
+    // actionable error. Shared by every node:stream call site in send() so none can be
+    // added without the guard, and the translation logic lives in one place.
+    private static _guardNodeStream<T>(fn: () => T): T {
+        try {
+            return fn();
+        } catch (err) {
+            throw RavenCommand._maybeNodeStreamUnavailableError(err as Error);
+        }
+    }
+
+    private static _maybeNodeStreamUnavailableError(err: Error): Error {
+        // The failure is signalled by the polyfill itself, not by the runtime: unenv
+        // (used by Nitro-based presets -- TanStack Start, Nuxt -- and edge targets such as
+        // Cloudflare Workers, Vercel Edge, Deno Deploy) ships `node:stream` stubs that
+        // throw e.g. "[unenv] PassThrough is not implemented yet!". We match that signature
+        // rather than the runtime so (a) every affected runtime gets the guidance, not just
+        // workerd, and (b) an unrelated node:stream error on a correctly configured runtime
+        // is NOT mislabeled as a polyfill problem. The original error is kept as the cause.
+        const message = err?.message ?? "";
+        const isIncompletePolyfill = message.includes("[unenv]")
+            || /\bnot implemented\b/i.test(message);
+
+        if (isIncompletePolyfill) {
+            return getError(
+                "InvalidOperationException",
+                "The RavenDB client requires a working node:stream, but this runtime provided an "
+                + "incomplete polyfill (unenv). On Cloudflare Workers, enable Node.js compatibility by "
+                + `adding compatibility_flags = ["nodejs_compat"] (and a recent compatibility_date) to `
+                + "your wrangler configuration; for framework bundlers such as Nitro / TanStack Start / "
+                + "Nuxt this makes node: built-ins resolve to the runtime instead of unenv stubs. On "
+                + "other edge runtimes (e.g. Vercel Edge, Deno Deploy) enable the equivalent Node.js "
+                + "compatibility so node:stream is backed by a real implementation.",
+                err);
+        }
+        return err;
     }
 
     private static maybeWrapBody(body: any) {

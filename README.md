@@ -2321,6 +2321,91 @@ let store = new DocumentStore('url', 'databaseName', authOptions);
 store.initialize();
 ```
 
+## Cloudflare Workers
+
+The client runs on [Cloudflare Workers](https://developers.cloudflare.com/workers/).
+Three Workers-specific things to know:
+
+**1. Enable the Node.js compatibility flag.** The client uses a few Node built-ins
+(`node:stream`, `node:events`, …). Add `nodejs_compat` to your `wrangler.toml`:
+
+```toml
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2024-09-23" # or newer
+```
+
+The package ships `workerd` and `worker` export conditions, so wrangler/esbuild and
+framework bundlers (OpenNext, Vite, …) automatically resolve the Workers-compatible
+ESM build — you do not need any bundler aliases or `serverExternalPackages` tweaks.
+
+**2. On frameworks that use Nitro (TanStack Start, Nuxt, Nitro), make sure Node
+built-ins resolve to the runtime — not to `unenv` stubs.** Nitro polyfills Node with
+[`unenv`](https://github.com/unjs/unenv), whose `node:stream` is incomplete. If Node.js
+compatibility is not enabled, the first request fails and the client raises a descriptive
+error (the underlying `[unenv] PassThrough is not implemented yet!` is kept as its cause):
+
+```
+InvalidOperationException: The RavenDB client requires a working node:stream on Cloudflare
+Workers, but this runtime provided an incomplete polyfill. Enable Node.js compatibility by
+adding compatibility_flags = ["nodejs_compat"] (and a recent compatibility_date) to your
+wrangler configuration. ...
+```
+
+The fix is to enable Cloudflare's real Node.js compatibility so Nitro defers `node:`
+built-ins to `workerd` instead of stubbing them. Provide a `wrangler.toml` (that Nitro
+reads at build time) with the flag, and set a recent `compatibilityDate` in your Nitro
+/ TanStack Start config:
+
+```toml
+# wrangler.toml (read by Nitro at build time)
+compatibility_date = "2024-09-23" # or newer
+compatibility_flags = ["nodejs_compat"]
+```
+
+You can confirm it worked: the built bundle no longer inlines `unenv` `node:*` stubs,
+and requests stream responses successfully.
+
+**3. mTLS is done with a Cloudflare `mtls_certificate` binding, not `authOptions`.**
+Workers has no Node `https` agent, so X.509 client-certificate authentication cannot
+use the usual `authOptions` certificate. Instead, upload the client certificate to
+Cloudflare and hand the client a `fetch` bound to that certificate via
+`conventions.customFetch`:
+
+```bash
+# Upload the RavenDB client certificate (PEM: cert + key) once:
+npx wrangler mtls-certificate upload --cert client.crt --key client.key --name ravendb
+```
+
+```toml
+# wrangler.toml — bind the uploaded certificate
+mtls_certificates = [
+  { binding = "RAVENDB_CERT", certificate_id = "<id printed by the upload command>" }
+]
+```
+
+```javascript
+import { DocumentStore } from "ravendb";
+
+export default {
+  async fetch(request, env) {
+    // `env` (and therefore the binding) is only available inside the handler.
+    const store = new DocumentStore("https://a.free.example.ravendb.cloud", "MyDatabase");
+
+    // Route every request through the mTLS binding's fetch. Because the binding
+    // presents the client certificate at the TLS layer, do NOT also pass authOptions.
+    store.conventions.customFetch = env.RAVENDB_CERT.fetch.bind(env.RAVENDB_CERT);
+    store.initialize();
+
+    const session = store.openSession();
+    const doc = await session.load("users/1");
+    return Response.json(doc ?? null);
+  }
+};
+```
+
+A minimal, runnable load check lives in [`test/cloudflare-worker`](./test/cloudflare-worker)
+and runs in CI.
+
 ## Building
 
 ```bash

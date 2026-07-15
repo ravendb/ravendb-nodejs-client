@@ -340,7 +340,20 @@ export class RequestExecutor implements IDisposable {
             return null;
         }
 
-        if (RuntimeUtil.isBun()) {
+        // Runtimes whose fetch has no undici dispatcher (Bun, Cloudflare Workers) can't use
+        // an http agent -- there is nothing to build.
+        if (!RuntimeUtil.supportsUndiciDispatcher()) {
+            // On workerd a client certificate configured the Node way can never be presented
+            // (no Node https agent) unless mTLS is wired through conventions.customFetch
+            // (checked above). Fail fast with an actionable message instead of silently
+            // issuing an uncertified request.
+            if (RuntimeUtil.isWorkerd() && this._certificate) {
+                throwError("InvalidOperationException",
+                    "A client certificate was configured via authOptions, but Cloudflare Workers has no Node "
+                    + "https agent to present it. On workerd, X.509 mTLS must be provided through a Cloudflare "
+                    + "mtls_certificate binding wired into conventions.customFetch (see the \"Cloudflare Workers\" "
+                    + "section of the README). Remove the certificate from authOptions and set conventions.customFetch.");
+            }
             return null;
         }
 

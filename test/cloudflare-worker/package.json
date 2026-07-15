@@ -1,0 +1,16 @@
+{
+  "name": "ravendb-cf-repro",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Minimal Cloudflare Worker reproduction / smoke test for the RavenDB client (RDBC-1083).",
+  "type": "module",
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.106.0"
+  },
+  "dependencies": {
+    "ravendb": "file:../.."
+  }
+}

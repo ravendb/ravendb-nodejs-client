@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+.output/
+.nitro/
+.wrangler/
+dist/
+*.tgz
+*.log

@@ -1,0 +1,6 @@
+# Read by Nitro at build time. nodejs_compat makes Nitro defer node: built-ins to
+# workerd's real implementation instead of unenv stubs -- required so node:stream
+# (PassThrough / Readable.fromWeb) works at request time. See readme.md.
+name = "ravendb-nitro-cf-example"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
