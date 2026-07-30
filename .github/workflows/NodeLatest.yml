@@ -1,25 +1,28 @@
-name: tests/node
+name: tests/node-latest
+
+# Early-warning canary for new Node.js releases.
+#
+# Node.js ships a new major every 6 months (April/October) and minor/patch
+# releases of the current line roughly every 2-4 weeks, so a weekly run is
+# enough to catch a breaking release within days. The regular test matrix
+# (RavenClient.yml) pins concrete lines; this workflow always resolves the
+# newest available versions instead.
 
 permissions:
   contents: read
 
 on:
-  push:
-    branches: [ v7.2 ]
-  pull_request:
-    branches: [ v7.2 ]
   schedule:
-    - cron: '0 10 * * *'
+    - cron: '0 10 * * 1' # Mondays 10:00 UTC
   workflow_dispatch:
-    inputs:
-      ravendb_version:
-        description: 'RavenDB Version'
-        required: true
-        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # `nightly` is allowed to fail: it exists to spot upstream breaks early
+    # (like the undici dispatch handler protocol changes), not to gate anything.
+    continue-on-error: ${{ matrix.node-version == 'nightly' }}
 
     env:
       RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
@@ -34,8 +37,9 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x, 24.x, 26.x]
-        serverVersion: ["6.2", "7.1", "7.2"]
+        # `latest` = newest stable release (any line), `nightly` = tip of main.
+        node-version: [latest, nightly]
+        serverVersion: ["7.2"]
       fail-fast: false
 
     steps:
@@ -45,14 +49,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        check-latest: true
+
+    - name: Print resolved Node.js version
+      run: node --version
 
     - name: Download RavenDB Server
-      run: |
-        if [[ -n "${{ inputs.ravendb_version }}" ]]; then
-          wget -O RavenDB.tar.bz2 "https://daily-builds.s3.amazonaws.com/RavenDB-${{ inputs.ravendb_version }}-linux-x64.tar.bz2"
-        else
-          wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
-        fi
+      run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
 
     - run: mkdir certs
     - run: openssl genrsa -out certs/ca.key 2048
@@ -69,12 +72,6 @@ jobs:
       run: tar xjf RavenDB.tar.bz2
 
     - run: npm ci
-
-    - name: Run Linter
-      run: npm run lint
-
-    - name: Check exports
-      run: npm run check-exports
 
     - name: Run Tests
       run: npm run test

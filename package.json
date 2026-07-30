@@ -51,7 +51,7 @@
     "Hibernating Rhinos"
   ],
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "keywords": [
     "ravendb",
@@ -87,10 +87,10 @@
     "unzipper": "^0.12.3"
   },
   "dependencies": {
-    "@types/node": "^20.14.14",
+    "@types/node": "^22.0.0",
     "@types/ws": "^8.5.12",
     "date-fns": "^3.6.0",
-    "undici": "^6.19.5",
+    "undici": "^7.16.0",
     "ws": "^8.18.0"
   },
   "optionalDependencies": {
