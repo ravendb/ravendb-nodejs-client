@@ -24,7 +24,7 @@ jobs:
       matrix:
         # Node 22+ : the Vite 6 example config loader needs node:module.registerHooks
         # (absent in Node 20), and GitHub is deprecating Node 20 on runners.
-        node-version: [22.x, 24.x]
+        node-version: [22.x, 24.x, 26.x]
         dir:
           - test/cloudflare-worker   # wrangler / esbuild
           - test/cloudflare-vite     # Vite / Rollup
