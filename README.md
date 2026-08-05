@@ -33,6 +33,7 @@ npm install --save ravendb
    [Vector Search](#vector-search),  
    [Embeddings Generation](#embeddings-generation),  
    [GenAI](#genai),  
+   [CDC Sink](#cdc-sink),  
    [Schema Validation](#schema-validation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
@@ -918,6 +919,27 @@ console.log("chunkedText", chunkedText);
 console.log("Final answer:", answer);
 ```
 
+#### Read conversation messages
+Read back the messages of a stored conversation, with optional paging and detail filtering.
+
+```javascript
+// Read the most recent messages of a conversation
+const result = await store.ai.getConversationMessages("chats/1");
+// Messages are in chronological order (oldest first)
+for (const message of result.messages) {
+    console.log(message.role, message.content, message.timestamp);
+}
+
+// Page backward (e.g. scrolling up in a chat UI) and include tool calls
+const olderPage = await store.ai.getConversationMessages({
+    conversationId: "chats/1",
+    before: result.messages[0].timestamp,  // exclusive upper bound
+    pageSize: 50,
+    detailLevel: "Detailed"                // "Simple" (default) | "Detailed" | "Full"
+});
+console.log(olderPage.hasMoreMessages);    // true when older messages exist
+```
+
 ## Attachments
 
 #### Store attachments
@@ -1787,6 +1809,65 @@ const errors = config.validate();
 > <small>[add GenAI ETL task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L53)</small>  
 > <small>[update GenAI task and change starting point](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L71)</small>  
 > <small>[validation requires schema or sample object](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L109)</small>  
+
+## CDC Sink
+
+Sync changes from a relational database (SQL Server, PostgreSQL) into RavenDB documents using change data capture.
+
+#### Create a CDC Sink task
+
+```javascript
+// Map the source SQL table "orders" to the RavenDB collection "Orders"
+const configuration = {
+    name: "orders-cdc",
+    connectionStringName: "<Your SQL connection string name>",
+    tables: [
+        {
+            collectionName: "Orders",
+            sourceTableSchema: "public",
+            sourceTableName: "orders",
+            // Primary key columns are used for document ID generation
+            primaryKeyColumns: ["id"],
+            columns: [
+                { column: "id", name: "Id" },
+                { column: "customer", name: "Customer" },
+                // Parse a jsonb column as a native JSON object instead of a string
+                { column: "details", name: "Details", type: "Json" }
+            ],
+            // Embed the "order_lines" table as an array inside each order document
+            embeddedTables: [
+                {
+                    sourceTableName: "order_lines",
+                    propertyName: "Lines",
+                    type: "Array",
+                    primaryKeyColumns: ["line_id"],
+                    joinColumns: ["order_id"],
+                    columns: [
+                        { column: "line_id", name: "Id" },
+                        { column: "product", name: "Product" },
+                        { column: "quantity", name: "Quantity" }
+                    ]
+                }
+            ]
+        }
+    ]
+};
+
+const result = await store.maintenance.send(new AddCdcSinkOperation(configuration));
+console.log(result.taskId);  // the ID of the created ongoing task
+```
+
+#### Update a CDC Sink task
+
+```javascript
+// Archive documents instead of deleting them when the source row is deleted
+configuration.tables[0].onDelete = {
+    ignoreDeletes: true,
+    patch: "this.Archived = true;"
+};
+
+await store.maintenance.send(new UpdateCdcSinkOperation(result.taskId, configuration));
+```
 
 ## Schema Validation
 
