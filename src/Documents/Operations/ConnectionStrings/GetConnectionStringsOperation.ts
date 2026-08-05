@@ -4,7 +4,7 @@ import {
     ConnectionStringType,
     SqlConnectionString,
     RavenConnectionString,
-    OlapConnectionString, ElasticSearchConnectionString, QueueConnectionString
+    OlapConnectionString, ElasticSearchConnectionString, QueueConnectionString, SnowflakeConnectionString
 } from "../Etl/ConnectionString.js";
 import { AiConnectionString } from "../AI/ConnectionStrings/AiConnectionString.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
@@ -18,6 +18,7 @@ export interface GetConnectionStringsResult {
     olapConnectionStrings: Record<string, OlapConnectionString>;
     elasticSearchConnectionStrings: Record<string, ElasticSearchConnectionString>;
     queueConnectionStrings: Record<string, QueueConnectionString>;
+    snowflakeConnectionStrings: Record<string, SnowflakeConnectionString>;
     aiConnectionStrings: Record<string, AiConnectionString>;
 }
 
@@ -114,6 +115,14 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
                     previousValue[currentValue[0]] = Object.assign(new OlapConnectionString(), currentValue[1]);
                     return previousValue;
                 }), {} as Record<string, OlapConnectionString>);
+        }
+
+        if (this.result.snowflakeConnectionStrings) {
+            this.result.snowflakeConnectionStrings = Object.entries(this.result.snowflakeConnectionStrings)
+                .reduce(((previousValue, currentValue) => {
+                    previousValue[currentValue[0]] = Object.assign(new SnowflakeConnectionString(), currentValue[1]);
+                    return previousValue;
+                }), {} as Record<string, SnowflakeConnectionString>);
         }
 
         if (this.result.aiConnectionStrings) {
