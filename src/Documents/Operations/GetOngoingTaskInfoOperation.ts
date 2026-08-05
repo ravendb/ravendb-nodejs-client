@@ -11,6 +11,7 @@ import { ServerNode } from "../../Http/ServerNode.js";
 import { throwError } from "../../Exceptions/index.js";
 import { RavenEtlConfiguration } from "./Etl/RavenEtlConfiguration.js";
 import { SqlEtlConfiguration } from "./Etl/Sql/SqlEtlConfiguration.js";
+import { SnowflakeEtlConfiguration } from "./Etl/Snowflake/SnowflakeEtlConfiguration.js";
 import { OlapEtlConfiguration } from "./Etl/Olap/OlapEtlConfiguration.js";
 import { ElasticSearchEtlConfiguration } from "./Etl/ElasticSearch/ElasticSearchEtlConfiguration.js";
 import { QueueEtlConfiguration } from "./Etl/Queue/QueueEtlConfiguration.js";
@@ -102,6 +103,13 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 };
                 break;
             }
+            case "SnowflakeEtl": {
+                nestedTypes = {
+                    configuration: "SnowflakeEtlConfiguration",
+                    "configuration.transforms": "Transformation"
+                };
+                break;
+            }
             case "Subscription": {
                 nestedTypes = {
                     lastBatchAckTime: "date",
@@ -139,6 +147,13 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
             case "QueueSink": {
                 break;
             }
+            case "CdcSink": {
+                nestedTypes = {
+                    lastBatchTime: "date",
+                    lastActivityTime: "date"
+                }
+                break;
+            }
             case "Backup": {
                 nestedTypes = {
                     lastFullBackup: "date",
@@ -171,6 +186,7 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
 const knownTypes = new Map<string, any>([
     [RavenEtlConfiguration.name, RavenEtlConfiguration],
     [SqlEtlConfiguration.name, SqlEtlConfiguration],
+    [SnowflakeEtlConfiguration.name, SnowflakeEtlConfiguration],
     [OlapEtlConfiguration.name, OlapEtlConfiguration],
     [ElasticSearchEtlConfiguration.name, ElasticSearchEtlConfiguration],
     [QueueEtlConfiguration.name, QueueEtlConfiguration],

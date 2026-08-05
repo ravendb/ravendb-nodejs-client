@@ -24,10 +24,21 @@ export type DatabaseRecordItemType =
     | "ElasticSearchEtls"
     | "PostgreSqlIntegration"
     | "QueueConnectionStrings"
+    /**
+     * @deprecated The server-side enum member is "QueueEtls". Use "QueueEtls" instead.
+     */
     | "QueueEtl"
+    | "QueueEtls"
     | "IndexesHistory"
     | "Refresh"
     | "QueueSinks"
     | "DataArchival"
+    | "SnowflakeConnectionStrings"
+    | "SnowflakeEtls"
+    | "EmbeddingsGenerations"
+    | "AiConnectionStrings"
+    | "GenAiEtls"
+    | "AiAgents"
     | "RemoteAttachments"
-    | "SchemaValidation";
+    | "SchemaValidation"
+    | "CdcSinks";
