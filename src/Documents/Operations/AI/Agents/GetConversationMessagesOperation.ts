@@ -125,6 +125,7 @@ class GetConversationMessagesCommand extends RavenCommand<AiConversationMessages
     async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
         if (!bodyStream) {
             // 404 - conversation not found
+            this.result = null;
             return null;
         }
 
