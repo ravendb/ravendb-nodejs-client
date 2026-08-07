@@ -61,7 +61,10 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             .objectKeysTransform({
                 defaultTransform: ObjectUtil.camel,
                 ignorePaths: [
-                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|ravenConnectionStrings|sqlConnectionStrings|rollingIndexes)\.[^.]+$/i,
+                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|rollingIndexes)\.[^.]+$/i,
+                    // Connection string names are dictionary keys and must keep their original casing;
+                    // matches the name level of any current or future *ConnectionStrings dictionary.
+                    /^\w+ConnectionStrings\.[^.]+$/i,
                     /^rollingIndexes\.[^.]+\.activeDeployments\.[^.]+$/i,
                     /^indexesHistory\.[^.]+\.[^.]+\.rollingDeployment\.[^.]+$/i,
                     /^timeSeries\./i

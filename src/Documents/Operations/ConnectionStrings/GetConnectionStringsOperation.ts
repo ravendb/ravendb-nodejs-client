@@ -11,6 +11,7 @@ import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { OperationResultType, IMaintenanceOperation } from "../OperationAbstractions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
+import { ObjectUtil } from "../../../Utility/ObjectUtil.js";
 
 export interface GetConnectionStringsResult {
     ravenConnectionStrings: Record<string, RavenConnectionString>;
@@ -75,7 +76,17 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
         }
 
         let body = "";
-        this.result = await this._defaultPipeline(_ => body += _).process(bodyStream);
+        // Connection string names are dictionary keys and must keep their original casing
+        // (e.g. server-wide strings propagate as "Server Wide Connection String, <name>").
+        // Matches the name level of any current or future *ConnectionStrings dictionary.
+        this.result = await this._defaultPipeline(_ => body += _)
+            .objectKeysTransform({
+                defaultTransform: ObjectUtil.camel,
+                ignorePaths: [
+                    /^\w+ConnectionStrings\.[^.]+$/i
+                ]
+            })
+            .process(bodyStream);
 
         if (this.result.ravenConnectionStrings) {
             this.result.ravenConnectionStrings = Object.entries(this.result.ravenConnectionStrings)

@@ -7,7 +7,10 @@ import {
     RemoveConnectionStringOperation,
     OlapConnectionString,
     ElasticSearchConnectionString,
-    QueueConnectionString
+    QueueConnectionString,
+    ServerWideConnectionString,
+    PutServerWideConnectionStringOperation,
+    RemoveServerWideConnectionStringOperation
 } from "../../../../src/index.js";
 import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil.js";
 import { assertThat } from "../../../Utils/AssertExtensions.js";
@@ -165,6 +168,35 @@ describe("ConnectionStringsTest", function () {
             .hasSize(0);
         assertThat(afterDelete.sqlConnectionStrings)
             .hasSize(0);
+    });
+
+    it("connectionStringNamesKeepOriginalCasing", async () => {
+        // Names are dictionary keys and must not be camel-cased by response deserialization.
+        // Server-wide connection strings propagate to databases under a key with a fixed
+        // prefix: "Server Wide Connection String, <name>".
+        const name = "Playground-Central-Raven";
+
+        const serverWide = new ServerWideConnectionString();
+        serverWide.connectionString = Object.assign(new RavenConnectionString(), {
+            database: "db1",
+            topologyDiscoveryUrls: ["http://localhost:8080"],
+            name
+        });
+
+        await store.maintenance.server.send(new PutServerWideConnectionStringOperation(serverWide));
+
+        try {
+            const propagatedKey = `Server Wide Connection String, ${name}`;
+
+            const connectionStrings = await store.maintenance.send(new GetConnectionStringsOperation());
+            assertThat(connectionStrings.ravenConnectionStrings)
+                .containsKey(propagatedKey);
+            assertThat(connectionStrings.ravenConnectionStrings[propagatedKey].database)
+                .isEqualTo("db1");
+        } finally {
+            await store.maintenance.server.send(
+                new RemoveServerWideConnectionStringOperation(serverWide.connectionString));
+        }
     });
 
 });
