@@ -12,7 +12,7 @@ import {
     PutServerWideConnectionStringOperation,
     RemoveServerWideConnectionStringOperation
 } from "../../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
 import { assertThat } from "../../../Utils/AssertExtensions.js";
 
 describe("ConnectionStringsTest", function () {
@@ -170,7 +170,8 @@ describe("ConnectionStringsTest", function () {
             .hasSize(0);
     });
 
-    it("connectionStringNamesKeepOriginalCasing", async () => {
+    // Server-wide connection strings endpoint requires RavenDB 7.2+
+    (RavenTestContext.isRavenDbServerVersion("7.2") ? it : it.skip)("connectionStringNamesKeepOriginalCasing", async () => {
         // Names are dictionary keys and must not be camel-cased by response deserialization.
         // Server-wide connection strings propagate to databases under a key with a fixed
         // prefix: "Server Wide Connection String, <name>".

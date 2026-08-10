@@ -14,7 +14,7 @@ import {
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
 import { assertThat } from "../../../Utils/AssertExtensions.js";
 
-(RavenTestContext.isPullRequest || !RavenTestContext.isRavenDbServerVersion("7.2") ? describe.skip : describe)("CdcSinkCrudTest", function () {
+(RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("CdcSinkCrudTest", function () {
     let store: IDocumentStore;
 
     beforeEach(async function () {

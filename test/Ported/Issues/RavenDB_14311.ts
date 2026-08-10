@@ -1,5 +1,5 @@
 import { IDocumentStore } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 
 describe("RavenDB_14311Test", function () {
@@ -12,7 +12,8 @@ describe("RavenDB_14311Test", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("invalidQueryWithExtraParenthesesShouldThrowSyntaxErrorNotNre", async () => {
+    // The parser fix (readable syntax error instead of NullReferenceException) landed in RavenDB 7.2
+    (RavenTestContext.isRavenDbServerVersion("7.2") ? it : it.skip)("invalidQueryWithExtraParenthesesShouldThrowSyntaxErrorNotNre", async () => {
         const session = store.openSession();
         try {
             // note the extra '()' after search(...) - this is invalid RQL syntax.

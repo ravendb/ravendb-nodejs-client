@@ -79,6 +79,11 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
     }
 
     async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            this.result = null;
+            return null;
+        }
+
         let body: string = null;
         const results = await this._defaultPipeline(_ => body = _)
             .process(bodyStream);
