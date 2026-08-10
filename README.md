@@ -924,6 +924,7 @@ Read back the messages of a stored conversation, with optional paging and detail
 
 ```javascript
 // Read the most recent messages of a conversation
+// (returns null when the conversation does not exist)
 const result = await store.ai.getConversationMessages("chats/1");
 // Messages are in chronological order (oldest first)
 for (const message of result.messages) {
@@ -1866,7 +1867,9 @@ configuration.tables[0].onDelete = {
     patch: "this.Archived = true;"
 };
 
-await store.maintenance.send(new UpdateCdcSinkOperation(result.taskId, configuration));
+const updateResult = await store.maintenance.send(new UpdateCdcSinkOperation(result.taskId, configuration));
+// The update replaces the task, so it gets a NEW task ID - use it for further operations
+console.log(updateResult.taskId);
 ```
 
 ## Schema Validation
