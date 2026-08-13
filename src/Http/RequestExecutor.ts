@@ -766,36 +766,28 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _updateTopologyCallback(): Promise<void> {
-        const time = new Date();
-        const fiveMinutes = 5 * 60 * 1000;
-        if (time.valueOf() - this._lastReturnedResponse.valueOf() <= fiveMinutes) {
+    private async _updateTopologyCallback(): Promise<void> {
+        const selector = this._nodeSelector;
+        if (!selector || !selector.getTopology()) {
             return;
         }
 
-        let serverNode: ServerNode;
+        for (const serverNode of selector.getTopology().nodes) {
+            try {
+                if (serverNode.serverRole !== "Member") {
+                    continue;
+                }
 
-        try {
-            const selector = this._nodeSelector;
-            if (!selector) {
-                return;
+                const updateParameters = new UpdateTopologyParameters(serverNode);
+                updateParameters.timeoutInMs = 0;
+                updateParameters.debugTag = "timer-callback-node-" + serverNode.clusterTag;
+
+                await this.updateTopology(updateParameters);
+            } catch (err) {
+                this._log.warn(err,
+                    "Couldn't update topology from _updateTopologyTimer task when fetching from node " + serverNode.clusterTag);
             }
-            const preferredNode: CurrentIndexAndNode = selector.getPreferredNode();
-            serverNode = preferredNode.currentNode;
-        } catch (err) {
-            this._log.warn(err, "Couldn't get preferred node Topology from _updateTopologyTimer");
-            return;
         }
-
-        const updateParameters = new UpdateTopologyParameters(serverNode);
-        updateParameters.timeoutInMs = 0;
-        updateParameters.debugTag = "timer-callback";
-
-        return this.updateTopology(updateParameters)
-            .catch(err => {
-                this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
-                return null;
-            });
     }
 
     protected async _singleTopologyUpdateAsync(initialUrls: string[], applicationIdentifier: string): Promise<void> {
