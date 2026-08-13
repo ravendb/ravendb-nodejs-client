@@ -1857,7 +1857,7 @@ export class RequestExecutor implements IDisposable {
             .then(() => {
                 return Promise.resolve(this._performHealthCheck(serverNode, nodeIndex))
                     .then(() => {
-                            status = this._failedNodesTimers[nodeIndex];
+                            status = this._failedNodesTimers.get(nodeStatus.node);
                             if (status) {
                                 this._failedNodesTimers.delete(nodeStatus.node);
                                 status.dispose();
