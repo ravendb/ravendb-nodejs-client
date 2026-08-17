@@ -1,11 +1,15 @@
 import { NodeSelector } from "../../../src/Http/NodeSelector.js";
-import { RequestExecutor } from "../../../src/Http/RequestExecutor.js";
 import { ServerNode, ServerNodeRole } from "../../../src/Http/ServerNode.js";
 import { Topology } from "../../../src/Http/Topology.js";
 import { UpdateTopologyParameters } from "../../../src/Http/UpdateTopologyParameters.js";
 import { DocumentStore, GetDatabaseTopologyCommand } from "../../../src/index.js";
 import { delay } from "../../../src/Utility/PromiseUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
+import {
+    createBareRequestExecutor,
+    createNoopLogger,
+    internals
+} from "../../Utils/RequestExecutorInternals.js";
 import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil.js";
 
 describe("RDBC_1101", function () {
@@ -20,11 +24,12 @@ describe("RDBC_1101", function () {
     }
 
     function createExecutorStub(nodes: ServerNode[], failingTags: Set<string> = new Set()) {
-        const executor = Object.create(RequestExecutor.prototype) as RequestExecutor;
+        const executor = createBareRequestExecutor();
+        const executorInternals = internals(executor);
         const polled: UpdateTopologyParameters[] = [];
 
-        (executor as any)._nodeSelector = new NodeSelector(new Topology(1, nodes));
-        (executor as any)._log = { error: () => {}, warn: () => {}, info: () => {} };
+        executorInternals._nodeSelector = new NodeSelector(new Topology(1, nodes));
+        executorInternals._log = createNoopLogger();
 
         executor.updateTopology = async (parameters: UpdateTopologyParameters) => {
             polled.push(parameters);
@@ -34,7 +39,7 @@ describe("RDBC_1101", function () {
             return true;
         };
 
-        return { executor, polled };
+        return { executorInternals, polled };
     }
 
     it("serverNode constructor keeps serverRole", () => {
@@ -44,13 +49,13 @@ describe("RDBC_1101", function () {
     });
 
     it("topology timer polls every member node, even while requests are flowing", async () => {
-        const { executor, polled } = createExecutorStub([
+        const { executorInternals, polled } = createExecutorStub([
             createNode("A", "Member"),
             createNode("B", "Member"),
             createNode("C", "Member")
         ]);
 
-        await (executor as any)._updateTopologyCallback();
+        await executorInternals._updateTopologyCallback();
 
         assertThat(polled.map(x => x.node.clusterTag).join(","))
             .isEqualTo("A,B,C");
@@ -64,37 +69,37 @@ describe("RDBC_1101", function () {
     });
 
     it("topology timer skips non-member nodes", async () => {
-        const { executor, polled } = createExecutorStub([
+        const { executorInternals, polled } = createExecutorStub([
             createNode("A", "Member"),
             createNode("B", "Rehab"),
             createNode("C", "Promotable"),
             createNode("D", "Member")
         ]);
 
-        await (executor as any)._updateTopologyCallback();
+        await executorInternals._updateTopologyCallback();
 
         assertThat(polled.map(x => x.node.clusterTag).join(","))
             .isEqualTo("A,D");
     });
 
     it("topology timer keeps polling remaining nodes when one fails", async () => {
-        const { executor, polled } = createExecutorStub([
+        const { executorInternals, polled } = createExecutorStub([
             createNode("A", "Member"),
             createNode("B", "Member"),
             createNode("C", "Member")
         ], new Set(["A"]));
 
-        await (executor as any)._updateTopologyCallback();
+        await executorInternals._updateTopologyCallback();
 
         assertThat(polled.map(x => x.node.clusterTag).join(","))
             .isEqualTo("A,B,C");
     });
 
     it("topology timer is a no-op without a node selector", async () => {
-        const executor = Object.create(RequestExecutor.prototype) as RequestExecutor;
-        (executor as any)._nodeSelector = null;
+        const executorInternals = internals(createBareRequestExecutor());
+        executorInternals._nodeSelector = null;
 
-        await (executor as any)._updateTopologyCallback();
+        await executorInternals._updateTopologyCallback();
     });
 });
 
@@ -144,7 +149,8 @@ describe("RDBC_1101", function () {
                     await delay(50);
                 }
 
-                const selector = (executor as any)._nodeSelector as NodeSelector;
+                const executorInternals = internals(executor);
+                const selector = executorInternals._nodeSelector;
 
                 // kill the node the timer would poll - the preferred one
                 const preferredNode = selector.getPreferredNode().currentNode;
@@ -160,10 +166,10 @@ describe("RDBC_1101", function () {
                     .hasSize(3);
 
                 // artificially call the timer func
-                await (executor as any)._updateTopologyCallback();
+                await executorInternals._updateTopologyCallback();
 
                 // we expect the topology fetched from the healthy nodes, despite the dead preferred node
-                const nodesAfter = ((executor as any)._nodeSelector as NodeSelector).getTopology().nodes;
+                const nodesAfter = executorInternals._nodeSelector.getTopology().nodes;
                 assertThat(nodesAfter.filter(x => x.serverRole === "Member"))
                     .hasSize(2);
                 assertThat(nodesAfter.filter(x => x.serverRole === "Rehab"))

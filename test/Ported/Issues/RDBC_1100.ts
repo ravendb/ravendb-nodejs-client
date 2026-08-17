@@ -1,8 +1,15 @@
-﻿import { NodeSelector } from "../../../src/Http/NodeSelector.js";
-import { NodeStatus, RequestExecutor } from "../../../src/Http/RequestExecutor.js";
+import { NodeSelector } from "../../../src/Http/NodeSelector.js";
+import { NodeStatus } from "../../../src/Http/RequestExecutor.js";
 import { ServerNode } from "../../../src/Http/ServerNode.js";
 import { Topology } from "../../../src/Http/Topology.js";
+import { Timer } from "../../../src/Primitives/Timer.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
+import {
+    createBareRequestExecutor,
+    createNoopLogger,
+    internals,
+    nodeStatusInternals
+} from "../../Utils/RequestExecutorInternals.js";
 
 describe("RDBC_1100", function () {
 
@@ -16,13 +23,14 @@ describe("RDBC_1100", function () {
     }
 
     function createExecutorStub(node: ServerNode, healthCheckError?: Error) {
-        const executor = Object.create(RequestExecutor.prototype) as RequestExecutor;
+        const executor = createBareRequestExecutor();
+        const executorInternals = internals(executor);
 
         const failedNodesTimers = new Map<ServerNode, NodeStatus>();
-        (executor as any)._failedNodesTimers = failedNodesTimers;
-        (executor as any)._nodeSelector = new NodeSelector(new Topology(1, [node]));
-        (executor as any)._log = { error: () => {}, warn: () => {}, info: () => {} };
-        (executor as any)._performHealthCheck = async () => {
+        executorInternals._failedNodesTimers = failedNodesTimers;
+        executorInternals._nodeSelector = new NodeSelector(new Topology(1, [node]));
+        executorInternals._log = createNoopLogger();
+        executorInternals._performHealthCheck = async () => {
             if (healthCheckError) {
                 throw healthCheckError;
             }
@@ -30,20 +38,20 @@ describe("RDBC_1100", function () {
 
         const timerCalls = { disposed: false, changed: false };
         const nodeStatus = new NodeStatus(node, executor, () => Promise.resolve());
-        (nodeStatus as any)._timer = {
+        nodeStatusInternals(nodeStatus)._timer = {
             dispose: () => timerCalls.disposed = true,
             change: () => timerCalls.changed = true
-        };
+        } as unknown as Timer;
         failedNodesTimers.set(node, nodeStatus);
 
-        return { executor, failedNodesTimers, nodeStatus, timerCalls };
+        return { executorInternals, failedNodesTimers, nodeStatus, timerCalls };
     }
 
     it("recovered node is removed from failed nodes timers, so future health checks can spawn", async () => {
         const node = createNode("A");
-        const { executor, failedNodesTimers, nodeStatus, timerCalls } = createExecutorStub(node);
+        const { executorInternals, failedNodesTimers, nodeStatus, timerCalls } = createExecutorStub(node);
 
-        await (executor as any)._checkNodeStatusCallback(nodeStatus);
+        await executorInternals._checkNodeStatusCallback(nodeStatus);
 
         assertThat(failedNodesTimers.has(node))
             .isFalse();
@@ -55,10 +63,10 @@ describe("RDBC_1100", function () {
 
     it("still-down node stays in failed nodes timers and its timer is rescheduled", async () => {
         const node = createNode("A");
-        const { executor, failedNodesTimers, nodeStatus, timerCalls } =
+        const { executorInternals, failedNodesTimers, nodeStatus, timerCalls } =
             createExecutorStub(node, new Error("Node is still down"));
 
-        await (executor as any)._checkNodeStatusCallback(nodeStatus);
+        await executorInternals._checkNodeStatusCallback(nodeStatus);
 
         assertThat(failedNodesTimers.has(node))
             .isTrue();
