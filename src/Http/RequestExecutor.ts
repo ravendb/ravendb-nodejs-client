@@ -161,8 +161,6 @@ export class RequestExecutor implements IDisposable {
     protected _databaseName: string;
     protected _certificate: ICertificate = null;
 
-    private _lastReturnedResponse: Date;
-
     private readonly _cache: HttpCache;
 
     private _topologyTakenFromNode: ServerNode;
@@ -437,7 +435,6 @@ export class RequestExecutor implements IDisposable {
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
         this._databaseName = database;
-        this._lastReturnedResponse = new Date();
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
         this._certificate = Certificate.createFromOptions(this._authOptions);
@@ -767,17 +764,17 @@ export class RequestExecutor implements IDisposable {
     }
 
     private async _updateTopologyCallback(): Promise<void> {
-        const selector = this._nodeSelector;
-        if (!selector || !selector.getTopology()) {
+        const topology = this._nodeSelector?.getTopology();
+        if (!topology) {
             return;
         }
 
-        for (const serverNode of selector.getTopology().nodes) {
-            try {
-                if (serverNode.serverRole !== "Member") {
-                    continue;
-                }
+        for (const serverNode of topology.nodes) {
+            if (serverNode.serverRole !== "Member") {
+                continue;
+            }
 
+            try {
                 const updateParameters = new UpdateTopologyParameters(serverNode);
                 updateParameters.timeoutInMs = 0;
                 updateParameters.debugTag = "timer-callback-node-" + serverNode.clusterTag;
@@ -1080,7 +1077,6 @@ export class RequestExecutor implements IDisposable {
             this._emitter.emit("succeedRequest", new SucceedRequestEventArgs(this._databaseName, url, response, req, attemptNum));
 
             responseDispose = await command.processResponse(this._cache, response, bodyStream, req.uri as string);
-            this._lastReturnedResponse = new Date();
         } finally {
             if (responseDispose === "Automatic") {
                 closeHttpResponse(response);
@@ -1840,6 +1836,7 @@ export class RequestExecutor implements IDisposable {
             if (e.name === "DatabaseDoesNotExistException" || e.name === "RequestedNodeUnavailableException") {
                 status = this._failedNodesTimers.get(nodeStatus.node);
                 if (status) {
+                    this._failedNodesTimers.delete(nodeStatus.node);
                     status.dispose();
                 }
 

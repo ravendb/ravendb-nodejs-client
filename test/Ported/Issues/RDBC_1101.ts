@@ -25,7 +25,6 @@ describe("RDBC_1101", function () {
 
         (executor as any)._nodeSelector = new NodeSelector(new Topology(1, nodes));
         (executor as any)._log = { error: () => {}, warn: () => {}, info: () => {} };
-        (executor as any)._lastReturnedResponse = new Date();
 
         executor.updateTopology = async (parameters: UpdateTopologyParameters) => {
             polled.push(parameters);
