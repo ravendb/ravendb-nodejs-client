@@ -2449,7 +2449,9 @@ Deno-specific notes:
   without `DENO_CERT` / `--cert`.
 - On Deno-based platforms that remove `Deno.createHttpClient`, the client throws an
   actionable error instead of sending uncertified requests; provide the transport via
-  `conventions.customFetch` (see below) in that case.
+  `conventions.customFetch` (see below) in that case. [Bunny Edge
+  Scripting](https://bunny.net/edge-scripting/) keeps the API available — the client is
+  verified end-to-end there (store + load against RavenDB Cloud over mTLS).
 - Like on workerd, the Changes API (WebSocket) and subscriptions (raw TCP) are not
   supported — use the document/query APIs.
 
