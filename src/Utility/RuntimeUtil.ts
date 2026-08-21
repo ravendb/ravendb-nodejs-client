@@ -38,9 +38,22 @@ export class RuntimeUtil {
     }
 
     /**
+     * Detects if the code is running in the Deno runtime.
+     *
+     * Not cached: unlike `process`/`navigator` sniffing this is a cheap property
+     * probe, and tests fake `globalThis.Deno` around single calls.
+     */
+    public static isDeno(): boolean {
+        const deno = (globalThis as { Deno?: { version?: { deno?: unknown } } }).Deno;
+        return !!deno && typeof deno.version?.deno === "string";
+    }
+
+    /**
      * Whether the current runtime can accept an undici `Dispatcher` (Node's undici
-     * Agent) in a `fetch` init. Node can; Bun and Cloudflare Workers (workerd) cannot --
-     * their `fetch` has no dispatcher concept, so building or passing one is meaningless.
+     * Agent) in a `fetch` init. Node can; Bun, Cloudflare Workers (workerd) and Deno
+     * cannot -- their `fetch` has no dispatcher concept, so building or passing one is
+     * meaningless (Deno's fetch silently ignores it, which used to drop a configured
+     * client certificate on the floor).
      *
      * Centralized here so the two consumers -- request send (RavenCommand.send) and http
      * agent creation (RequestExecutor.getHttpAgent) -- stay in lockstep: if they drift
@@ -48,6 +61,6 @@ export class RuntimeUtil {
      * original workerd failure returns. A future dispatcher-less runtime is added once.
      */
     public static supportsUndiciDispatcher(): boolean {
-        return !this.isBun() && !this.isWorkerd();
+        return !this.isBun() && !this.isWorkerd() && !this.isDeno();
     }
 }

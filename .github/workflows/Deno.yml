@@ -1,0 +1,106 @@
+name: tests/deno
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ v7.2 ]
+  pull_request:
+    branches: [ v7.2 ]
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  # Full mTLS data-path end-to-end on Deno: the client configured with a PEM
+  # certificate via authOptions performs a real store + load against a *secured*
+  # RavenDB server (guards the RDBC-1083 mTLS family - before the fix Deno
+  # silently sent uncertified requests that failed with a bare 403).
+  e2e-mtls:
+    name: e2e mTLS (deno -> secured RavenDB)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        deno-version: [v2.x]
+        serverVersion: ["7.2"]
+    env:
+      RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Setup Deno ${{ matrix.deno-version }}
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ matrix.deno-version }}
+
+      # A mini PKI: CA + one leaf used as both the server certificate (pfx) and the
+      # client certificate (pem) - RavenDB trusts its own certificate as ClusterAdmin.
+      # The key is converted to PKCS#1 because the client's PEM parsing expects
+      # a "BEGIN RSA PRIVATE KEY" block.
+      - name: Generate certificates
+        run: |
+          mkdir certs && cd certs
+          openssl req -x509 -newkey rsa:2048 -keyout ca-key.pem -out ca.pem -days 2 -nodes \
+            -subj "/CN=deno-smoke-ca" -addext "basicConstraints=critical,CA:TRUE" \
+            -addext "keyUsage=critical,keyCertSign,cRLSign"
+          openssl genrsa -out key-pkcs8.pem 2048
+          openssl rsa -in key-pkcs8.pem -out key.pem -traditional
+          openssl req -new -key key.pem -subj "/CN=localhost" -out leaf.csr
+          printf "subjectAltName=DNS:localhost,IP:127.0.0.1\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth,clientAuth\nbasicConstraints=CA:FALSE\n" > leaf.ext
+          openssl x509 -req -in leaf.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -days 2 -extfile leaf.ext -out cert.pem
+          openssl pkcs12 -export -out server.pfx -inkey key.pem -in cert.pem -certfile ca.pem -passout pass:
+          cat cert.pem key.pem > client.pem
+
+      - name: Download RavenDB Server
+        run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=nightly&version=${{ matrix.serverVersion }}"
+
+      - name: Extract RavenDB Server
+        run: tar xjf RavenDB.tar.bz2
+
+      - name: Start RavenDB (secured, in-memory)
+        run: |
+          chmod +x ./RavenDB/Server/Raven.Server
+          ./RavenDB/Server/Raven.Server \
+            --non-interactive \
+            --ServerUrl=https://0.0.0.0:8080 \
+            --PublicServerUrl=https://localhost:8080 \
+            --Setup.Mode=None \
+            --Security.Certificate.Path="$PWD/certs/server.pfx" \
+            --License.Eula.Accepted=true \
+            --RunInMemory=true &
+          for i in $(seq 1 60); do
+            if curl -sf --cert certs/client.pem --cacert certs/ca.pem https://localhost:8080/build/version > /dev/null; then echo "RavenDB up"; exit 0; fi
+            sleep 1
+          done
+          echo "RavenDB did not start in time" && exit 1
+
+      - name: Create the smoke database
+        run: |
+          curl -sf -X PUT "https://localhost:8080/admin/databases?name=smoke&replicationFactor=1" \
+            --cert certs/client.pem --cacert certs/ca.pem \
+            -H "Content-Type: application/json" -d '{"DatabaseName":"smoke"}' > /dev/null
+
+      # `npm ci` runs `prepare` (tshy build): builds dist/ the example resolves.
+      - name: Build the client
+        run: npm ci
+
+      - name: Install example deps (resolves ravendb from repo root)
+        working-directory: test/deno
+        run: npm install
+
+      - name: End-to-end mTLS store/load on Deno against RavenDB
+        working-directory: test/deno
+        env:
+          RAVENDB_URL: https://localhost:8080
+          RAVENDB_DATABASE: smoke
+          RAVENDB_CLIENT_CERT: ${{ github.workspace }}/certs/client.pem
+          RAVENDB_CA: ${{ github.workspace }}/certs/ca.pem
+        run: npm run smoke

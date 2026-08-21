@@ -2,11 +2,12 @@
   "slow": 1000,
   "timeout": 40000,
 
-  // The test/cloudflare-* dirs are self-contained Cloudflare example projects
+  // The test/cloudflare-* and test/deno dirs are self-contained example projects
   // (with their own deps); they must not be picked up by the "test/**/*.ts"
   // runner or it fails to resolve their bundler deps (e.g. nitropack).
   "ignore": [
-    "test/cloudflare-*/**"
+    "test/cloudflare-*/**",
+    "test/deno/**"
   ],
 
   "node-option": [

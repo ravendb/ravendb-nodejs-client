@@ -8,11 +8,22 @@ import { BunTlsOptions } from "../Types/BunTypes.js";
 
 export type CertificateType = "pem" | "pfx";
 
+/**
+ * Subset of Deno.CreateHttpClientOptions the client cares about
+ * (mirrored here so the Node build does not depend on Deno types).
+ */
+export interface DenoHttpClientOptions {
+    cert?: string;
+    key?: string;
+    caCerts?: string[];
+}
+
 export interface ICertificate {
     toAgentOptions(): Agent.Options;
     toSocketOptions(): ConnectionOptions;
     toWebSocketOptions(): ClientOptions;
     toBunTlsOptions(): BunTlsOptions;
+    toDenoHttpClientOptions(): DenoHttpClientOptions;
 }
 
 export abstract class Certificate implements ICertificate {
@@ -101,6 +112,17 @@ export abstract class Certificate implements ICertificate {
 
         return {};
     }
+
+    public toDenoHttpClientOptions(): DenoHttpClientOptions {
+        if (this._passphrase) {
+            throwError("InvalidArgumentException",
+                "Deno.createHttpClient does not support encrypted private keys, so a certificate "
+                + "with a passphrase cannot be used on Deno. Decrypt the key "
+                + "(e.g. openssl rsa -in encrypted.key -out decrypted.key) and configure the decrypted PEM.");
+        }
+
+        return {};
+    }
 }
 
 export class PemCertificate extends Certificate {
@@ -162,6 +184,16 @@ export class PemCertificate extends Certificate {
             cert: this._certificate,
             key: this._key,
             ca: this._ca
+        };
+    }
+
+    public toDenoHttpClientOptions(): DenoHttpClientOptions {
+        const options = super.toDenoHttpClientOptions();
+        return {
+            ...options,
+            cert: this._certificate as string,
+            key: this._key,
+            caCerts: this._ca ? [this._ca.toString()] : undefined
         };
     }
 
@@ -237,5 +269,13 @@ export class PfxCertificate extends Certificate {
             pfx: this._certificate as Buffer,
             ca: this._ca
         };
+    }
+
+    public toDenoHttpClientOptions(): DenoHttpClientOptions {
+        return throwError("InvalidArgumentException",
+            "PFX (PKCS#12) client certificates are not supported on Deno - Deno.createHttpClient "
+            + "accepts PEM only. Convert the certificate to PEM "
+            + "(e.g. openssl pkcs12 -in cert.pfx -out cert.pem -nodes) "
+            + "and configure authOptions with type \"pem\".");
     }
 }

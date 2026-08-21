@@ -50,8 +50,27 @@ import { Dispatcher, Agent } from "undici-types";
 import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
+import { createDenoHttpClient } from "../Utility/DenoHttpUtil.js";
 
 const DEFAULT_REQUEST_OPTIONS = {};
+
+// RDBC-1083: thrown both at DocumentStore.initialize() (validateCertificateRuntimeSupport)
+// and on the request path (getHttpAgent) when an X.509 client certificate is configured on
+// workerd, where user-space code cannot present one. Deliberately lists ways out that do
+// not require access to the Cloudflare account owning the deployment.
+const WORKERD_MTLS_ERROR =
+    "A client certificate was configured via authOptions, but Cloudflare Workers (workerd) cannot "
+    + "present an X.509 client certificate from JavaScript - mTLS on workerd works only through a "
+    + "Cloudflare mtls_certificate binding. "
+    + "If you control the Cloudflare account: upload the certificate "
+    + "(npx wrangler mtls-certificate upload --cert client.crt --key client.key --name ravendb), "
+    + "bind it in wrangler.toml (mtls_certificates = [...]), remove the certificate from authOptions "
+    + "and set conventions.customFetch = env.<BINDING>.fetch.bind(env.<BINDING>) - see the "
+    + "\"Cloudflare Workers\" section of the README. "
+    + "If the app is deployed through a platform that owns the Cloudflare account (e.g. Lovable): "
+    + "export the project to your own Cloudflare account (a free plan is enough) to gain wrangler.toml "
+    + "access, or move the RavenDB calls to a backend you host that supports mTLS and call that "
+    + "backend from the worker.";
 
 const log = getLogger({ module: "RequestExecutor" });
 
@@ -338,19 +357,18 @@ export class RequestExecutor implements IDisposable {
             return null;
         }
 
-        // Runtimes whose fetch has no undici dispatcher (Bun, Cloudflare Workers) can't use
-        // an http agent -- there is nothing to build.
+        // Runtimes whose fetch has no undici dispatcher (Bun, Cloudflare Workers, Deno)
+        // can't use an http agent -- there is nothing to build. A configured certificate
+        // is presented another way there: Bun via the `tls` request option, Deno via a
+        // Deno.HttpClient `client` request option (both set in _setDefaultRequestOptions).
         if (!RuntimeUtil.supportsUndiciDispatcher()) {
-            // On workerd a client certificate configured the Node way can never be presented
-            // (no Node https agent) unless mTLS is wired through conventions.customFetch
-            // (checked above). Fail fast with an actionable message instead of silently
-            // issuing an uncertified request.
+            // On workerd a client certificate can never be presented from user-space
+            // unless mTLS is wired through conventions.customFetch (checked above).
+            // Fail fast with an actionable message instead of silently issuing an
+            // uncertified request. Normally initialize() already threw this
+            // (validateCertificateRuntimeSupport) -- this guards direct RequestExecutor use.
             if (RuntimeUtil.isWorkerd() && this._certificate) {
-                throwError("InvalidOperationException",
-                    "A client certificate was configured via authOptions, but Cloudflare Workers has no Node "
-                    + "https agent to present it. On workerd, X.509 mTLS must be provided through a Cloudflare "
-                    + "mtls_certificate binding wired into conventions.customFetch (see the \"Cloudflare Workers\" "
-                    + "section of the README). Remove the certificate from authOptions and set conventions.customFetch.");
+                throwError("InvalidOperationException", WORKERD_MTLS_ERROR);
             }
             return null;
         }
@@ -369,7 +387,7 @@ export class RequestExecutor implements IDisposable {
             if (RequestExecutor.HTTPS_AGENT_CACHE.has(cacheKey)) {
                 return RequestExecutor.HTTPS_AGENT_CACHE.get(cacheKey);
             } else {
-                const agent = await RequestExecutor.createAgent(agentOptions);
+                const agent = await RequestExecutor.createAgent(agentOptions, true);
 
                 RequestExecutor.HTTPS_AGENT_CACHE.set(cacheKey, agent);
                 return agent;
@@ -378,6 +396,25 @@ export class RequestExecutor implements IDisposable {
             return RequestExecutor.KEEP_ALIVE_HTTP_AGENT ??= await RequestExecutor.createAgent({
                 pipelining: 0
             });
+        }
+    }
+
+    /**
+     * Throws when an X.509 client certificate is configured on a runtime that cannot
+     * present it (and no conventions.customFetch is set to take over the transport).
+     * Called from DocumentStore.initialize() so misconfiguration surfaces at startup
+     * instead of on the first request.
+     */
+    public static validateCertificateRuntimeSupport(
+        authOptions: IAuthOptions,
+        conventions: DocumentConventions): void {
+
+        if (!authOptions?.certificate || conventions?.customFetch) {
+            return;
+        }
+
+        if (RuntimeUtil.isWorkerd()) {
+            throwError("InvalidOperationException", WORKERD_MTLS_ERROR);
         }
     }
 
@@ -394,7 +431,7 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private static async createAgent(options: Agent.Options) {
+    private static async createAgent(options: Agent.Options, requiredForCertificate = false) {
         try {
             let UndiciAgent;
 
@@ -416,7 +453,17 @@ export class RequestExecutor implements IDisposable {
 
             return new UndiciAgent(options);
         } catch (err) {
-            // If we can't import undici - we might be in cloudflare env - simply return no-agent.
+            // A missing undici only costs keep-alive tuning on a plain (uncertified)
+            // connection - degrade silently. But when the agent is what would present a
+            // configured client certificate, degrading would send uncertified requests
+            // that fail with a bare 401/403 (RDBC-1083) - fail loudly instead.
+            if (requiredForCertificate) {
+                throwError("InvalidOperationException",
+                    "A client certificate was configured via authOptions, but the undici Agent needed to "
+                    + "present it could not be loaded in this runtime, so the certificate cannot be "
+                    + "presented. No uncertified request was sent. Make the undici package resolvable, or "
+                    + "provide a fetch that performs mTLS via conventions.customFetch.", err);
+            }
             return null;
         }
     }
@@ -1963,6 +2010,12 @@ export class RequestExecutor implements IDisposable {
 
         if (RuntimeUtil.isBun() && this._certificate) {
             this._defaultRequestOptions.tls = this._certificate.toBunTlsOptions();
+        }
+
+        // Deno's fetch presents a client certificate through a Deno.HttpClient passed
+        // as the `client` init option - the undici agent path is a silent no-op there.
+        if (RuntimeUtil.isDeno() && this._certificate) {
+            this._defaultRequestOptions.client = createDenoHttpClient(this._certificate);
         }
     }
 

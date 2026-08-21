@@ -2366,10 +2366,12 @@ You can confirm it worked: the built bundle no longer inlines `unenv` `node:*` s
 and requests stream responses successfully.
 
 **3. mTLS is done with a Cloudflare `mtls_certificate` binding, not `authOptions`.**
-Workers has no Node `https` agent, so X.509 client-certificate authentication cannot
-use the usual `authOptions` certificate. Instead, upload the client certificate to
-Cloudflare and hand the client a `fetch` bound to that certificate via
-`conventions.customFetch`:
+Workers cannot present an X.509 client certificate from JavaScript — not via `fetch`,
+not via `cloudflare:sockets`, not via `node:tls` under `nodejs_compat`. Configuring a
+certificate through `authOptions` therefore fails fast: `DocumentStore.initialize()`
+throws an error explaining the options. The supported mechanism is an
+`mtls_certificate` binding: upload the client certificate to Cloudflare and hand the
+client a `fetch` bound to that certificate via `conventions.customFetch`:
 
 ```bash
 # Upload the RavenDB client certificate (PEM: cert + key) once:
@@ -2403,8 +2405,74 @@ export default {
 };
 ```
 
+Creating the binding requires access to the Cloudflare account that owns the
+deployment (`wrangler.toml` plus an "SSL and Certificates Edit" API token). If the app
+is deployed through a platform that owns the account for you (e.g. Lovable), export
+the project to your own Cloudflare account — a free plan is enough — or move the
+RavenDB calls to a backend you host that supports mTLS and call that backend from the
+worker.
+
+**4. Features that need raw sockets do not work on workerd.** The Changes API uses a
+WebSocket client (`ws`) and subscriptions use a raw TCP (`node:tls`) connection —
+neither is available on Cloudflare Workers, regardless of how mTLS is provided. Use
+the document/query APIs from workers, and run Changes API consumers and subscription
+workers on a Node process.
+
 A minimal, runnable load check lives in [`test/cloudflare-worker`](./test/cloudflare-worker)
 and runs in CI.
+
+## Deno
+
+The client runs on [Deno](https://deno.com) (2.x), including X.509
+client-certificate authentication: configure `authOptions` with a **PEM** certificate
+exactly like on Node, and the client presents it through `Deno.createHttpClient`.
+
+```javascript
+import { DocumentStore } from "ravendb";
+
+const authOptions = {
+    type: "pem",
+    certificate: Deno.readTextFileSync("client.pem"), // certificate + private key
+    ca: Deno.readTextFileSync("ca.pem")               // optional, for a private CA
+};
+
+const store = new DocumentStore("https://a.free.example.ravendb.cloud", "MyDatabase", authOptions);
+store.initialize();
+```
+
+Deno-specific notes:
+
+- **PEM only.** `Deno.createHttpClient` does not accept PKCS#12 archives or encrypted
+  keys, so a PFX certificate or a PEM with a passphrase throws an actionable error —
+  convert with `openssl pkcs12 -in cert.pfx -out cert.pem -nodes`.
+- **`authOptions.ca` is passed as `caCerts`**, so a server behind a private CA works
+  without `DENO_CERT` / `--cert`.
+- On Deno-based platforms that remove `Deno.createHttpClient`, the client throws an
+  actionable error instead of sending uncertified requests; provide the transport via
+  `conventions.customFetch` (see below) in that case.
+- Like on workerd, the Changes API (WebSocket) and subscriptions (raw TCP) are not
+  supported — use the document/query APIs.
+
+An end-to-end smoke test lives in [`test/deno`](./test/deno).
+
+## Custom fetch: bring your own transport
+
+On runtimes where the client cannot provide authentication itself,
+`conventions.customFetch` replaces the transport with any fetch-compatible function.
+The client calls it exactly like the global `fetch` — `customFetch(url, init)` — for
+every HTTP request (document operations, queries, topology updates). Set it before
+`initialize()`:
+
+```javascript
+const store = new DocumentStore(urls, database);
+store.conventions.customFetch = myFetch; // e.g. a Cloudflare mtls_certificate binding's fetch
+store.initialize();
+```
+
+When `customFetch` is set the client does not build an HTTP(S) agent and does not
+require a certificate in `authOptions` — the supplied fetch owns connection handling
+and authentication (mTLS, a relay with its own credentials, request signing, and so
+on).
 
 ## Building
 
