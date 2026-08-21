@@ -35,7 +35,7 @@ docker run -d --name ravendb-smoke -p 8080:8080 -v "$PWD/server.pfx:/certs/serve
   -e RAVEN_Setup_Mode=None -e RAVEN_License_Eula_Accepted=true \
   -e RAVEN_Security_Certificate_Path=/certs/server.pfx \
   -e RAVEN_ServerUrl=https://0.0.0.0:8080 -e RAVEN_PublicServerUrl=https://localhost:8080 \
-  -e RAVEN_RunInMemory=true ravendb/ravendb:7.1-latest
+  -e RAVEN_RunInMemory=true ravendb/ravendb:7.2-latest
 
 # 3. the database
 curl -s -X PUT "https://localhost:8080/admin/databases?name=smoke&replicationFactor=1" \
