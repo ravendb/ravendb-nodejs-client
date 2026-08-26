@@ -20,6 +20,7 @@ export class ServerNode {
             this.database = opts.database;
             this.url = opts.url;
             this.clusterTag = opts.clusterTag;
+            this.serverRole = opts.serverRole;
         }
     }
 

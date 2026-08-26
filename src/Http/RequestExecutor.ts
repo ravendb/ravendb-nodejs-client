@@ -161,8 +161,6 @@ export class RequestExecutor implements IDisposable {
     protected _databaseName: string;
     protected _certificate: ICertificate = null;
 
-    private _lastReturnedResponse: Date;
-
     private readonly _cache: HttpCache;
 
     private _topologyTakenFromNode: ServerNode;
@@ -437,7 +435,6 @@ export class RequestExecutor implements IDisposable {
 
         this._cache = new HttpCache(conventions.maxHttpCacheSize);
         this._databaseName = database;
-        this._lastReturnedResponse = new Date();
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
         this._certificate = Certificate.createFromOptions(this._authOptions);
@@ -766,36 +763,28 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private _updateTopologyCallback(): Promise<void> {
-        const time = new Date();
-        const fiveMinutes = 5 * 60 * 1000;
-        if (time.valueOf() - this._lastReturnedResponse.valueOf() <= fiveMinutes) {
+    private async _updateTopologyCallback(): Promise<void> {
+        const topology = this._nodeSelector?.getTopology();
+        if (!topology) {
             return;
         }
 
-        let serverNode: ServerNode;
-
-        try {
-            const selector = this._nodeSelector;
-            if (!selector) {
-                return;
+        for (const serverNode of topology.nodes) {
+            if (serverNode.serverRole !== "Member") {
+                continue;
             }
-            const preferredNode: CurrentIndexAndNode = selector.getPreferredNode();
-            serverNode = preferredNode.currentNode;
-        } catch (err) {
-            this._log.warn(err, "Couldn't get preferred node Topology from _updateTopologyTimer");
-            return;
+
+            try {
+                const updateParameters = new UpdateTopologyParameters(serverNode);
+                updateParameters.timeoutInMs = 0;
+                updateParameters.debugTag = "timer-callback-node-" + serverNode.clusterTag;
+
+                await this.updateTopology(updateParameters);
+            } catch (err) {
+                this._log.warn(err,
+                    "Couldn't update topology from _updateTopologyTimer task when fetching from node " + serverNode.clusterTag);
+            }
         }
-
-        const updateParameters = new UpdateTopologyParameters(serverNode);
-        updateParameters.timeoutInMs = 0;
-        updateParameters.debugTag = "timer-callback";
-
-        return this.updateTopology(updateParameters)
-            .catch(err => {
-                this._log.error(err, "Couldn't update topology from _updateTopologyTimer");
-                return null;
-            });
     }
 
     protected async _singleTopologyUpdateAsync(initialUrls: string[], applicationIdentifier: string): Promise<void> {
@@ -1088,7 +1077,6 @@ export class RequestExecutor implements IDisposable {
             this._emitter.emit("succeedRequest", new SucceedRequestEventArgs(this._databaseName, url, response, req, attemptNum));
 
             responseDispose = await command.processResponse(this._cache, response, bodyStream, req.uri as string);
-            this._lastReturnedResponse = new Date();
         } finally {
             if (responseDispose === "Automatic") {
                 closeHttpResponse(response);
@@ -1848,6 +1836,7 @@ export class RequestExecutor implements IDisposable {
             if (e.name === "DatabaseDoesNotExistException" || e.name === "RequestedNodeUnavailableException") {
                 status = this._failedNodesTimers.get(nodeStatus.node);
                 if (status) {
+                    this._failedNodesTimers.delete(nodeStatus.node);
                     status.dispose();
                 }
 
@@ -1865,7 +1854,7 @@ export class RequestExecutor implements IDisposable {
             .then(() => {
                 return Promise.resolve(this._performHealthCheck(serverNode, nodeIndex))
                     .then(() => {
-                            status = this._failedNodesTimers[nodeIndex];
+                            status = this._failedNodesTimers.get(nodeStatus.node);
                             if (status) {
                                 this._failedNodesTimers.delete(nodeStatus.node);
                                 status.dispose();
