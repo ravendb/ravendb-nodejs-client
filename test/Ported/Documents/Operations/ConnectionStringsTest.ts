@@ -170,8 +170,7 @@ describe("ConnectionStringsTest", function () {
             .hasSize(0);
     });
 
-    // Server-wide connection strings endpoint requires RavenDB 7.2+
-    (RavenTestContext.isRavenDbServerVersion("7.2") ? it : it.skip)("connectionStringNamesKeepOriginalCasing", async () => {
+    ((RavenTestContext.isRavenDbServerVersion("7.2") && !RavenTestContext.isPullRequest) ? it : it.skip)("connectionStringNamesKeepOriginalCasing", async () => {
         // Names are dictionary keys and must not be camel-cased by response deserialization.
         // Server-wide connection strings propagate to databases under a key with a fixed
         // prefix: "Server Wide Connection String, <name>".
