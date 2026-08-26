@@ -90,7 +90,7 @@ export class RemoteAttachmentsS3Settings {
      * Some S3-compatible services require path-style requests. Set to true for compatibility
      * with these services or when using custom domain names.
      */
-    public forcePathStyle?: boolean;
+    public forcePathStyle: boolean = false;
 
     /**
      * Disables checksum validation for S3 uploads.
@@ -98,7 +98,7 @@ export class RemoteAttachmentsS3Settings {
      * Checksum validation ensures data integrity and should not be disabled if not necessary.
      * Set this to true if your S3-compatible storage does not support modern object integrity checks.
      */
-    public disableChecksumValidation?: boolean;
+    public disableChecksumValidation: boolean = false;
 
     public isConfigured(): boolean {
         return !!this.bucketName && !!this.awsAccessKey && !!this.awsSecretKey;

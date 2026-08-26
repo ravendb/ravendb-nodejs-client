@@ -15,7 +15,7 @@ export class SnowflakeEtlConfiguration extends EtlConfiguration<SnowflakeConnect
         const result = super.serialize(conventions) as any;
         result.CommandTimeout = this.commandTimeout;
         result.EtlType = this.etlType;
-        result.SnowflakeTables = this.snowflakeTables?.map(x => serializeSnowflakeEtlTable(x));
+        result.SnowflakeTables = this.snowflakeTables?.map(serializeSnowflakeEtlTable);
         return result;
     }
 }

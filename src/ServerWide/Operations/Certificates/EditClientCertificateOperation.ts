@@ -97,7 +97,7 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
         // serializer) so the casing-preserving serializer can be used: the default one would also
         // PascalCase the first letter of every `permissions` key (database names), breaking
         // case-sensitive permission matching (RDBC-1085).
-        const definition: Record<string, any> = {
+        const definition: Record<string, unknown> = {
             Thumbprint: this._thumbprint,
             Permissions: this._permissions,
             SecurityClearance: this._clearance,
@@ -107,7 +107,7 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
 
         // The SSO fields are written only when explicitly provided so the server leaves the existing
         // SSO configuration untouched on a partial edit, and clears it when an empty list is sent.
-        if (this._ssoServerPublicKeyPinningHashes) {
+        if (this._ssoServerPublicKeyPinningHashes != null) {
             definition.SsoServerPublicKeyPinningHashes = this._ssoServerPublicKeyPinningHashes;
         }
 
@@ -115,7 +115,7 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
             definition.AllowAnySsoServer = this._allowAnySsoServer;
         }
 
-        if (this._ssoIdentifiers) {
+        if (this._ssoIdentifiers != null) {
             definition.SsoIdentifiers = this._ssoIdentifiers.map(id => {
                 const result: Record<string, string> = {
                     Provider: id.provider,

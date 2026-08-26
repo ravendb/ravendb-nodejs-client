@@ -82,19 +82,16 @@ class GetServerWideConnectionStringsCommand extends RavenCommand<GetServerWideCo
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        let uri = node.url + "/admin/configuration/server-wide/connection-strings";
-
-        const queryParams: string[] = [];
+        const uriParams = new URLSearchParams();
         if (this._connectionStringName != null) {
-            queryParams.push("name=" + encodeURIComponent(this._connectionStringName));
+            uriParams.append("name", this._connectionStringName);
         }
         if (this._type != null && this._type !== "None") {
-            queryParams.push("type=" + this._type);
+            uriParams.append("type", this._type);
         }
 
-        if (queryParams.length > 0) {
-            uri += "?" + queryParams.join("&");
-        }
+        const uri = node.url + "/admin/configuration/server-wide/connection-strings"
+            + (uriParams.size > 0 ? "?" + uriParams : "");
 
         return {
             method: "GET",

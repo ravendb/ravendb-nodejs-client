@@ -5,7 +5,7 @@ export interface SnowflakeEtlTable {
     insertOnlyMode: boolean;
 }
 
-export function serializeSnowflakeEtlTable(table: SnowflakeEtlTable): object {
+export function serializeSnowflakeEtlTable(table: SnowflakeEtlTable) {
     return {
         TableName: table.tableName,
         DocumentIdColumn: table.documentIdColumn,
