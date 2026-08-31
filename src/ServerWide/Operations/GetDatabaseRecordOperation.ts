@@ -75,17 +75,14 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
 
         // The *ConnectionStrings subtrees were left with their server-side casing to preserve
         // the names (dictionary keys); camel-case the fields of each entry here.
-        const record = this.result as unknown as Record<string, Record<string, object>>;
-        for (const recordField of Object.keys(record)) {
-            if (recordField.endsWith("ConnectionStrings") && record[recordField]) {
-                for (const [name, fields] of Object.entries(record[recordField])) {
-                    if (fields) {
-                        record[recordField][name] =
-                            ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel });
-                    }
-                }
-            }
-        }
+        // A newly added *ConnectionStrings field on the database record must be listed here too.
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.ravenConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.sqlConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.olapConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.elasticSearchConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.queueConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.snowflakeConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.aiConnectionStrings);
 
         if (this.result.rollingIndexes) {
             for (const index of Object.values(this.result.rollingIndexes)) {
@@ -118,6 +115,18 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
         }
 
         return body;
+    }
+
+    private static _camelCaseConnectionStringEntries(dict: Record<string, object>): void {
+        if (!dict) {
+            return;
+        }
+
+        for (const [name, fields] of Object.entries(dict)) {
+            if (fields) {
+                dict[name] = ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel });
+            }
+        }
     }
 
     static mapRollingDeployment(input: ServerResponse<Record<string, RollingIndexDeployment>>): Record<string, RollingIndexDeployment> {

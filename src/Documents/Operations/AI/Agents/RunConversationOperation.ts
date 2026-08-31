@@ -175,31 +175,36 @@ class RunConversationCommand<TAnswer>
 
         // Parameters are keyed by user-provided, case-sensitive names (which may contain dots, so
         // no path regex can single out the name level), and their values are user data - both must
-        // bypass the PascalCase transform. They are re-attached manually below with only the
-        // AiAgentParameter envelope (Value, SendToModel) cased.
+        // stay untouched by the PascalCase transform. The AiAgentParameter envelope (Value,
+        // SendToModel) is cased here and the whole Parameters subtree is excluded below.
         const { parameters, ...otherCreationOptions } = creationOptions;
+        const parametersPayload = parameters
+            ? Object.fromEntries(
+                Object.entries(parameters).map(([name, parameter]) =>
+                    [name, { Value: parameter.value, SendToModel: parameter.sendToModel }]))
+            : undefined;
+
         const bodyObj = {
             ActionResponses: this._actionResponses,
             ArtificialActions: this._artificialActions,
             UserPrompt: this._promptParts.length > 0 ? this._promptParts : null,
-            CreationOptions: otherCreationOptions
+            CreationOptions: {
+                ...otherCreationOptions,
+                ...(parametersPayload ? { parameters: parametersPayload } : {})
+            }
         };
 
         const headers = this._headers().typeAppJson().build();
 
-        // Serialize properties to PascalCase, except the user prompt content parts.
+        // Serialize properties to PascalCase, except the user prompt content parts and
+        // everything under CreationOptions.Parameters (already in its wire shape above).
         const serialized = ObjectUtil.transformObjectKeys(bodyObj, {
             defaultTransform: ObjectUtil.pascalCase,
             ignorePaths: [
-                new RegExp("^UserPrompt\\..*$")
+                new RegExp("^UserPrompt\\..*$"),
+                new RegExp("^CreationOptions\\.Parameters\\..*$")
             ]
-        }) as Record<string, any>;
-
-        if (parameters) {
-            serialized.CreationOptions.Parameters = Object.fromEntries(
-                Object.entries(parameters).map(([name, parameter]) =>
-                    [name, { Value: parameter.value, SendToModel: parameter.sendToModel }]));
-        }
+        });
 
         const attachments = this._attachmentCommands;
         if (!attachments || attachments.length === 0) {

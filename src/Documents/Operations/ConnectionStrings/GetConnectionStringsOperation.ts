@@ -115,7 +115,7 @@ function toTypedConnectionStrings<T extends object>(
         // The entry fields kept their server-side (PascalCase) casing - see ignorePaths above.
         result[name] = Object.assign(
             new ctor(),
-            fields ? ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel }) : fields) as T;
+            fields ? ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel }) : fields);
     }
     return result;
 }
