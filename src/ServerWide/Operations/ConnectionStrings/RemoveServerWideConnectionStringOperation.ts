@@ -31,7 +31,8 @@ export class RemoveServerWideConnectionStringOperation<T extends ConnectionStrin
     private readonly _connectionString: T;
 
     /**
-     * @param connectionString - The connection string to remove. Only the name property is required.
+     * @param connectionString - The connection string to remove. Only the name and type properties are used;
+     * type is already set when passing a concrete connection string instance (e.g. RavenConnectionString).
      */
     public constructor(connectionString: T) {
         if (!connectionString) {
@@ -39,6 +40,9 @@ export class RemoveServerWideConnectionStringOperation<T extends ConnectionStrin
         }
         if (StringUtil.isNullOrWhitespace(connectionString.name)) {
             throwError("InvalidArgumentException", "Connection string name must not be null or empty.");
+        }
+        if (!connectionString.type || connectionString.type === "None") {
+            throwError("InvalidArgumentException", "Connection string type must be set.");
         }
 
         this._connectionString = connectionString;

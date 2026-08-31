@@ -62,15 +62,30 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
                 defaultTransform: ObjectUtil.camel,
                 ignorePaths: [
                     /^(indexes|sorters|autoIndexes|settings|indexesHistory|rollingIndexes)\.[^.]+$/i,
-                    // Connection string names are dictionary keys and must keep their original casing;
-                    // matches the name level of any current or future *ConnectionStrings dictionary.
-                    /^\w+ConnectionStrings\.[^.]+$/i,
+                    // Connection string names are dictionary keys and must keep their original casing.
+                    // Names may contain dots, so the whole subtree is excluded here and the fields
+                    // of each entry are camel-cased individually below.
+                    /^\w+ConnectionStrings\./i,
                     /^rollingIndexes\.[^.]+\.activeDeployments\.[^.]+$/i,
                     /^indexesHistory\.[^.]+\.[^.]+\.rollingDeployment\.[^.]+$/i,
                     /^timeSeries\./i
                 ]
             })
             .process(bodyStream);
+
+        // The *ConnectionStrings subtrees were left with their server-side casing to preserve
+        // the names (dictionary keys); camel-case the fields of each entry here.
+        const record = this.result as unknown as Record<string, Record<string, object>>;
+        for (const recordField of Object.keys(record)) {
+            if (recordField.endsWith("ConnectionStrings") && record[recordField]) {
+                for (const [name, fields] of Object.entries(record[recordField])) {
+                    if (fields) {
+                        record[recordField][name] =
+                            ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel });
+                    }
+                }
+            }
+        }
 
         if (this.result.rollingIndexes) {
             for (const index of Object.values(this.result.rollingIndexes)) {

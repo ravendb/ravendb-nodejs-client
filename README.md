@@ -1872,6 +1872,112 @@ const updateResult = await store.maintenance.send(new UpdateCdcSinkOperation(res
 console.log(updateResult.taskId);
 ```
 
+## Server-Wide Connection Strings
+
+Define a connection string once at the cluster level and have it propagated to all databases (with optional exclusions).
+
+#### Create, read and remove a server-wide connection string
+
+```javascript
+const serverWide = new ServerWideConnectionString();
+serverWide.connectionString = Object.assign(new RavenConnectionString(), {
+    name: "central-raven",
+    database: "Reports",
+    topologyDiscoveryUrls: ["https://reports.example.com"]
+});
+// Databases listed here will not receive the connection string
+serverWide.excludedDatabases = ["Sandbox"];
+
+await store.maintenance.server.send(new PutServerWideConnectionStringOperation(serverWide));
+
+// All server-wide connection strings, or filter by name and type
+const all = await store.maintenance.server.send(new GetServerWideConnectionStringsOperation());
+const one = await store.maintenance.server.send(new GetServerWideConnectionStringsOperation("central-raven", "Raven"));
+// Each result exposes usedBy: the ETL/replication/sink tasks and AI agents
+// (across all databases) that currently reference the connection string
+console.log(one.results[0].usedBy);
+
+// Removal fails if the connection string is in use by any ongoing task
+await store.maintenance.server.send(new RemoveServerWideConnectionStringOperation(serverWide.connectionString));
+```
+
+## Snowflake ETL
+
+Transfer documents to a Snowflake data warehouse using an ETL task.
+
+#### Add a Snowflake ETL task
+
+```javascript
+const connectionString = Object.assign(new SnowflakeConnectionString(), {
+    name: "snowflake",
+    connectionString: "ACCOUNT=my-account;USER=etl;PASSWORD=..."
+});
+await store.maintenance.send(new PutConnectionStringOperation(connectionString));
+
+const etl = Object.assign(new SnowflakeEtlConfiguration(), {
+    connectionStringName: "snowflake",
+    transforms: [{ name: "orders", collections: ["Orders"], script: "loadToOrders(this);" }],
+    snowflakeTables: [{ tableName: "Orders", documentIdColumn: "Id", insertOnlyMode: false }]
+});
+await store.maintenance.send(new AddEtlOperation(etl));
+```
+
+## Queue Brokers: Azure Service Bus, Azure Queue Storage, Amazon SQS
+
+In addition to Kafka and RabbitMQ, `QueueConnectionString` supports the Azure Service Bus, Azure Queue Storage and Amazon SQS brokers for Queue ETL and Queue Sink tasks.
+
+#### Configure a queue broker connection string
+
+```javascript
+// Azure Service Bus: connection string, Microsoft Entra ID, or Managed Identity
+const serviceBus = Object.assign(new QueueConnectionString(), {
+    name: "sb",
+    brokerType: "AzureServiceBus",
+    azureServiceBusConnectionSettings: {
+        passwordless: { namespace: "mynamespace.servicebus.windows.net" }
+    }
+});
+
+// Azure Queue Storage: connection string, Entra ID, or Managed Identity
+const queueStorage = Object.assign(new QueueConnectionString(), {
+    name: "aqs",
+    brokerType: "AzureQueueStorage",
+    azureQueueStorageConnectionSettings: {
+        passwordless: { storageAccountName: "myaccount" }
+    }
+});
+
+// Amazon SQS: basic credentials or the ambient AWS identity
+const sqs = Object.assign(new QueueConnectionString(), {
+    name: "sqs",
+    brokerType: "AmazonSqs",
+    amazonSqsConnectionSettings: {
+        basic: { accessKey: "...", secretKey: "...", regionName: "eu-west-1" }
+    }
+});
+```
+
+For Queue Sink scripts on Azure Service Bus, `AzureServiceBusSinkSource` encodes the sources for `QueueSinkScript.queues`: `AzureServiceBusSinkSource.queue("orders")` for a queue, `AzureServiceBusSinkSource.subscription("topic", "subscription")` for a topic subscription.
+
+## Client Certificate Management
+
+#### Edit a client certificate
+
+`EditClientCertificateOperation` replaces a certificate's name, permissions, clearance and disabled state. The SSO fields (`ssoServerPublicKeyPinningHashes`, `allowAnySsoServer`, `ssoIdentifiers`) are opt-in: leaving them undefined keeps the certificate's existing SSO settings untouched, while passing a value (even an empty list) fully replaces the stored value.
+
+```javascript
+await store.maintenance.server.send(new EditClientCertificateOperation({
+    thumbprint,
+    name: "sso-user",
+    clearance: "ValidUser",
+    permissions: { Northwind: "ReadWrite" },
+    disabled: false,
+    ssoIdentifiers: [{ provider: "Github", identifier: "octocat" }]
+}));
+```
+
+`GetCertificatesOperation` results expose the matching metadata: `usage`, `disabled`, `ssoServerPublicKeyPinningHashes`, `allowAnySsoServer` and `ssoIdentifiers`.
+
 ## Schema Validation
 
 Validate documents against JSON schemas before storing them in the database.

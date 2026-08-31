@@ -10,6 +10,7 @@ import {
     QueueConnectionString,
     ServerWideConnectionString,
     PutServerWideConnectionStringOperation,
+    GetServerWideConnectionStringsOperation,
     RemoveServerWideConnectionStringOperation
 } from "../../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
@@ -171,10 +172,11 @@ describe("ConnectionStringsTest", function () {
     });
 
     ((RavenTestContext.isRavenDbServerVersion("7.2") && !RavenTestContext.isPullRequest) ? it : it.skip)("connectionStringNamesKeepOriginalCasing", async () => {
-        // Names are dictionary keys and must not be camel-cased by response deserialization.
+        // Names are dictionary keys and must not be camel-cased by response deserialization,
+        // including names containing dots (which break any single-path-segment ignore regex).
         // Server-wide connection strings propagate to databases under a key with a fixed
         // prefix: "Server Wide Connection String, <name>".
-        const name = "Playground-Central-Raven";
+        const name = "My.App.Central-Raven";
 
         const serverWide = new ServerWideConnectionString();
         serverWide.connectionString = Object.assign(new RavenConnectionString(), {
@@ -193,6 +195,16 @@ describe("ConnectionStringsTest", function () {
                 .containsKey(propagatedKey);
             assertThat(connectionStrings.ravenConnectionStrings[propagatedKey].database)
                 .isEqualTo("db1");
+
+            const serverWideResults = await store.maintenance.server.send(new GetServerWideConnectionStringsOperation());
+            const stored = serverWideResults.results.find(x => x.name === name);
+            assertThat(stored)
+                .isNotNull();
+            assertThat(stored.connectionString instanceof RavenConnectionString)
+                .isTrue();
+            // usedBy is computed server-side; nothing references this connection string here.
+            assertThat(stored.usedBy)
+                .hasSize(0);
         } finally {
             await store.maintenance.server.send(
                 new RemoveServerWideConnectionStringOperation(serverWide.connectionString));

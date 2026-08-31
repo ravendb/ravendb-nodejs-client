@@ -88,9 +88,7 @@ export class AiOperations {
      */
     public async getConversationMessages(parameters: GetConversationMessagesOptions): Promise<AiConversationMessagesResult>;
     public async getConversationMessages(conversationIdOrParameters: string | GetConversationMessagesOptions): Promise<AiConversationMessagesResult> {
-        const operation = typeof conversationIdOrParameters === "string"
-            ? new GetConversationMessagesOperation(conversationIdOrParameters)
-            : new GetConversationMessagesOperation(conversationIdOrParameters);
+        const operation = new GetConversationMessagesOperation(conversationIdOrParameters);
         return await this._executor.send(operation);
     }
 }

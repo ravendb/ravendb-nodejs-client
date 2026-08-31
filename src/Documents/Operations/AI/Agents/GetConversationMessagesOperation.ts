@@ -53,8 +53,10 @@ export interface GetConversationMessagesOptions {
 export class GetConversationMessagesOperation implements IMaintenanceOperation<AiConversationMessagesResult> {
     private readonly _parameters: GetConversationMessagesOptions;
 
-    public constructor(conversationId: string);
-    public constructor(parameters: GetConversationMessagesOptions);
+    /**
+     * @param conversationIdOrParameters - The conversation document ID (returns the most recent messages),
+     * or a {@link GetConversationMessagesOptions} object controlling paging and filtering.
+     */
     public constructor(conversationIdOrParameters: string | GetConversationMessagesOptions) {
         const parameters = TypeUtil.isString(conversationIdOrParameters)
             ? { conversationId: conversationIdOrParameters }
@@ -110,8 +112,10 @@ class GetConversationMessagesCommand extends RavenCommand<AiConversationMessages
         if (this._parameters.after) {
             uriParams.append("after", DateUtil.utc.stringify(this._parameters.after));
         }
+        if (this._parameters.pageSize != null) {
+            uriParams.append("pageSize", this._parameters.pageSize.toString());
+        }
 
-        uriParams.append("pageSize", (this._parameters.pageSize ?? 2_147_483_647).toString());
         uriParams.append("detailLevel", this._parameters.detailLevel ?? "Simple");
 
         const uri = `${node.url}/databases/${node.database}/ai/agent/conversation/messages?${uriParams}`;

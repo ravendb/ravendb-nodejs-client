@@ -78,72 +78,44 @@ export class GetConnectionStringCommand extends RavenCommand<GetConnectionString
         let body = "";
         // Connection string names are dictionary keys and must keep their original casing
         // (e.g. server-wide strings propagate as "Server Wide Connection String, <name>").
-        // Matches the name level of any current or future *ConnectionStrings dictionary.
+        // Names may contain dots, so no path regex can tell the name level apart from the field
+        // level; the whole *ConnectionStrings subtree is excluded here and the fields of each
+        // entry are camel-cased individually below.
         this.result = await this._defaultPipeline(_ => body += _)
             .objectKeysTransform({
                 defaultTransform: ObjectUtil.camel,
                 ignorePaths: [
-                    /^\w+ConnectionStrings\.[^.]+$/i
+                    /^\w+ConnectionStrings\./i
                 ]
             })
             .process(bodyStream);
 
-        if (this.result.ravenConnectionStrings) {
-            this.result.ravenConnectionStrings = Object.entries(this.result.ravenConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new RavenConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, RavenConnectionString>);
-        }
-
-        if (this.result.sqlConnectionStrings) {
-            this.result.sqlConnectionStrings = Object.entries(this.result.sqlConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new SqlConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, SqlConnectionString>);
-        }
-
-        if (this.result.elasticSearchConnectionStrings) {
-            this.result.elasticSearchConnectionStrings = Object.entries(this.result.elasticSearchConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new ElasticSearchConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, ElasticSearchConnectionString>);
-        }
-
-        if (this.result.queueConnectionStrings) {
-            this.result.queueConnectionStrings = Object.entries(this.result.queueConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new QueueConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, QueueConnectionString>);
-        }
-
-        if (this.result.olapConnectionStrings) {
-            this.result.olapConnectionStrings = Object.entries(this.result.olapConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new OlapConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, OlapConnectionString>);
-        }
-
-        if (this.result.snowflakeConnectionStrings) {
-            this.result.snowflakeConnectionStrings = Object.entries(this.result.snowflakeConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new SnowflakeConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, SnowflakeConnectionString>);
-        }
-
-        if (this.result.aiConnectionStrings) {
-            this.result.aiConnectionStrings = Object.entries(this.result.aiConnectionStrings)
-                .reduce(((previousValue, currentValue) => {
-                    previousValue[currentValue[0]] = Object.assign(new AiConnectionString(), currentValue[1]);
-                    return previousValue;
-                }), {} as Record<string, AiConnectionString>);
-        }
+        this.result.ravenConnectionStrings = toTypedConnectionStrings(this.result.ravenConnectionStrings, RavenConnectionString);
+        this.result.sqlConnectionStrings = toTypedConnectionStrings(this.result.sqlConnectionStrings, SqlConnectionString);
+        this.result.elasticSearchConnectionStrings = toTypedConnectionStrings(this.result.elasticSearchConnectionStrings, ElasticSearchConnectionString);
+        this.result.queueConnectionStrings = toTypedConnectionStrings(this.result.queueConnectionStrings, QueueConnectionString);
+        this.result.olapConnectionStrings = toTypedConnectionStrings(this.result.olapConnectionStrings, OlapConnectionString);
+        this.result.snowflakeConnectionStrings = toTypedConnectionStrings(this.result.snowflakeConnectionStrings, SnowflakeConnectionString);
+        this.result.aiConnectionStrings = toTypedConnectionStrings(this.result.aiConnectionStrings, AiConnectionString);
 
         return body;
     }
+}
+
+function toTypedConnectionStrings<T extends object>(
+    dict: Record<string, object>,
+    ctor: new () => T
+): Record<string, T> {
+    if (!dict) {
+        return dict as Record<string, T>;
+    }
+
+    const result: Record<string, T> = {};
+    for (const [name, fields] of Object.entries(dict)) {
+        // The entry fields kept their server-side (PascalCase) casing - see ignorePaths above.
+        result[name] = Object.assign(
+            new ctor(),
+            fields ? ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel }) : fields) as T;
+    }
+    return result;
 }

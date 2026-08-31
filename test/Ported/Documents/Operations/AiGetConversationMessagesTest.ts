@@ -1,4 +1,4 @@
-import { GetConversationMessagesOperation, IDocumentStore } from "../../../../src/index.js";
+import { DocumentConventions, GetConversationMessagesOperation, IDocumentStore, ServerNode } from "../../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../../../Utils/AssertExtensions.js";
 
@@ -36,6 +36,20 @@ describe("AiGetConversationMessagesTest - validation", function () {
                 assertThat(err.message).contains("pageSize must be greater than 0");
             });
         }
+    });
+
+    it("omits pageSize from the request when not specified (server defaults to int.MaxValue)", () => {
+        const node = new ServerNode({ url: "http://localhost:8080", database: "db1" });
+
+        const withoutPageSize = new GetConversationMessagesOperation("chats/1")
+            .getCommand(DocumentConventions.defaultConventions)
+            .createRequest(node);
+        assertThat(withoutPageSize.uri.includes("pageSize")).isFalse();
+
+        const withPageSize = new GetConversationMessagesOperation({ conversationId: "chats/1", pageSize: 50 })
+            .getCommand(DocumentConventions.defaultConventions)
+            .createRequest(node);
+        assertThat(withPageSize.uri.includes("pageSize=50")).isTrue();
     });
 });
 

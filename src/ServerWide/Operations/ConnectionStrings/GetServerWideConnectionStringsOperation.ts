@@ -111,12 +111,13 @@ class GetServerWideConnectionStringsCommand extends RavenCommand<GetServerWideCo
 
         for (const item of raw.results ?? []) {
             // Each entry is the underlying connection string's fields flattened to the top level,
-            // plus type and excludedDatabases (matches the C# ServerWideConnectionString wire format).
+            // plus type, excludedDatabases and usedBy (matches the C# ServerWideConnectionString wire format).
             const { excludedDatabases, usedBy, ...connectionStringFields } = item;
 
             const result = new ServerWideConnectionString();
             result.connectionString = createTypedConnectionString(item.type, connectionStringFields);
             result.excludedDatabases = excludedDatabases ?? null;
+            result.usedBy = usedBy ?? [];
             results.push(result);
         }
 
