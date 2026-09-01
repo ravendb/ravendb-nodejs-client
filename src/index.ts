@@ -781,6 +781,7 @@ export * from "./Documents/Smuggler/IDatabaseSmugglerOptions.js";
 // Certificates
 export * from "./ServerWide/Operations/Certificates/CertificateDefinition.js";
 export * from "./ServerWide/Operations/Certificates/CertificateRawData.js";
+export * from "./ServerWide/Operations/Certificates/CertificateUsage.js";
 export * from "./ServerWide/Operations/Certificates/CreateClientCertificateOperation.js";
 export * from "./ServerWide/Operations/Certificates/DatabaseAccess.js";
 export * from "./ServerWide/Operations/Certificates/DeleteCertificateOperation.js";
@@ -789,6 +790,8 @@ export * from "./ServerWide/Operations/Certificates/GetCertificatesOperation.js"
 export * from "./ServerWide/Operations/Certificates/GetCertificatesResponse.js";
 export * from "./ServerWide/Operations/Certificates/PutClientCertificateOperation.js";
 export * from "./ServerWide/Operations/Certificates/SecurityClearance.js";
+export * from "./ServerWide/Operations/Certificates/SsoIdentifier.js";
+export * from "./ServerWide/Operations/Certificates/SsoProvider.js";
 export * from "./ServerWide/Operations/AddDatabaseNodeOperation.js";
 export * from "./ServerWide/Operations/PromoteDatabaseNodeOperation.js";
 export * from "./ServerWide/Operations/Analyzers/DeleteServerWideAnalyzerOperation.js";

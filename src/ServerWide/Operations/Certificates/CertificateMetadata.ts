@@ -1,5 +1,7 @@
 import { SecurityClearance } from "./SecurityClearance.js";
 import { DatabaseAccess } from "./DatabaseAccess.js";
+import { CertificateUsage } from "./CertificateUsage.js";
+import { SsoIdentifier } from "./SsoIdentifier.js";
 
 export interface CertificateMetadata {
     name: string;
@@ -11,4 +13,8 @@ export interface CertificateMetadata {
     collectionSecondaryKeys?: string[];
     collectionPrimaryKey?: string;
     publicKeyPinningHash: string;
+    usage?: CertificateUsage;
+    ssoServerPublicKeyPinningHashes?: string[];
+    allowAnySsoServer?: boolean;
+    ssoIdentifiers?: SsoIdentifier[];
 }
