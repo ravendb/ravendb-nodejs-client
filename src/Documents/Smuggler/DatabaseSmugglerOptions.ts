@@ -14,7 +14,7 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         "HubPullReplications", "SinkPullReplications", "TimeSeries", "DocumentsCompression",
         "Analyzers", "LockMode", "OlapConnectionStrings", "OlapEtls", "ElasticSearchConnectionStrings",
         "ElasticSearchEtls", "PostgreSqlIntegration", "QueueConnectionStrings", "QueueEtl",
-        "IndexesHistory", "Refresh", "QueueSinks", "DataArchival"
+        "IndexesHistory", "Refresh", "QueueSinks", "DataArchival", "CdcSinks"
     ];
 
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;

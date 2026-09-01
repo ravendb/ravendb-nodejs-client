@@ -12,6 +12,7 @@ import { QueueEtlConfiguration } from "../Etl/Queue/QueueEtlConfiguration.js";
 import { ArchivedDataProcessingBehavior } from "../../DataArchival/ArchivedDataProcessingBehavior.js";
 import { QueueBrokerType } from "../Etl/ConnectionString.js";
 import { QueueSinkConfiguration } from "../QueueSink/QueueSinkConfiguration.js";
+import { CdcSinkConfiguration } from "../CdcSink/CdcSinkConfiguration.js";
 
 export interface OngoingTask {
     taskId: number;
@@ -77,6 +78,19 @@ export interface OngoingTaskQueueSink extends OngoingTask {
     connectionStringName: string;
     url: string;
     configuration: QueueSinkConfiguration;
+}
+
+export interface OngoingTaskCdcSink extends OngoingTask {
+    taskType: "CdcSink",
+    configuration: CdcSinkConfiguration;
+    connectionStringName: string;
+    factoryName: string;
+    lastBatchTime?: Date;
+    lastCheckpoint: string;
+    secondsSinceLastBatch?: number;
+    lastActivityTime?: Date;
+    secondsSinceLastActivity?: number;
+    healthIssue: string;
 }
 
 export interface OngoingTaskSqlEtl extends OngoingTask {
