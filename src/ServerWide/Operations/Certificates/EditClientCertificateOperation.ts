@@ -1,8 +1,10 @@
 import { throwError } from "../../../Exceptions/index.js";
 import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
+import { StringUtil } from "../../../Utility/StringUtil.js";
 import { DatabaseAccess } from "./DatabaseAccess.js";
 import { SecurityClearance } from "./SecurityClearance.js";
+import { SsoIdentifier } from "./SsoIdentifier.js";
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions.js";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
@@ -15,6 +17,10 @@ export class EditClientCertificateOperation implements IServerOperation<void> {
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _name: string;
     private readonly _clearance: SecurityClearance;
+    private readonly _disabled: boolean;
+    private readonly _ssoServerPublicKeyPinningHashes: string[];
+    private readonly _allowAnySsoServer: boolean;
+    private readonly _ssoIdentifiers: SsoIdentifier[];
 
     public constructor(parameters: EditClientCertificateParameters) {
         if (!parameters) {
@@ -41,6 +47,10 @@ export class EditClientCertificateOperation implements IServerOperation<void> {
         this._thumbprint = parameters.thumbprint;
         this._permissions = parameters.permissions;
         this._clearance = parameters.clearance;
+        this._disabled = parameters.disabled ?? false;
+        this._ssoServerPublicKeyPinningHashes = parameters.ssoServerPublicKeyPinningHashes;
+        this._allowAnySsoServer = parameters.allowAnySsoServer;
+        this._ssoIdentifiers = parameters.ssoIdentifiers;
     }
 
     public get resultType(): OperationResultType {
@@ -48,7 +58,8 @@ export class EditClientCertificateOperation implements IServerOperation<void> {
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<void> {
-        return new EditClientCertificateCommand(this._thumbprint, this._name, this._permissions, this._clearance);
+        return new EditClientCertificateCommand(this._thumbprint, this._name, this._permissions, this._clearance,
+            this._disabled, this._ssoServerPublicKeyPinningHashes, this._allowAnySsoServer, this._ssoIdentifiers);
     }
 }
 
@@ -57,14 +68,24 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
     private readonly _permissions: Record<string, DatabaseAccess>;
     private readonly _name: string;
     private readonly _clearance: SecurityClearance;
+    private readonly _disabled: boolean;
+    private readonly _ssoServerPublicKeyPinningHashes: string[];
+    private readonly _allowAnySsoServer: boolean;
+    private readonly _ssoIdentifiers: SsoIdentifier[];
 
-    public constructor(thumbprint: string, name: string, permissions: Record<string, DatabaseAccess>, clearance: SecurityClearance) {
+    public constructor(thumbprint: string, name: string, permissions: Record<string, DatabaseAccess>,
+        clearance: SecurityClearance, disabled: boolean, ssoServerPublicKeyPinningHashes: string[],
+        allowAnySsoServer: boolean, ssoIdentifiers: SsoIdentifier[]) {
         super();
 
         this._thumbprint = thumbprint;
         this._name = name;
         this._permissions = permissions;
         this._clearance = clearance;
+        this._disabled = disabled;
+        this._ssoServerPublicKeyPinningHashes = ssoServerPublicKeyPinningHashes;
+        this._allowAnySsoServer = allowAnySsoServer;
+        this._ssoIdentifiers = ssoIdentifiers;
     }
 
     get isReadRequest(): boolean {
@@ -78,12 +99,39 @@ class EditClientCertificateCommand extends RavenCommand<void> implements IRaftCo
         // serializer) so the casing-preserving serializer can be used: the default one would also
         // PascalCase the first letter of every `permissions` key (database names), breaking
         // case-sensitive permission matching (RDBC-1085).
-        const definition = {
+        // The body never carries Usage: the server derives it from the existing certificate.
+        const definition: Record<string, unknown> = {
             Thumbprint: this._thumbprint,
-            Permissions: this._permissions,
+            Name: this._name,
             SecurityClearance: this._clearance,
-            Name: this._name
+            Disabled: this._disabled,
+            Permissions: this._permissions
         };
+
+        // An SSO field is written only when it is provided, so an ordinary edit leaves the stored
+        // SSO configuration untouched; an explicitly-empty list is written and clears it.
+        if (this._ssoServerPublicKeyPinningHashes != null) {
+            definition.SsoServerPublicKeyPinningHashes = this._ssoServerPublicKeyPinningHashes;
+        }
+
+        if (this._allowAnySsoServer != null) {
+            definition.AllowAnySsoServer = this._allowAnySsoServer;
+        }
+
+        if (this._ssoIdentifiers != null) {
+            definition.SsoIdentifiers = this._ssoIdentifiers.map(id => {
+                const entry: Record<string, string> = {
+                    Provider: id.provider,
+                    Identifier: id.identifier
+                };
+
+                if (!StringUtil.isNullOrEmpty(id.domain)) {
+                    entry.Domain = id.domain;
+                }
+
+                return entry;
+            });
+        }
 
         const body = JsonSerializer.getDefault().serialize(definition);
 
@@ -105,4 +153,8 @@ export interface EditClientCertificateParameters {
     permissions: Record<string, DatabaseAccess>;
     name: string;
     clearance: SecurityClearance;
+    disabled?: boolean;
+    ssoServerPublicKeyPinningHashes?: string[];
+    allowAnySsoServer?: boolean;
+    ssoIdentifiers?: SsoIdentifier[];
 }
