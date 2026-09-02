@@ -2452,8 +2452,12 @@ Deno-specific notes:
   `conventions.customFetch` (see below) in that case. [Bunny Edge
   Scripting](https://bunny.net/edge-scripting/) keeps the API available — the client is
   verified end-to-end there (store + load against RavenDB Cloud over mTLS).
-- Like on workerd, the Changes API (WebSocket) and subscriptions (raw TCP) are not
-  supported — use the document/query APIs.
+- **The Changes API and subscriptions are untested on Deno.** Both bypass
+  `Deno.createHttpClient`: the Changes API opens a `ws` WebSocket and subscriptions a
+  `node:tls` socket, each handed the certificate as Node `tls` options through Deno's
+  Node compatibility layer. Only the fetch-based document/query APIs are verified
+  end-to-end; run Changes API consumers and subscription workers on Node unless you
+  have verified them on your Deno version.
 
 An end-to-end smoke test lives in [`test/deno`](./test/deno).
 

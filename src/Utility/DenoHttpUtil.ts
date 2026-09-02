@@ -2,16 +2,17 @@ import { ICertificate } from "../Auth/Certificate.js";
 import { throwError } from "../Exceptions/index.js";
 
 /**
- * Builds a Deno HttpClient presenting the configured X.509 client certificate,
- * for passing as the (Deno-specific) `client` option of `fetch`. This is the
- * only way to do mTLS on Deno - its fetch has no undici dispatcher concept and
- * silently ignores one, which is exactly how certificates used to get dropped
- * (RDBC-1083).
- *
- * `Deno.HttpClient` is opaque to this (Node-compiled) codebase, hence `unknown`.
+ * The slice of `Deno.HttpClient` this (Node-compiled) codebase relies on: an opaque
+ * handle owning a connection pool, so whoever creates one must `close()` it.
  */
-export function createDenoHttpClient(certificate: ICertificate): unknown {
-    const deno = (globalThis as { Deno?: { createHttpClient?: (options: unknown) => unknown } }).Deno;
+export interface DenoHttpClient {
+    close(): void;
+}
+
+type DenoCreateHttpClient = (options: unknown) => DenoHttpClient;
+
+function getDenoCreateHttpClient(): DenoCreateHttpClient {
+    const deno = (globalThis as { Deno?: { createHttpClient?: DenoCreateHttpClient } }).Deno;
 
     if (typeof deno?.createHttpClient !== "function") {
         throwError("InvalidOperationException",
@@ -22,5 +23,27 @@ export function createDenoHttpClient(certificate: ICertificate): unknown {
             + "or route the RavenDB calls through a backend that supports mTLS.");
     }
 
-    return deno.createHttpClient(certificate.toDenoHttpClientOptions());
+    return options => deno.createHttpClient(options);
+}
+
+/**
+ * Throws when the configured X.509 client certificate cannot be presented on this Deno
+ * runtime: no `Deno.createHttpClient` (gated or stripped), a PFX archive, or a
+ * passphrase-protected key. Builds nothing - RequestExecutor.validateCertificateRuntimeSupport
+ * runs it at DocumentStore.initialize() so misconfiguration surfaces at startup.
+ */
+export function validateDenoCertificateSupport(certificate: ICertificate): void {
+    getDenoCreateHttpClient();
+    certificate.toDenoHttpClientOptions();
+}
+
+/**
+ * Builds a Deno HttpClient presenting the configured X.509 client certificate,
+ * for passing as the (Deno-specific) `client` option of `fetch`. This is the
+ * only way to do mTLS on Deno - its fetch has no undici dispatcher concept and
+ * silently ignores one, which is exactly how certificates used to get dropped
+ * (RDBC-1083). The caller owns the returned client and must `close()` it.
+ */
+export function createDenoHttpClient(certificate: ICertificate): DenoHttpClient {
+    return getDenoCreateHttpClient()(certificate.toDenoHttpClientOptions());
 }

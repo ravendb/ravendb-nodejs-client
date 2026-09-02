@@ -50,7 +50,7 @@ import { Dispatcher, Agent } from "undici-types";
 import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
-import { createDenoHttpClient } from "../Utility/DenoHttpUtil.js";
+import { createDenoHttpClient, DenoHttpClient, validateDenoCertificateSupport } from "../Utility/DenoHttpUtil.js";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -244,6 +244,9 @@ export class RequestExecutor implements IDisposable {
 
     protected _defaultRequestOptions: HttpRequestParametersWithoutUri;
 
+    /** Deno only: the Deno.HttpClient presenting the client certificate, built lazily in _getDenoHttpClient(). */
+    private _denoHttpClient: DenoHttpClient = null;
+
     public static requestPostProcessor: (req: HttpRequestParameters) => void = null;
 
     public get customHttpRequestOptions(): HttpRequestParametersWithoutUri {
@@ -359,8 +362,9 @@ export class RequestExecutor implements IDisposable {
 
         // Runtimes whose fetch has no undici dispatcher (Bun, Cloudflare Workers, Deno)
         // can't use an http agent -- there is nothing to build. A configured certificate
-        // is presented another way there: Bun via the `tls` request option, Deno via a
-        // Deno.HttpClient `client` request option (both set in _setDefaultRequestOptions).
+        // is presented another way there: Bun via the `tls` request option (set in
+        // _setDefaultRequestOptions), Deno via a Deno.HttpClient `client` request option
+        // (set in _createRequest).
         if (!RuntimeUtil.supportsUndiciDispatcher()) {
             // On workerd a client certificate can never be presented from user-space
             // unless mTLS is wired through conventions.customFetch (checked above).
@@ -387,7 +391,7 @@ export class RequestExecutor implements IDisposable {
             if (RequestExecutor.HTTPS_AGENT_CACHE.has(cacheKey)) {
                 return RequestExecutor.HTTPS_AGENT_CACHE.get(cacheKey);
             } else {
-                const agent = await RequestExecutor.createAgent(agentOptions, true);
+                const agent = await RequestExecutor.createAgent(agentOptions, { requiredForCertificate: true });
 
                 RequestExecutor.HTTPS_AGENT_CACHE.set(cacheKey, agent);
                 return agent;
@@ -401,9 +405,10 @@ export class RequestExecutor implements IDisposable {
 
     /**
      * Throws when an X.509 client certificate is configured on a runtime that cannot
-     * present it (and no conventions.customFetch is set to take over the transport).
-     * Called from DocumentStore.initialize() so misconfiguration surfaces at startup
-     * instead of on the first request.
+     * present it (and no conventions.customFetch is set to take over the transport):
+     * workerd never can; Deno cannot without Deno.createHttpClient, nor for a PFX
+     * archive or a passphrase-protected key. Called from DocumentStore.initialize() so
+     * misconfiguration surfaces at startup instead of on the first request.
      */
     public static validateCertificateRuntimeSupport(
         authOptions: IAuthOptions,
@@ -415,6 +420,10 @@ export class RequestExecutor implements IDisposable {
 
         if (RuntimeUtil.isWorkerd()) {
             throwError("InvalidOperationException", WORKERD_MTLS_ERROR);
+        }
+
+        if (RuntimeUtil.isDeno()) {
+            validateDenoCertificateSupport(Certificate.createFromOptions(authOptions));
         }
     }
 
@@ -431,7 +440,9 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private static async createAgent(options: Agent.Options, requiredForCertificate = false) {
+    private static async createAgent(
+        options: Agent.Options,
+        { requiredForCertificate = false }: { requiredForCertificate?: boolean } = {}) {
         try {
             let UndiciAgent;
 
@@ -1487,6 +1498,16 @@ export class RequestExecutor implements IDisposable {
         }
 
         const req = Object.assign(request, this._defaultRequestOptions);
+
+        // Deno presents a client certificate through a Deno.HttpClient passed as the
+        // `client` fetch init option - the undici agent path is a silent no-op there.
+        // Built lazily, once per executor (mirroring getHttpAgent's agent cache) and
+        // closed in dispose(). When conventions.customFetch owns the transport mTLS is
+        // its job - the same rule getHttpAgent applies.
+        if (RuntimeUtil.isDeno() && this._certificate && !this.conventions.customFetch) {
+            req.client = this._getDenoHttpClient();
+        }
+
         urlRef(req.uri);
         req.headers = req.headers || {};
 
@@ -2004,19 +2025,25 @@ export class RequestExecutor implements IDisposable {
 
 
     private _setDefaultRequestOptions(): void {
+        // Object.assign mutates its target: copying into a fresh object keeps one
+        // executor's options (custom options, Bun `tls`) from leaking into every other
+        // executor in the process through the shared module-level default.
         this._defaultRequestOptions = Object.assign(
+            {},
             DEFAULT_REQUEST_OPTIONS,
             this._customHttpRequestOptions);
 
         if (RuntimeUtil.isBun() && this._certificate) {
             this._defaultRequestOptions.tls = this._certificate.toBunTlsOptions();
         }
+    }
 
-        // Deno's fetch presents a client certificate through a Deno.HttpClient passed
-        // as the `client` init option - the undici agent path is a silent no-op there.
-        if (RuntimeUtil.isDeno() && this._certificate) {
-            this._defaultRequestOptions.client = createDenoHttpClient(this._certificate);
+    private _getDenoHttpClient(): DenoHttpClient {
+        if (!this._denoHttpClient) {
+            this._denoHttpClient = createDenoHttpClient(this._certificate);
         }
+
+        return this._denoHttpClient;
     }
 
     public dispose(): void {
@@ -2040,6 +2067,10 @@ export class RequestExecutor implements IDisposable {
         this._nodeSelector?.dispose();
 
         this._disposeAllFailedNodesTimers();
+
+        // Deno only: release the connection pool behind the client certificate.
+        this._denoHttpClient?.close();
+        this._denoHttpClient = null;
     }
 
     public async getRequestedNode(nodeTag: string, throwIfContainsFailures = false): Promise<CurrentIndexAndNode> {
