@@ -32,6 +32,7 @@ import { ElasticSearchEtlConfiguration } from "../Documents/Operations/Etl/Elast
 import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEtlConfiguration.js";
 import { DataArchivalConfiguration } from "../Documents/Operations/DataArchival/DataArchivalConfiguration.js";
 import { QueueSinkConfiguration } from "../Documents/Operations/QueueSink/QueueSinkConfiguration.js";
+import { CdcSinkConfiguration } from "../Documents/Operations/CdcSink/CdcSinkConfiguration.js";
 import { ShardingConfiguration } from "./Sharding/ShardingConfiguration.js";
 import {
     AiConnectionString,
@@ -92,6 +93,7 @@ export interface DatabaseRecord {
     olapEtls?: OlapEtlConfiguration[];
     queueEtls?: QueueEtlConfiguration[];
     queueSinks?: QueueSinkConfiguration[];
+    cdcSinks?: CdcSinkConfiguration[];
     aiAgents?: AiAgentConfiguration[];
     genAis?: GenAiConfiguration[];
     embeddingsGenerations?: EmbeddingsGenerationConfiguration[];

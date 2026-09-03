@@ -78,6 +78,12 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
     }
 
     async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
+        if (!bodyStream) {
+            // a 404 (task does not exist) arrives with a null body stream; the result stays null
+            this.result = null;
+            return null;
+        }
+
         let body: string = null;
         const results = await this._defaultPipeline(_ => body = _)
             .process(bodyStream);
@@ -137,6 +143,13 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 break;
             }
             case "QueueSink": {
+                break;
+            }
+            case "CdcSink": {
+                nestedTypes = {
+                    lastBatchTime: "date",
+                    lastActivityTime: "date"
+                };
                 break;
             }
             case "Backup": {

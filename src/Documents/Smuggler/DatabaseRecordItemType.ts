@@ -30,4 +30,5 @@ export type DatabaseRecordItemType =
     | "QueueSinks"
     | "DataArchival"
     | "RemoteAttachments"
-    | "SchemaValidation";
+    | "SchemaValidation"
+    | "CdcSinks";

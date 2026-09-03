@@ -92,6 +92,9 @@ export class RemoteAttachmentsS3Settings {
      */
     public forcePathStyle?: boolean;
 
+    /** Set to true when the S3-compatible storage does not support modern object integrity checks. */
+    public disableChecksumValidation?: boolean;
+
     public isConfigured(): boolean {
         return !!this.bucketName && !!this.awsAccessKey && !!this.awsSecretKey;
     }

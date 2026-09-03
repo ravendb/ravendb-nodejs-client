@@ -169,6 +169,10 @@ class RunConversationCommand<TAnswer>
             uriParams.append("streamPropertyPath", this._streamPropertyPath);
         }
 
+        // Always false: the public surface can never request cancellation of
+        // pending action tools (the internal knob is not ported).
+        uriParams.append("cancelPendingActionTools", "false");
+
         const uri = `${node.url}/databases/${node.database}/ai/agent?${uriParams}`;
 
         const creationOptions = this._options ?? {};

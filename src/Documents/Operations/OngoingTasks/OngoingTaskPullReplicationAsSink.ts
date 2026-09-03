@@ -15,4 +15,7 @@ export interface OngoingTaskPullReplicationAsSink extends OngoingTask {
     accessName: string;
     allowedHubToSinkPaths: string[];
     allowedSinkToHubPaths: string[];
+
+    hubCursor: string;
+    sinkCursor: string;
 }
