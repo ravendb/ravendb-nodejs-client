@@ -399,7 +399,11 @@ export class RequestExecutor implements IDisposable {
             let UndiciAgent;
 
             try {
-                const undiciModule = await import(importFix("undici"));
+                // Keep the importFix() call out of the import() argument: terser >= 5.51.1
+                // inlines it there as an unparenthesized sequence expression, which esbuild
+                // (wrangler) then reads as a two-argument import() and refuses to bundle.
+                const undiciSpecifier = importFix("undici");
+                const undiciModule = await import(undiciSpecifier);
                 UndiciAgent = undiciModule.Agent;
             } catch (err) {
                 const undiciModule = await import("undici");
