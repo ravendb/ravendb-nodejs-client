@@ -13,8 +13,10 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         "RavenEtls", "Revisions", "Settings", "SqlConnectionStrings", "Sorters", "SqlEtls",
         "HubPullReplications", "SinkPullReplications", "TimeSeries", "DocumentsCompression",
         "Analyzers", "LockMode", "OlapConnectionStrings", "OlapEtls", "ElasticSearchConnectionStrings",
-        "ElasticSearchEtls", "PostgreSqlIntegration", "QueueConnectionStrings", "QueueEtl",
-        "IndexesHistory", "Refresh", "QueueSinks", "DataArchival"
+        "ElasticSearchEtls", "PostgreSqlIntegration", "QueueConnectionStrings", "QueueEtls",
+        "IndexesHistory", "Refresh", "QueueSinks", "DataArchival",
+        "SnowflakeConnectionStrings", "SnowflakeEtls", "EmbeddingsGenerations", "AiConnectionStrings",
+        "GenAiEtls", "AiAgents", "RemoteAttachments", "SchemaValidation", "CdcSinks"
     ];
 
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;

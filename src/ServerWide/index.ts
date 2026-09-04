@@ -16,8 +16,10 @@ import {
     ElasticSearchConnectionString,
     OlapConnectionString, QueueConnectionString,
     RavenConnectionString,
+    SnowflakeConnectionString,
     SqlConnectionString
 } from "../Documents/Operations/Etl/ConnectionString.js";
+import { SnowflakeEtlConfiguration } from "../Documents/Operations/Etl/Snowflake/SnowflakeEtlConfiguration.js";
 import { ClientConfiguration } from "../Documents/Operations/Configuration/ClientConfiguration.js";
 import { RefreshConfiguration } from "../Documents/Operations/Refresh/RefreshConfiguration.js";
 import { RevisionsCollectionConfiguration } from "../Documents/Operations/RevisionsCollectionConfiguration.js";
@@ -32,6 +34,7 @@ import { ElasticSearchEtlConfiguration } from "../Documents/Operations/Etl/Elast
 import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEtlConfiguration.js";
 import { DataArchivalConfiguration } from "../Documents/Operations/DataArchival/DataArchivalConfiguration.js";
 import { QueueSinkConfiguration } from "../Documents/Operations/QueueSink/QueueSinkConfiguration.js";
+import { CdcSinkConfiguration } from "../Documents/Operations/CdcSink/CdcSinkConfiguration.js";
 import { ShardingConfiguration } from "./Sharding/ShardingConfiguration.js";
 import {
     AiConnectionString,
@@ -85,13 +88,16 @@ export interface DatabaseRecord {
     olapConnectionStrings?: { [key: string]: OlapConnectionString };
     elasticSearchConnectionStrings?: { [key: string]: ElasticSearchConnectionString };
     queueConnectionStrings?: { [key: string]: QueueConnectionString };
+    snowflakeConnectionStrings?: { [key: string]: SnowflakeConnectionString };
     aiConnectionStrings?: { [key: string]: AiConnectionString };
     ravenEtls?: RavenEtlConfiguration[];
     sqlEtls?: SqlEtlConfiguration[];
     elasticSearchEtls?: ElasticSearchEtlConfiguration[];
     olapEtls?: OlapEtlConfiguration[];
     queueEtls?: QueueEtlConfiguration[];
+    snowflakeEtls?: SnowflakeEtlConfiguration[];
     queueSinks?: QueueSinkConfiguration[];
+    cdcSinks?: CdcSinkConfiguration[];
     aiAgents?: AiAgentConfiguration[];
     genAis?: GenAiConfiguration[];
     embeddingsGenerations?: EmbeddingsGenerationConfiguration[];

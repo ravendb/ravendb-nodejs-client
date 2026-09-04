@@ -33,6 +33,7 @@ npm install --save ravendb
    [Vector Search](#vector-search),  
    [Embeddings Generation](#embeddings-generation),  
    [GenAI](#genai),  
+   [CDC Sink](#cdc-sink),  
    [Schema Validation](#schema-validation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
@@ -918,6 +919,28 @@ console.log("chunkedText", chunkedText);
 console.log("Final answer:", answer);
 ```
 
+#### Read conversation messages
+Read back the messages of a stored conversation, with optional paging and detail filtering.
+
+```javascript
+// Read the most recent messages of a conversation
+// (returns null when the conversation does not exist)
+const result = await store.ai.getConversationMessages("chats/1");
+// Messages are in chronological order (oldest first)
+for (const message of result.messages) {
+    console.log(message.role, message.content, message.timestamp);
+}
+
+// Page backward (e.g. scrolling up in a chat UI) and include tool calls
+const olderPage = await store.ai.getConversationMessages({
+    conversationId: "chats/1",
+    before: result.messages[0].timestamp,  // exclusive upper bound
+    pageSize: 50,
+    detailLevel: "Detailed"                // "Simple" (default) | "Detailed" | "Full"
+});
+console.log(olderPage.hasMoreMessages);    // true when older messages exist
+```
+
 ## Attachments
 
 #### Store attachments
@@ -1787,6 +1810,173 @@ const errors = config.validate();
 > <small>[add GenAI ETL task](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L53)</small>  
 > <small>[update GenAI task and change starting point](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L71)</small>  
 > <small>[validation requires schema or sample object](https://github.com/ravendb/ravendb-nodejs-client/blob/v7.0/test/Ported/Documents/Operations/GenAiEtlTest.ts#L109)</small>  
+
+## CDC Sink
+
+Sync changes from a relational database (SQL Server, PostgreSQL) into RavenDB documents using change data capture.
+
+#### Create a CDC Sink task
+
+```javascript
+// Map the source SQL table "orders" to the RavenDB collection "Orders"
+const configuration = {
+    name: "orders-cdc",
+    connectionStringName: "<Your SQL connection string name>",
+    tables: [
+        {
+            collectionName: "Orders",
+            sourceTableSchema: "public",
+            sourceTableName: "orders",
+            // Primary key columns are used for document ID generation
+            primaryKeyColumns: ["id"],
+            columns: [
+                { column: "id", name: "Id" },
+                { column: "customer", name: "Customer" },
+                // Parse a jsonb column as a native JSON object instead of a string
+                { column: "details", name: "Details", type: "Json" }
+            ],
+            // Embed the "order_lines" table as an array inside each order document
+            embeddedTables: [
+                {
+                    sourceTableName: "order_lines",
+                    propertyName: "Lines",
+                    type: "Array",
+                    primaryKeyColumns: ["line_id"],
+                    joinColumns: ["order_id"],
+                    columns: [
+                        { column: "line_id", name: "Id" },
+                        { column: "product", name: "Product" },
+                        { column: "quantity", name: "Quantity" }
+                    ]
+                }
+            ]
+        }
+    ]
+};
+
+const result = await store.maintenance.send(new AddCdcSinkOperation(configuration));
+console.log(result.taskId);  // the ID of the created ongoing task
+```
+
+#### Update a CDC Sink task
+
+```javascript
+// Archive documents instead of deleting them when the source row is deleted
+configuration.tables[0].onDelete = {
+    ignoreDeletes: true,
+    patch: "this.Archived = true;"
+};
+
+const updateResult = await store.maintenance.send(new UpdateCdcSinkOperation(result.taskId, configuration));
+// The update replaces the task, so it gets a NEW task ID - use it for further operations
+console.log(updateResult.taskId);
+```
+
+## Server-Wide Connection Strings
+
+Define a connection string once at the cluster level and have it propagated to all databases (with optional exclusions).
+
+#### Create, read and remove a server-wide connection string
+
+```javascript
+const serverWide = new ServerWideConnectionString();
+serverWide.connectionString = Object.assign(new RavenConnectionString(), {
+    name: "central-raven",
+    database: "Reports",
+    topologyDiscoveryUrls: ["https://reports.example.com"]
+});
+// Databases listed here will not receive the connection string
+serverWide.excludedDatabases = ["Sandbox"];
+
+await store.maintenance.server.send(new PutServerWideConnectionStringOperation(serverWide));
+
+// All server-wide connection strings, or filter by name and type
+const all = await store.maintenance.server.send(new GetServerWideConnectionStringsOperation());
+const one = await store.maintenance.server.send(new GetServerWideConnectionStringsOperation("central-raven", "Raven"));
+// Each result exposes usedBy: the ETL/replication/sink tasks and AI agents
+// (across all databases) that currently reference the connection string
+console.log(one.results[0].usedBy);
+
+// Removal fails if the connection string is in use by any ongoing task
+await store.maintenance.server.send(new RemoveServerWideConnectionStringOperation(serverWide.connectionString));
+```
+
+## Snowflake ETL
+
+Transfer documents to a Snowflake data warehouse using an ETL task.
+
+#### Add a Snowflake ETL task
+
+```javascript
+const connectionString = Object.assign(new SnowflakeConnectionString(), {
+    name: "snowflake",
+    connectionString: "ACCOUNT=my-account;USER=etl;PASSWORD=..."
+});
+await store.maintenance.send(new PutConnectionStringOperation(connectionString));
+
+const etl = Object.assign(new SnowflakeEtlConfiguration(), {
+    connectionStringName: "snowflake",
+    transforms: [{ name: "orders", collections: ["Orders"], script: "loadToOrders(this);" }],
+    snowflakeTables: [{ tableName: "Orders", documentIdColumn: "Id", insertOnlyMode: false }]
+});
+await store.maintenance.send(new AddEtlOperation(etl));
+```
+
+## Queue Brokers: Azure Service Bus, Azure Queue Storage, Amazon SQS
+
+In addition to Kafka and RabbitMQ, `QueueConnectionString` supports the Azure Service Bus, Azure Queue Storage and Amazon SQS brokers for Queue ETL and Queue Sink tasks.
+
+#### Configure a queue broker connection string
+
+```javascript
+// Azure Service Bus: connection string, Microsoft Entra ID, or Managed Identity
+const serviceBus = Object.assign(new QueueConnectionString(), {
+    name: "sb",
+    brokerType: "AzureServiceBus",
+    azureServiceBusConnectionSettings: {
+        passwordless: { namespace: "mynamespace.servicebus.windows.net" }
+    }
+});
+
+// Azure Queue Storage: connection string, Entra ID, or Managed Identity
+const queueStorage = Object.assign(new QueueConnectionString(), {
+    name: "aqs",
+    brokerType: "AzureQueueStorage",
+    azureQueueStorageConnectionSettings: {
+        passwordless: { storageAccountName: "myaccount" }
+    }
+});
+
+// Amazon SQS: basic credentials or the ambient AWS identity
+const sqs = Object.assign(new QueueConnectionString(), {
+    name: "sqs",
+    brokerType: "AmazonSqs",
+    amazonSqsConnectionSettings: {
+        basic: { accessKey: "...", secretKey: "...", regionName: "eu-west-1" }
+    }
+});
+```
+
+For Queue Sink scripts on Azure Service Bus, `AzureServiceBusSinkSource` encodes the sources for `QueueSinkScript.queues`: `AzureServiceBusSinkSource.queue("orders")` for a queue, `AzureServiceBusSinkSource.subscription("topic", "subscription")` for a topic subscription.
+
+## Client Certificate Management
+
+#### Edit a client certificate
+
+`EditClientCertificateOperation` replaces a certificate's name, permissions, clearance and disabled state. The SSO fields (`ssoServerPublicKeyPinningHashes`, `allowAnySsoServer`, `ssoIdentifiers`) are opt-in: leaving them undefined keeps the certificate's existing SSO settings untouched, while passing a value (even an empty list) fully replaces the stored value.
+
+```javascript
+await store.maintenance.server.send(new EditClientCertificateOperation({
+    thumbprint,
+    name: "sso-user",
+    clearance: "ValidUser",
+    permissions: { Northwind: "ReadWrite" },
+    disabled: false,
+    ssoIdentifiers: [{ provider: "Github", identifier: "octocat" }]
+}));
+```
+
+`GetCertificatesOperation` results expose the matching metadata: `usage`, `disabled`, `ssoServerPublicKeyPinningHashes`, `allowAnySsoServer` and `ssoIdentifiers`.
 
 ## Schema Validation
 

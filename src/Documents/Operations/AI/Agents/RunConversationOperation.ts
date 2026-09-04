@@ -171,24 +171,38 @@ class RunConversationCommand<TAnswer>
 
         const uri = `${node.url}/databases/${node.database}/ai/agent?${uriParams}`;
 
-        const creationOptions = this._options ?? {};
+        const creationOptions: Partial<AiConversationCreationOptions> = this._options ?? {};
+
+        // Parameters are keyed by user-provided, case-sensitive names (which may contain dots, so
+        // no path regex can single out the name level), and their values are user data - both must
+        // stay untouched by the PascalCase transform. The AiAgentParameter envelope (Value,
+        // SendToModel) is cased here and the whole Parameters subtree is excluded below.
+        const { parameters, ...otherCreationOptions } = creationOptions;
+        const parametersPayload = parameters
+            ? Object.fromEntries(
+                Object.entries(parameters).map(([name, parameter]) =>
+                    [name, { Value: parameter.value, SendToModel: parameter.sendToModel }]))
+            : undefined;
+
         const bodyObj = {
             ActionResponses: this._actionResponses,
             ArtificialActions: this._artificialActions,
             UserPrompt: this._promptParts.length > 0 ? this._promptParts : null,
-            CreationOptions: creationOptions
+            CreationOptions: {
+                ...otherCreationOptions,
+                ...(parametersPayload ? { parameters: parametersPayload } : {})
+            }
         };
 
         const headers = this._headers().typeAppJson().build();
 
-        // Serialize properties to PascalCase, except user-provided parameter keys in
-        // CreationOptions.Parameters which must stay case-sensitive (e.g. "userId", "locale").
-        // Sub-properties of each parameter (Value, SendToModel) are still PascalCased.
+        // Serialize properties to PascalCase, except the user prompt content parts and
+        // everything under CreationOptions.Parameters (already in its wire shape above).
         const serialized = ObjectUtil.transformObjectKeys(bodyObj, {
             defaultTransform: ObjectUtil.pascalCase,
             ignorePaths: [
-                new RegExp("^CreationOptions\\.Parameters\\.[^.]+$"),
-                new RegExp("^UserPrompt\\..*$")
+                new RegExp("^UserPrompt\\..*$"),
+                new RegExp("^CreationOptions\\.Parameters\\..*$")
             ]
         });
 

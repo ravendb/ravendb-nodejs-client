@@ -6,6 +6,9 @@ import { GoogleCloudSettings } from "../Backups/GoogleCloudSettings.js";
 import { FtpSettings } from "../Backups/FtpSettings.js";
 import { KafkaConnectionSettings } from "./Queue/KafkaConnectionSettings.js";
 import { RabbitMqConnectionSettings } from "./Queue/RabbitMqConnectionSettings.js";
+import { AzureServiceBusConnectionSettings } from "./Queue/AzureServiceBusConnectionSettings.js";
+import { AzureQueueStorageConnectionSettings } from "./Queue/AzureQueueStorageConnectionSettings.js";
+import { AmazonSqsConnectionSettings } from "./Queue/AmazonSqsConnectionSettings.js";
 
 export type ConnectionStringType =
     "None"
@@ -14,12 +17,16 @@ export type ConnectionStringType =
     | "Olap"
     | "ElasticSearch"
     | "Queue"
+    | "Snowflake"
     | "Ai";
 
 export type QueueBrokerType =
     "None"
     | "Kafka"
-    | "RabbitMq";
+    | "RabbitMq"
+    | "AzureQueueStorage"
+    | "AmazonSqs"
+    | "AzureServiceBus";
 
 export abstract class ConnectionString {
     public name: string;
@@ -36,6 +43,11 @@ export class SqlConnectionString extends ConnectionString {
     public connectionString: string;
     public factoryName: string;
     public type: ConnectionStringType = "Sql";
+}
+
+export class SnowflakeConnectionString extends ConnectionString {
+    public connectionString: string;
+    public type: ConnectionStringType = "Snowflake";
 }
 
 export class OlapConnectionString extends ConnectionString {
@@ -85,6 +97,9 @@ export class QueueConnectionString extends ConnectionString {
     public brokerType: QueueBrokerType;
     public kafkaConnectionSettings: KafkaConnectionSettings;
     public rabbitMqConnectionSettings: RabbitMqConnectionSettings;
+    public azureQueueStorageConnectionSettings: AzureQueueStorageConnectionSettings;
+    public amazonSqsConnectionSettings: AmazonSqsConnectionSettings;
+    public azureServiceBusConnectionSettings: AzureServiceBusConnectionSettings;
 
     public type: ConnectionStringType = "Queue";
 }
@@ -96,5 +111,6 @@ export type EtlType =
     | "Olap"
     | "ElasticSearch"
     | "Queue"
+    | "Snowflake"
     | "GenAi"
     | "EmbeddingsGeneration";

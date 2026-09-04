@@ -6,3 +6,7 @@ export * from "./AiAgentToolQueryOptions.js";
 export * from "./AiAgentToolSubAgent.js";
 export * from "./AiAgentParameter.js";
 export * from "./AiConversationCreationOptions.js";
+export * from "./AiConversationDetailLevel.js";
+export * from "./AiConversationMessage.js";
+export * from "./AiConversationMessagesResult.js";
+export * from "./GetConversationMessagesOperation.js";

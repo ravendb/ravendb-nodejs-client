@@ -3,7 +3,9 @@ import type { AiAgentConfiguration } from "./Agents/config/AiAgentConfiguration.
 import type { AiAgentConfigurationResult } from "./Agents/AiAgentConfigurationResult.js";
 import type { GetAiAgentsResponse } from "./Agents/GetAiAgentsResponse.js";
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
-import { AddOrUpdateAiAgentOperation, DeleteAiAgentOperation, GetAiAgentsOperation } from "./Agents/index.js";
+import type { AiConversationMessagesResult } from "./Agents/AiConversationMessagesResult.js";
+import type { GetConversationMessagesOptions } from "./Agents/GetConversationMessagesOperation.js";
+import { AddOrUpdateAiAgentOperation, DeleteAiAgentOperation, GetAiAgentsOperation, GetConversationMessagesOperation } from "./Agents/index.js";
 import { MaintenanceOperationExecutor } from "../MaintenanceOperationExecutor.js";
 import { StringUtil } from "../../../Utility/StringUtil.js";
 import { AiConversation } from "./AiConversation.js";
@@ -73,5 +75,20 @@ export class AiOperations {
      */
     public conversation(agentId: string, conversationId: string, creationOptions?: AiConversationCreationOptions, changeVector?: string): AiConversation {
         return new AiConversation(this._store, this._databaseName, agentId, conversationId, creationOptions, changeVector);
+    }
+
+    /**
+     * Reads messages from an AI conversation. Returns the most recent messages by default.
+     * @param conversationId - The conversation document ID
+     */
+    public async getConversationMessages(conversationId: string): Promise<AiConversationMessagesResult>;
+    /**
+     * Reads messages from an AI conversation with full control over paging and filtering.
+     * @param parameters - Parameters controlling paging (before/after timestamps), page size, and view filter
+     */
+    public async getConversationMessages(parameters: GetConversationMessagesOptions): Promise<AiConversationMessagesResult>;
+    public async getConversationMessages(conversationIdOrParameters: string | GetConversationMessagesOptions): Promise<AiConversationMessagesResult> {
+        const operation = new GetConversationMessagesOperation(conversationIdOrParameters);
+        return await this._executor.send(operation);
     }
 }

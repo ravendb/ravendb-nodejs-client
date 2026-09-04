@@ -61,13 +61,28 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             .objectKeysTransform({
                 defaultTransform: ObjectUtil.camel,
                 ignorePaths: [
-                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|ravenConnectionStrings|sqlConnectionStrings|rollingIndexes)\.[^.]+$/i,
+                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|rollingIndexes)\.[^.]+$/i,
+                    // Connection string names are dictionary keys and must keep their original casing.
+                    // Names may contain dots, so the whole subtree is excluded here and the fields
+                    // of each entry are camel-cased individually below.
+                    /^\w+ConnectionStrings\./i,
                     /^rollingIndexes\.[^.]+\.activeDeployments\.[^.]+$/i,
                     /^indexesHistory\.[^.]+\.[^.]+\.rollingDeployment\.[^.]+$/i,
                     /^timeSeries\./i
                 ]
             })
             .process(bodyStream);
+
+        // The *ConnectionStrings subtrees were left with their server-side casing to preserve
+        // the names (dictionary keys); camel-case the fields of each entry here.
+        // A newly added *ConnectionStrings field on the database record must be listed here too.
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.ravenConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.sqlConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.olapConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.elasticSearchConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.queueConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.snowflakeConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.aiConnectionStrings);
 
         if (this.result.rollingIndexes) {
             for (const index of Object.values(this.result.rollingIndexes)) {
@@ -100,6 +115,18 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
         }
 
         return body;
+    }
+
+    private static _camelCaseConnectionStringEntries(dict: Record<string, object>): void {
+        if (!dict) {
+            return;
+        }
+
+        for (const [name, fields] of Object.entries(dict)) {
+            if (fields) {
+                dict[name] = ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel });
+            }
+        }
     }
 
     static mapRollingDeployment(input: ServerResponse<Record<string, RollingIndexDeployment>>): Record<string, RollingIndexDeployment> {
