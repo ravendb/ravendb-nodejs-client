@@ -17,13 +17,11 @@ Needs a secured RavenDB server and a PEM client certificate the server trusts. A
 throwaway setup with Docker and OpenSSL:
 
 ```bash
-# 1. a mini PKI: CA + a leaf certificate (SANs for both hostnames used below);
-#    the private key must be PKCS#1 ("BEGIN RSA PRIVATE KEY") for authOptions PEM parsing
+# 1. a mini PKI: CA + a leaf certificate (SANs for both hostnames used below)
 openssl req -x509 -newkey rsa:2048 -keyout ca-key.pem -out ca.pem -days 365 -nodes \
   -subj "/CN=smoke-ca" -addext "basicConstraints=critical,CA:TRUE" \
   -addext "keyUsage=critical,keyCertSign,cRLSign"
-openssl genrsa -out key-pkcs8.pem 2048
-openssl rsa -in key-pkcs8.pem -out key.pem -traditional
+openssl genrsa -out key.pem 2048
 openssl req -new -key key.pem -subj "/CN=ravendb" -out leaf.csr
 printf "subjectAltName=DNS:localhost,DNS:ravendb,IP:127.0.0.1\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth,clientAuth\nbasicConstraints=CA:FALSE\n" > leaf.ext
 openssl x509 -req -in leaf.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -days 365 -extfile leaf.ext -out cert.pem

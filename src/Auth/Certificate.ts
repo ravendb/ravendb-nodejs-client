@@ -127,7 +127,12 @@ export abstract class Certificate implements ICertificate {
 
 export class PemCertificate extends Certificate {
     private readonly _certToken: string = "CERTIFICATE";
-    private readonly _keyToken: string = "RSA PRIVATE KEY";
+    /**
+     * Private key PEM labels accepted, in lookup order: PKCS#1 (RSA), SEC1 (EC),
+     * PKCS#8 - what OpenSSL 3 emits by default (openssl genrsa, openssl pkcs12 -nodes) -
+     * and encrypted PKCS#8.
+     */
+    private readonly _keyTokens: string[] = ["RSA PRIVATE KEY", "EC PRIVATE KEY", "PRIVATE KEY", "ENCRYPTED PRIVATE KEY"];
     protected _key: string;
 
     constructor(certificate: string | Buffer, passphrase?: string, ca?: string | Buffer) {
@@ -137,7 +142,7 @@ export class PemCertificate extends Certificate {
             this._certificate = certificate.toString();
         }
 
-        this._key = this._fetchPart(this._keyToken);
+        this._key = this._keyTokens.map(token => this._fetchPart(token)).find(Boolean) ?? null;
         this._certificate = this._fetchPart(this._certToken);
 
         if (!this._key && !this._certificate) {
@@ -189,6 +194,14 @@ export class PemCertificate extends Certificate {
 
     public toDenoHttpClientOptions(): DenoHttpClientOptions {
         const options = super.toDenoHttpClientOptions();
+
+        if (!this._key) {
+            throwError("InvalidArgumentException",
+                "The PEM certificate has no private key block, so it cannot authenticate the client on Deno. "
+                + "Put the certificate and its private key (\"BEGIN PRIVATE KEY\", \"BEGIN RSA PRIVATE KEY\" "
+                + "or \"BEGIN EC PRIVATE KEY\") in authOptions.certificate.");
+        }
+
         return {
             ...options,
             cert: this._certificate as string,

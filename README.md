@@ -2299,6 +2299,9 @@ let authOptions = {
 };
 ``` 
 
+The private key block may be PKCS#1 (`BEGIN RSA PRIVATE KEY`), PKCS#8 (`BEGIN PRIVATE KEY`,
+what OpenSSL 3 emits by default) or SEC1 (`BEGIN EC PRIVATE KEY`).
+
 PFX certificates content should be passed as a `Buffer` object:
 
 ```javascript
@@ -2444,7 +2447,9 @@ Deno-specific notes:
 
 - **PEM only.** `Deno.createHttpClient` does not accept PKCS#12 archives or encrypted
   keys, so a PFX certificate or a PEM with a passphrase throws an actionable error —
-  convert with `openssl pkcs12 -in cert.pfx -out cert.pem -nodes`.
+  convert with `openssl pkcs12 -in cert.pfx -out cert.pem -nodes` (the PKCS#8
+  `BEGIN PRIVATE KEY` block it writes is accepted as-is). A PEM without a private key
+  block throws as well.
 - **`authOptions.ca` is passed as `caCerts`**, so a server behind a private CA works
   without `DENO_CERT` / `--cert`.
 - On Deno-based platforms that remove `Deno.createHttpClient`, the client throws an

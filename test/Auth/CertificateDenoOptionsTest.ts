@@ -41,6 +41,16 @@ describe("Certificate.toDenoHttpClientOptions", function () {
         });
     });
 
+    it("throws an actionable error when the PEM has no private key block", function () {
+        const certificate = Certificate.createPem(PEM_CERT);
+
+        assert.throws(() => certificate.toDenoHttpClientOptions(), (err: Error) => {
+            assert.match(err.message, /private key/i);
+            assert.match(err.message, /BEGIN PRIVATE KEY/);
+            return true;
+        });
+    });
+
     it("throws an actionable error for a PFX certificate", function () {
         const certificate = Certificate.createPfx(Buffer.from("pfx-bytes"));
 

@@ -43,16 +43,15 @@ jobs:
 
       # A mini PKI: CA + one leaf used as both the server certificate (pfx) and the
       # client certificate (pem) - RavenDB trusts its own certificate as ClusterAdmin.
-      # The key is converted to PKCS#1 because the client's PEM parsing expects
-      # a "BEGIN RSA PRIVATE KEY" block.
+      # The key stays PKCS#8 ("BEGIN PRIVATE KEY", the OpenSSL 3 default) on purpose:
+      # it is the format users get from openssl and the client must accept it.
       - name: Generate certificates
         run: |
           mkdir certs && cd certs
           openssl req -x509 -newkey rsa:2048 -keyout ca-key.pem -out ca.pem -days 2 -nodes \
             -subj "/CN=deno-smoke-ca" -addext "basicConstraints=critical,CA:TRUE" \
             -addext "keyUsage=critical,keyCertSign,cRLSign"
-          openssl genrsa -out key-pkcs8.pem 2048
-          openssl rsa -in key-pkcs8.pem -out key.pem -traditional
+          openssl genrsa -out key.pem 2048
           openssl req -new -key key.pem -subj "/CN=localhost" -out leaf.csr
           printf "subjectAltName=DNS:localhost,IP:127.0.0.1\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth,clientAuth\nbasicConstraints=CA:FALSE\n" > leaf.ext
           openssl x509 -req -in leaf.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -days 2 -extfile leaf.ext -out cert.pem
