@@ -168,9 +168,11 @@ export abstract class RavenCommand<TResult> {
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         } else {
-            // Bun and Cloudflare Workers (workerd) have no undici `dispatcher` concept, so
-            // one must never leak into their fetch init. On workerd mTLS is handled by the
-            // custom fetch (an mtls_certificate binding); Bun manages TLS itself.
+            // Bun, Cloudflare Workers (workerd) and Deno have no undici `dispatcher`
+            // concept, so one must never leak into their fetch init. On workerd mTLS is
+            // handled by the custom fetch (an mtls_certificate binding); Bun manages TLS
+            // itself (`tls` request option); Deno presents the certificate through a
+            // Deno.HttpClient (`client` request option).
             optionsToUse = { body: bodyToUse, ...restOptions } as RequestInit;
         }
 
