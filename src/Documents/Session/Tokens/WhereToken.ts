@@ -123,20 +123,18 @@ export class WhereToken extends QueryToken {
         return token;
     }
 
+    /**
+     * Prefixes the field name with the query alias (e.g. `from Orders as o` turns `Field` into `o.Field`).
+     * The token is updated in place and returned, so subclasses (vector search, moreLikeThis) keep their
+     * own state and can override this to customize aliasing. Tokens targeting `id()` are left untouched.
+     */
     public addAlias(alias: string): WhereToken {
         if (CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME === this.fieldName) {
             return this;
         }
 
         this.fieldName = alias + "." + this.fieldName;
-
-        const whereToken = new WhereToken();
-        whereToken.fieldName = alias + "." + this.fieldName;
-        whereToken.parameterName = this.parameterName;
-        whereToken.whereOperator = this.whereOperator;
-        whereToken.options = this.options;
-
-        return whereToken;
+        return this;
     }
 
     private _writeMethod(writer): boolean {

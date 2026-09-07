@@ -5,6 +5,7 @@ import type { AiAgentActionResponse, AiAgentArtificialActionResponse } from "./A
 import type { AiConversationCreationOptions } from "./AiConversationCreationOptions.js";
 import type { ConversationResult } from "./ConversationResult.js";
 import type { AiStreamCallback } from "../AiStreamCallback.js";
+import type { AiOutputOptions } from "../AiOutputOptions.js";
 import type { AiAttachmentCommand } from "../AiConversation.js";
 import { ContentPart, TextPart } from "../ContentPart.js";
 import { RavenCommand } from "../../../../Http/RavenCommand.js";
@@ -31,6 +32,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     private readonly _attachmentCommands?: AiAttachmentCommand[];
     private readonly _streamPropertyPath?: string;
     private readonly _streamCallback?: AiStreamCallback;
+    private readonly _outputOptions?: AiOutputOptions;
 
     public constructor(
         agentId: string,
@@ -42,7 +44,8 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         changeVector?: string,
         attachmentCommands?: AiAttachmentCommand[],
         streamPropertyPath?: string,
-        streamCallback?: AiStreamCallback
+        streamCallback?: AiStreamCallback,
+        outputOptions?: AiOutputOptions
     ) {
         if (StringUtil.isNullOrEmpty(agentId)) {
             throwError("InvalidArgumentException", "agentId cannot be null or empty.");
@@ -73,6 +76,7 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
         this._attachmentCommands = attachmentCommands;
         this._streamPropertyPath = streamPropertyPath;
         this._streamCallback = streamCallback;
+        this._outputOptions = outputOptions;
     }
 
     public get resultType(): OperationResultType {
@@ -91,7 +95,8 @@ export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
             this._attachmentCommands,
             conventions,
             this._streamPropertyPath,
-            this._streamCallback
+            this._streamCallback,
+            this._outputOptions
         );
     }
 }
@@ -109,6 +114,8 @@ class RunConversationCommand<TAnswer>
     private readonly _attachmentCommands?: AiAttachmentCommand[];
     private readonly _streamPropertyPath?: string;
     private readonly _streamCallback?: AiStreamCallback;
+    private readonly _outputOptions?: AiOutputOptions;
+    private readonly _conventions: DocumentConventions;
     private _raftId: string;
 
     public constructor(
@@ -122,7 +129,8 @@ class RunConversationCommand<TAnswer>
         attachmentCommands: AiAttachmentCommand[] | undefined,
         conventions: DocumentConventions,
         streamPropertyPath?: string,
-        streamCallback?: AiStreamCallback
+        streamCallback?: AiStreamCallback,
+        outputOptions?: AiOutputOptions
     ) {
         super();
         this._conversationId = conversationId;
@@ -135,9 +143,12 @@ class RunConversationCommand<TAnswer>
         this._attachmentCommands = attachmentCommands;
         this._streamPropertyPath = streamPropertyPath;
         this._streamCallback = streamCallback;
+        this._outputOptions = outputOptions;
+        this._conventions = conventions;
 
-        // When streaming is enabled, we need to handle raw response
-        if (this._streamPropertyPath && this._streamCallback) {
+        // When streaming is enabled, we need to handle raw response.
+        // The property path may be an empty string when streaming raw text (noSchema), so check for null only.
+        if (this._streamPropertyPath != null && this._streamCallback) {
             this._responseType = "Raw";
         }
 
@@ -164,7 +175,8 @@ class RunConversationCommand<TAnswer>
             uriParams.append("changeVector", this._changeVector);
         }
 
-        if (this._streamPropertyPath) {
+        // An empty property path is valid when streaming raw text (noSchema); the server ignores it then.
+        if (this._streamPropertyPath != null) {
             uriParams.append("streaming", "true");
             uriParams.append("streamPropertyPath", this._streamPropertyPath);
         }
@@ -184,6 +196,8 @@ class RunConversationCommand<TAnswer>
                     [name, { Value: parameter.value, SendToModel: parameter.sendToModel }]))
             : undefined;
 
+        const outputOptionsPayload = this._serializeOutputOptions();
+
         const bodyObj = {
             ActionResponses: this._actionResponses,
             ArtificialActions: this._artificialActions,
@@ -191,18 +205,20 @@ class RunConversationCommand<TAnswer>
             CreationOptions: {
                 ...otherCreationOptions,
                 ...(parametersPayload ? { parameters: parametersPayload } : {})
-            }
+            },
+            ...(outputOptionsPayload ? { OutputOptions: outputOptionsPayload } : {})
         };
 
         const headers = this._headers().typeAppJson().build();
 
-        // Serialize properties to PascalCase, except the user prompt content parts and
-        // everything under CreationOptions.Parameters (already in its wire shape above).
+        // Serialize properties to PascalCase, except the user prompt content parts,
+        // everything under CreationOptions.Parameters and OutputOptions (already in their wire shape above).
         const serialized = ObjectUtil.transformObjectKeys(bodyObj, {
             defaultTransform: ObjectUtil.pascalCase,
             ignorePaths: [
                 new RegExp("^UserPrompt\\..*$"),
-                new RegExp("^CreationOptions\\.Parameters\\..*$")
+                new RegExp("^CreationOptions\\.Parameters\\..*$"),
+                new RegExp("^OutputOptions\\..*$")
             ]
         });
 
@@ -284,11 +300,40 @@ class RunConversationCommand<TAnswer>
             this._throwInvalidResponse();
         }
 
-        if (this._streamPropertyPath && this._streamCallback) {
+        if (this._streamPropertyPath != null && this._streamCallback) {
             return await this._processStreamingResponse(bodyStream as Readable);
         }
 
         return await this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    /**
+     * Wire shape of AiOutputOptions (mirrors the C# client's AiOutputOptions.ToJson):
+     * SampleObject travels as a JSON *string* (the server derives the schema from it),
+     * OutputSchema as a string, NoSchema only when true.
+     */
+    private _serializeOutputOptions(): Record<string, unknown> | null {
+        const options = this._outputOptions;
+        if (!options) {
+            return null;
+        }
+
+        const payload: Record<string, unknown> = {};
+
+        if (options.sampleObject != null) {
+            const literal = this._conventions.objectMapper.toObjectLiteral(options.sampleObject);
+            payload.SampleObject = JsonSerializer.getDefault().serialize(literal);
+        }
+
+        if (options.outputSchema != null) {
+            payload.OutputSchema = options.outputSchema;
+        }
+
+        if (options.noSchema) {
+            payload.NoSchema = true;
+        }
+
+        return payload;
     }
 
     private async _processStreamingResponse(bodyStream: Readable): Promise<string> {
