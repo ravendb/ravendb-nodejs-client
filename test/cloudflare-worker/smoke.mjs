@@ -12,14 +12,16 @@ const worker = await unstable_dev("src/worker.ts", {
 });
 
 try {
-    const res = await worker.fetch("/");
-    const text = await res.text();
+    for (const path of ["/", "/initialize-mtls"]) {
+        const res = await worker.fetch(path);
+        const text = await res.text();
 
-    if (res.status !== 200 || !text.startsWith("ok:")) {
-        console.error(`SMOKE FAILED [HTTP ${res.status}]: ${text}`);
-        process.exitCode = 1;
-    } else {
-        console.log(`SMOKE OK: ${text}`);
+        if (res.status !== 200 || !text.startsWith("ok:")) {
+            console.error(`SMOKE FAILED [${path}] [HTTP ${res.status}]: ${text}`);
+            process.exitCode = 1;
+        } else {
+            console.log(`SMOKE OK [${path}]: ${text}`);
+        }
     }
 } finally {
     await worker.stop();

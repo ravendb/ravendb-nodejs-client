@@ -1,0 +1,13 @@
+{
+  "name": "ravendb-deno-smoke",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Deno end-to-end smoke test for the RavenDB client with X.509 client-certificate authentication (RDBC-1083).",
+  "type": "module",
+  "scripts": {
+    "smoke": "deno run --allow-net --allow-env --allow-read smoke.mjs"
+  },
+  "dependencies": {
+    "ravendb": "file:../.."
+  }
+}

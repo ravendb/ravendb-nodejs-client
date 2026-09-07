@@ -289,6 +289,7 @@ export class DocumentStore extends DocumentStoreBase {
         this._assertValidConfiguration();
 
         RequestExecutor.validateUrls(this.urls, this.authOptions);
+        RequestExecutor.validateCertificateRuntimeSupport(this.authOptions, this.conventions);
 
         try {
             if (!this.conventions.documentIdGenerator) { // don't overwrite what the user is doing
