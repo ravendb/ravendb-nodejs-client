@@ -136,7 +136,9 @@ export class BatchOperation {
                     this._handleDelete(batchResult);
                     break;
                 }
-                case "PATCH": {
+                case "PATCH":
+                case "JsonPatch": {
+                    // JsonPatch replies carry the same PatchStatus / ModifiedDocument / ChangeVector / LastModified fields
                     this._handlePatch(batchResult);
                     break;
                 }

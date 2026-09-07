@@ -2284,6 +2284,19 @@ session.advanced.patch("users/1", "underAge", false);
 await session.saveChanges();
 ```
 
+Session patches are sent as RFC 6902 JsonPatch commands when the path is a plain member/index chain
+(`"address.city"`, `"tags[1]"`) and the value is `null`, a string, a number or a boolean; `patchArray`
+`push()`/`removeAt()` and `patchObject` `set()`/`remove()` follow the same rule. Object and `Date` values,
+`increment()` and anything else keep using a JavaScript patch. JsonPatch is strict: removing a missing key or
+an out-of-range index fails `saveChanges()`. `patch()` on an array index that does not exist yet, or on
+JavaScript-only members such as `array.length`, also fails instead of extending or mutating the array. To keep
+the legacy JavaScript behaviour:
+
+```javascript
+// Before store.initialize()
+store.conventions.sessionPatchBehavior = "JavaScript"; // default: "JsonPatch"
+```
+
 >##### Related tests:
 > <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L708)</small>  
 > <small>[can patch](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/FirstClassPatchTest.ts#L18)</small>  

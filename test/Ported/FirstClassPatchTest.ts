@@ -83,8 +83,8 @@ describe("FirstClassPatchTest", function () {
                 await session.saveChanges();
                 assert.fail("it should have thrown");
             } catch (err) {
-                assert.strictEqual(err.message, 
-                    "Cannot perform save because document users/1-A has been modified by the session and is also taking part in deferred PATCH command");
+                assert.strictEqual(err.message,
+                    "Cannot perform save because document users/1-A has been modified by the session and is also taking part in deferred JsonPatch command");
                 assert.strictEqual(err.name, "InvalidOperationException");
             }
         }
@@ -328,17 +328,18 @@ describe("FirstClassPatchTest", function () {
 
         {
             const session = store.openSession();
+            // primitives go through JsonPatch, Date values stay JavaScript: one JsonPatch + one PATCH command per document
             session.advanced.patch(_docId, "numbers[0]", 31);
             assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
 
             session.advanced.patch(_docId, "lastLogin", now);
-            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 1);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 2);
 
             session.advanced.patch(docId2, "numbers[0]", 123);
-            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 2);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 3);
 
             session.advanced.patch(docId2, "lastLogin", now);
-            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 2);
+            assert.strictEqual((session as any as InMemoryDocumentSessionOperations).deferredCommandsCount, 4);
 
             await session.saveChanges();
         }

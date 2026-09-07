@@ -1,5 +1,6 @@
 export { DocumentConventions } from "./Documents/Conventions/DocumentConventions.js";
 export { BulkInsertConventions } from "./Documents/Conventions/BulkInsertConventions.js";
+export * from "./Documents/Conventions/SessionPatchBehavior.js";
 export type { RavenErrorType } from "./Exceptions/index.js";
 export * from "./Types/index.js";
 
@@ -244,6 +245,8 @@ export * from "./Documents/Operations/GetDetailedStatisticsOperation.js";
 export * from "./Documents/Commands/Batches/BatchOptions.js";
 export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData.js";
 export * from "./Documents/Commands/Batches/PatchCommandData.js";
+export * from "./Documents/Commands/Batches/JsonPatchCommandData.js";
+export * from "./Documents/Operations/JsonPatchDocument.js";
 export * from "./Documents/Commands/Batches/PutAttachmentCommandData.js";
 export * from "./Documents/Commands/Batches/PutAttachmentCommandHelper.js";
 export * from "./Documents/Commands/CommandData.js";
@@ -534,6 +537,7 @@ export * from "./Documents/Session/ISessionDocumentRollupTypedTimeSeries.js";
 export * from "./Documents/Session/ISessionDocumentTimeSeries.js";
 export * from "./Documents/Session/ISessionDocumentTypedAppendTimeSeriesBase.js";
 export * from "./Documents/Session/ISessionDocumentTypedTimeSeries.js";
+export * from "./Documents/Session/JavaScriptArray.js";
 export * from "./Documents/Session/JavaScriptMap.js";
 export * from "./Documents/Session/IMetadataDictionary.js";
 export type { MetadataAsDictionary } from "./Mapping/MetadataAsDictionary.js";

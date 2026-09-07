@@ -44,6 +44,9 @@ import { LazySessionOperations } from "./Operations/Lazy/LazySessionOperations.j
 import { JavaScriptArray } from "./JavaScriptArray.js";
 import { PatchRequest } from "../Operations/PatchRequest.js";
 import { PatchCommandData } from "../Commands/Batches/PatchCommandData.js";
+import { JsonPatchCommandData } from "../Commands/Batches/JsonPatchCommandData.js";
+import { JsonPatchDocument } from "../Operations/JsonPatchDocument.js";
+import { canUseJsonPatchValue, escapeJsonPointerSegment, isValidJsonPointerSegment, tryBuildJsonPointer } from "./JsonPatchPath.js";
 import { IdTypeAndName } from "../IdTypeAndName.js";
 import { IRevisionsSessionOperations } from "./IRevisionsSessionOperations.js";
 import { DocumentSessionRevisions } from "./DocumentSessionRevisions.js";
@@ -493,7 +496,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public addOrPatchArray<T extends object, UValue>(id: string, entity: T, pathToArray: string, arrayAdder: (array: JavaScriptArray<UValue>) => void) {
-        const scriptArray = new JavaScriptArray(this._customCount++, pathToArray);
+        const scriptArray = new JavaScriptArray<UValue>(this._customCount++, pathToArray);
 
         arrayAdder(scriptArray);
 
@@ -577,6 +580,10 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = metadata["@id"];
         }
 
+        if (this._tryPatchWithJsonPatch(id, path, value)) {
+            return;
+        }
+
         const patchRequest = new PatchRequest();
         patchRequest.script = "this." + path + " = args.val_" + this._valsCount + ";";
         const valKey = "val_" + this._valsCount;
@@ -606,8 +613,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             id = metadata["@id"];
         }
 
-        const scriptArray = new JavaScriptArray(this._customCount++, path);
+        const scriptArray = new JavaScriptArray<UValue>(this._customCount++, path);
         arrayAdder(scriptArray);
+
+        if (this._tryPatchArrayWithJsonPatch(id, path, scriptArray)) {
+            return;
+        }
 
         const patchRequest = new PatchRequest();
         patchRequest.script = scriptArray.script;
@@ -625,9 +636,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     patchObject<TEntity extends object, TKey, TValue>(
         idOrEntity: string | TEntity, pathToObject: string, mapAdder: (map: JavaScriptMap<TKey, TValue>) => void): void {
         if (TypeUtil.isString(idOrEntity)) {
-            const scriptMap = new JavaScriptMap(this._customCount++, pathToObject);
+            const scriptMap = new JavaScriptMap<TKey, TValue>(this._customCount++, pathToObject);
 
             mapAdder(scriptMap);
+
+            if (this._tryPatchObjectWithJsonPatch(idOrEntity, pathToObject, scriptMap)) {
+                return;
+            }
 
             const patchRequest = new PatchRequest();
             patchRequest.script = scriptMap.getScript();
@@ -641,6 +656,151 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             const id = metadata[CONSTANTS.Documents.Metadata.ID];
             this.patchObject(id, pathToObject, mapAdder);
         }
+    }
+
+    private get _useJsonPatchInSessionPatchMethods(): boolean {
+        return this.conventions.sessionPatchBehavior === "JsonPatch";
+    }
+
+    /**
+     * A JavaScript patch already deferred for this document has to run first; later operations join it
+     * (see _tryMergePatches) instead of being reordered into a separate JsonPatch command.
+     */
+    private _hasDeferredJavaScriptPatch(id: string): boolean {
+        return this.deferredCommandsMap.has(IdTypeAndName.keyFor(id, "PATCH", null));
+    }
+
+    /**
+     * Defers the JsonPatch, or appends its operations to the JsonPatch already deferred for the same
+     * document so one document gets one JsonPatch command per saveChanges().
+     */
+    private _deferJsonPatch(id: string, patch: JsonPatchDocument): void {
+        const existing = this.deferredCommandsMap.get(IdTypeAndName.keyFor(id, "JsonPatch", null)) as JsonPatchCommandData | undefined;
+        if (!existing) {
+            this.defer(new JsonPatchCommandData(id, patch));
+            return;
+        }
+
+        const commandIdx = this._deferredCommands.indexOf(existing);
+        if (commandIdx > -1) {
+            this._deferredCommands.splice(commandIdx, 1);
+        }
+
+        existing.jsonPatch.operations.push(...patch.operations);
+        this.defer(existing);
+    }
+
+    private _tryPatchWithJsonPatch(id: string, path: string, value: unknown): boolean {
+        if (!this._useJsonPatchInSessionPatchMethods
+            || this._hasDeferredJavaScriptPatch(id)
+            || !canUseJsonPatchValue(value)) {
+            return false;
+        }
+
+        const pointer = tryBuildJsonPointer(path);
+        if (!pointer) {
+            return false;
+        }
+
+        // Match the JavaScript "this.x = value" semantics: assigning to a named member creates it when
+        // absent (JsonPatch "add" creates-or-replaces an object member), while assigning to an existing
+        // positional element overwrites it in place (JsonPatch "replace"; "add" would insert before the index).
+        const patch = new JsonPatchDocument();
+        if (pointer.endsWithIndex) {
+            patch.replace(pointer.pointer, value);
+        } else {
+            patch.add(pointer.pointer, value);
+        }
+
+        this._deferJsonPatch(id, patch);
+        return true;
+    }
+
+    private _tryPatchArrayWithJsonPatch<UValue>(id: string, path: string, scriptArray: JavaScriptArray<UValue>): boolean {
+        if (!this._useJsonPatchInSessionPatchMethods || this._hasDeferredJavaScriptPatch(id)) {
+            return false;
+        }
+
+        const pointer = tryBuildJsonPointer(path);
+        if (!pointer) {
+            return false;
+        }
+
+        const patch = new JsonPatchDocument();
+        for (const operation of scriptArray.operations) {
+            switch (operation.type) {
+                case "push": {
+                    for (const value of operation.values) {
+                        if (!canUseJsonPatchValue(value)) {
+                            return false;
+                        }
+                        patch.add(`${pointer.pointer}/-`, value);
+                    }
+                    break;
+                }
+                case "removeAt": {
+                    if (!Number.isInteger(operation.index) || operation.index < 0) {
+                        return false;
+                    }
+                    patch.remove(`${pointer.pointer}/${operation.index}`);
+                    break;
+                }
+                default: {
+                    return false;
+                }
+            }
+        }
+
+        if (patch.operations.length === 0) {
+            return false;
+        }
+
+        this._deferJsonPatch(id, patch);
+        return true;
+    }
+
+    private _tryPatchObjectWithJsonPatch<TKey, TValue>(id: string, path: string, scriptMap: JavaScriptMap<TKey, TValue>): boolean {
+        if (!this._useJsonPatchInSessionPatchMethods || this._hasDeferredJavaScriptPatch(id)) {
+            return false;
+        }
+
+        const pointer = tryBuildJsonPointer(path);
+        if (!pointer) {
+            return false;
+        }
+
+        const patch = new JsonPatchDocument();
+        for (const operation of scriptMap.operations) {
+            const key = operation.key == null ? null : String(operation.key);
+            if (!isValidJsonPointerSegment(key)) {
+                return false;
+            }
+
+            const keyPointer = `${pointer.pointer}/${escapeJsonPointerSegment(key)}`;
+            switch (operation.type) {
+                case "set": {
+                    if (!canUseJsonPatchValue(operation.value)) {
+                        return false;
+                    }
+                    patch.add(keyPointer, operation.value);
+                    break;
+                }
+                case "remove": {
+                    patch.remove(keyPointer);
+                    break;
+                }
+                default: {
+                    return false;
+                }
+            }
+        }
+
+        if (patch.operations.length === 0) {
+            return false;
+        }
+
+        this._deferJsonPatch(id, patch);
+        return true;
     }
 
     private _tryMergePatches(id: string, patchRequest: PatchRequest): boolean {
