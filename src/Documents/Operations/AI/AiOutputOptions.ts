@@ -26,8 +26,20 @@ export interface AiOutputOptions {
     sampleObject?: object;
 
     /**
-     * An explicit JSON schema string for structured output.
+     * An explicit output schema for structured output, as a JSON string.
+     * The server forwards it verbatim as the model's `response_format.json_schema`, so it must be the
+     * OpenAI-style wrapper `{ "name": "...", "strict": true, "schema": { ...JSON schema... } }`, not a bare
+     * JSON schema (a bare schema is ignored by the model and the turn fails to parse).
      * Takes precedence over `sampleObject` if both are set.
+     *
+     * @example
+     * ```typescript
+     * outputSchema: JSON.stringify({
+     *     name: "rating",
+     *     strict: true,
+     *     schema: { type: "object", properties: { score: { type: "number" } }, required: ["score"], additionalProperties: false }
+     * })
+     * ```
      */
     outputSchema?: string;
 

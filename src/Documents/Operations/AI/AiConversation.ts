@@ -317,9 +317,10 @@ export class AiConversation {
     }
 
     /**
-     * Executes one "turn" of the conversation with an explicit JSON schema override for this turn only.
+     * Executes one "turn" of the conversation with an explicit output schema override for this turn only.
      *
-     * @param outputSchema - A JSON schema string sent to the model for this turn
+     * @param outputSchema - The OpenAI-style `{ name, strict, schema }` JSON string sent to the model for this turn
+     * (see {@link AiOutputOptions.outputSchema}); a bare JSON schema is not accepted by the model endpoint
      */
     public runWithSchema<TAnswer>(outputSchema: string): Promise<AiAnswer<TAnswer>>;
     /**
@@ -431,7 +432,8 @@ export class AiConversation {
      *
      * @param streamPropertyPath - The property path of the answer to stream
      * @param streamCallback - Callback invoked with each streamed chunk
-     * @param outputSchema - A JSON schema string sent to the model for this turn
+     * @param outputSchema - The OpenAI-style `{ name, strict, schema }` JSON string sent to the model for this turn
+     * (see {@link AiOutputOptions.outputSchema})
      */
     public streamWithSchema<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback, outputSchema: string): Promise<AiAnswer<TAnswer>>;
     /**

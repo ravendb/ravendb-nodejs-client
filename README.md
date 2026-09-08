@@ -951,12 +951,18 @@ const summary = await chat.runWithSchema({
 });
 console.log(summary.answer.oneLineSummary);
 
-// Or pass an explicit JSON schema string
+// Or pass an explicit schema: the OpenAI-style wrapper { name, strict, schema } as a JSON string
+// (a bare JSON schema is not accepted by the model endpoint)
 chat.setUserPrompt("Rate the top performer from 1 to 10");
 const rated = await chat.runWithSchema(JSON.stringify({
-    type: "object",
-    properties: { score: { type: "number" } },
-    required: ["score"]
+    name: "performer_rating",
+    strict: true,
+    schema: {
+        type: "object",
+        properties: { score: { type: "number" } },
+        required: ["score"],
+        additionalProperties: false
+    }
 }));
 console.log(rated.answer.score); // 8
 
