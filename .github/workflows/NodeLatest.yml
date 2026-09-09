@@ -6,7 +6,7 @@ name: tests/node-latest
 # releases of the current line roughly every 2-4 weeks, so a weekly run is
 # enough to catch a breaking release within days. The regular test matrix
 # (RavenClient.yml) pins concrete lines; this workflow always resolves the
-# newest available versions instead.
+# newest available release instead.
 
 permissions:
   contents: read
@@ -19,10 +19,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
-    # `nightly` is allowed to fail: it exists to spot upstream breaks early
-    # (like the undici dispatch handler protocol changes), not to gate anything.
-    continue-on-error: ${{ matrix.node-version == 'nightly' }}
 
     env:
       RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
@@ -37,8 +33,7 @@ jobs:
 
     strategy:
       matrix:
-        # `latest` = newest stable release (any line), `nightly` = tip of main.
-        node-version: [latest, nightly]
+        node-version: [latest]
         serverVersion: ["7.2"]
       fail-fast: false
 
