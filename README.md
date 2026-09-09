@@ -919,6 +919,61 @@ console.log("chunkedText", chunkedText);
 console.log("Final answer:", answer);
 ```
 
+#### Get a plain text answer (no output schema)
+Skip the agent's output schema for a single turn and get the model's answer as free-form text.
+
+```javascript
+const chat = store.ai.conversation(agent.identifier, "Performers/", {
+    parameters: {country: "France"}
+});
+
+chat.setUserPrompt("Summarize the top performer in two sentences");
+
+// noSchema: the answer is a plain string instead of an object shaped by the agent's schema
+const { answer } = await chat.run({ noSchema: true });
+console.log(answer); // "The employee with the largest profit is ..."
+
+// Stream the raw text as it is generated
+chat.setUserPrompt("Now do the same for Germany");
+await chat.stream(chunk => process.stdout.write(chunk));
+```
+
+#### Override the output schema for one turn
+Replace the agent's default output schema for a single turn with a sample object or an explicit JSON schema.
+The agent-level schema is used again on the next turn.
+
+```javascript
+// Derive the schema from a sample object
+chat.setUserPrompt("Give me a one line summary of the top performer");
+const summary = await chat.runWithSchema({
+    employeeID: "the ID of the top performer",
+    oneLineSummary: "one sentence about the performer"
+});
+console.log(summary.answer.oneLineSummary);
+
+// Or pass an explicit schema: the OpenAI-style wrapper { name, strict, schema } as a JSON string
+// (a bare JSON schema is not accepted by the model endpoint)
+chat.setUserPrompt("Rate the top performer from 1 to 10");
+const rated = await chat.runWithSchema(JSON.stringify({
+    name: "performer_rating",
+    strict: true,
+    schema: {
+        type: "object",
+        properties: { score: { type: "number" } },
+        required: ["score"],
+        additionalProperties: false
+    }
+}));
+console.log(rated.answer.score); // 8
+
+// The same overrides work with streaming (the streamed property must exist in the override)
+chat.setUserPrompt("Give me a one line summary of the top performer");
+await chat.streamWithSchema("oneLineSummary", chunk => process.stdout.write(chunk), {
+    employeeID: "the ID of the top performer",
+    oneLineSummary: "one sentence about the performer"
+});
+```
+
 #### Read conversation messages
 Read back the messages of a stored conversation, with optional paging and detail filtering.
 
@@ -2233,6 +2288,19 @@ session.advanced.increment("users/1", "age", 1);
 session.advanced.patch("users/1", "underAge", false);
 
 await session.saveChanges();
+```
+
+Session patches are sent as RFC 6902 JsonPatch commands when the path is a plain member/index chain
+(`"address.city"`, `"tags[1]"`) and the value is `null`, a string, a number or a boolean; `patchArray`
+`push()`/`removeAt()` and `patchObject` `set()`/`remove()` follow the same rule. Object and `Date` values,
+`increment()` and anything else keep using a JavaScript patch. JsonPatch is strict: removing a missing key or
+an out-of-range index fails `saveChanges()`. `patch()` on an array index that does not exist yet, or on
+JavaScript-only members such as `array.length`, also fails instead of extending or mutating the array. To keep
+the legacy JavaScript behaviour:
+
+```javascript
+// Before store.initialize()
+store.conventions.sessionPatchBehavior = "JavaScript"; // default: "JsonPatch"
 ```
 
 >##### Related tests:

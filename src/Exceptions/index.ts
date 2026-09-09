@@ -172,7 +172,16 @@ export type RavenErrorType = "RavenException"
     | "NotImplementedInCoraxException"
     | "CompareExchangeInvalidKeyException"
     | "BulkInsertInvalidOperationException"
-    | "BulkInsertClientException";
+    | "BulkInsertClientException"
+    | "AiException"
+    | "RefusedToAnswerException"
+    | "UnsuccessfulAiRequestException"
+    | "TooManyRequestsException"
+    | "RateLimitException"
+    | "InsufficientQuotaException"
+    | "TooManyTokensException"
+    | "MissingAiAgentParameterException"
+    | "QueryToolFailedException";
 
 export interface ExceptionSchema {
     url: string;

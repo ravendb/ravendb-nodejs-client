@@ -13,6 +13,13 @@ export class MoreLikeThisToken extends WhereToken {
         super();
     }
 
+    /**
+     * moreLikeThis() has no field of its own, so aliasing the query does not change it.
+     */
+    public addAlias(alias: string): WhereToken {
+        return this;
+    }
+
     public writeTo(writer: StringBuilder): void {
         writer.append("moreLikeThis(");
 

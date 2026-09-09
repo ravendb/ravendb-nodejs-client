@@ -69,6 +69,13 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
     public embeddingsCacheForQueryingExpiration: number = DEFAULT_QUERY_CACHE_EXPIRATION_MS;
 
     /**
+     * Store the text of each chunk in the database alongside its embedding.
+     * Useful for debugging or highlighting, but increases storage requirements.
+     * @default false
+     */
+    public storeChunkText: boolean = false;
+
+    /**
      * Gets the transformation name based on the configuration approach.
      * @internal
      */
@@ -258,6 +265,7 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
         result.EmbeddingsCacheForQueryingExpiration = TimeUtil.millisToTimeSpan(
             this.embeddingsCacheForQueryingExpiration
         );
+        result.StoreChunkText = this.storeChunkText;
 
         return result;
     }
@@ -282,6 +290,7 @@ export class EmbeddingsGenerationConfiguration extends AbstractAiIntegrationConf
 
         if (this.collection !== other.collection ||
             this.quantization !== other.quantization ||
+            !!this.storeChunkText !== !!other.storeChunkText ||
             this.embeddingsCacheExpiration !== other.embeddingsCacheExpiration ||
             this.embeddingsCacheForQueryingExpiration !== other.embeddingsCacheForQueryingExpiration) {
             return false;

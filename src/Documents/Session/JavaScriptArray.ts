@@ -1,3 +1,7 @@
+export type JavaScriptArrayOperation<U> =
+    | { type: "push"; values: U[] }
+    | { type: "removeAt"; index: number };
+
 export class JavaScriptArray<U> {
     private readonly _suffix: number;
     private _argCounter: number = 0;
@@ -6,6 +10,7 @@ export class JavaScriptArray<U> {
 
     private _scriptLines: string[] = [];
     private _parameters = {};
+    private readonly _operations: JavaScriptArrayOperation<U>[] = [];
 
     constructor(suffix: number, pathToArray: string) {
         this._suffix = suffix;
@@ -14,7 +19,7 @@ export class JavaScriptArray<U> {
 
     public push(...u: U[]): this {
         if (!u || u.length === 0) {
-            return;
+            return this;
         }
 
         const args = u.map(value => {
@@ -24,6 +29,7 @@ export class JavaScriptArray<U> {
         }).join(",");
 
         this._scriptLines.push("this." + this._pathToArray + ".push(" + args + ");");
+        this._operations.push({ type: "push", values: [...u] });
         return this;
     }
 
@@ -32,6 +38,7 @@ export class JavaScriptArray<U> {
 
         this._scriptLines.push("this." + this._pathToArray + ".splice(args." + argumentName + ", 1);");
         this._parameters[argumentName] = index;
+        this._operations.push({ type: "removeAt", index });
         return this;
     }
 
@@ -45,5 +52,13 @@ export class JavaScriptArray<U> {
 
     get parameters() {
         return this._parameters;
+    }
+
+    /**
+     * The operations requested so far, in call order. The session uses them to emit an
+     * RFC 6902 JsonPatch instead of the script when every operation has a JsonPatch equivalent.
+     */
+    get operations(): ReadonlyArray<JavaScriptArrayOperation<U>> {
+        return this._operations;
     }
 }

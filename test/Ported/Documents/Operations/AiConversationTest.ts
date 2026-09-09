@@ -1,9 +1,13 @@
+import assert from "node:assert";
 import {IDocumentStore} from "../../../../src/index.js";
 import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
 import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 
-import {AiHandleErrorStrategy} from "../../../../src/Documents/Operations/AI/AiConversation.js";
+import {AiConversation, AiHandleErrorStrategy} from "../../../../src/Documents/Operations/AI/AiConversation.js";
 import {AiUsage} from "../../../../src/Documents/Operations/AI/Agents/AiUsage.js";
+import type {AiAnswer} from "../../../../src/Documents/Operations/AI/AiAnswer.js";
+import type {AiOutputOptions} from "../../../../src/Documents/Operations/AI/AiOutputOptions.js";
+import type {AiStreamCallback} from "../../../../src/Documents/Operations/AI/AiStreamCallback.js";
 import {
     AiConversationCreationOptions
 } from "../../../../src/Documents/Operations/AI/Agents/AiConversationCreationOptions.js";
@@ -551,6 +555,180 @@ import {
                 assertThat(err.message).contains("previous usage cannot be null");
             }
         );
+    });
+
+    interface RunInternalCall {
+        streamPropertyPath?: string;
+        streamCallback?: AiStreamCallback;
+        outputOptions?: AiOutputOptions;
+    }
+
+    // Replaces the server round-trip with a recorder so the output options plumbing can be asserted offline
+    function stubRunInternal(conv: any, answer: unknown = { result: "ok" }): RunInternalCall[] {
+        const calls: RunInternalCall[] = [];
+        conv._runInternal = async (streamPropertyPath?: string, streamCallback?: AiStreamCallback, outputOptions?: AiOutputOptions) => {
+            calls.push({ streamPropertyPath, streamCallback, outputOptions });
+            return { answer, status: "Done" };
+        };
+        return calls;
+    }
+
+    it("run() passes output options through to the conversation turn", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/30|") as any;
+        const calls = stubRunInternal(conv, "free text");
+
+        const plain = await conv.run();
+        const noSchema = await conv.run({ noSchema: true });
+        const sample = await conv.run({ sampleObject: { summary: "x" } });
+
+        assertThat(plain.answer).isEqualTo("free text");
+        assertThat(noSchema.answer).isEqualTo("free text");
+        assertThat(sample.status).isEqualTo("Done");
+
+        assertThat(calls).hasSize(3);
+        assertThat(calls[0].outputOptions).isUndefined();
+        assertThat(calls[0].streamPropertyPath).isUndefined();
+        assertThat(calls[1].outputOptions.noSchema).isTrue();
+        assertThat((calls[2].outputOptions.sampleObject as any).summary).isEqualTo("x");
+    });
+
+    it("run() rejects noSchema combined with a schema or sample object", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/31|") as any;
+        stubRunInternal(conv);
+
+        await assertThrows(() => conv.run({ noSchema: true, outputSchema: "{}" }), err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("noSchema");
+        });
+
+        await assertThrows(() => conv.run({ noSchema: true, sampleObject: { a: 1 } }), err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("noSchema");
+        });
+
+        await assertThrows(() => conv.run({ outputSchema: "   " }), err => {
+            assertThat(err.name).isEqualTo("InvalidArgumentException");
+            assertThat(err.message).contains("outputSchema");
+        });
+
+        await assertThrows(() => conv.run({ sampleObject: "not an object" }), err => {
+            assertThat(err.name).isEqualTo("InvalidArgumentException");
+            assertThat(err.message).contains("sampleObject");
+        });
+
+        await assertThrows(() => conv.runWithSchema(null), err => {
+            assertThat(err.name).isEqualTo("InvalidArgumentException");
+        });
+    });
+
+    it("runWithSchema() accepts a schema string, a sample object or output options", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/32|") as any;
+        const calls = stubRunInternal(conv);
+
+        await conv.runWithSchema(`{"type":"object"}`);
+        await conv.runWithSchema({ summary: "a short summary", score: 5 });
+        await conv.runWithSchema({ sampleObject: { summary: "wrapped" } });
+        await conv.runWithSchema({ noSchema: true });
+        await conv.runWithSchema({});
+
+        assertThat(calls).hasSize(5);
+        assert.deepStrictEqual(calls[0].outputOptions, { outputSchema: `{"type":"object"}` });
+        assert.deepStrictEqual(calls[1].outputOptions, { sampleObject: { summary: "a short summary", score: 5 } });
+        assert.deepStrictEqual(calls[2].outputOptions, { sampleObject: { summary: "wrapped" } });
+        assert.deepStrictEqual(calls[3].outputOptions, { noSchema: true });
+        // an empty object carries no schema information, so it is passed through as (empty) options
+        assert.deepStrictEqual(calls[4].outputOptions, {});
+    });
+
+    it("stream(callback) streams raw text with an empty property path and noSchema", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/33|") as any;
+        const calls = stubRunInternal(conv, "the whole answer");
+        const callback: AiStreamCallback = async () => { /* no-op */ };
+
+        const answer = await conv.stream(callback);
+
+        assertThat(answer.answer).isEqualTo("the whole answer");
+        assertThat(calls).hasSize(1);
+        assertThat(calls[0].streamPropertyPath).isEqualTo("");
+        assertThat(calls[0].streamCallback).isSameAs(callback);
+        assert.deepStrictEqual(calls[0].outputOptions, { noSchema: true });
+    });
+
+    it("stream() requires a property path unless noSchema is set", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/34|") as any;
+        const calls = stubRunInternal(conv);
+        const callback: AiStreamCallback = async () => { /* no-op */ };
+
+        await assertThrows(() => conv.stream("", callback), err => {
+            assertThat(err.message).contains("streamPropertyPath cannot be empty");
+        });
+
+        await assertThrows(() => conv.stream("summary", null), err => {
+            assertThat(err.message).contains("streamCallback cannot be null");
+        });
+
+        await conv.stream("", callback, { noSchema: true });
+        await conv.stream("summary", callback, { outputSchema: `{"type":"object"}` });
+
+        assertThat(calls).hasSize(2);
+        assertThat(calls[0].streamPropertyPath).isEqualTo("");
+        assert.deepStrictEqual(calls[0].outputOptions, { noSchema: true });
+        assertThat(calls[1].streamPropertyPath).isEqualTo("summary");
+        assert.deepStrictEqual(calls[1].outputOptions, { outputSchema: `{"type":"object"}` });
+    });
+
+    it("streamWithSchema() accepts a schema string, a sample object or output options", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/35|") as any;
+        const calls = stubRunInternal(conv);
+        const callback: AiStreamCallback = async () => { /* no-op */ };
+
+        await conv.streamWithSchema("summary", callback, `{"type":"object"}`);
+        await conv.streamWithSchema("summary", callback, { summary: "a short summary", score: 5 });
+        await conv.streamWithSchema("summary", callback, { sampleObject: { summary: "wrapped" } });
+
+        assertThat(calls).hasSize(3);
+        assertThat(calls.every(c => c.streamPropertyPath === "summary" && c.streamCallback === callback)).isTrue();
+        assert.deepStrictEqual(calls[0].outputOptions, { outputSchema: `{"type":"object"}` });
+        assert.deepStrictEqual(calls[1].outputOptions, { sampleObject: { summary: "a short summary", score: 5 } });
+        assert.deepStrictEqual(calls[2].outputOptions, { sampleObject: { summary: "wrapped" } });
+    });
+
+    it("run/stream output options overloads are typed", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/36|");
+        stubRunInternal(conv, "text");
+
+        // compile-time check: noSchema turns the answer into a string, other options keep TAnswer
+        const text: AiAnswer<string> = await conv.run({ noSchema: true });
+        const streamed: AiAnswer<string> = await conv.stream(async () => { /* no-op */ });
+        const typed: AiAnswer<{ summary: string }> = await conv.run<{ summary: string }>({ sampleObject: { summary: "x" } });
+        const sample: AiAnswer<{ summary: string }> = await conv.runWithSchema({ summary: "x" });
+
+        assertThat(text.answer).isEqualTo("text");
+        assertThat(streamed.answer).isEqualTo("text");
+        assertThat(typed.status).isEqualTo("Done");
+        assertThat(sample.status).isEqualTo("Done");
+        assertThat(conv).isNotNull();
+    });
+
+    it("handle() and receive() accept handlers for no-args action tools", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/37|") as AiConversation;
+        const internals = conv as any;
+
+        let handled = false;
+        conv.handle("get-current-time", async () => {
+            handled = true;
+            return { now: "12:00" };
+        });
+        conv.receive("ping", request => {
+            conv.addActionResponse(request.toolId, "pong");
+        });
+
+        await internals._invocations.get("get-current-time")({ name: "get-current-time", toolId: "tool-1", arguments: "{}" });
+        await internals._invocations.get("ping")({ name: "ping", toolId: "tool-2", arguments: "" });
+
+        assertThat(handled).isTrue();
+        assertThat(internals._actionResponses.get("tool-1").content).isEqualTo(JSON.stringify({ now: "12:00" }));
+        assertThat(internals._actionResponses.get("tool-2").content).isEqualTo("pong");
     });
 
     it("AiUsage reasoning tokens calculation in getUsageDifference", async () => {

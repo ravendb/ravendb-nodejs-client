@@ -548,5 +548,60 @@ describe("EmbeddingsGenerationConfiguration", () => {
                 `Expected ContextPrefix to be undefined when not set, got: ${chunkingOpts.ContextPrefix}`);
         });
     });
+
+    describe("storeChunkText", () => {
+        function createConfig(): EmbeddingsGenerationConfiguration {
+            const config = new EmbeddingsGenerationConfiguration();
+            config.name = "Products Embeddings";
+            config.collection = "Products";
+            config.identifier = "products-embeddings";
+            config.embeddingsPathConfigurations = [
+                {
+                    path: "Description",
+                    chunkingOptions: {
+                        chunkingMethod: "PlainTextSplitParagraphs",
+                        maxTokensPerChunk: 256,
+                        overlapTokens: 32
+                    }
+                }
+            ];
+            config.chunkingOptionsForQuerying = {
+                chunkingMethod: "PlainTextSplit",
+                maxTokensPerChunk: 256,
+                overlapTokens: 0
+            };
+            return config;
+        }
+
+        it("defaults to false and is always serialized", () => {
+            const config = createConfig();
+
+            assert.strictEqual(config.storeChunkText, false);
+
+            const serialized = config.serialize(new DocumentConventions()) as any;
+            assert.strictEqual(serialized.StoreChunkText, false);
+        });
+
+        it("is serialized as StoreChunkText when enabled", () => {
+            const config = createConfig();
+            config.storeChunkText = true;
+
+            const serialized = config.serialize(new DocumentConventions()) as any;
+            assert.strictEqual(serialized.StoreChunkText, true);
+        });
+
+        it("is part of the equality comparison", () => {
+            const left = createConfig();
+            const right = createConfig();
+
+            assert.strictEqual(left.isEqual(right), true);
+
+            right.storeChunkText = true;
+            assert.strictEqual(left.isEqual(right), false);
+
+            left.storeChunkText = true;
+            assert.strictEqual(left.isEqual(right), true);
+        });
+    });
 });
 

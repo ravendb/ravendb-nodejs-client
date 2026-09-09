@@ -9,6 +9,7 @@ import {
 } from "../../Types/index.js";
 import { ClientConfiguration } from "../Operations/Configuration/ClientConfiguration.js";
 import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior.js";
+import { SessionPatchBehavior } from "./SessionPatchBehavior.js";
 import { throwError } from "../../Exceptions/index.js";
 import { CONSTANTS } from "../../Constants.js";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
@@ -93,6 +94,7 @@ export class DocumentConventions {
     private _loadBalancerContextSeed: number;
     private _loadBalanceBehavior: LoadBalanceBehavior;
     private _readBalanceBehavior: ReadBalanceBehavior;
+    private _sessionPatchBehavior: SessionPatchBehavior;
     private _maxHttpCacheSize: number;
 
     private readonly _knownEntityTypes: Map<string, ObjectTypeDescriptor>;
@@ -142,6 +144,7 @@ export class DocumentConventions {
 
     public constructor() {
         this._readBalanceBehavior = "None";
+        this._sessionPatchBehavior = "JsonPatch";
         this._identityPartsSeparator = "/";
         this._identityProperty = CONSTANTS.Documents.Metadata.ID_PROPERTY;
 
@@ -316,6 +319,21 @@ export class DocumentConventions {
     public set readBalanceBehavior(value: ReadBalanceBehavior) {
         this._assertNotFrozen();
         this._readBalanceBehavior = value;
+    }
+
+    /**
+     * Determines whether the session patch methods (session.advanced.patch(), patchArray(), patchObject())
+     * emit RFC 6902 JsonPatch commands ("JsonPatch", the default) or legacy JavaScript patch commands
+     * ("JavaScript"). Set to "JavaScript" to opt out of the JsonPatch code path entirely and restore the
+     * previous behavior.
+     */
+    public get sessionPatchBehavior(): SessionPatchBehavior {
+        return this._sessionPatchBehavior;
+    }
+
+    public set sessionPatchBehavior(value: SessionPatchBehavior) {
+        this._assertNotFrozen();
+        this._sessionPatchBehavior = value;
     }
 
     public get loadBalancerContextSeed() {

@@ -4,6 +4,7 @@ import type { AiAgentActionResponse, AiAgentArtificialActionResponse } from "./A
 import type { AiConversationCreationOptions } from "./Agents/AiConversationCreationOptions.js";
 import type { AiAnswer } from "./AiAnswer.js";
 import type { AiStreamCallback } from "./AiStreamCallback.js";
+import type { AiOutputOptions } from "./AiOutputOptions.js";
 import type { IDocumentStore } from "../../IDocumentStore.js";
 import type { UnhandledActionEventArgs } from "./UnhandledActionEventArgs.js";
 import { ContentPart, TextPart } from "./ContentPart.js";
@@ -199,6 +200,15 @@ export class AiConversation {
         this._attachmentCommands.push({ kind: "copy", sourceDocumentId, fileName });
     }
 
+    /**
+     * Registers a handler for an action tool. The handler's return value is sent back to the model
+     * as the tool result (use {@link receive} to send the response manually).
+     *
+     * The handler may take `(args)`, `(request, args)`, or no parameters at all for a no-args action tool:
+     * ```typescript
+     * chat.handle("get-current-time", async () => ({ now: new Date().toISOString() }));
+     * ```
+     */
     public handle<TArgs = any, TResult extends object = object>(
         actionName: string,
         action: (args: TArgs) => Promise<TResult>,
@@ -240,6 +250,15 @@ export class AiConversation {
         }, aiHandleError);
     }
 
+    /**
+     * Registers a receiver for an action tool. Unlike {@link handle}, the receiver is responsible for
+     * sending the tool result itself via {@link addActionResponse}.
+     *
+     * For a no-args action tool the receiver may take just `(request)`:
+     * ```typescript
+     * chat.receive("ping", request => chat.addActionResponse(request.toolId, "pong"));
+     * ```
+     */
     public receive<TArgs = any>(actionName: string, action: (request: AiAgentActionRequest, args: TArgs) => Promise<void> | void, aiHandleError: AiHandleErrorStrategy = AiHandleErrorStrategy.SendErrorsToModel): void {
         if (this._invocations.has(actionName)) {
             throwError("InvalidOperationException", `Action '${actionName}' already exists.`);
@@ -259,17 +278,89 @@ export class AiConversation {
         this._invocations.set(actionName, inv);
     }
 
-    public async run<TAnswer>(): Promise<AiAnswer<TAnswer>> {
+    /**
+     * Executes one "turn" of the conversation: sends the current prompt, processes any required
+     * actions and returns the model's answer, shaped by the agent's default output schema.
+     */
+    public run<TAnswer>(): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Executes one "turn" of the conversation without structured output.
+     * The model returns free-form text, available as `answer` (a string).
+     *
+     * @example
+     * ```typescript
+     * const { answer } = await chat.run({ noSchema: true });
+     * ```
+     */
+    public run(outputOptions: AiOutputOptions & { noSchema: true }): Promise<AiAnswer<string>>;
+    /**
+     * Executes one "turn" of the conversation with output format options, allowing the caller to
+     * override the agent's default output schema (`sampleObject` / `outputSchema`) or disable
+     * structured output (`noSchema`) for this turn only.
+     *
+     * @param outputOptions - Options controlling the output format for this turn
+     */
+    public run<TAnswer>(outputOptions: AiOutputOptions): Promise<AiAnswer<TAnswer>>;
+    public async run<TAnswer>(outputOptions?: AiOutputOptions): Promise<AiAnswer<TAnswer>> {
+        if (outputOptions != null) {
+            this._validateOutputOptions(outputOptions);
+        }
+
         this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const r = await this._runInternal<TAnswer>();
+            const r = await this._runInternal<TAnswer>(undefined, undefined, outputOptions);
             if (r.status === "Done" || !await this._dispatchPendingActions(r)) {
                 return r;
             }
         }
     }
 
+    /**
+     * Executes one "turn" of the conversation with an explicit output schema override for this turn only.
+     *
+     * @param outputSchema - The OpenAI-style `{ name, strict, schema }` JSON string sent to the model for this turn
+     * (see {@link AiOutputOptions.outputSchema}); a bare JSON schema is not accepted by the model endpoint
+     */
+    public runWithSchema<TAnswer>(outputSchema: string): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Executes one "turn" of the conversation with output format options for this turn only.
+     * Equivalent to {@link run} with `outputOptions`.
+     *
+     * @param outputOptions - Options controlling the output format for this turn
+     */
+    public runWithSchema<TAnswer>(outputOptions: AiOutputOptions): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Executes one "turn" of the conversation, deriving the output schema from `sampleObject`
+     * for this turn only. The server converts the sample object to a JSON schema.
+     *
+     * An object whose keys are only `sampleObject`, `outputSchema` or `noSchema` is treated as
+     * {@link AiOutputOptions}; wrap such a sample explicitly as `{ sampleObject }`.
+     *
+     * @param sampleObject - A sample instance used to generate the JSON schema sent to the model
+     *
+     * @example
+     * ```typescript
+     * const answer = await chat.runWithSchema({ summary: "a short summary", score: 5 });
+     * ```
+     */
+    public runWithSchema<TAnswer extends object>(sampleObject: TAnswer): Promise<AiAnswer<TAnswer>>;
+    public runWithSchema<TAnswer>(schemaOrSampleObjectOrOptions: string | AiOutputOptions | TAnswer): Promise<AiAnswer<TAnswer>> {
+        return this.run<TAnswer>(this._toOutputOptions(schemaOrSampleObjectOrOptions));
+    }
+
+    /**
+     * Streams the model's answer as raw text without structured output: `streamCallback` receives
+     * each text chunk as it arrives, and the full text is returned as `answer` (a string).
+     *
+     * @param streamCallback - Callback invoked with each streamed text chunk
+     *
+     * @example
+     * ```typescript
+     * const { answer } = await chat.stream(chunk => process.stdout.write(chunk));
+     * ```
+     */
+    public stream(streamCallback: AiStreamCallback): Promise<AiAnswer<string>>;
     /**
      * Executes one "turn" of the conversation with streaming enabled.
      * Streams the specified property's value in real-time by invoking the callback with each chunk.
@@ -285,8 +376,41 @@ export class AiConversation {
      * });
      * ```
      */
-    public async stream<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
-        if (StringUtil.isNullOrEmpty(streamPropertyPath)) {
+    public stream<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Streams the model's answer as raw text without structured output.
+     * `streamPropertyPath` is not used when `noSchema` is true.
+     */
+    public stream(streamPropertyPath: string, streamCallback: AiStreamCallback, outputOptions: AiOutputOptions & { noSchema: true }): Promise<AiAnswer<string>>;
+    /**
+     * Executes one "turn" of the conversation with streaming and output format options,
+     * allowing the caller to override the agent's default output schema for this turn only.
+     *
+     * @param streamPropertyPath - The property path of the answer to stream. Not used when `noSchema` is true
+     * @param streamCallback - Callback invoked with each streamed chunk
+     * @param outputOptions - Options controlling the output format for this turn
+     */
+    public stream<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback, outputOptions: AiOutputOptions): Promise<AiAnswer<TAnswer>>;
+    public async stream<TAnswer>(
+        streamPropertyPathOrCallback: string | AiStreamCallback,
+        streamCallback?: AiStreamCallback,
+        outputOptions?: AiOutputOptions
+    ): Promise<AiAnswer<TAnswer>> {
+        let streamPropertyPath: string;
+        if (typeof streamPropertyPathOrCallback === "function") {
+            // stream(callback): the whole answer is one text stream, no property path and no schema
+            streamPropertyPath = "";
+            streamCallback = streamPropertyPathOrCallback;
+            outputOptions = { noSchema: true };
+        } else {
+            streamPropertyPath = streamPropertyPathOrCallback;
+        }
+
+        if (outputOptions != null) {
+            this._validateOutputOptions(outputOptions);
+        }
+        // With noSchema the answer is plain text, so there is no property to point at
+        if (!outputOptions?.noSchema && StringUtil.isNullOrEmpty(streamPropertyPath)) {
             throwError("InvalidArgumentException", "streamPropertyPath cannot be empty");
         }
         if (!streamCallback) {
@@ -296,10 +420,81 @@ export class AiConversation {
         this._dispatchedToolIds.clear();
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const r = await this._runInternal<TAnswer>(streamPropertyPath, streamCallback);
+            const r = await this._runInternal<TAnswer>(streamPropertyPath ?? "", streamCallback, outputOptions);
             if (r.status === "Done" || !await this._dispatchPendingActions(r)) {
                 return r;
             }
+        }
+    }
+
+    /**
+     * Executes one "turn" of the conversation with streaming and an explicit JSON schema override for this turn only.
+     *
+     * @param streamPropertyPath - The property path of the answer to stream
+     * @param streamCallback - Callback invoked with each streamed chunk
+     * @param outputSchema - The OpenAI-style `{ name, strict, schema }` JSON string sent to the model for this turn
+     * (see {@link AiOutputOptions.outputSchema})
+     */
+    public streamWithSchema<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback, outputSchema: string): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Executes one "turn" of the conversation with streaming and output format options for this turn only.
+     * Equivalent to {@link stream} with `outputOptions`.
+     */
+    public streamWithSchema<TAnswer>(streamPropertyPath: string, streamCallback: AiStreamCallback, outputOptions: AiOutputOptions): Promise<AiAnswer<TAnswer>>;
+    /**
+     * Executes one "turn" of the conversation with streaming, deriving the output schema from
+     * `sampleObject` for this turn only.
+     *
+     * An object whose keys are only `sampleObject`, `outputSchema` or `noSchema` is treated as
+     * {@link AiOutputOptions}; wrap such a sample explicitly as `{ sampleObject }`.
+     */
+    public streamWithSchema<TAnswer extends object>(streamPropertyPath: string, streamCallback: AiStreamCallback, sampleObject: TAnswer): Promise<AiAnswer<TAnswer>>;
+    public streamWithSchema<TAnswer>(
+        streamPropertyPath: string,
+        streamCallback: AiStreamCallback,
+        schemaOrSampleObjectOrOptions: string | AiOutputOptions | TAnswer
+    ): Promise<AiAnswer<TAnswer>> {
+        return this.stream<TAnswer>(streamPropertyPath, streamCallback, this._toOutputOptions(schemaOrSampleObjectOrOptions));
+    }
+
+    private static readonly OUTPUT_OPTIONS_KEYS = new Set<string>(["sampleObject", "outputSchema", "noSchema"]);
+
+    private _toOutputOptions<TAnswer>(schemaOrSampleObjectOrOptions: string | AiOutputOptions | TAnswer): AiOutputOptions {
+        const value = schemaOrSampleObjectOrOptions;
+        if (typeof value === "string") {
+            return { outputSchema: value };
+        }
+        if (value == null || typeof value !== "object") {
+            throwError("InvalidArgumentException", "Expected a JSON schema string, a sample object or AiOutputOptions.");
+        }
+
+        // Only sampleObject / outputSchema / noSchema keys: this is AiOutputOptions, otherwise a sample object
+        const keys = Object.keys(value);
+        if (keys.every(key => AiConversation.OUTPUT_OPTIONS_KEYS.has(key))) {
+            return value as AiOutputOptions;
+        }
+
+        return { sampleObject: value as object };
+    }
+
+    private _validateOutputOptions(outputOptions: AiOutputOptions): void {
+        if (outputOptions == null || typeof outputOptions !== "object") {
+            throwError("InvalidArgumentException", "outputOptions cannot be null");
+        }
+
+        if (outputOptions.noSchema && (outputOptions.outputSchema != null || outputOptions.sampleObject != null)) {
+            throwError("InvalidOperationException",
+                "When noSchema is true the model is expected to return just a string, with no structure, " +
+                "so you cannot also set an output schema. Either set noSchema to false, or remove the outputSchema and sampleObject.");
+        }
+
+        if (outputOptions.outputSchema != null
+            && (typeof outputOptions.outputSchema !== "string" || outputOptions.outputSchema.trim().length === 0)) {
+            throwError("InvalidArgumentException", "outputSchema cannot be null or whitespace.");
+        }
+
+        if (outputOptions.sampleObject != null && typeof outputOptions.sampleObject !== "object") {
+            throwError("InvalidArgumentException", "sampleObject must be an object.");
         }
     }
 
@@ -333,7 +528,7 @@ export class AiConversation {
         return this._actionResponses.size > 0; // false = ActionsRequired, nothing to send back yet
     }
 
-    private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback): Promise<AiAnswer<TAnswer>> {
+    private async _runInternal<TAnswer>(streamPropertyPath?: string, streamCallback?: AiStreamCallback, outputOptions?: AiOutputOptions): Promise<AiAnswer<TAnswer>> {
         if (this._actionRequests != null && this._promptParts.length === 0 && this._actionResponses.size === 0 && this._artificialActions.length === 0 && this._attachmentCommands.length === 0) {
             return {status: "Done" as const} as AiAnswer<TAnswer>;
         }
@@ -348,7 +543,8 @@ export class AiConversation {
             this._changeVector,
             this._attachmentCommands.length > 0 ? [...this._attachmentCommands] : undefined,
             streamPropertyPath,
-            streamCallback
+            streamCallback,
+            outputOptions
         );
 
         try {
