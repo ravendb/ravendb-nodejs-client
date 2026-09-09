@@ -2303,6 +2303,11 @@ the legacy JavaScript behaviour:
 store.conventions.sessionPatchBehavior = "JavaScript"; // default: "JsonPatch"
 ```
 
+`patchObject` keys always name a single property of the target object, in both modes: `map.set("a.b", value)`
+writes the `"a.b"` key (JsonPatch `/settings/a.b`, JavaScript `this.settings["a.b"]`), not the nested `settings.a.b`
+member that versions before 7.2.7 reached with `this.settings.a.b`. Use `session.advanced.patch(id, "settings.a.b", value)`
+for a nested member.
+
 >##### Related tests:
 > <small>[can use advanced.patch](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L708)</small>  
 > <small>[can patch](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/FirstClassPatchTest.ts#L18)</small>  
