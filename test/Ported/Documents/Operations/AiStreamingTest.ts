@@ -137,6 +137,12 @@ import type {AiStreamCallback} from "../../../../src/Documents/Operations/AI/AiS
         assertThat(body.OutputOptions).isUndefined();
     });
 
+    it("should not send OutputOptions when the options object has nothing set", () => {
+        const { body } = requestFor({});
+
+        assertThat(body.OutputOptions).isUndefined();
+    });
+
     it("should send the sample object as a JSON string in OutputOptions", () => {
         const { body } = requestFor({ sampleObject: { summary: "a short summary", score: 5 } });
 

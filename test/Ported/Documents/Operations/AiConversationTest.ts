@@ -629,15 +629,29 @@ import {
         await conv.runWithSchema({ summary: "a short summary", score: 5 });
         await conv.runWithSchema({ sampleObject: { summary: "wrapped" } });
         await conv.runWithSchema({ noSchema: true });
-        await conv.runWithSchema({});
 
-        assertThat(calls).hasSize(5);
+        assertThat(calls).hasSize(4);
         assert.deepStrictEqual(calls[0].outputOptions, { outputSchema: `{"type":"object"}` });
         assert.deepStrictEqual(calls[1].outputOptions, { sampleObject: { summary: "a short summary", score: 5 } });
         assert.deepStrictEqual(calls[2].outputOptions, { sampleObject: { summary: "wrapped" } });
         assert.deepStrictEqual(calls[3].outputOptions, { noSchema: true });
-        // an empty object carries no schema information, so it is passed through as (empty) options
-        assert.deepStrictEqual(calls[4].outputOptions, {});
+    });
+
+    it("runWithSchema() and streamWithSchema() reject an options object with nothing set", async () => {
+        const conv = store.ai.conversation("agents/1-A", "conversations/34|") as any;
+        const calls = stubRunInternal(conv);
+
+        for (const empty of [{}, { sampleObject: undefined }, { outputSchema: null, noSchema: false }]) {
+            await assertThrows(() => conv.runWithSchema(empty), err => {
+                assertThat(err.name).isEqualTo("InvalidArgumentException");
+                assertThat(err.message).contains("sampleObject");
+            });
+            await assertThrows(() => conv.streamWithSchema("summary", () => {}, empty), err => {
+                assertThat(err.name).isEqualTo("InvalidArgumentException");
+            });
+        }
+
+        assertThat(calls).hasSize(0);
     });
 
     it("stream(callback) streams raw text with an empty property path and noSchema", async () => {
