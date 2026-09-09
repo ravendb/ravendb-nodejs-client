@@ -336,6 +336,7 @@ export class AiConversation {
      *
      * An object whose keys are only `sampleObject`, `outputSchema` or `noSchema` is treated as
      * {@link AiOutputOptions}; wrap such a sample explicitly as `{ sampleObject }`.
+     * Options with none of the three set (e.g. `{}`) throw an `InvalidArgumentException`.
      *
      * @param sampleObject - A sample instance used to generate the JSON schema sent to the model
      *
@@ -447,6 +448,7 @@ export class AiConversation {
      *
      * An object whose keys are only `sampleObject`, `outputSchema` or `noSchema` is treated as
      * {@link AiOutputOptions}; wrap such a sample explicitly as `{ sampleObject }`.
+     * Options with none of the three set (e.g. `{}`) throw an `InvalidArgumentException`.
      */
     public streamWithSchema<TAnswer extends object>(streamPropertyPath: string, streamCallback: AiStreamCallback, sampleObject: TAnswer): Promise<AiAnswer<TAnswer>>;
     public streamWithSchema<TAnswer>(
@@ -471,7 +473,14 @@ export class AiConversation {
         // Only sampleObject / outputSchema / noSchema keys: this is AiOutputOptions, otherwise a sample object
         const keys = Object.keys(value);
         if (keys.every(key => AiConversation.OUTPUT_OPTIONS_KEYS.has(key))) {
-            return value as AiOutputOptions;
+            const options = value as AiOutputOptions;
+            // {} would otherwise travel as empty OutputOptions and silently keep the agent default schema
+            if (options.sampleObject == null && options.outputSchema == null && !options.noSchema) {
+                throwError("InvalidArgumentException",
+                    "Output options must set sampleObject, outputSchema or noSchema. " +
+                    "To derive the schema from a sample object pass it as { sampleObject }.");
+            }
+            return options;
         }
 
         return { sampleObject: value as object };

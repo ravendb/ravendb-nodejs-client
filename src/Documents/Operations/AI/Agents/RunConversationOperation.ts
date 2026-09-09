@@ -333,7 +333,8 @@ class RunConversationCommand<TAnswer>
             payload.NoSchema = true;
         }
 
-        return payload;
+        // Nothing set means "use the agent default", which is exactly what omitting OutputOptions does
+        return Object.keys(payload).length > 0 ? payload : null;
     }
 
     private async _processStreamingResponse(bodyStream: Readable): Promise<string> {
