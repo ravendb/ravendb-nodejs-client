@@ -381,7 +381,7 @@ export class DocumentQuery<T extends object>
 
     public whereEquals(fieldName: Field<T>, method: MethodCall): IDocumentQuery<T>;
     public whereEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): IDocumentQuery<T>;
-    public whereEquals(fieldName: Field<T>, value: any): void;
+    public whereEquals(fieldName: Field<T>, value: any): IDocumentQuery<T>;
     public whereEquals(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereEquals(whereParams: WhereParams): IDocumentQuery<T>;
     public whereEquals(...args: any[]): IDocumentQuery<T> {
@@ -391,7 +391,7 @@ export class DocumentQuery<T extends object>
 
     public whereNotEquals(fieldName: Field<T>, method: MethodCall): IDocumentQuery<T>;
     public whereNotEquals(fieldName: Field<T>, method: MethodCall, exact: boolean): IDocumentQuery<T>;
-    public whereNotEquals(fieldName: Field<T>, value: any): void;
+    public whereNotEquals(fieldName: Field<T>, value: any): IDocumentQuery<T>;
     public whereNotEquals(fieldName: Field<T>, value: any, exact: boolean): IDocumentQuery<T>;
     public whereNotEquals(whereParams: WhereParams): IDocumentQuery<T>;
     public whereNotEquals(...args: any[]): IDocumentQuery<T> {
