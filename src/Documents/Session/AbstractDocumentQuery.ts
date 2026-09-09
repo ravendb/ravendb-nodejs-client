@@ -2584,12 +2584,13 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
             throwError("InvalidArgumentException", "Alias cannot be null or empty.");
         }
 
-        for (const token of tokens) {
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
             if (token instanceof WhereToken) {
                 token.addAlias(fromAlias);
-            }
-            if (token instanceof OrderByToken) {
-                token.addAlias(fromAlias);
+            } else if (token instanceof OrderByToken) {
+                // OrderByToken is immutable: addAlias() returns a new token that has to be stored back
+                tokens[i] = token.addAlias(fromAlias);
             }
         }
     }
