@@ -4,6 +4,7 @@ import {
     InMemoryDocumentSessionOperations,
     JsonPatchCommandData,
     JsonPatchDocument,
+    PatchCommandData,
     SessionPatchBehavior
 } from "../../../src/index.js";
 import { CommandType } from "../../../src/Documents/Commands/CommandData.js";
@@ -247,6 +248,14 @@ describe("RavenDB-22293 JsonPatch session patching", function () {
 
         assert.strictEqual(user.name, "Updated");
         assert.notStrictEqual(session.advanced.getChangeVectorFor(user), changeVectorBefore);
+
+        // the refreshed change vector lets the same session keep working with the entity
+        user.age = 30;
+        await session.saveChanges();
+
+        const reloaded = await loadUser(store);
+        assert.strictEqual(reloaded.name, "Updated");
+        assert.strictEqual(reloaded.age, 30);
     });
 
     it("patch() does not send a change vector even with optimistic concurrency", async () => {
@@ -271,6 +280,43 @@ describe("RavenDB-22293 JsonPatch session patching", function () {
         const reloaded = await loadUser(store);
         assert.strictEqual(reloaded.name, "Updated");
         assert.strictEqual(reloaded.age, 99);
+    });
+
+    it("increment() does not send a change vector even with optimistic concurrency", async () => {
+        await storeUser(store);
+
+        const session = store.openSession();
+        session.advanced.useOptimisticConcurrency = true;
+        const user = await session.load<UserWithTags>(USER_ID, UserWithTags);
+
+        // concurrent write from another session must not make the JavaScript patch fail either
+        const other = store.openSession();
+        const otherUser = await other.load<UserWithTags>(USER_ID, UserWithTags);
+        otherUser.age = 99;
+        await other.saveChanges();
+
+        session.advanced.increment(user, "age", 1);
+
+        const command = deferred(session).deferredCommandsMap.get(IdTypeAndName.keyFor(USER_ID, "PATCH", null)) as PatchCommandData;
+        assert.strictEqual(command.changeVector, null);
+
+        await session.saveChanges();
+
+        const reloaded = await loadUser(store);
+        assert.strictEqual(reloaded.age, 100); // 99 + 1
+    });
+
+    it("increment() stays on JavaScript", async () => {
+        await storeUser(store, { age: 10 });
+
+        const session = store.openSession();
+        session.advanced.increment(USER_ID, "age", 5);
+        assert.strictEqual(hasDeferred(session, "PATCH"), true);
+        assert.strictEqual(hasDeferred(session, "JsonPatch"), false);
+        await session.saveChanges();
+
+        const user = await loadUser(store);
+        assert.strictEqual(user.age, 15);
     });
 
     for (const [behavior, expectedType] of behaviors) {
