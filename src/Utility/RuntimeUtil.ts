@@ -20,6 +20,14 @@ export class RuntimeUtil {
     }
 
     /**
+     * The running Bun version (e.g. "1.4.2"), or null off Bun. Not cached: capability
+     * checks read it rarely, and tests stub it around single calls.
+     */
+    public static getBunVersion(): string {
+        return (typeof process !== "undefined" && process.versions?.bun) || null;
+    }
+
+    /**
      * Detects if the code is running in the Cloudflare Workers (workerd) runtime.
      *
      * workerd exposes the Web `navigator.userAgent` as the string
