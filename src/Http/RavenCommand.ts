@@ -158,7 +158,7 @@ export abstract class RavenCommand<TResult> {
 
         log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
 
-        const bodyToUse = fetcher ? RavenCommand.maybeWrapBody(body) : body;
+        const bodyToUse = fetcher ? RavenCommand.maybeWrapBody(body, fetcher) : body;
 
         let optionsToUse: RequestInit | BunFetchRequestInit;
 
@@ -244,8 +244,10 @@ export abstract class RavenCommand<TResult> {
         return err;
     }
 
-    private static maybeWrapBody(body: any) {
-        if (body instanceof Readable) {
+    private static maybeWrapBody(body: any, fetcher: any) {
+        // A fetcher that declares it can take one gets the stream as-is (the Bun node:https
+        // transport pipes it); the global fetch and a user-supplied customFetch cannot.
+        if (body instanceof Readable && !fetcher?.acceptsNodeStreamBody) {
             throw new Error("Requests using stream.Readable as payload are not yet supported!");
         }
 

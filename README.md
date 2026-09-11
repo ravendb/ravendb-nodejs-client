@@ -2729,6 +2729,48 @@ Deno-specific notes:
 
 An end-to-end smoke test lives in [`test/deno`](./test/deno).
 
+## Bun
+
+The client runs on [Bun](https://bun.com), including X.509 client-certificate
+authentication with either a **PEM** bundle or a **PKCS#12 (PFX)** archive - configure
+`authOptions` exactly like on Node.
+
+```javascript
+import { DocumentStore } from "ravendb";
+import { readFileSync } from "node:fs";
+
+const authOptions = {
+    type: "pfx",
+    certificate: readFileSync("client.pfx"), // a Buffer, as on Node
+    password: "secret",                      // optional
+    ca: readFileSync("ca.pem")               // optional, for a private CA
+};
+
+const store = new DocumentStore("https://a.free.example.ravendb.cloud", "MyDatabase", authOptions);
+store.initialize();
+```
+
+Bun-specific notes:
+
+- **A PEM certificate is presented through Bun's `tls` fetch option**, a PKCS#12 archive
+  through a `node:https` transport the client installs for it. Bun's `fetch` silently
+  ignores `tls.pfx` ([oven-sh/bun#41958](https://github.com/oven-sh/bun/issues/41958),
+  [oven-sh/bun#17543](https://github.com/oven-sh/bun/issues/17543)), which would send the
+  request uncertified; its `node:https` implementation does honour `pfx`
+  ([oven-sh/bun#14417](https://github.com/oven-sh/bun/issues/14417)).
+- **A PKCS#12 archive needs Bun 1.4.0 or newer.** Earlier versions present no client
+  certificate on either transport, so the client throws an actionable error at
+  `initialize()` instead of sending uncertified requests. Convert the archive with
+  `openssl pkcs12 -in cert.pfx -out cert.pem -nodes` and use `type: "pem"` to stay on an
+  older Bun.
+- **HTTP decompression is off by default on Bun** (`conventions.useHttpDecompression`),
+  unchanged by the above - the `node:https` transport decodes `gzip`, `deflate` and `br`
+  responses when you turn it on.
+- **The Changes API does not work over TLS on Bun.** Bun replaces the `ws` package with
+  its own WebSocket, which ignores the Node TLS options the client passes (certificate,
+  `ca`, even `rejectUnauthorized`), so the connection fails the TLS handshake against a
+  secured server. Run Changes API consumers on Node.
+
 ## Custom fetch: bring your own transport
 
 On runtimes where the client cannot provide authentication itself,

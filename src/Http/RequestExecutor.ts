@@ -51,6 +51,12 @@ import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
 import { createDenoHttpClient, DenoHttpClient, validateDenoCertificateSupport } from "../Utility/DenoHttpUtil.js";
+import {
+    BunHttpTransport,
+    createNodeHttpsTransport,
+    requiresNodeHttpsTransport,
+    validateBunCertificateSupport
+} from "../Utility/BunHttpUtil.js";
 
 const DEFAULT_REQUEST_OPTIONS = {};
 
@@ -247,6 +253,9 @@ export class RequestExecutor implements IDisposable {
     /** Deno only: the Deno.HttpClient presenting the client certificate, built lazily in _getDenoHttpClient(). */
     private _denoHttpClient: DenoHttpClient = null;
 
+    /** Bun only: the node:https transport presenting a PKCS#12 certificate, built lazily in _getBunHttpTransport(). */
+    private _bunHttpTransport: BunHttpTransport = null;
+
     public static requestPostProcessor: (req: HttpRequestParameters) => void = null;
 
     public get customHttpRequestOptions(): HttpRequestParametersWithoutUri {
@@ -363,8 +372,9 @@ export class RequestExecutor implements IDisposable {
         // Runtimes whose fetch has no undici dispatcher (Bun, Cloudflare Workers, Deno)
         // can't use an http agent -- there is nothing to build. A configured certificate
         // is presented another way there: Bun via the `tls` request option (set in
-        // _setDefaultRequestOptions), Deno via a Deno.HttpClient `client` request option
-        // (set in _createRequest).
+        // _setDefaultRequestOptions) or, for a PKCS#12 archive Bun's fetch cannot present,
+        // a node:https `fetcher` (set in _createRequest); Deno via a Deno.HttpClient
+        // `client` request option (also set in _createRequest).
         if (!RuntimeUtil.supportsUndiciDispatcher()) {
             // On workerd a client certificate can never be presented from user-space
             // unless mTLS is wired through conventions.customFetch (checked above).
@@ -424,6 +434,10 @@ export class RequestExecutor implements IDisposable {
 
         if (RuntimeUtil.isDeno()) {
             validateDenoCertificateSupport(Certificate.createFromOptions(authOptions));
+        }
+
+        if (RuntimeUtil.isBun()) {
+            validateBunCertificateSupport(Certificate.createFromOptions(authOptions));
         }
     }
 
@@ -1508,6 +1522,16 @@ export class RequestExecutor implements IDisposable {
             req.client = this._getDenoHttpClient();
         }
 
+        // Bun only: a PKCS#12 archive cannot be presented through Bun's fetch (its `tls`
+        // option ignores `pfx`), so those requests are issued by a node:https-backed
+        // fetcher instead - Bun's node:https does honour `pfx`. Built lazily, once per
+        // executor, closed in dispose(), and skipped when conventions.customFetch owns
+        // the transport - the same rules the Deno client follows.
+        if (RuntimeUtil.isBun() && this._certificate && !this.conventions.customFetch
+            && requiresNodeHttpsTransport(this._certificate)) {
+            req.fetcher = this._getBunHttpTransport().fetch;
+        }
+
         urlRef(req.uri);
         req.headers = req.headers || {};
 
@@ -2033,7 +2057,9 @@ export class RequestExecutor implements IDisposable {
             DEFAULT_REQUEST_OPTIONS,
             this._customHttpRequestOptions);
 
-        if (RuntimeUtil.isBun() && this._certificate) {
+        // A PKCS#12 archive is deliberately left out: Bun's fetch ignores `tls.pfx`, so it
+        // is presented through the node:https fetcher installed in _createRequest instead.
+        if (RuntimeUtil.isBun() && this._certificate && !requiresNodeHttpsTransport(this._certificate)) {
             this._defaultRequestOptions.tls = this._certificate.toBunTlsOptions();
         }
     }
@@ -2044,6 +2070,14 @@ export class RequestExecutor implements IDisposable {
         }
 
         return this._denoHttpClient;
+    }
+
+    private _getBunHttpTransport(): BunHttpTransport {
+        if (!this._bunHttpTransport) {
+            this._bunHttpTransport = createNodeHttpsTransport(this._certificate);
+        }
+
+        return this._bunHttpTransport;
     }
 
     public dispose(): void {
@@ -2071,6 +2105,10 @@ export class RequestExecutor implements IDisposable {
         // Deno only: release the connection pool behind the client certificate.
         this._denoHttpClient?.close();
         this._denoHttpClient = null;
+
+        // Bun only: the same, for the node:https transport presenting a PKCS#12 archive.
+        this._bunHttpTransport?.close();
+        this._bunHttpTransport = null;
     }
 
     public async getRequestedNode(nodeTag: string, throwIfContainsFailures = false): Promise<CurrentIndexAndNode> {

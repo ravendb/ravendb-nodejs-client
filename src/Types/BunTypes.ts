@@ -107,8 +107,10 @@ export interface BunTlsOptions {
     /**
      * PFX or PKCS12 encoded certificate and private key
      *
-     * @warning This property is included for Node.js compatibility, but PFX certificates
-     * are NOT currently supported in Bun runtime. Use PEM certificates (cert/key/ca) instead.
+     * @warning Bun's fetch silently IGNORES this option - only PEM material (cert/key/ca)
+     * is honoured there (oven-sh/bun#41958, oven-sh/bun#17543). The client therefore
+     * presents a PKCS#12 archive through a node:https transport (Utility/BunHttpUtil.ts),
+     * whose Agent does honour `pfx`; this property is kept for shape compatibility.
      */
     pfx?: Buffer;
 }

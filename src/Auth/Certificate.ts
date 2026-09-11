@@ -269,13 +269,13 @@ export class PfxCertificate extends Certificate {
         });
     }
 
+    /**
+     * Kept for completeness, but note that Bun's fetch ignores `tls.pfx` - the client
+     * presents a PKCS#12 archive on Bun through a node:https transport instead
+     * (see Utility/BunHttpUtil.ts), which is why nothing here warns any more.
+     */
     public toBunTlsOptions(): BunTlsOptions {
         const options = super.toBunTlsOptions();
-
-        console.warn(
-            "WARNING: PFX certificates are not currently supported in Bun runtime. " +
-            "The connection may fail. Please use PEM certificates instead. "
-        );
 
         return {
             ...options,
