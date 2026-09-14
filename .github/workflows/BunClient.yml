@@ -25,7 +25,7 @@ jobs:
       RAVENDB_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
       RAVENDB_TEST_SERVER_CERTIFICATE_PATH: ./certs/server.pfx
       RAVENDB_TEST_CLIENT_CERT_PASSPHRASE: client11
-      RAVENDB_TEST_CLIENT_CERT_PATH: ./certs/nodejs.pem
+      RAVENDB_TEST_CLIENT_CERT_PATH: ${{ matrix.client-cert == 'pem' && './certs/nodejs.pem' || '' }}
       RAVENDB_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
       RAVENDB_TEST_HTTPS_SERVER_URL: https://localhost:8989
       RAVENDB_BUILD_TYPE: nightly
@@ -36,6 +36,11 @@ jobs:
       matrix:
         bun-version: [latest]
         serverVersion: ["6.2", "7.1", "7.2"]
+        client-cert: [pem]
+        include:
+          - bun-version: latest
+            serverVersion: "7.2"
+            client-cert: pfx
       fail-fast: false
 
     steps:

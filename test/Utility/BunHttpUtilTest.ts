@@ -20,6 +20,13 @@ const PFX_BYTES = Buffer.from("pfx-bytes");
 
 type Handler = (req: IncomingMessage, res: ServerResponse, body: Buffer) => void;
 
+function withHangGuard<T>(promise: Promise<T>): Promise<T | "hang"> {
+    return Promise.race([
+        promise,
+        new Promise<"hang">(resolve => setTimeout(() => resolve("hang"), 2000))
+    ]);
+}
+
 describe("BunHttpUtil", function () {
 
     describe("requiresNodeHttpsTransport", function () {
@@ -236,6 +243,83 @@ describe("BunHttpUtil", function () {
             assert.strictEqual(await response.text(), "{\"Results\":[]}");
             assert.strictEqual(response.headers.get("content-encoding"), null);
             assert.strictEqual(response.headers.get("content-length"), null);
+        });
+
+        it("asks for the encodings it can decode unless the caller chose one", async function () {
+            const seen: string[] = [];
+            handler = (req, res) => {
+                seen.push(req.headers["accept-encoding"]);
+                res.end("ok");
+            };
+
+            await (await transport.fetch(baseUrl + "/docs")).text();
+            await (await transport.fetch(baseUrl + "/docs", { headers: { "Accept-Encoding": "identity" } })).text();
+
+            assert.match(seen[0], /\bgzip\b/);
+            assert.match(seen[0], /\bdeflate\b/);
+            assert.match(seen[0], /\bbr\b/);
+            assert.strictEqual(seen[1], "identity");
+        });
+
+        it("fails a compressed body instead of hanging when the connection drops mid-way", async function () {
+            const payload = gzipSync(Buffer.alloc(64 * 1024, "a"));
+            handler = (req, res) => {
+                res.writeHead(200, { "Content-Encoding": "gzip" });
+                res.write(payload.subarray(0, 100));
+                setTimeout(() => req.socket.destroy(), 20);
+            };
+
+            const response = await transport.fetch(baseUrl + "/docs");
+
+            await assert.rejects(withHangGuard(response.text()));
+        });
+
+        it("fails a compressed body instead of hanging when the request is aborted mid-way", async function () {
+            const controller = new AbortController();
+            const payload = gzipSync(Buffer.alloc(64 * 1024, "a"));
+            handler = (req, res) => {
+                res.writeHead(200, { "Content-Encoding": "gzip" });
+                res.write(payload.subarray(0, 100));
+                setTimeout(() => controller.abort(), 20);
+                // never ends - only the abort can settle the body
+            };
+
+            const response = await transport.fetch(baseUrl + "/docs", { signal: controller.signal });
+
+            await assert.rejects(withHangGuard(response.text()), (err: Error) => {
+                assert.strictEqual(err.name, "AbortError", "the body fails with the abort, as fetch does");
+                return true;
+            });
+        });
+
+        it("fails the body with the AbortError when aborted mid-way through a plain response", async function () {
+            const controller = new AbortController();
+            handler = (req, res) => {
+                res.writeHead(200);
+                res.write("first");
+                setTimeout(() => controller.abort(), 20);
+                // never ends - only the abort can settle the body
+            };
+
+            const response = await transport.fetch(baseUrl + "/docs", { signal: controller.signal });
+
+            await assert.rejects(withHangGuard(response.text()), (err: Error) => {
+                assert.strictEqual(err.name, "AbortError");
+                return true;
+            });
+        });
+
+        it("does not try to decode a body-less compressed response", async function () {
+            handler = (req, res) => {
+                res.writeHead(200, { "Content-Encoding": "gzip", "Content-Length": "123" });
+                res.end();
+            };
+
+            const response = await transport.fetch(baseUrl + "/docs", { method: "HEAD" });
+
+            assert.strictEqual(response.body, null);
+            // an eagerly built gunzip would now fail on its empty input as an unhandled error
+            await new Promise<void>(resolve => setTimeout(resolve, 20));
         });
 
         it("gives a 304 a null body instead of failing to build the Response", async function () {

@@ -40,9 +40,11 @@ const NULL_BODY_STATUSES = new Set([204, 205, 304]);
 interface NodeHttpModules {
     request: typeof import("node:http").request;
     secureRequest: typeof import("node:https").request;
+    pipeline: typeof import("node:stream").pipeline;
     zlib: typeof import("node:zlib");
     httpAgent: HttpAgent;
     httpsAgent: HttpsAgent;
+    acceptEncoding: string;
 }
 
 /**
@@ -134,14 +136,17 @@ export function createNodeHttpsTransport(certificate: ICertificate): BunHttpTran
             loading = (async () => {
                 const http = await import("node:http");
                 const https = await import("node:https");
+                const stream = await import("node:stream");
                 const zlib = await import("node:zlib");
 
                 loaded = {
                     request: http.request,
                     secureRequest: https.request,
+                    pipeline: stream.pipeline,
                     zlib,
                     httpAgent: new http.Agent({ keepAlive: true }),
-                    httpsAgent: new https.Agent(agentOptions)
+                    httpsAgent: new https.Agent(agentOptions),
+                    acceptEncoding: supportedEncodings(zlib).join(", ")
                 };
 
                 // close() may have run while the imports were in flight.
@@ -188,6 +193,10 @@ async function nodeHttpsFetch(modules: NodeHttpModules, url: string, init?: Requ
 
     const { payload, stream, headers } = await encodeRequestBody(init, method);
 
+    if (!headers["accept-encoding"]) {
+        headers["accept-encoding"] = modules.acceptEncoding;
+    }
+
     const requestOptions: RequestOptions = {
         method,
         headers,
@@ -197,7 +206,7 @@ async function nodeHttpsFetch(modules: NodeHttpModules, url: string, init?: Requ
     return new Promise<Response>((resolve, reject) => {
         const request = (secure ? modules.secureRequest : modules.request)(target, requestOptions, res => {
             try {
-                resolve(toResponse(modules, res, method));
+                resolve(toResponse(modules, res, method, signal));
             } catch (err) {
                 res.destroy();
                 reject(err);
@@ -279,14 +288,14 @@ async function encodeRequestBody(
     return { payload, stream, headers: outgoing };
 }
 
-// Duck-typed on purpose: this module holds no runtime dependency on node:stream, and an
-// attachment Readable can come from a different copy of it (CommonJS vs ESM build).
+// Duck-typed on purpose: an attachment Readable can come from a different copy of
+// node:stream than the one loaded here (CommonJS vs ESM build), so instanceof cannot be trusted.
 function isNodeReadable(body: unknown): body is Readable {
     const candidate = body as Readable;
     return !!candidate && typeof candidate.pipe === "function" && typeof candidate.on === "function";
 }
 
-function toResponse(modules: NodeHttpModules, res: IncomingMessage, method: string): Response {
+function toResponse(modules: NodeHttpModules, res: IncomingMessage, method: string, signal: AbortSignal): Response {
     const status = res.statusCode;
     const headers = new Headers();
 
@@ -302,6 +311,11 @@ function toResponse(modules: NodeHttpModules, res: IncomingMessage, method: stri
         }
     }
 
+    if (method === "HEAD" || NULL_BODY_STATUSES.has(status)) {
+        res.resume();
+        return new Response(null, { status, statusText: res.statusMessage, headers });
+    }
+
     const decompressor = createDecompressor(modules.zlib, res.headers["content-encoding"]);
     let stream: Readable = res;
 
@@ -310,15 +324,21 @@ function toResponse(modules: NodeHttpModules, res: IncomingMessage, method: stri
         // described the wire bytes must not survive.
         headers.delete("content-encoding");
         headers.delete("content-length");
-        stream = res.pipe(decompressor);
+        modules.pipeline(res, decompressor, () => { /* handled via the decompressor's error event */ });
+        stream = decompressor;
     }
 
-    if (method === "HEAD" || NULL_BODY_STATUSES.has(status)) {
-        res.resume(); // release the socket back to the keep-alive pool
-        return new Response(null, { status, statusText: res.statusMessage, headers });
+    return new Response(toWebStream(stream, signal), { status, statusText: res.statusMessage, headers });
+}
+
+function supportedEncodings(zlib: typeof import("node:zlib")): string[] {
+    const encodings = ["gzip", "deflate", "br"];
+
+    if (typeof zlib.createZstdDecompress === "function") {
+        encodings.push("zstd");
     }
 
-    return new Response(toWebStream(stream), { status, statusText: res.statusMessage, headers });
+    return encodings;
 }
 
 function createDecompressor(zlib: typeof import("node:zlib"), encoding: string | string[]): Transform {
@@ -341,7 +361,7 @@ function createDecompressor(zlib: typeof import("node:zlib"), encoding: string |
     }
 }
 
-function toWebStream(stream: Readable): ReadableStream<Uint8Array> {
+function toWebStream(stream: Readable, signal: AbortSignal): ReadableStream<Uint8Array> {
     let finished = false;
 
     return new ReadableStream<Uint8Array>({
@@ -375,7 +395,7 @@ function toWebStream(stream: Readable): ReadableStream<Uint8Array> {
             stream.on("error", err => {
                 if (!finished) {
                     finished = true;
-                    controller.error(err);
+                    controller.error(signal?.aborted ? toAbortError(signal) : err);
                 }
             });
         },

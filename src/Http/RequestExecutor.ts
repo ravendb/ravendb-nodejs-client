@@ -256,6 +256,13 @@ export class RequestExecutor implements IDisposable {
     /** Bun only: the node:https transport presenting a PKCS#12 certificate, built lazily in _getBunHttpTransport(). */
     private _bunHttpTransport: BunHttpTransport = null;
 
+    /**
+     * Bun only: whether the configured certificate is a PKCS#12 archive Bun's fetch cannot
+     * present, so requests go through _getBunHttpTransport() (see requiresNodeHttpsTransport).
+     * Decided once with the certificate rather than per request.
+     */
+    private _presentsCertificateViaNodeHttps = false;
+
     public static requestPostProcessor: (req: HttpRequestParameters) => void = null;
 
     public get customHttpRequestOptions(): HttpRequestParametersWithoutUri {
@@ -514,6 +521,7 @@ export class RequestExecutor implements IDisposable {
         this._conventions = conventions.clone();
         this._authOptions = authOptions;
         this._certificate = Certificate.createFromOptions(this._authOptions);
+        this._presentsCertificateViaNodeHttps = RuntimeUtil.isBun() && requiresNodeHttpsTransport(this._certificate);
         this._setDefaultRequestOptions();
 
         this._defaultTimeout = conventions.requestTimeout;
@@ -1527,8 +1535,7 @@ export class RequestExecutor implements IDisposable {
         // fetcher instead - Bun's node:https does honour `pfx`. Built lazily, once per
         // executor, closed in dispose(), and skipped when conventions.customFetch owns
         // the transport - the same rules the Deno client follows.
-        if (RuntimeUtil.isBun() && this._certificate && !this.conventions.customFetch
-            && requiresNodeHttpsTransport(this._certificate)) {
+        if (this._presentsCertificateViaNodeHttps && !this.conventions.customFetch) {
             req.fetcher = this._getBunHttpTransport().fetch;
         }
 
@@ -2059,7 +2066,7 @@ export class RequestExecutor implements IDisposable {
 
         // A PKCS#12 archive is deliberately left out: Bun's fetch ignores `tls.pfx`, so it
         // is presented through the node:https fetcher installed in _createRequest instead.
-        if (RuntimeUtil.isBun() && this._certificate && !requiresNodeHttpsTransport(this._certificate)) {
+        if (RuntimeUtil.isBun() && this._certificate && !this._presentsCertificateViaNodeHttps) {
             this._defaultRequestOptions.tls = this._certificate.toBunTlsOptions();
         }
     }

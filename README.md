@@ -2764,7 +2764,8 @@ Bun-specific notes:
   `openssl pkcs12 -in cert.pfx -out cert.pem -nodes` and use `type: "pem"` to stay on an
   older Bun.
 - **HTTP decompression is off by default on Bun** (`conventions.useHttpDecompression`),
-  unchanged by the above - the `node:https` transport decodes `gzip`, `deflate` and `br`
+  unchanged by the above - the `node:https` transport asks for and decodes `gzip`, `deflate`, `br`
+  (and `zstd` where the runtime's `zlib` has it)
   responses when you turn it on.
 - **The Changes API does not work over TLS on Bun.** Bun replaces the `ws` package with
   its own WebSocket, which ignores the Node TLS options the client passes (certificate,
