@@ -1,5 +1,6 @@
 import { throwError } from "../../../Exceptions/index.js";
-import { LogMode } from "./LogMode.js";
+import { LogFilterAction, LogLevel } from "./LogLevel.js";
+import { LogFilter } from "./LogFilter.js";
 import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { IServerOperation, OperationResultType } from "../../../Documents/Operations/OperationAbstractions.js";
 import { DocumentConventions } from "../../../Documents/Conventions/DocumentConventions.js";
@@ -12,6 +13,10 @@ export class SetLogsConfigurationOperation implements IServerOperation<void> {
     public constructor(parameters: SetLogsConfigurationParameters) {
         if (!parameters) {
             throwError("InvalidArgumentException", "Parameters cannot be null");
+        }
+
+        if (!parameters.logs && !parameters.microsoftLogs && !parameters.adminLogs) {
+            throwError("InvalidArgumentException", "At least one of logs, microsoftLogs or adminLogs configuration must be provided");
         }
 
         this._parameters = parameters;
@@ -58,9 +63,24 @@ class SetLogsConfigurationCommand extends RavenCommand<void> {
 }
 
 export interface SetLogsConfigurationParameters {
-    mode: LogMode;
-    retentionTime?: string;
-    retentionSize?: number;
-    compress?: boolean;
+    logs?: LogsConfigurationParameters;
+    microsoftLogs?: MicrosoftLogsConfigurationParameters;
+    adminLogs?: AdminLogsConfigurationParameters;
     persist?: boolean;
+}
+
+export interface LogsConfigurationParameters {
+    minLevel: LogLevel;
+    filters?: LogFilter[];
+    logFilterDefaultAction?: LogFilterAction;
+}
+
+export interface MicrosoftLogsConfigurationParameters {
+    minLevel: LogLevel;
+}
+
+export interface AdminLogsConfigurationParameters {
+    minLevel: LogLevel;
+    filters?: LogFilter[];
+    logFilterDefaultAction?: LogFilterAction;
 }

@@ -1,14 +1,15 @@
+import assert from "node:assert"
 import {
     IDocumentStore,
     GetLogsConfigurationOperation,
     SetLogsConfigurationOperation,
-    SetLogsConfigurationParameters
+    LogFilter,
+    LogLevel
 } from "../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-// TODO - https://issues.hibernatingrhinos.com/issue/RDBC-901/update-outdated-LogsConfiguration-in-node.js-client
-describe.skip("LogsConfigurationTest", function () {
+(RavenTestContext.isRavenDbServerVersion("7.0") ? describe : describe.skip)("LogsConfigurationTest", function () {
 
     let store: IDocumentStore;
 
@@ -20,43 +21,63 @@ describe.skip("LogsConfigurationTest", function () {
         await disposeTestDocumentStore(store));
 
     it("canGetAndSetLogging", async () => {
-        let getOperation = new GetLogsConfigurationOperation();
+        const initialConfig = await store.maintenance.server.send(new GetLogsConfigurationOperation());
 
-        let logsConfig = await store.maintenance.server.send(getOperation);
+        assertThat(initialConfig.logs.path)
+            .isNotNull();
 
-        assertThat(logsConfig.currentMode)
-            .isEqualTo("Operations");
-        assertThat(logsConfig.mode)
-            .isEqualTo("Operations");
-
-        // now try to set mode to operations and info
+        const newMinLevel: LogLevel = initialConfig.logs.currentMinLevel === "Debug" ? "Info" : "Debug";
 
         try {
-            const parameters: SetLogsConfigurationParameters = {
-                mode: "Information"
-            };
+            await store.maintenance.server.send(new SetLogsConfigurationOperation({
+                logs: { minLevel: newMinLevel }
+            }));
 
-            const setOperation = new SetLogsConfigurationOperation(parameters);
+            const logsConfig = await store.maintenance.server.send(new GetLogsConfigurationOperation());
 
-            await store.maintenance.server.send(setOperation);
-
-            getOperation = new GetLogsConfigurationOperation();
-
-            logsConfig = await store.maintenance.server.send(getOperation);
-
-            assertThat(logsConfig.currentMode)
-                .isEqualTo("Information");
-            assertThat(logsConfig.mode)
-                .isEqualTo("Operations");
+            assertThat(logsConfig.logs.currentMinLevel)
+                .isEqualTo(newMinLevel);
+            assertThat(logsConfig.logs.minLevel)
+                .isEqualTo(initialConfig.logs.minLevel);
         } finally {
-            // try to clean up
-
-            const parameters: SetLogsConfigurationParameters = {
-                mode: "Operations"
-            };
-
-            await store.maintenance.server.send(new SetLogsConfigurationOperation(parameters));
+            await store.maintenance.server.send(new SetLogsConfigurationOperation({
+                logs: { minLevel: initialConfig.logs.currentMinLevel }
+            }));
         }
     });
 
+    it("canSetLogFilters", async () => {
+        const initialConfig = await store.maintenance.server.send(new GetLogsConfigurationOperation());
+
+        const filter: LogFilter = {
+            minLevel: "Info",
+            maxLevel: "Fatal",
+            condition: "contains('${logger}', 'Raven.Server.Documents')",
+            action: "Log"
+        };
+
+        try {
+            await store.maintenance.server.send(new SetLogsConfigurationOperation({
+                logs: {
+                    minLevel: initialConfig.logs.currentMinLevel,
+                    filters: [filter],
+                    logFilterDefaultAction: "Ignore"
+                }
+            }));
+
+            const logsConfig = await store.maintenance.server.send(new GetLogsConfigurationOperation());
+
+            assert.deepStrictEqual(logsConfig.logs.currentFilters, [filter]);
+            assertThat(logsConfig.logs.currentLogFilterDefaultAction)
+                .isEqualTo("Ignore");
+        } finally {
+            await store.maintenance.server.send(new SetLogsConfigurationOperation({
+                logs: {
+                    minLevel: initialConfig.logs.currentMinLevel,
+                    filters: initialConfig.logs.currentFilters,
+                    logFilterDefaultAction: initialConfig.logs.currentLogFilterDefaultAction
+                }
+            }));
+        }
+    });
 });

@@ -2,15 +2,12 @@ import {
     IDocumentStore,
     GetLogsConfigurationOperation,
     SetLogsConfigurationOperation,
-    LogMode
+    LogLevel
 } from "../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
-import { throwError } from "../../../src/Exceptions/index.js";
-import { TimeUtil } from "../../../src/Utility/TimeUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-// TODO - https://issues.hibernatingrhinos.com/issue/RDBC-901/update-outdated-LogsConfiguration-in-node.js-client
-describe.skip("RavenDB_11440", function () {
+(RavenTestContext.isRavenDbServerVersion("7.0") ? describe : describe.skip)("RavenDB_11440", function () {
 
     let store: IDocumentStore;
 
@@ -21,56 +18,37 @@ describe.skip("RavenDB_11440", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    it("canGetLogsConfigurationAndChangeMode", async () => {
-        const configuration = await store.maintenance.server.send(new GetLogsConfigurationOperation());
+    it("canGetLogsConfigurationAndChangeLogMode", async () => {
+        const configuration1 = await store.maintenance.server.send(new GetLogsConfigurationOperation());
+
+        const newMinLevel: LogLevel = configuration1.logs.currentMinLevel === "Debug" ? "Trace" : "Debug";
 
         try {
-            let modeToSet: LogMode;
-
-            switch (configuration.currentMode) {
-                case "None": {
-                    modeToSet = "Information";
-                    break;
-                }
-                case "Operations": {
-                    modeToSet = "Information";
-                    break;
-                }
-                case "Information": {
-                    modeToSet = "None";
-                    break;
-                }
-                default: {
-                    throwError("InvalidOperationException", "Invalid mode: " + configuration.currentMode);
-                }
-            }
-
-            const time = 1000 * 24 * 3600 * 1000;
-
-            const setLogsOperation = new SetLogsConfigurationOperation({
-                compress: false,
-                mode: modeToSet,
-                retentionTime: TimeUtil.millisToTimeSpan(time)
-            });
-
-            await store.maintenance.server.send(setLogsOperation);
+            await store.maintenance.server.send(new SetLogsConfigurationOperation({
+                logs: { minLevel: newMinLevel }
+            }));
 
             const configuration2 = await store.maintenance.server.send(new GetLogsConfigurationOperation());
 
-            assertThat(configuration2.currentMode)
-                .isEqualTo(modeToSet);
-            assertThat(configuration2.retentionTime)
-                .isEqualTo(TimeUtil.millisToTimeSpan(time));
-            assertThat(configuration2.mode)
-                .isEqualTo(configuration.mode);
-            assertThat(configuration2.useUtcTime)
-                .isEqualTo(configuration.useUtcTime);
+            assertThat(configuration2.logs.currentMinLevel)
+                .isEqualTo(newMinLevel);
+
+            assertThat(configuration2.logs.minLevel)
+                .isEqualTo(configuration1.logs.minLevel);
+            assertThat(configuration2.logs.archiveAboveSizeInMb)
+                .isEqualTo(configuration1.logs.archiveAboveSizeInMb);
+            assertThat(configuration2.logs.enableArchiveFileCompression)
+                .isEqualTo(configuration1.logs.enableArchiveFileCompression);
+            assertThat(configuration2.logs.maxArchiveDays)
+                .isEqualTo(configuration1.logs.maxArchiveDays);
+            assertThat(configuration2.logs.maxArchiveFiles)
+                .isEqualTo(configuration1.logs.maxArchiveFiles);
+            assertThat(configuration2.logs.path)
+                .isEqualTo(configuration1.logs.path);
         } finally {
             await store.maintenance.server.send(new SetLogsConfigurationOperation({
-                retentionTime: configuration.retentionTime,
-                mode: configuration.currentMode,
-                compress: false
-            }))
+                logs: { minLevel: configuration1.logs.currentMinLevel }
+            }));
         }
     });
 });
