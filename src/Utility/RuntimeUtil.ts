@@ -19,10 +19,7 @@ export class RuntimeUtil {
         return this._isBun;
     }
 
-    /**
-     * The running Bun version (e.g. "1.4.2"), or null off Bun. Not cached: capability
-     * checks read it rarely, and tests stub it around single calls.
-     */
+    /** The running Bun version (e.g. "1.4.2"), or null off Bun. */
     public static getBunVersion(): string {
         return (typeof process !== "undefined" && process.versions?.bun) || null;
     }

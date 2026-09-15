@@ -245,8 +245,6 @@ export abstract class RavenCommand<TResult> {
     }
 
     private static maybeWrapBody(body: any, fetcher: any) {
-        // A fetcher that declares it can take one gets the stream as-is (the Bun node:https
-        // transport pipes it); the global fetch and a user-supplied customFetch cannot.
         if (body instanceof Readable && !fetcher?.acceptsNodeStreamBody) {
             throw new Error("Requests using stream.Readable as payload are not yet supported!");
         }

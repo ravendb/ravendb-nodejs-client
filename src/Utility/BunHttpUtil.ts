@@ -18,20 +18,13 @@ export interface BunHttpTransport {
 export interface NodeHttpsFetch {
     (url: string, init?: RequestInit): Promise<Response>;
 
-    /**
-     * Marks this fetcher as accepting a `node:stream` Readable request body, which the
-     * global `fetch` does not. RavenCommand.send checks it before rejecting the streamed
-     * attachment payloads PutAttachmentOperation produces.
-     */
+    /** Unlike the global `fetch`, this fetcher accepts a `node:stream` Readable request body. */
     acceptsNodeStreamBody: true;
 }
 
 export type NodeHttpsAgentOptions = ConnectionOptions & { keepAlive: boolean };
 
-/**
- * First Bun whose `node:https` presents a client certificate (and honours `ca`) at all.
- * Bun 1.3.x ignores both, so the PKCS#12 path has nothing to fall back to there.
- */
+/** First Bun whose `node:https` presents a client certificate and honours `ca` (oven-sh/bun#14417). */
 const MIN_BUN_MAJOR_MINOR_FOR_PFX = [1, 4];
 
 /** Responses that must not carry a body - the `Response` constructor rejects one. */
@@ -48,28 +41,15 @@ interface NodeHttpModules {
 }
 
 /**
- * Whether the configured certificate has to be presented through `node:https` instead of
- * Bun's own `fetch`. Bun's `fetch` accepts only PEM material in its `tls` option (`cert`,
- * `key`, `ca`) - a `pfx` there is silently ignored, so the request goes out uncertified
- * and comes back as a bare 401/403 (oven-sh/bun#41958, oven-sh/bun#17543). Its
- * `node:https` implementation does honour `pfx` (oven-sh/bun#14417, fixed in Bun 1.4.x),
- * which is why a PKCS#12 archive is routed there and PEM material is not.
- *
- * Decided on the TLS options the certificate produces rather than `instanceof
- * PfxCertificate`: the package ships both a CommonJS and an ESM build, and a certificate
- * built from the other one would silently fail the identity check and go out uncertified.
+ * Bun's fetch ignores `tls.pfx` (oven-sh/bun#41958, oven-sh/bun#17543), so a PKCS#12 archive is
+ * presented through `node:https`. Decided on the socket options rather than `instanceof
+ * PfxCertificate`: the CommonJS and ESM builds have separate class identities.
  */
 export function requiresNodeHttpsTransport(certificate: ICertificate): boolean {
     return !!certificate && !!(certificate.toSocketOptions() as { pfx?: unknown }).pfx;
 }
 
-/**
- * Throws when a PKCS#12 archive is configured on a Bun too old to present it: before
- * Bun 1.4.0 neither transport works - `fetch` ignores `tls.pfx` and `node:https` drops
- * the client certificate (and the `ca`) as well. Called from
- * RequestExecutor.validateCertificateRuntimeSupport at DocumentStore.initialize(), so the
- * misconfiguration surfaces at startup instead of as an opaque TLS failure per request.
- */
+/** Throws for a PKCS#12 archive on Bun older than 1.4.0, where neither `fetch` nor `node:https` presents one. */
 export function validateBunCertificateSupport(certificate: ICertificate): void {
     if (!requiresNodeHttpsTransport(certificate)) {
         return;
@@ -94,8 +74,6 @@ function supportsNodeHttpsClientCertificates(version: string): boolean {
     const [major, minor] = version.split(".").map(part => Number.parseInt(part, 10));
 
     if (!Number.isInteger(major) || !Number.isInteger(minor)) {
-        // An unreadable version is not evidence of an old runtime - let the request path
-        // decide rather than refusing to start.
         return true;
     }
 
@@ -103,10 +81,6 @@ function supportsNodeHttpsClientCertificates(version: string): boolean {
     return major > minMajor || (major === minMajor && minor >= minMinor);
 }
 
-/**
- * The `node:https.Agent` options presenting the configured client certificate.
- * `toSocketOptions()` already produces exactly the TLS shape an Agent takes.
- */
 export function buildNodeHttpsAgentOptions(certificate: ICertificate): NodeHttpsAgentOptions {
     return {
         ...certificate.toSocketOptions(),
@@ -114,16 +88,7 @@ export function buildNodeHttpsAgentOptions(certificate: ICertificate): NodeHttps
     };
 }
 
-/**
- * Builds a `fetch`-compatible transport that issues requests through `node:https`, so a
- * PKCS#12 client certificate is actually presented on Bun (see requiresNodeHttpsTransport).
- * It is installed as the request `fetcher`, the same seam `conventions.customFetch` uses.
- *
- * Covers what the client asks of `fetch`: methods, headers, string/binary/FormData bodies,
- * streamed response bodies, `AbortSignal`, and content-encoding decompression. It does NOT
- * follow redirects - the RavenDB API does not use them, and silently re-issuing a request
- * elsewhere is worse than surfacing the 3xx.
- */
+/** A `fetch`-compatible transport over `node:https`. Does not follow redirects. */
 export function createNodeHttpsTransport(certificate: ICertificate): BunHttpTransport {
     const agentOptions = buildNodeHttpsAgentOptions(certificate);
 
@@ -215,8 +180,6 @@ async function nodeHttpsFetch(modules: NodeHttpModules, url: string, init?: Requ
 
         const onAbort = () => request.destroy(toAbortError(signal));
         signal?.addEventListener("abort", onAbort, { once: true });
-        // Kept for the whole request, not just until the headers land: an abort during a
-        // streamed response body must tear the connection down too.
         request.on("close", () => signal?.removeEventListener("abort", onAbort));
 
         request.on("error", reject);
@@ -232,16 +195,6 @@ async function nodeHttpsFetch(modules: NodeHttpModules, url: string, init?: Requ
     });
 }
 
-/**
- * Turns the `fetch` body shapes the client uses into bytes: strings and binary go
- * straight through, everything else (FormData with attachment blobs, Blob,
- * URLSearchParams, a web stream) is encoded by the platform `Response`, which also
- * yields the `content-type` - including the multipart boundary the batch command relies
- * on fetch to generate.
- *
- * A `node:stream` Readable (an attachment payload) is piped instead, so uploading a large
- * file does not have to fit in memory first.
- */
 async function encodeRequestBody(
     init: RequestInit | undefined,
     method: string): Promise<{ payload: Buffer, stream: Readable, headers: Record<string, string> }> {
@@ -273,9 +226,7 @@ async function encodeRequestBody(
         }
     }
 
-    // node:http would otherwise fall back to chunked transfer encoding; fetch always
-    // sends a length, and RavenDB's 0-length POSTs need the explicit zero. A streamed body
-    // has no length to send - that one stays chunked, exactly as undici sends it on Node.
+    // fetch always sends a content-length; only a streamed body stays chunked.
     if (payload) {
         headers.set("content-length", String(payload.length));
     } else if (!stream && method !== "GET" && method !== "HEAD") {
@@ -288,8 +239,7 @@ async function encodeRequestBody(
     return { payload, stream, headers: outgoing };
 }
 
-// Duck-typed on purpose: an attachment Readable can come from a different copy of
-// node:stream than the one loaded here (CommonJS vs ESM build), so instanceof cannot be trusted.
+// Duck-typed: the Readable may come from another copy of node:stream (CommonJS vs ESM build).
 function isNodeReadable(body: unknown): body is Readable {
     const candidate = body as Readable;
     return !!candidate && typeof candidate.pipe === "function" && typeof candidate.on === "function";
@@ -320,8 +270,6 @@ function toResponse(modules: NodeHttpModules, res: IncomingMessage, method: stri
     let stream: Readable = res;
 
     if (decompressor) {
-        // Mirror fetch: the caller sees the decoded body, so the encoding headers that
-        // described the wire bytes must not survive.
         headers.delete("content-encoding");
         headers.delete("content-length");
         modules.pipeline(res, decompressor, () => { /* handled via the decompressor's error event */ });
@@ -353,8 +301,6 @@ function createDecompressor(zlib: typeof import("node:zlib"), encoding: string |
         case "br":
             return zlib.createBrotliDecompress();
         case "zstd":
-            // Node >= 22.15 / Bun >= 1.2; an older runtime simply gets the raw bytes,
-            // which is what it would have got before this transport existed.
             return typeof zlib.createZstdDecompress === "function" ? zlib.createZstdDecompress() : null;
         default:
             return null;
@@ -416,7 +362,6 @@ function toAbortError(signal: AbortSignal): Error {
         return reason;
     }
 
-    // RequestExecutor branches on error.name === "AbortError" (its request timeout path).
     const error = new Error("The operation was aborted");
     error.name = "AbortError";
     return error;

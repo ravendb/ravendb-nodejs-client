@@ -20,13 +20,6 @@ const PFX_BYTES = Buffer.from("pfx-bytes");
 
 type Handler = (req: IncomingMessage, res: ServerResponse, body: Buffer) => void;
 
-function withHangGuard<T>(promise: Promise<T>): Promise<T | "hang"> {
-    return Promise.race([
-        promise,
-        new Promise<"hang">(resolve => setTimeout(() => resolve("hang"), 2000))
-    ]);
-}
-
 describe("BunHttpUtil", function () {
 
     describe("requiresNodeHttpsTransport", function () {
@@ -263,15 +256,17 @@ describe("BunHttpUtil", function () {
 
         it("fails a compressed body instead of hanging when the connection drops mid-way", async function () {
             const payload = gzipSync(Buffer.alloc(64 * 1024, "a"));
+            let dropConnection: () => void;
             handler = (req, res) => {
                 res.writeHead(200, { "Content-Encoding": "gzip" });
                 res.write(payload.subarray(0, 100));
-                setTimeout(() => req.socket.destroy(), 20);
+                dropConnection = () => req.socket.destroy();
             };
 
             const response = await transport.fetch(baseUrl + "/docs");
+            dropConnection();
 
-            await assert.rejects(withHangGuard(response.text()));
+            await assert.rejects(response.text());
         });
 
         it("fails a compressed body instead of hanging when the request is aborted mid-way", async function () {
@@ -279,14 +274,13 @@ describe("BunHttpUtil", function () {
             const payload = gzipSync(Buffer.alloc(64 * 1024, "a"));
             handler = (req, res) => {
                 res.writeHead(200, { "Content-Encoding": "gzip" });
-                res.write(payload.subarray(0, 100));
-                setTimeout(() => controller.abort(), 20);
-                // never ends - only the abort can settle the body
+                res.write(payload.subarray(0, 100)); // never ends
             };
 
             const response = await transport.fetch(baseUrl + "/docs", { signal: controller.signal });
+            controller.abort();
 
-            await assert.rejects(withHangGuard(response.text()), (err: Error) => {
+            await assert.rejects(response.text(), (err: Error) => {
                 assert.strictEqual(err.name, "AbortError", "the body fails with the abort, as fetch does");
                 return true;
             });
@@ -296,14 +290,13 @@ describe("BunHttpUtil", function () {
             const controller = new AbortController();
             handler = (req, res) => {
                 res.writeHead(200);
-                res.write("first");
-                setTimeout(() => controller.abort(), 20);
-                // never ends - only the abort can settle the body
+                res.write("first"); // never ends
             };
 
             const response = await transport.fetch(baseUrl + "/docs", { signal: controller.signal });
+            controller.abort();
 
-            await assert.rejects(withHangGuard(response.text()), (err: Error) => {
+            await assert.rejects(response.text(), (err: Error) => {
                 assert.strictEqual(err.name, "AbortError");
                 return true;
             });
@@ -318,8 +311,6 @@ describe("BunHttpUtil", function () {
             const response = await transport.fetch(baseUrl + "/docs", { method: "HEAD" });
 
             assert.strictEqual(response.body, null);
-            // an eagerly built gunzip would now fail on its empty input as an unhandled error
-            await new Promise<void>(resolve => setTimeout(resolve, 20));
         });
 
         it("gives a 304 a null body instead of failing to build the Response", async function () {
