@@ -19,6 +19,11 @@ export class RuntimeUtil {
         return this._isBun;
     }
 
+    /** The running Bun version (e.g. "1.4.2"), or null off Bun. */
+    public static getBunVersion(): string {
+        return (typeof process !== "undefined" && process.versions?.bun) || null;
+    }
+
     /**
      * Detects if the code is running in the Cloudflare Workers (workerd) runtime.
      *

@@ -272,11 +272,6 @@ export class PfxCertificate extends Certificate {
     public toBunTlsOptions(): BunTlsOptions {
         const options = super.toBunTlsOptions();
 
-        console.warn(
-            "WARNING: PFX certificates are not currently supported in Bun runtime. " +
-            "The connection may fail. Please use PEM certificates instead. "
-        );
-
         return {
             ...options,
             pfx: this._certificate as Buffer,
