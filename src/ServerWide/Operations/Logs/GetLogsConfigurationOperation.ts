@@ -19,7 +19,7 @@ export class GetLogsConfigurationOperation implements IServerOperation<GetLogsCo
 
 class GetLogsConfigurationCommand extends RavenCommand<GetLogsConfigurationResult> {
     get isReadRequest(): boolean {
-        return false;
+        return true;
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {

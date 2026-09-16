@@ -34,6 +34,7 @@ npm install --save ravendb
    [Embeddings Generation](#embeddings-generation),  
    [GenAI](#genai),  
    [CDC Sink](#cdc-sink),  
+   [Server logs configuration](#server-logs-configuration),  
    [Schema Validation](#schema-validation),  
    [Patching](#advanced-patching),  
    [Subscriptions](#subscriptions),  
@@ -2032,6 +2033,32 @@ await store.maintenance.server.send(new EditClientCertificateOperation({
 ```
 
 `GetCertificatesOperation` results expose the matching metadata: `usage`, `disabled`, `ssoServerPublicKeyPinningHashes`, `allowAnySsoServer` and `ssoIdentifiers`.
+
+## Server Logs Configuration
+
+`GetLogsConfigurationOperation` returns the server logging setup (`logs`, `auditLogs`, `microsoftLogs`, `adminLogs`). `SetLogsConfigurationOperation` changes the minimum level and the filters at runtime; pass `persist: true` to also store the level in the server `settings.json`. Requires RavenDB 7.0 or newer.
+
+```javascript
+const { logs } = await store.maintenance.server.send(new GetLogsConfigurationOperation());
+console.log(logs.currentMinLevel); // "Info" - level in effect right now
+console.log(logs.minLevel);        // level from the server configuration, applied after restart
+
+// Lower the level and keep only messages from one component
+await store.maintenance.server.send(new SetLogsConfigurationOperation({
+    logs: {
+        minLevel: "Debug",
+        filters: [{
+            minLevel: "Debug",
+            maxLevel: "Fatal",
+            condition: "contains('${logger}', 'Raven.Server.Documents')",
+            action: "Log"
+        }],
+        logFilterDefaultAction: "Ignore"
+    }
+}));
+```
+
+Levels are `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal` and `Off`. The `microsoftLogs: { minLevel }` and `adminLogs: { minLevel, filters, logFilterDefaultAction }` sections are set the same way.
 
 ## Schema Validation
 
