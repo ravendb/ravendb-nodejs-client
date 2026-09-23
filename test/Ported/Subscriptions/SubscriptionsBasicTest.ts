@@ -23,7 +23,7 @@ import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 import { TimeValue } from "../../../src/Primitives/TimeValue.js";
 import { Semaphore } from "../../../src/Utility/Semaphore.js";
 import { delay, wrapWithTimeout } from "../../../src/Utility/PromiseUtil.js";
-import { addDays } from "date-fns";
+import { addDays, milliseconds } from "date-fns";
 
 describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 15 * 1000;
@@ -1513,7 +1513,7 @@ describe("SubscriptionsBasicTest", function () {
     it("connectionStreamTimeoutCannotBeSmallerThan15Seconds", async () => {
         await assertThrows(() => store.subscriptions.getSubscriptionWorker({
             subscriptionName: "subscription",
-            connectionStreamTimeout: 14_999
+            connectionStreamTimeout: milliseconds({ seconds: 15 }) - 1
         }), err => assertThat(err.name).isEqualTo("InvalidArgumentException"));
     });
 
@@ -1548,10 +1548,10 @@ describe("SubscriptionsBasicTest", function () {
         const options: SubscriptionWorkerOptions<User> = {
             subscriptionName,
             documentType: User,
-            timeToWaitBeforeConnectionRetry: 40 * 1000,
-            maxErroneousPeriod: 60 * 60 * 1000,
+            timeToWaitBeforeConnectionRetry: milliseconds({ seconds: 40 }),
+            maxErroneousPeriod: milliseconds({ hours: 1 }),
             strategy: "WaitForFree",
-            connectionStreamTimeout: 15 * 1000
+            connectionStreamTimeout: milliseconds({ seconds: 15 })
         };
 
         const subscription = store.subscriptions.getSubscriptionWorker(options);
@@ -1575,7 +1575,7 @@ describe("SubscriptionsBasicTest", function () {
             subscription2.on("batch", processDocuments);
             subscription3.on("batch", processDocuments);
 
-            await delay(options.timeToWaitBeforeConnectionRetry / 2 + 5 * 1000);
+            await delay(options.timeToWaitBeforeConnectionRetry / 2 + milliseconds({ seconds: 5 }));
 
             assert.deepStrictEqual(errors.map(x => x.message), []);
         } finally {
