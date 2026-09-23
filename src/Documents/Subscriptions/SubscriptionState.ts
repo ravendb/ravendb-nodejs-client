@@ -7,6 +7,7 @@ export interface SubscriptionState {
     subscriptionId: number;
     subscriptionName: string;
     mentorNode: string;
+    pinToMentorNode: boolean;
     nodeTag: string;
     lastBatchAckTime: string;
     lastClientConnectionTime: string;
