@@ -22,6 +22,7 @@ import { TypeUtil } from "../../../src/Utility/TypeUtil.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 import { TimeValue } from "../../../src/Primitives/TimeValue.js";
 import { Semaphore } from "../../../src/Utility/Semaphore.js";
+import { delay, wrapWithTimeout } from "../../../src/Utility/PromiseUtil.js";
 import { addDays } from "date-fns";
 
 describe("SubscriptionsBasicTest", function () {
@@ -1506,6 +1507,81 @@ describe("SubscriptionsBasicTest", function () {
                 .isEqualTo(0);
         } finally {
             subscription.dispose();
+        }
+    });
+
+    it("connectionStreamTimeoutCannotBeSmallerThan15Seconds", async () => {
+        await assertThrows(() => store.subscriptions.getSubscriptionWorker({
+            subscriptionName: "subscription",
+            connectionStreamTimeout: 14_999
+        }), err => assertThat(err.name).isEqualTo("InvalidArgumentException"));
+    });
+
+    it("subscriptions_WithWaitForFree_ShouldNotDisconnectOnStreamTimeout", async () => {
+        const subscriptionName = await store.subscriptions.create({
+            query: "from Users where count > 0"
+        });
+
+        {
+            const session = store.openSession();
+            for (let i = 0; i < 10; i++) {
+                const user = new User();
+                user.count = 1;
+                await session.store(user);
+            }
+            await session.saveChanges();
+        }
+
+        const processDocuments = async (batch: SubscriptionBatch<User>, callback: (error?: Error) => void) => {
+            try {
+                const session = batch.openSession();
+                for (const item of batch.items) {
+                    item.result.count--;
+                }
+                await session.saveChanges();
+                callback();
+            } catch (err) {
+                callback(err);
+            }
+        };
+
+        const options: SubscriptionWorkerOptions<User> = {
+            subscriptionName,
+            documentType: User,
+            timeToWaitBeforeConnectionRetry: 40 * 1000,
+            maxErroneousPeriod: 60 * 60 * 1000,
+            strategy: "WaitForFree",
+            connectionStreamTimeout: 15 * 1000
+        };
+
+        const subscription = store.subscriptions.getSubscriptionWorker(options);
+        const subscription2 = store.subscriptions.getSubscriptionWorker(options);
+        const subscription3 = store.subscriptions.getSubscriptionWorker(options);
+
+        try {
+            const established = new Promise<void>(resolve =>
+                subscription.on("onEstablishedSubscriptionConnection", () => resolve()));
+            subscription.on("batch", processDocuments);
+
+            const errors: Error[] = [];
+            for (const waitingSubscription of [subscription2, subscription3]) {
+                waitingSubscription.on("connectionRetry", err => errors.push(err));
+                waitingSubscription.on("unexpectedSubscriptionError", err => errors.push(err));
+                waitingSubscription.on("error", err => errors.push(err));
+            }
+
+            await wrapWithTimeout(established, _reasonableWaitTime);
+
+            subscription2.on("batch", processDocuments);
+            subscription3.on("batch", processDocuments);
+
+            await delay(options.timeToWaitBeforeConnectionRetry / 2 + 5 * 1000);
+
+            assert.deepStrictEqual(errors.map(x => x.message), []);
+        } finally {
+            subscription.dispose();
+            subscription2.dispose();
+            subscription3.dispose();
         }
     });
 });
