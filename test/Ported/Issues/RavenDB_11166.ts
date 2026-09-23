@@ -203,4 +203,126 @@ class Person {
             }
         }
     });
+
+    it("canUseSubscriptionRevisionsWithIncludesViaJavaScript", async () => {
+        await testContext.setupRevisions(store, false, 5);
+
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Person(), { name: "Arava" }), "people/1");
+            await session.store(Object.assign(new Person(), { name: "Karmel" }), "people/2");
+            await session.store(Object.assign(new Dog(), { name: "Oscar", owner: "people/1" }), "dogs/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Dog(), { name: "Oscar", owner: "people/2" }), "dogs/1");
+            await session.saveChanges();
+        }
+
+        const options: SubscriptionCreationOptions = {
+            query: "declare function f(d) {\n" +
+                "    include(d.Current.owner);\n" +
+                "    include(d.Previous.owner);\n" +
+                "    return d;\n" +
+                "}\n" +
+                "from Dogs (Revisions = true) as dog\n" +
+                "select f(dog)"
+        };
+        const id = await store.subscriptions.create(options);
+
+        const sub = store.subscriptions.getSubscriptionWorkerForRevisions({
+            documentType: Dog,
+            subscriptionName: id
+        });
+
+        try {
+            await new Promise<void>((resolve, reject) => {
+                sub.on("error", reject);
+                sub.on("batch", async (batch, callback) => {
+                    try {
+                        assertThat(batch.items)
+                            .isNotEmpty();
+
+                        const s = batch.openSession();
+                        for (const item of batch.items) {
+                            if (!item.result.previous) {
+                                continue;
+                            }
+
+                            const currentOwner = await s.load(item.result.current.owner, Person);
+                            assertThat(currentOwner.name)
+                                .isEqualTo("Karmel");
+                            const previousOwner = await s.load(item.result.previous.owner, Person);
+                            assertThat(previousOwner.name)
+                                .isEqualTo("Arava");
+                        }
+
+                        assertThat(s.advanced.numberOfRequests)
+                            .isZero();
+
+                        callback();
+                        resolve();
+                    } catch (err) {
+                        callback(err);
+                        reject(err);
+                    }
+                });
+            });
+        } finally {
+            sub.dispose();
+        }
+    });
+
+    it("canUseSubscriptionWithIncludesViaJavaScript", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Person(), { name: "Arava" }), "people/1");
+            await session.store(Object.assign(new Dog(), { name: "Oscar", owner: "people/1" }));
+            await session.saveChanges();
+        }
+
+        const options: SubscriptionCreationOptions = {
+            query: "declare function f(d) {\n" +
+                "    include(d.owner);\n" +
+                "    return d;\n" +
+                "}\n" +
+                "from Dogs as dog\n" +
+                "select f(dog)"
+        };
+        const id = await store.subscriptions.create(options);
+
+        const sub = store.subscriptions.getSubscriptionWorker<Dog>(id);
+        try {
+            await new Promise<void>((resolve, reject) => {
+                sub.on("error", reject);
+                sub.on("batch", async (batch, callback) => {
+                    try {
+                        assertThat(batch.items)
+                            .isNotEmpty();
+
+                        const s = batch.openSession();
+                        for (const item of batch.items) {
+                            await s.load(item.result.owner, Person);
+                            const dog = await s.load(item.id, Dog);
+                            assertThat(dog)
+                                .isSameAs(item.result);
+                        }
+
+                        assertThat(s.advanced.numberOfRequests)
+                            .isZero();
+
+                        callback();
+                        resolve();
+                    } catch (err) {
+                        callback(err);
+                        reject(err);
+                    }
+                });
+            });
+        } finally {
+            sub.dispose();
+        }
+    });
 });

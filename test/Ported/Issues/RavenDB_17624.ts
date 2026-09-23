@@ -81,6 +81,53 @@ describe("RavenDB_17624Test", function () {
             }
         }
     });
+
+    it("clearSessionOpenedWhenBatchIsReused", async () => {
+        {
+            const session = store.openSession();
+            const command1 = new Command();
+            command1.value = 1;
+            await session.store(command1);
+
+            const command2 = new Command();
+            command2.value = 2;
+            await session.store(command2);
+
+            await session.saveChanges();
+        }
+
+        await store.subscriptions.create({
+            name: "BackgroundSubscriptionWorker",
+            documentType: Command
+        });
+
+        const workerOptions: SubscriptionWorkerOptions<Command> = {
+            subscriptionName: "BackgroundSubscriptionWorker",
+            documentType: Command,
+            maxDocsPerBatch: 1,
+            closeWhenNoDocsLeft: true
+        };
+
+        const worker = store.subscriptions.getSubscriptionWorker(workerOptions);
+        try {
+            const error = await new Promise<Error>(resolve => {
+                worker.on("error", resolve);
+                worker.on("batch", (batch, callback) => {
+                    try {
+                        batch.openSession();
+                        callback();
+                    } catch (err) {
+                        callback(err);
+                    }
+                });
+            });
+
+            assertThat(error.name)
+                .isEqualTo("SubscriptionClosedException");
+        } finally {
+            worker.dispose();
+        }
+    });
 })
 
 
