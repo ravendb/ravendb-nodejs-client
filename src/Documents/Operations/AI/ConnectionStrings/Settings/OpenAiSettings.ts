@@ -1,12 +1,9 @@
 import { OpenAiBaseSettings } from "./OpenAiBaseSettings.js";
 import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
+import { LiteralUnion } from "../../../../../Types/index.js";
 
-/**
- * Controls the amount of internal reasoning the model performs.
- * Lower values reduce latency; higher values improve response quality for complex tasks.
- */
-export type OpenAiReasoningEffort = "Minimal" | "Low" | "Medium" | "High";
+export type OpenAiReasoningEffort = LiteralUnion<"none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max">;
 
 /**
  * The configuration for the OpenAI API client.
@@ -32,6 +29,13 @@ export class OpenAiSettings extends OpenAiBaseSettings {
     /**
      * Controls the reasoning depth used by supported models (e.g. GPT-5 family).
      * Lower values reduce internal reasoning, improving latency.
+     *
+     * Typical values are "none", "minimal", "low", "medium", "high", "xhigh" and "max". Model families accept
+     * different subsets. When not set, the model applies its own default.
+     *
+     * Sent to the provider as supplied (trimmed) and not validated by RavenDB, so new provider values can be used
+     * without a client update. OpenAI accepts lowercase values only. Legacy names ("Minimal", "Low", "Medium",
+     * "High") are normalized by the server.
      */
     public reasoningEffort?: OpenAiReasoningEffort;
 

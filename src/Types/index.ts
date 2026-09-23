@@ -92,3 +92,5 @@ export type CapitalizeObjectKeys<T> = T extends Array<infer U>
         : T
 
 export type ServerCasing<T extends object> = CapitalizeObjectKeys<T>;
+
+export type LiteralUnion<T extends string> = T | (string & Record<never, never>);
