@@ -70,7 +70,7 @@ export class SubscriptionBatch<T extends object> extends SubscriptionBatchBase<T
                 "InvalidOperationException", "Cannot set RequestExecutor when session is opened in subscription.");
         }
 
-        if (options.transactionMode !== "SingleNode") {
+        if (options.transactionMode && options.transactionMode !== "SingleNode") {
             throwError(
                 "InvalidOperationException",
                 "Cannot set TransactionMode when session is opened in subscription. Only 'SingleNode' is supported.");
