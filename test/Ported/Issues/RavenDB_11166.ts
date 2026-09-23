@@ -71,6 +71,60 @@ class Person {
         }
     });
 
+    it("canUseSubscriptionWithIncludes2", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Person(), { name: "Arava" }), "people/1");
+            await session.store(Object.assign(new Dog(), { name: "Oscar", owner: "people/1" }));
+            await session.store(Object.assign(new Dog(), { name: "Oscar2", owner: "People/2" }));
+            await session.saveChanges();
+        }
+
+        const id = await store.subscriptions.create({
+            query: "from Dogs include owner"
+        });
+
+        const sub = store.subscriptions.getSubscriptionWorker<Dog>(id);
+        try {
+            await new Promise<void>((resolve, reject) => {
+                sub.on("error", reject);
+                sub.on("batch", async (batch, callback) => {
+                    try {
+                        assertThat(batch.items)
+                            .isNotEmpty();
+
+                        const session = batch.openSession();
+                        for (const item of batch.items) {
+                            const owner = await session.load<Person>(item.result.owner);
+                            if (item.result.owner === "people/1") {
+                                assertThat(owner)
+                                    .isNotNull();
+                            } else {
+                                assertThat(owner)
+                                    .isNull();
+                            }
+
+                            const dog = await session.load<Dog>(item.id);
+                            assertThat(dog)
+                                .isSameAs(item.result);
+                        }
+
+                        assertThat(session.advanced.numberOfRequests)
+                            .isZero();
+
+                        callback();
+                        resolve();
+                    } catch (err) {
+                        callback(err);
+                        reject(err);
+                    }
+                });
+            });
+        } finally {
+            sub.dispose();
+        }
+    });
+
     it("canUseSubscriptionRevisionsWithIncludes", async () => {
         await testContext.setupRevisions(store, false, 5);
 

@@ -652,7 +652,7 @@ export abstract class InMemoryDocumentSessionOperations
         return entity;
     }
 
-    public registerIncludes(includes: object): void {
+    public registerIncludes(includes: object, registerMissingIds: boolean = false): void {
         if (this.noTracking) {
             return;
         }
@@ -665,6 +665,10 @@ export abstract class InMemoryDocumentSessionOperations
             const fieldValue = includes[fieldName];
 
             if (TypeUtil.isNullOrUndefined(fieldValue)) {
+                if (registerMissingIds) {
+                    this.registerMissing(fieldName);
+                }
+
                 continue;
             }
 

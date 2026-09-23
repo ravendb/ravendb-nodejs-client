@@ -84,7 +84,7 @@ export class SubscriptionBatch<T extends object> extends SubscriptionBatchBase<T
 
         if (this._includes && this._includes.length) {
             for (const item of this._includes) {
-                session.registerIncludes(item);
+                session.registerIncludes(item, true);
             }
         }
 
