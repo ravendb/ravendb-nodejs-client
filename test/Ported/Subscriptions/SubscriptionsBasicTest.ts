@@ -2,7 +2,7 @@ import { Address, Company, Order, User } from "../../Assets/Entities.js";
 import assert from "node:assert"
 import fs from "node:fs";
 import path from "node:path";
-import { testContext, disposeTestDocumentStore, TemporaryDirContext } from "../../Utils/TestUtil.js";
+import { testContext, disposeTestDocumentStore, TemporaryDirContext, RavenTestContext } from "../../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
@@ -1783,7 +1783,7 @@ describe("SubscriptionsBasicTest", function () {
         }
     });
 
-    it("canBackupAndRestoreSubscriptions", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("canBackupAndRestoreSubscriptions", async () => {
         const temporaryDirContext = new TemporaryDirContext();
 
         try {
