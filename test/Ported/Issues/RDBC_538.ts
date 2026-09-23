@@ -1,4 +1,5 @@
-import { DatabaseRecord, DocumentStore } from "../../../src/index.js";
+import assert from "node:assert";
+import { DatabaseRecord, DocumentStore, ObjectUtil } from "../../../src/index.js";
 import { ClusterTestContext, RavenTestContext } from "../../Utils/TestUtil.js";
 import { User } from "../../Assets/Entities.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
@@ -87,4 +88,78 @@ import { assertThat } from "../../Utils/AssertExtensions.js";
             cluster.dispose();
         }
     });
+
+    it("redirectsSubscriptionToNodeNamedByServer", async () => {
+        const cluster = await testContext.createRaftCluster(3);
+        try {
+            const leader = cluster.getInitialLeader();
+            const databaseName = testContext.getDatabaseName();
+
+            await cluster.createDatabase({ databaseName }, 3, leader.url);
+
+            await assertSubscriptionFollowsRedirect(leader.url, databaseName, false);
+            await assertSubscriptionFollowsRedirect(leader.url, databaseName, true);
+        } finally {
+            cluster.dispose();
+        }
+    });
 });
+
+async function assertSubscriptionFollowsRedirect(url: string, databaseName: string, camelCaseServerFields: boolean) {
+    const store = new DocumentStore(url, databaseName);
+    if (camelCaseServerFields) {
+        store.conventions.serverToLocalFieldNameConverter = ObjectUtil.camel;
+        store.conventions.localToServerFieldNameConverter = ObjectUtil.pascal;
+    }
+
+    try {
+        store.initialize();
+
+        const session = store.openSession();
+        await session.store(new User(), "users/1");
+        await session.saveChanges();
+
+        const requestExecutor = store.getRequestExecutor();
+        const preferredNode = (await requestExecutor.getPreferredNode()).currentNode.clusterTag;
+        const mentorNode = requestExecutor.getTopologyNodes()
+            .find(x => x.clusterTag !== preferredNode)
+            .clusterTag;
+
+        const subscriptionName = await store.subscriptions.create({ documentType: User, mentorNode });
+
+        const worker = store.subscriptions.getSubscriptionWorker({
+            documentType: User,
+            subscriptionName,
+            timeToWaitBeforeConnectionRetry: 100
+        });
+
+        try {
+            const retryErrors: Error[] = [];
+            worker.on("connectionRetry", error => retryErrors.push(error));
+
+            await new Promise<void>((resolve, reject) => {
+                worker.on("error", reject);
+                worker.on("batch", (batch, callback) => {
+                    callback();
+                    resolve();
+                });
+            });
+
+            assertThat(retryErrors).hasSize(1);
+
+            const [redirect] = retryErrors;
+            assertThat(redirect.name).isEqualTo("SubscriptionDoesNotBelongToNodeException");
+            assertThat((redirect as any).appropriateNode).isEqualTo(mentorNode);
+            assertThat(redirect.message)
+                .contains("current node '" + preferredNode + "'")
+                .contains("redirected to " + mentorNode);
+            assert.match(redirect.message, new RegExp("^" + mentorNode + ":", "m"));
+
+            assertThat(worker.currentNodeTag).isEqualTo(mentorNode);
+        } finally {
+            worker.dispose();
+        }
+    } finally {
+        store.dispose();
+    }
+}

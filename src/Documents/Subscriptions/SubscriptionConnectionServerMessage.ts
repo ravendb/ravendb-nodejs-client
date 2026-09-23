@@ -12,10 +12,10 @@ export interface SubscriptionConnectionServerMessage {
 }
 
 export interface SubscriptionRedirectData {
-    currentTag: string;
-    redirectedTag: string;
-    reasons: Record<string, string>;
-    registerConnectionDurationInTicks: number;
+    CurrentTag: string;
+    RedirectedTag: string;
+    Reasons: Record<string, string>[];
+    RegisterConnectionDurationInTicks: number;
 }
 
 export type MessageType = "None"
