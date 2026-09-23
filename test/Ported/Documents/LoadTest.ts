@@ -4,6 +4,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 import {
     IDocumentStore,
 } from "../../../src/index.js";
+import { Order, OrderLine } from "../../Assets/Entities.js";
 
 describe("Load test", function () {
 
@@ -55,46 +56,76 @@ describe("Load test", function () {
         assert.strictEqual(foo.name, "Beginning");
         assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests);
     });
+
+    it("can load with includes and missing document", async () => {
+        const session = store.openSession();
+        await session.store(Object.assign(new Bar(), { name: "End", fooId: "somefoo/1" }), "bars/1");
+        await session.saveChanges();
+
+        const newSession = store.openSession();
+        const bars = await newSession
+            .include("fooId")
+            .load<Bar>(["bars/1"], Bar);
+
+        assert.strictEqual(Object.keys(bars).length, 1);
+        assert.ok(bars["bars/1"]);
+
+        const numOfRequests = newSession.advanced.numberOfRequests;
+
+        const foo = await newSession.load<Foo>(bars["bars/1"].fooId, Foo);
+
+        assert.strictEqual(foo, null);
+        assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests);
+    });
+
+    it("loads includes of an already loaded document", async () => {
+        const session = store.openSession();
+        await session.store(Object.assign(new Foo(), { name: "Beginning" }), "foos/1");
+        await session.store(Object.assign(new Bar(), { name: "End", fooId: "foos/1" }), "bars/1");
+        await session.saveChanges();
+
+        const newSession = store.openSession();
+        await newSession.load<Bar>("bars/1", Bar);
+
+        const numOfRequests = newSession.advanced.numberOfRequests;
+
+        const bar = await newSession.include("fooId").load<Bar>("bars/1", Bar);
+
+        assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests + 1);
+
+        const foo = await newSession.load<Foo>(bar.fooId, Foo);
+
+        assert.strictEqual(foo.name, "Beginning");
+        assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests + 1);
+    });
+
+    it("does not treat a document as missing when the server ignores the include path", async () => {
+        const session = store.openSession();
+        await session.store(Object.assign(new Foo(), { name: "Beginning" }), "foos/1");
+        const line = Object.assign(new OrderLine(), { product: "foos/1" });
+        await session.store(Object.assign(new Order(), { lines: [line] }), "orders/1");
+        await session.saveChanges();
+
+        const newSession = store.openSession();
+        await newSession.include("lines[0].product").load<Order>("orders/1", Order);
+
+        const foo = await newSession.load<Foo>("foos/1", Foo);
+
+        assert.strictEqual(foo?.name, "Beginning");
+    });
+
+    it("does not request includes again when the included id is empty", async () => {
+        const session = store.openSession();
+        await session.store(Object.assign(new Bar(), { name: "End", fooId: "" }), "bars/1");
+        await session.saveChanges();
+
+        const newSession = store.openSession();
+        await newSession.include("fooId").load<Bar>("bars/1", Bar);
+
+        const numOfRequests = newSession.advanced.numberOfRequests;
+
+        await newSession.include("fooId").load<Bar>("bars/1", Bar);
+
+        assert.strictEqual(newSession.advanced.numberOfRequests, numOfRequests);
+    });
 });
-
-//TODO: @Test
-//     @Disabled("waiting for IncludesUtils")
-//     public void loadWithIncludesAndMissingDocument() throws Exception {
-//         try (IDocumentStore store = getDocumentStore()) {
-
-//             String barId;
-
-//             try (IDocumentSession session = store.openSession()) {
-//                 Bar bar = new Bar();
-//                 bar.setName("End");
-//                 bar.setFooId("somefoo/1");
-
-//                 session.store(bar);
-//                 barId = session.advanced().getDocumentId(bar);
-//                 session.saveChanges();
-//             }
-
-//             try (IDocumentSession newSession = store.openSession()) {
-//                 Map<String, Bar> bar = newSession.include("fooId")
-//                         .load(Bar.class, new String[] { barId });
-
-//                 assertThat(bar)
-//                         .isNotNull()
-//                         .hasSize(1);
-
-//                 assertThat(bar.get(barId))
-//                         .isNotNull();
-
-//                 int numOfRequests = newSession.advanced().getNumberOfRequests();
-
-//                 Foo foo = newSession.load(Foo.class, bar.get(barId).getFooId());
-
-//                 assertThat(foo)
-//                         .isNull();
-
-//                 assertThat(newSession.advanced().getNumberOfRequests())
-//                         .isEqualTo(numOfRequests);
-//             }
-//         }
-//     }
-// }
