@@ -1470,6 +1470,44 @@ describe("SubscriptionsBasicTest", function () {
             subscription.dispose();
         }
     });
+
+    it("removeListener detaches batch handler", async () => {
+        const id = await store.subscriptions.create(User);
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: id,
+            documentType: User
+        });
+
+        const keys = new AsyncQueue<string>();
+        let removedHandlerCalls = 0;
+        const removedHandler = (batch: SubscriptionBatch<User>, callback: () => void) => {
+            removedHandlerCalls++;
+            callback();
+        };
+
+        try {
+            subscription.on("batch", (batch, callback) => {
+                for (const x of batch.items) keys.push(x.id);
+                callback();
+            });
+            subscription.on("batch", removedHandler);
+            subscription.removeListener("batch", removedHandler);
+
+            {
+                const session = store.openSession();
+                await session.store(new User(), "users/1");
+                await session.saveChanges();
+            }
+
+            assertThat(await keys.poll(_reasonableWaitTime))
+                .isEqualTo("users/1");
+            assertThat(removedHandlerCalls)
+                .isEqualTo(0);
+        } finally {
+            subscription.dispose();
+        }
+    });
 });
 
 

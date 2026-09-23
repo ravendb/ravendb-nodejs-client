@@ -185,7 +185,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             | ((value: SubscriptionWorker<any>) => void)
             | ((error: Error) => void)
             | ((status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void)): this {
-        this.removeListener(event as any, handler as any);
+        this._emitter.removeListener(event, handler);
         return this;
     }
 
