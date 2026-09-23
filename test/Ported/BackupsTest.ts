@@ -74,7 +74,7 @@ import { TimeUtil } from "../../src/Utility/TimeUtil.js";
         const backupConfiguration: PeriodicBackupConfiguration = {
             name: "myBackup",
             backupType: snapshot,
-            fullBackupFrequency: "20 * * * *",
+            fullBackupFrequency: "0 0 1 1 *",
             localSettings: {
                 folderPath: path.resolve(backup)
             }
