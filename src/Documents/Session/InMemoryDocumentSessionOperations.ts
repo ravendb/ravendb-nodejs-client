@@ -88,7 +88,9 @@ export abstract class InMemoryDocumentSessionOperations
         return this._id;
     }
 
-    protected _knownMissingIds: Set<string> = CaseInsensitiveStringSet.create();
+    public readonly trackedEntities: TrackedEntitiesHolder = new TrackedEntitiesHolder();
+
+    protected _knownMissingIds: KnownMissingIdsHolder = new KnownMissingIdsHolder(this.trackedEntities);
 
     private _externalState: Map<string, object>;
 
@@ -562,6 +564,7 @@ export abstract class InMemoryDocumentSessionOperations
             if (!noTracking) {
                 this.includedDocumentsById.delete(id);
                 this.documentsByEntity.put(docInfo.entity, docInfo);
+                this.trackedEntities.set(id, docInfo.changeVector);
             }
 
             this.onAfterConversionToEntityInvoke(id, docInfo.document, docInfo.entity);
@@ -580,6 +583,7 @@ export abstract class InMemoryDocumentSessionOperations
                 this.includedDocumentsById.delete(id);
                 this.documentsById.add(docInfo);
                 this.documentsByEntity.put(docInfo.entity, docInfo);
+                this.trackedEntities.set(id, docInfo.changeVector);
             }
 
             this.onAfterConversionToEntityInvoke(id, docInfo.document, docInfo.entity);
@@ -604,6 +608,7 @@ export abstract class InMemoryDocumentSessionOperations
 
             this.documentsById.add(newDocumentInfo);
             this.documentsByEntity.put(entity, newDocumentInfo);
+            this.trackedEntities.set(id, changeVector);
             this._makeMetadataInstance(newDocumentInfo);
         }
 
@@ -644,6 +649,7 @@ export abstract class InMemoryDocumentSessionOperations
         this.documentsByEntity.put(info.entity, info);
         this.documentsById.add(info);
         this.includedDocumentsById.delete(info.id);
+        this.trackedEntities.tryAdd(info.id, info.changeVector);
      }
 
     private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object, trackEntity: boolean): object {
@@ -674,6 +680,7 @@ export abstract class InMemoryDocumentSessionOperations
             }
 
             this.includedDocumentsById.set(newDocumentInfo.id, newDocumentInfo);
+            this.trackedEntities.tryAdd(newDocumentInfo.id, newDocumentInfo.changeVector);
         }
     }
 
@@ -1480,6 +1487,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         if (id) {
             this.documentsById.add(documentInfo);
+            this.trackedEntities.tryAdd(id, changeVector);
         }
     }
 
@@ -1523,9 +1531,9 @@ export abstract class InMemoryDocumentSessionOperations
         if (this._optimisticConcurrencyMode === "WritesAndReads") {
             const trackedEntities: Record<string, string> = {};
             const idsInBatch = new Set(result.sessionCommands.map(c => c.id?.toLowerCase()));
-            for (const [id, docInfo] of this.documentsById.entries()) {
-                if (!idsInBatch.has(id.toLowerCase()) && docInfo.changeVector) {
-                    trackedEntities[id] = docInfo.changeVector;
+            for (const [id, changeVector] of this.trackedEntities) {
+                if (!idsInBatch.has(id.toLowerCase()) && !TypeUtil.isNullOrUndefined(changeVector)) {
+                    trackedEntities[id] = changeVector;
                 }
             }
             if (Object.keys(trackedEntities).length > 0) {
@@ -1891,7 +1899,7 @@ export abstract class InMemoryDocumentSessionOperations
             this._timeSeriesByDocId.delete(value.id);
         }
 
-        this._knownMissingIds.add(value.id);
+        this._knownMissingIds.addWithTracking(value.id, value.changeVector);
     }
 
     /**
@@ -1920,9 +1928,11 @@ export abstract class InMemoryDocumentSessionOperations
 
             this.documentsById.remove(id);
             changeVector = documentInfo.changeVector;
+            this._knownMissingIds.addWithTracking(id, changeVector);
+        } else {
+            this._knownMissingIds.addWithoutTracking(id);
         }
 
-        this._knownMissingIds.add(id);
         changeVector = this.useOptimisticConcurrency ? changeVector : null;
 
         if (this._countersByDocId) {
@@ -2064,6 +2074,8 @@ export abstract class InMemoryDocumentSessionOperations
             documentInfoById.entity = entity;
         }
 
+        this.trackedEntities.tryUpdate(documentInfo.id, documentInfo.changeVector);
+
         this.onAfterConversionToEntityInvoke(documentInfo.id, documentInfo.document, documentInfo.entity);
     }
 
@@ -2144,6 +2156,7 @@ export abstract class InMemoryDocumentSessionOperations
             if (this._timeSeriesByDocId) {
                 this._timeSeriesByDocId.delete(documentInfo.id);
             }
+            this.trackedEntities.tryRemove(documentInfo.id);
         }
 
         this.deletedEntities.evict(entity);
@@ -2169,6 +2182,7 @@ export abstract class InMemoryDocumentSessionOperations
 
         this._pendingLazyOperations.length = 0;
         this.entityToJson.clear();
+        this.trackedEntities.clear();
     }
 
     /**
@@ -2543,6 +2557,76 @@ export class DeletedEntitiesHolder implements Iterable<DeletedEntitiesEnumerator
 export interface DeletedEntitiesEnumeratorResult {
     entity: object;
     executeOnBeforeDelete: boolean;
+}
+
+export class TrackedEntitiesHolder implements Iterable<[string, string]> {
+    private readonly _changeVectorsById: Map<string, string> = CaseInsensitiveKeysMap.create();
+
+    public tryAdd(id: string, changeVector: string): void {
+        if (!this._changeVectorsById.has(id)) {
+            this._changeVectorsById.set(id, changeVector);
+        }
+    }
+
+    public set(id: string, changeVector: string): void {
+        this._changeVectorsById.set(id, changeVector);
+    }
+
+    public tryUpdate(id: string, changeVector: string): void {
+        if (this._changeVectorsById.has(id)) {
+            this._changeVectorsById.set(id, changeVector);
+        }
+    }
+
+    public tryRemove(id: string): void {
+        this._changeVectorsById.delete(id);
+    }
+
+    public clear(): void {
+        this._changeVectorsById.clear();
+    }
+
+    [Symbol.iterator](): Iterator<[string, string]> {
+        return this._changeVectorsById.entries();
+    }
+}
+
+export class KnownMissingIdsHolder implements Iterable<string> {
+    private readonly _ids: Set<string> = CaseInsensitiveStringSet.create();
+
+    public constructor(private readonly _trackedEntities: TrackedEntitiesHolder) {
+    }
+
+    public has(id: string): boolean {
+        return this._ids.has(id);
+    }
+
+    public add(id: string): void {
+        this._trackedEntities.tryAdd(id, "");
+        this._ids.add(id);
+    }
+
+    public addWithTracking(id: string, changeVector: string): void {
+        this._trackedEntities.tryUpdate(id, changeVector);
+        this._ids.add(id);
+    }
+
+    public addWithoutTracking(id: string): void {
+        this._trackedEntities.tryRemove(id);
+        this._ids.add(id);
+    }
+
+    public delete(id: string): void {
+        this._ids.delete(id);
+    }
+
+    public clear(): void {
+        this._ids.clear();
+    }
+
+    [Symbol.iterator](): Iterator<string> {
+        return this._ids[Symbol.iterator]();
+    }
 }
 
 

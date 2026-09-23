@@ -203,6 +203,7 @@ export class BatchOperation {
         documentInfo.metadata = ObjectUtil.deepLiteralClone(documentInfo.metadata);
 
         documentInfo.metadata["@change-vector"] = documentInfo.changeVector;
+        this._session.trackedEntities.tryUpdate(id, documentInfo.changeVector);
 
         const documentCopy = ObjectUtil.deepLiteralClone(documentInfo.document);
         documentCopy[CONSTANTS.Documents.Metadata.KEY] = documentInfo.metadata;
@@ -383,6 +384,8 @@ export class BatchOperation {
 
     private _handleDeleteInternal(batchResult: object, type: CommandType): void {
         const id = BatchOperation._getStringField(batchResult, type, "id");
+        this._session.trackedEntities.tryRemove(id);
+
         const documentInfo = this._session.documentsById.getValue(id);
         if (!documentInfo) {
             return;
