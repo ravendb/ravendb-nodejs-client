@@ -23,7 +23,7 @@ import { StreamValues } from "../../ext/stream-json/streamers/StreamValues.js";
 import { TcpNegotiationResponse } from "../../ServerWide/Tcp/TcpNegotiationResponse.js";
 import { TcpConnectionHeaderResponse } from "../../ServerWide/Tcp/TcpConnectionHeaderResponse.js";
 import { ObjectUtil } from "../../Utility/ObjectUtil.js";
-import { SubscriptionConnectionServerMessage } from "./SubscriptionConnectionServerMessage.js";
+import { SubscriptionConnectionServerMessage, SubscriptionRedirectData } from "./SubscriptionConnectionServerMessage.js";
 import { EOL } from "../../Utility/OsUtil.js";
 import { BatchFromServer, CounterIncludeItem } from "./BatchFromServer.js";
 import { SubscriptionBatchBase } from "./SubscriptionBatchBase.js";
@@ -509,24 +509,25 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                 break;
             }
             case "Redirect": {
-                if (this._options.strategy === "WaitForFree") {
-                    if (connectionStatus.data) {
-                        const registerConnectionDurationInTicks = connectionStatus.data["RegisterConnectionDurationInTicks"];
-                        if (registerConnectionDurationInTicks / 10_000 >= this._options.maxErroneousPeriod) {
-                            // this worker connection Waited For Free for more than MaxErroneousPeriod
-                            this._lastConnectionFailure = null;
-                        }
-                    }
+                const data: SubscriptionRedirectData = connectionStatus.data;
+
+                if (this._options.strategy === "WaitForFree"
+                    && data?.RegisterConnectionDurationInTicks / 10_000 >= this._options.maxErroneousPeriod) {
+                    // this worker connection Waited For Free for more than MaxErroneousPeriod
+                    this._lastConnectionFailure = null;
                 }
 
-                const data = connectionStatus.data;
-                const appropriateNode = data.redirectedTag;
-                const currentNode = data.currentTag;
-                const reasons = data.reasons;
+                const appropriateNode = data?.RedirectedTag;
+                const currentNode = data?.CurrentTag;
+                const reasons = (data?.Reasons ?? [])
+                    .flatMap(reason => Object.entries(reason))
+                    .map(([tag, reason]) => tag + ":" + reason)
+                    .join(EOL);
 
                 const error = getError("SubscriptionDoesNotBelongToNodeException",
                     "Subscription with id '" + this._options.subscriptionName
-                    + "' cannot be processed by current node '" + currentNode + "', it will be redirected to " + appropriateNode + EOL + reasons);
+                    + "' cannot be processed by current node '" + currentNode + "', it will be redirected to " + appropriateNode
+                    + EOL + "Reasons:" + EOL + reasons);
                 (error as any).appropriateNode = appropriateNode;
                 throw error;
             }
@@ -986,7 +987,9 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
         let data: any;
         if (Data) {
-            if (revisions) {
+            if (json.Type !== "Data") {
+                data = Data;
+            } else if (revisions) {
                 data = {
                     current: ObjectUtil.transformDocumentKeys(Data.Current, conventions),
                     previous: ObjectUtil.transformDocumentKeys(Data.Previous, conventions),
