@@ -21,7 +21,7 @@ export class IncludesUtil {
 
         const { path, addition, isPrefix } = IncludesUtil._getIncludePath(include);
 
-        for (const token of selectTokens(document, path)) {
+        for (const token of IncludesUtil._selectTokens(document, path)) {
             IncludesUtil._executeInternal(token, addition, (value, valueAddition) => {
                 if (!valueAddition) {
                     loadId(value);
@@ -45,6 +45,44 @@ export class IncludesUtil {
             addition: addition.substring(1, addition.length - 1),
             isPrefix: !!prefixMatch
         };
+    }
+
+    private static _selectTokens(document: object, path: string): unknown[] {
+        const [firstPath, ...nestedPaths] = path.split(COLLECTION_SEPARATOR);
+        const result = IncludesUtil._readPath(document, firstPath);
+
+        if (!nestedPaths.length) {
+            return [result];
+        }
+
+        const nestedPath = nestedPaths.join(COLLECTION_SEPARATOR);
+
+        if (TypeUtil.isArray(result)) {
+            return result.flatMap(item =>
+                TypeUtil.isObject(item) ? IncludesUtil._selectTokens(item, nestedPath) : [item]);
+        }
+
+        if (TypeUtil.isObject(result)) {
+            return Object.values(result)
+                .filter(value => TypeUtil.isObject(value))
+                .flatMap(value => IncludesUtil._selectTokens(value, nestedPath));
+        }
+
+        return [];
+    }
+
+    private static _readPath(document: object, path: string): unknown {
+        let current: unknown = document;
+
+        for (const property of path.split(".")) {
+            if (!TypeUtil.isObject(current)) {
+                return null;
+            }
+
+            current = current[property];
+        }
+
+        return current;
     }
 
     private static _executeInternal(
@@ -76,41 +114,4 @@ export class IncludesUtil {
         escapedIncludeSetter(null);
         return false;
     }
-}
-
-function selectTokens(document: object, path: string): unknown[] {
-    const [firstPath, ...nestedPaths] = path.split(COLLECTION_SEPARATOR);
-    const result = readPath(document, firstPath);
-
-    if (!nestedPaths.length) {
-        return [result];
-    }
-
-    const nestedPath = nestedPaths.join(COLLECTION_SEPARATOR);
-
-    if (TypeUtil.isArray(result)) {
-        return result.flatMap(item => TypeUtil.isObject(item) ? selectTokens(item, nestedPath) : [item]);
-    }
-
-    if (TypeUtil.isObject(result)) {
-        return Object.values(result)
-            .filter(value => TypeUtil.isObject(value))
-            .flatMap(value => selectTokens(value, nestedPath));
-    }
-
-    return [];
-}
-
-function readPath(document: object, path: string): unknown {
-    let current: unknown = document;
-
-    for (const property of path.split(".")) {
-        if (!TypeUtil.isObject(current)) {
-            return null;
-        }
-
-        current = current[property];
-    }
-
-    return current;
 }
