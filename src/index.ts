@@ -481,6 +481,8 @@ export * from "./Documents/Subscriptions/SubscriptionBatch.js";
 export * from "./Documents/Subscriptions/DocumentSubscriptions.js";
 export * from "./Documents/Subscriptions/SubscriptionWorker.js";
 export * from "./Documents/Subscriptions/SubscriptionWorkerOptions.js";
+export * from "./Documents/Subscriptions/SubscriptionWorkerState.js";
+export * from "./Documents/Subscriptions/SubscriptionWorkerStatus.js";
 export * from "./Documents/Subscriptions/SubscriptionCreationOptions.js";
 export * from "./Documents/Subscriptions/Revision.js";
 export * from "./Documents/Subscriptions/SubscriptionState.js";

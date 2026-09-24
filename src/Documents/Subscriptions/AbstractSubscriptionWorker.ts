@@ -35,8 +35,10 @@ import { ServerCasing, ServerResponse } from "../../Types/index.js";
 import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { CONSTANTS } from "../../Constants.js";
 import { SubscriptionWorker } from "./SubscriptionWorker.js";
+import { SubscriptionWorkerState } from "./SubscriptionWorkerState.js";
+import { SubscriptionWorkerStatus } from "./SubscriptionWorkerStatus.js";
 
-type EventTypes = "afterAcknowledgment" | "onEstablishedSubscriptionConnection" | "connectionRetry" | "batch" | "error" | "end" | "unexpectedSubscriptionError";
+type EventTypes = "afterAcknowledgment" | "onEstablishedSubscriptionConnection" | "connectionRetry" | "batch" | "error" | "end" | "unexpectedSubscriptionError" | "stateChanged";
 
 export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatchBase<TType>, TType extends object> {
     protected readonly _documentType: DocumentType<TType>;
@@ -52,6 +54,13 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
     protected _subscriptionTask: Promise<void>;
     protected _forcedTopologyUpdateAttempts = 0;
     protected _emitter = new EventEmitter();
+    private _status: SubscriptionWorkerStatus = {
+        state: "NotStarted",
+        error: null,
+        sinceUtc: new Date(),
+        failingSinceUtc: null
+    };
+    private _failingSinceUtc: Date = null;
 
     public constructor(options: SubscriptionWorkerOptions<TType>,
                        withRevisions: boolean, dbName: string) {
@@ -76,6 +85,39 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         return this._options.workerId;
     }
 
+    public get status(): SubscriptionWorkerStatus {
+        return this._status;
+    }
+
+    private _setState(state: SubscriptionWorkerState, error: Error = null): void {
+        const now = new Date();
+
+        switch (state) {
+            case "WaitingForDocuments":
+            case "Processing":
+                this._failingSinceUtc = null;
+                break;
+            case "Retrying":
+            case "Faulted":
+                this._failingSinceUtc ??= now;
+                break;
+        }
+
+        const current = this._status;
+        if (current.state === state && current.error === error && current.failingSinceUtc === this._failingSinceUtc) {
+            return;
+        }
+
+        this._status = { state, error, sinceUtc: now, failingSinceUtc: this._failingSinceUtc };
+
+        try {
+            this._emitter.emit("stateChanged", this._status, this);
+        } catch (handlerError) {
+            this._logger.warn(handlerError, "Subscription " + this._options.subscriptionName
+                + ". stateChanged handler threw while reporting " + state + ".");
+        }
+    }
+
     public on(event: "batch",
               handler: (value: TBatch, callback: EmptyCallback) => void): this;
     public on(event: "error",
@@ -89,11 +131,14 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
               handler: (value: TBatch, callback: EmptyCallback) => void): this;
     public on(event: "connectionRetry",
               handler: (error?: Error) => void): this;
+    public on(event: "stateChanged",
+              handler: (status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void): this;
     public on(event: EventTypes,
               handler:
                   ((batchOrError: TBatch, callback: EmptyCallback) => void)
                   | ((value: SubscriptionWorker<any>) => void)
-                  | ((error: Error) => void)): this {
+                  | ((error: Error) => void)
+                  | ((status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void)): this {
         this._emitter.on(event, handler);
 
         if (event === "batch" && !this._subscriptionTask) {
@@ -112,11 +157,13 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
     public off(event: "end", handler: (error?: Error) => void): this;
     public off(event: "afterAcknowledgment", handler: (value: TBatch, callback: EmptyCallback) => void): this;
     public off(event: "connectionRetry", handler: (error?: Error) => void): this;
+    public off(event: "stateChanged", handler: (status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void): this;
     public off(event: EventTypes,
                handler:
                    ((batchOrError: TBatch, callback: EmptyCallback) => void)
                    | ((value: SubscriptionWorker<any>) => void)
-                   | ((error: Error) => void)): this {
+                   | ((error: Error) => void)
+                   | ((status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void)): this {
         this._emitter.removeListener(event, handler);
         return this;
     }
@@ -130,11 +177,14 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         event: "afterAcknowledgment", handler: (value: TBatch, callback: EmptyCallback) => void): this;
     public removeListener(event: "connectionRetry", handler: (error?: Error) => void): this;
     public removeListener(
+        event: "stateChanged", handler: (status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void): this;
+    public removeListener(
         event: EventTypes,
         handler:
             ((batchOrError: TBatch, callback: EmptyCallback) => void)
             | ((value: SubscriptionWorker<any>) => void)
-            | ((error: Error) => void)): this {
+            | ((error: Error) => void)
+            | ((status: SubscriptionWorkerStatus, worker: SubscriptionWorker<any>) => void)): this {
         this.removeListener(event as any, handler as any);
         return this;
     }
@@ -153,6 +203,10 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         }
 
         this._subscriptionLocalRequestExecutor?.dispose();
+
+        if (!this._subscriptionTask) {
+            this._setState("Stopped");
+        }
     }
 
 
@@ -521,6 +575,8 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                     return;
                 }
 
+                this._setState("WaitingForDocuments");
+
                 this._emitter.emit("onEstablishedSubscriptionConnection", this);
 
                 await this._processSubscriptionInternal(tcpClientCopy);
@@ -548,6 +604,8 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             while (!this._processingCanceled) {
                 await this._prepareBatch(tcpClientCopy, batch, notifiedSubscriber);
                 // start reading next batch from server on 1'st thread (can be before client started processing)
+
+                this._setState("Processing");
 
                 notifiedSubscriber = this._emitBatchAndWaitForProcessing(batch)
                     .catch((err) => {
@@ -583,6 +641,9 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
     private async _prepareBatch(tcpClientCopy: Socket, batch: TBatch, notifiedSubscriber: Promise<void>): Promise<BatchFromServer> {
         const readFromServer = this._readSingleSubscriptionBatchFromServer(batch);
+        let readFromServerSettled = false;
+        const markReadFromServerSettled = () => { readFromServerSettled = true; };
+        readFromServer.then(markReadFromServerSettled, markReadFromServerSettled);
 
         try {
             // and then wait for the subscriber to complete
@@ -593,6 +654,10 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
             // noinspection ExceptionCaughtLocallyJS
             throw err;
+        }
+
+        if (!readFromServerSettled && !this._processingCanceled) {
+            this._setState("WaitingForDocuments");
         }
 
         const incomingBatch = await readFromServer;
@@ -758,9 +823,26 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
 
     private async _runSubscriptionAsync(): Promise<void> {
+        try {
+            await this._runSubscriptionInternalAsync();
+        } catch (error) {
+            if (!this._disposed) {
+                this._setState("Faulted", error);
+            }
+
+            throw error;
+        } finally {
+            if (this._status.state !== "Faulted") {
+                this._setState("Stopped");
+            }
+        }
+    }
+
+    private async _runSubscriptionInternalAsync(): Promise<void> {
         while (!this._processingCanceled) {
             try {
                 this._closeTcpClient();
+                this._setState("Connecting");
 
                 this._logger.info("Subscription " + this._options.subscriptionName + ". Connecting to server...");
                 await this._processSubscription();
@@ -776,6 +858,8 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                     + this._options.subscriptionName + ". Pulling task threw the following exception. ");
 
                 if (this._shouldTryToReconnect(error)) {
+                    this._setState("Retrying", error);
+
                     await delay(this._options.timeToWaitBeforeConnectionRetry);
 
                     if (!this._redirectNode) {

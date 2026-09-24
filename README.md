@@ -2401,7 +2401,24 @@ subscriptionWorker.on("error", err => {
 });
 
 // Subscription event types: 
-'batch', 'error', 'end', 'unexpectedSubscriptionError', 'afterAcknowledgment', 'connectionRetry'
+'batch', 'error', 'end', 'unexpectedSubscriptionError', 'afterAcknowledgment', 'connectionRetry',
+'onEstablishedSubscriptionConnection', 'stateChanged'
+```
+
+The worker reports what it is doing through `subscriptionWorker.status`, a snapshot of:
+- `state`: `NotStarted`, `Connecting`, `WaitingForDocuments`, `Processing`, `Retrying`, `Faulted` or `Stopped`
+- `error`: the failure behind `Retrying` or `Faulted`, `null` otherwise
+- `sinceUtc`: when the worker entered this state
+- `failingSinceUtc`: when the worker lost the server, kept across the whole reconnect cycle and `null` while connected. `Faulted` always has it, and `Stopped` keeps the value it had, so a worker disposed while retrying still reports when it started failing
+
+`Faulted` and `Stopped` are final. `Faulted` means the worker gave up on an error it cannot reconnect from, and it stays `Faulted` with that `error` after `dispose()`. `Stopped` means the worker was disposed before it faulted.
+
+```javascript
+subscriptionWorker.on("stateChanged", (status, worker) => {
+    if (status.failingSinceUtc) {
+        console.warn(`Subscription ${worker.subscriptionName} failing since ${status.failingSinceUtc.toISOString()}`, status.error);
+    }
+});
 ```
 
 >##### Related tests:
