@@ -2409,9 +2409,9 @@ The worker reports what it is doing through `subscriptionWorker.status`, a snaps
 - `state`: `NotStarted`, `Connecting`, `WaitingForDocuments`, `Processing`, `Retrying`, `Faulted` or `Stopped`
 - `error`: the failure behind `Retrying` or `Faulted`, `null` otherwise
 - `sinceUtc`: when the worker entered this state
-- `failingSinceUtc`: when the worker lost the server, kept across the whole reconnect cycle and `null` while connected
+- `failingSinceUtc`: when the worker lost the server, kept across the whole reconnect cycle and `null` while connected. `Faulted` always has it, and `Stopped` keeps the value it had, so a worker disposed while retrying still reports when it started failing
 
-`Faulted` means the worker gave up on an error it cannot reconnect from. `Stopped` means it was disposed.
+`Faulted` and `Stopped` are final. `Faulted` means the worker gave up on an error it cannot reconnect from, and it stays `Faulted` with that `error` after `dispose()`. `Stopped` means the worker was disposed before it faulted.
 
 ```javascript
 subscriptionWorker.on("stateChanged", (status, worker) => {

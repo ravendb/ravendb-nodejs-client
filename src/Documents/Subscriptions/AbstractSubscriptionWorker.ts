@@ -656,7 +656,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             throw err;
         }
 
-        if (!readFromServerSettled) {
+        if (!readFromServerSettled && !this._processingCanceled) {
             this._setState("WaitingForDocuments");
         }
 

@@ -154,6 +154,11 @@ describe("RavenDB_27175Test", function () {
             assertThat(error.name).isEqualTo("SubscriptionDoesNotExistException");
             assertThat(worker.status.state).isEqualTo("Faulted");
             assertThat(worker.status.error).isSameAs(error);
+
+            worker.dispose();
+
+            assertThat(worker.status.state).isEqualTo("Faulted");
+            assertThat(worker.status.error).isSameAs(error);
         } finally {
             worker.dispose();
         }
@@ -210,16 +215,22 @@ describe("RavenDB_27175Test", function () {
             documentType: Company
         });
 
-        const ended = new Promise<void>(resolve => worker.on("end", () => resolve()));
+        const observed: SubscriptionWorkerState[] = [];
+        worker.on("stateChanged", status => observed.push(status.state));
 
-        worker.on("batch", (batch, callback) => {
-            worker.dispose();
-            callback();
-        });
+        const ended = new Promise<void>(resolve => worker.on("end", () => resolve()));
+        const batchReceived = new Promise<() => void>(resolve =>
+            worker.on("batch", (batch, callback) => resolve(callback)));
+
+        const acknowledge = await batchReceived;
+
+        const reportedBeforeDispose = observed.length;
+        worker.dispose();
+        acknowledge();
 
         await ended;
 
-        assertThat(worker.status.state).isEqualTo("Stopped");
+        assert.deepStrictEqual(observed.slice(reportedBeforeDispose), ["Stopped"]);
         assertThat(worker.status.error).isNull();
     });
 
