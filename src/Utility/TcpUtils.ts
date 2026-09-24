@@ -9,7 +9,22 @@ import { OperationTypes, SupportedFeatures } from "../ServerWide/Tcp/TcpConnecti
 
 export class TcpUtils {
     public static async connect(
-        urlString: string, 
+        urlString: string,
+        serverCertificate: string,
+        clientCertificate: IAuthOptions,
+        timeout?: number): Promise<Socket> {
+        const socket = await TcpUtils._openSocket(urlString, serverCertificate, clientCertificate);
+
+        if (timeout) {
+            socket.setTimeout(timeout, () => socket.destroy(getError("TimeoutException",
+                "No data was sent or received over the TCP connection to " + urlString + " for " + timeout + " ms.")));
+        }
+
+        return socket;
+    }
+
+    private static async _openSocket(
+        urlString: string,
         serverCertificate: string,
         clientCertificate: IAuthOptions): Promise<Socket> {
         const url = new URL(urlString);
@@ -67,11 +82,12 @@ export class TcpUtils {
     }
 
     public static async connectSecuredTcpSocket(info: TcpConnectionInfo, serverCertificate: string,
-                                            clientCertificate: IAuthOptions, operationType: OperationTypes, negotiationCallback: NegotiationCallback): Promise<ConnectSecuredTcpSocketResult> {
+                                            clientCertificate: IAuthOptions, operationType: OperationTypes, negotiationCallback: NegotiationCallback,
+                                            timeout?: number): Promise<ConnectSecuredTcpSocketResult> {
         if (info.urls) {
             for (const url of info.urls) {
                 try {
-                    const socket = await this.connect(url, serverCertificate, clientCertificate);
+                    const socket = await this.connect(url, serverCertificate, clientCertificate, timeout);
                     const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, url, socket);
                     return new ConnectSecuredTcpSocketResult(url, socket, supportedFeatures);
                 } catch {
@@ -80,7 +96,7 @@ export class TcpUtils {
             }
         }
 
-        const socket = await this.connect(info.url, serverCertificate, clientCertificate);
+        const socket = await this.connect(info.url, serverCertificate, clientCertificate, timeout);
         const supportedFeatures = await this._invokeNegotiation(info, operationType, negotiationCallback, info.url, socket);
         return new ConnectSecuredTcpSocketResult(info.url, socket, supportedFeatures);
     }

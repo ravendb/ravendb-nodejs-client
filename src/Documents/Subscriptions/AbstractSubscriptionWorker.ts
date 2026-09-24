@@ -69,6 +69,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             strategy: "OpenIfFree",
             maxDocsPerBatch: 4096,
             timeToWaitBeforeConnectionRetry: 5 * 1000,
+            connectionStreamTimeout: 30 * 1000,
             maxErroneousPeriod: 5 * 60 * 1000,
             workerId: randomUUID()
         }, options);
@@ -76,6 +77,10 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
         if (StringUtil.isNullOrEmpty(options.subscriptionName)) {
             throwError("InvalidArgumentException", "SubscriptionConnectionOptions must specify the subscriptionName");
+        }
+
+        if (this._options.connectionStreamTimeout < 15 * 1000) {
+            throwError("InvalidArgumentException", "connectionStreamTimeout can't be smaller than 15 seconds.");
         }
 
         this._dbName = dbName;
@@ -285,7 +290,8 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             command.result.certificate,
             requestExecutor.getAuthOptions(),
             "Subscription",
-            (chosenUrl, tcpInfo, socket) => this._negotiateProtocolVersionForSubscription(chosenUrl, tcpInfo, socket));
+            (chosenUrl, tcpInfo, socket) => this._negotiateProtocolVersionForSubscription(chosenUrl, tcpInfo, socket),
+            this._options.connectionStreamTimeout);
 
         this._tcpClient = result.socket;
 
