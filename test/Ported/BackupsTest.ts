@@ -138,7 +138,7 @@ import { TimeUtil } from "../../src/Utility/TimeUtil.js";
             name: "myBackup",
             disabled: true,
             backupType: "Snapshot",
-            fullBackupFrequency: "20 * * * *",
+            fullBackupFrequency: "0 0 1 1 *",
             backupEncryptionSettings: {
                 key: "QV2jJkHCPGwjbOiXuZDCNmyyj/GE4OH8OZlkg5jQPRI=",
                 encryptionMode: "UseProvidedKey"
