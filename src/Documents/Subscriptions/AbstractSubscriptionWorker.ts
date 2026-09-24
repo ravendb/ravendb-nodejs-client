@@ -457,13 +457,10 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             case "Redirect": {
                 const data: SubscriptionRedirectData = connectionStatus.data;
 
-                if (this._options.strategy === "WaitForFree") {
-                    if (data) {
-                        if (data.RegisterConnectionDurationInTicks / 10_000 >= this._options.maxErroneousPeriod) {
-                            // this worker connection Waited For Free for more than MaxErroneousPeriod
-                            this._lastConnectionFailure = null;
-                        }
-                    }
+                if (this._options.strategy === "WaitForFree"
+                    && data?.RegisterConnectionDurationInTicks / 10_000 >= this._options.maxErroneousPeriod) {
+                    // this worker connection Waited For Free for more than MaxErroneousPeriod
+                    this._lastConnectionFailure = null;
                 }
 
                 const appropriateNode = data?.RedirectedTag;
