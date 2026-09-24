@@ -1089,6 +1089,41 @@ describe("SubscriptionsBasicTest", function () {
             .isEqualTo(state.subscriptionId);
     });
 
+    it("canUpdateSubscriptionPinToMentorNodeByName", async () => {
+        const subsId = await store.subscriptions.create({
+            query: "from Users",
+            name: "Created",
+            mentorNode: "A"
+        });
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const state = subscriptions[0];
+        assertThat(subscriptions)
+            .hasSize(1);
+        assertThat(state.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(state.query)
+            .isEqualTo("from Users");
+        assertThat(state.mentorNode)
+            .isEqualTo("A");
+
+        await store.subscriptions.update({
+            name: subsId,
+            pinToMentorNode: true
+        });
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const newState = newSubscriptions[0];
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        assertThat(newState.subscriptionName)
+            .isEqualTo(state.subscriptionName);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(state.subscriptionId);
+        assertThat(newState.pinToMentorNode)
+            .isTrue();
+    });
+
    it("canCreateSubscriptionWithIncludeTimeSeries_LastRangeByTime", async () => {
        const now = testContext.utcToday();
 
