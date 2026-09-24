@@ -747,17 +747,13 @@ export abstract class InMemoryDocumentSessionOperations
                 }
 
                 IncludesUtil.include(result, include, id => {
-                    if (!id) {
-                        return;
-                    }
-
                     if (this.isLoaded(id)) {
                         return;
                     }
 
                     const document = includes[id];
                     if (document) {
-                        const metadata = document.get(CONSTANTS.Documents.Metadata.KEY);
+                        const metadata = document[CONSTANTS.Documents.Metadata.KEY];
 
                         if (tryGetConflict(metadata)) {
                             return;
