@@ -1,6 +1,8 @@
-import { Company, Order, User } from "../../Assets/Entities.js";
+import { Address, Company, Order, User } from "../../Assets/Entities.js";
 import assert from "node:assert"
-import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
+import fs from "node:fs";
+import path from "node:path";
+import { testContext, disposeTestDocumentStore, TemporaryDirContext, RavenTestContext } from "../../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
@@ -13,7 +15,17 @@ import {
     GetOngoingTaskInfoOperation,
     OngoingTaskSubscription,
     ObjectUtil,
-    DocumentStore
+    DocumentStore,
+    CONSTANTS,
+    DatabaseSmugglerExportOptions,
+    DatabaseSmugglerImportOptions,
+    DeleteDatabasesOperation,
+    OperationCompletionAwaiter,
+    PeriodicBackupConfiguration,
+    RestoreBackupConfiguration,
+    RestoreBackupOperation,
+    StartBackupOperation,
+    UpdatePeriodicBackupOperation
 } from "../../../src/index.js";
 import { AsyncQueue } from "../../Utils/AsyncQueue.js";
 import { acquireSemaphore } from "../../../src/Utility/SemaphoreUtil.js";
@@ -24,6 +36,12 @@ import { TimeValue } from "../../../src/Primitives/TimeValue.js";
 import { Semaphore } from "../../../src/Utility/Semaphore.js";
 import { delay, wrapWithTimeout } from "../../../src/Utility/PromiseUtil.js";
 import { addDays, milliseconds } from "date-fns";
+
+class PersonWithAddress {
+    public id: string;
+    public name: string;
+    public address: Address;
+}
 
 describe("SubscriptionsBasicTest", function () {
     const _reasonableWaitTime = 15 * 1000;
@@ -1090,6 +1108,61 @@ describe("SubscriptionsBasicTest", function () {
             .isEqualTo(state.subscriptionId);
     });
 
+    it("subscriptionLongName", async () => {
+        await assertThrows(() => store.subscriptions.create({
+            documentType: User,
+            name: "a".repeat(2266)
+        }), err => {
+            assertThat(err.name)
+                .isEqualTo("SubscriptionNameException");
+        });
+    });
+
+    it("shouldRespectStartsWithCriteria", async () => {
+        {
+            const session = store.openSession();
+            for (let i = 0; i < 100; i++) {
+                await session.store(new User(), i % 2 === 0 ? "users/" : "users/favorite/");
+            }
+
+            await session.saveChanges();
+        }
+
+        const id = await store.subscriptions.create({
+            query: "from Users as u where startsWith(id(u), 'users/favorite/')"
+        });
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: id,
+            maxDocsPerBatch: 15,
+            timeToWaitBeforeConnectionRetry: 5000
+        });
+
+        try {
+            const ids: string[] = [];
+
+            await new Promise<void>((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("batch", (batch, callback) => {
+                    ids.push(...batch.items.map(x => x.id));
+
+                    if (ids.length >= 50) {
+                        resolve();
+                    }
+
+                    callback();
+                });
+            });
+
+            assertThat(ids)
+                .hasSize(50);
+            assertThat(ids)
+                .allMatch(x => x.startsWith("users/favorite/"));
+        } finally {
+            subscription.dispose();
+        }
+    });
+
     it("canUpdateSubscriptionPinToMentorNodeByName", async () => {
         const subsId = await store.subscriptions.create({
             query: "from Users",
@@ -1123,6 +1196,193 @@ describe("SubscriptionsBasicTest", function () {
             .isEqualTo(state.subscriptionId);
         assertThat(newState.pinToMentorNode)
             .isTrue();
+    });
+
+    it("canUpdateDisabledByName", async () => {
+        const subsId = await store.subscriptions.create({
+            query: "from Users",
+            name: "Created"
+        });
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const state = subscriptions[0];
+        assertThat(subscriptions)
+            .hasSize(1);
+        assertThat(state.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(state.query)
+            .isEqualTo("from Users");
+        assertThat(state.disabled)
+            .isFalse();
+
+        await store.subscriptions.update({
+            name: subsId,
+            disabled: true
+        });
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        const newState = newSubscriptions[0];
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        assertThat(newState.subscriptionName)
+            .isEqualTo(state.subscriptionName);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(state.subscriptionId);
+        assertThat(newState.disabled)
+            .isTrue();
+    });
+
+    it("canCreateByUpdateSubscription", async () => {
+        let query = "from Users";
+        let name = "Created";
+        let id = 1000;
+
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(subscriptions)
+            .hasSize(0);
+
+        await store.subscriptions.update({
+            query,
+            name,
+            createNew: true
+        });
+
+        let newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        let newState = newSubscriptions[0];
+        assertThat(newState.subscriptionName)
+            .isEqualTo(name);
+        assertThat(newState.query)
+            .isEqualTo(query);
+
+        await store.subscriptions.update({
+            query,
+            id,
+            createNew: true
+        });
+
+        newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(newSubscriptions)
+            .hasSize(2);
+        newState = newSubscriptions.find(x => x.subscriptionName === id.toString());
+        assertThat(newState)
+            .isNotNull();
+        assertThat(newState.query)
+            .isEqualTo(query);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(id);
+
+        id++;
+        name += "New";
+        await store.subscriptions.update({
+            query,
+            name,
+            id,
+            createNew: true
+        });
+
+        newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(newSubscriptions)
+            .hasSize(3);
+        newState = newSubscriptions.find(x => x.subscriptionName === name);
+        assertThat(newState)
+            .isNotNull();
+        assertThat(newState.query)
+            .isEqualTo(query);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(id);
+
+        const oldId = id;
+        id++;
+        query += " where age > 322";
+
+        await store.subscriptions.update({
+            query,
+            name,
+            id,
+            createNew: true
+        });
+
+        newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(newSubscriptions)
+            .hasSize(3);
+        newState = newSubscriptions.find(x => x.subscriptionName === name);
+        assertThat(newState)
+            .isNotNull();
+        assertThat(newState.query)
+            .isEqualTo(query);
+        assertThat(newState.subscriptionId)
+            .isEqualTo(oldId);
+    });
+
+    it("canCreateDisabledSubscriptionByUpdateSubscriptionAndThenUpdate", async () => {
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(subscriptions)
+            .hasSize(0);
+
+        await store.subscriptions.update({
+            query: "from Users",
+            name: "Created",
+            disabled: true,
+            createNew: true
+        });
+
+        const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(newSubscriptions)
+            .hasSize(1);
+        const newState = newSubscriptions[0];
+        assertThat(newState)
+            .isNotNull();
+        assertThat(newState.subscriptionName)
+            .isEqualTo("Created");
+        assertThat(newState.query)
+            .isEqualTo("from Users");
+        assertThat(newState.disabled)
+            .isTrue();
+    });
+
+    it("subscription_GetOngoingTaskInfoOperation_ShouldReturnCorrentTaskStatus", async () => {
+        await putUserDoc(store);
+
+        const name = await store.subscriptions.create(User);
+        const state = await store.subscriptions.getSubscriptionState(name);
+
+        const subscription = store.subscriptions.getSubscriptionWorker(name);
+
+        try {
+            await new Promise<void>((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("batch", (batch, callback) => {
+                    resolve();
+                    callback();
+                });
+            });
+
+            const taskInfoById = await store.maintenance.send(
+                new GetOngoingTaskInfoOperation(state.subscriptionId, "Subscription"));
+            assertThat(taskInfoById)
+                .isNotNull();
+            assertThat(taskInfoById.taskState)
+                .isEqualTo("Enabled");
+            assertThat(taskInfoById.taskType)
+                .isEqualTo("Subscription");
+            assertThat(taskInfoById.taskConnectionStatus)
+                .isEqualTo("Active");
+
+            const taskInfoByName = await store.maintenance.send(
+                new GetOngoingTaskInfoOperation(state.subscriptionName, "Subscription"));
+            assertThat(taskInfoByName)
+                .isNotNull();
+            assertThat(taskInfoByName.taskState)
+                .isEqualTo(taskInfoById.taskState);
+            assertThat(taskInfoByName.taskType)
+                .isEqualTo(taskInfoById.taskType);
+            assertThat(taskInfoByName.taskConnectionStatus)
+                .isEqualTo(taskInfoById.taskConnectionStatus);
+        } finally {
+            subscription.dispose();
+        }
     });
 
    it("canCreateSubscriptionWithIncludeTimeSeries_LastRangeByTime", async () => {
@@ -1431,6 +1691,726 @@ describe("SubscriptionsBasicTest", function () {
            worker.dispose();
        }
    });
+
+    it("canGetSubscriptionsFromDatabase", async () => {
+        let subscriptionDocuments = await store.subscriptions.getSubscriptions(0, 10);
+        assertThat(subscriptionDocuments)
+            .hasSize(0);
+
+        await store.subscriptions.create(User);
+
+        subscriptionDocuments = await store.subscriptions.getSubscriptions(0, 10);
+        assertThat(subscriptionDocuments)
+            .hasSize(1);
+        assertThat(subscriptionDocuments[0].query)
+            .isEqualTo("from 'Users' as doc");
+
+        const subscription = store.subscriptions.getSubscriptionWorker({
+            subscriptionName: subscriptionDocuments[0].subscriptionName,
+            timeToWaitBeforeConnectionRetry: 5000
+        });
+
+        try {
+            await putUserDoc(store);
+
+            const itemsInBatch = await new Promise<number>((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("batch", (batch, callback) => {
+                    resolve(batch.getNumberOfItemsInBatch());
+                    callback();
+                });
+            });
+
+            assertThat(itemsInBatch)
+                .isEqualTo(1);
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("subscriptionsBatchSizeShouldIgnoreSkippedItems", async () => {
+        const name = await store.subscriptions.create({
+            query: "from Users where count > 0"
+        });
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: name,
+            documentType: User,
+            timeToWaitBeforeConnectionRetry: 5000,
+            maxDocsPerBatch: 2
+        });
+
+        try {
+            {
+                const session = store.openSession();
+                for (let i = 0; i < 10; i++) {
+                    const user = new User();
+                    user.count = 1;
+                    await session.store(user);
+                }
+
+                await session.saveChanges();
+            }
+
+            subscription.on("batch", async (batch, callback) => {
+                try {
+                    const session = batch.openSession();
+
+                    for (const item of batch.items) {
+                        item.result.count--;
+                    }
+
+                    await session.saveChanges();
+                    callback();
+                } catch (e) {
+                    callback(e);
+                }
+            });
+
+            const usersWithPositiveCount = await testContext.waitForValue(async () => {
+                const session = store.openSession();
+                const users = await session.query(User)
+                    .whereGreaterThan("count", 0)
+                    .waitForNonStaleResults()
+                    .all();
+                return users.length;
+            }, 0);
+
+            assertThat(usersWithPositiveCount)
+                .isEqualTo(0);
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    (RavenTestContext.isPullRequest ? it.skip : it)("canBackupAndRestoreSubscriptions", async () => {
+        const temporaryDirContext = new TemporaryDirContext();
+
+        try {
+            const backupPath = path.join(temporaryDirContext.tempDir, "BackupFolder");
+            fs.mkdirSync(backupPath);
+
+            {
+                const session = store.openSession();
+                const user = new User();
+                user.name = "oren";
+                await session.store(user, "users/1");
+                await session.saveChanges();
+            }
+
+            await store.subscriptions.create({ documentType: User, name: "sub1" });
+            await store.subscriptions.create({ documentType: User, name: "sub2" });
+            await store.subscriptions.create(User);
+
+            let subscriptionStateList = await store.subscriptions.getSubscriptions(0, 10);
+            assertThat(subscriptionStateList)
+                .hasSize(3);
+
+            const backupConfiguration: PeriodicBackupConfiguration = {
+                backupType: "Backup",
+                fullBackupFrequency: "0 0 1 1 *",
+                localSettings: {
+                    folderPath: backupPath
+                }
+            };
+
+            const { taskId } = await store.maintenance.send(new UpdatePeriodicBackupOperation(backupConfiguration));
+
+            await testContext.waitForValue(async () => {
+                const task = await store.maintenance.send(new GetOngoingTaskInfoOperation(taskId, "Backup"));
+                return !!task.responsibleNode?.nodeTag;
+            }, true);
+
+            const backupOperation = await store.maintenance.send(new StartBackupOperation(true, taskId));
+            await new OperationCompletionAwaiter(
+                store.getRequestExecutor(), store.conventions, backupOperation.operationId, backupOperation.responsibleNode)
+                .waitForCompletion();
+
+            const restoredDatabaseName = store.database + "_restored";
+
+            const restoreOperation = await store.maintenance.server.send(new RestoreBackupOperation({
+                backupLocation: path.join(backupPath, fs.readdirSync(backupPath)[0]),
+                databaseName: restoredDatabaseName,
+                type: "Local"
+            } as RestoreBackupConfiguration));
+            await restoreOperation.waitForCompletion();
+
+            try {
+                subscriptionStateList = await store.subscriptions.getSubscriptions(0, 10, restoredDatabaseName);
+
+                assertThat(subscriptionStateList)
+                    .hasSize(3);
+                assertThat(subscriptionStateList)
+                    .anyMatch(x => x.subscriptionName === "sub1");
+                assertThat(subscriptionStateList)
+                    .anyMatch(x => x.subscriptionName === "sub2");
+
+                const worker = store.subscriptions.getSubscriptionWorker<User>({
+                    subscriptionName: "sub1",
+                    documentType: User,
+                    maxDocsPerBatch: 5,
+                    timeToWaitBeforeConnectionRetry: 1000
+                }, restoredDatabaseName);
+
+                try {
+                    await new Promise<void>((resolve, reject) => {
+                        worker.on("error", reject);
+                        worker.on("batch", (batch, callback) => {
+                            resolve();
+                            callback();
+                        });
+                    });
+                } finally {
+                    worker.dispose();
+                }
+            } finally {
+                await store.maintenance.server.send(new DeleteDatabasesOperation({
+                    databaseNames: [restoredDatabaseName],
+                    hardDelete: true
+                }));
+            }
+        } finally {
+            temporaryDirContext.dispose();
+        }
+    });
+
+    it("canExportAndImportSubscriptions", async () => {
+        const temporaryDirContext = new TemporaryDirContext();
+        const store2 = await testContext.getDocumentStore();
+
+        try {
+            await store.subscriptions.create({ documentType: User, name: "sub1" });
+            await store.subscriptions.create({ documentType: User, name: "sub2" });
+            await store.subscriptions.create(User);
+
+            let subscriptionStateList = await store.subscriptions.getSubscriptions(0, 10);
+            assertThat(subscriptionStateList)
+                .hasSize(3);
+
+            const exportFile = path.join(
+                temporaryDirContext.tempDir, "subscriptions." + CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+
+            const exportOperation = await store.smuggler.export(new DatabaseSmugglerExportOptions(), exportFile);
+            await exportOperation.waitForCompletion();
+
+            const importOperation = await store2.smuggler.import(new DatabaseSmugglerImportOptions(), exportFile);
+            await importOperation.waitForCompletion();
+
+            subscriptionStateList = await store2.subscriptions.getSubscriptions(0, 10);
+
+            assertThat(subscriptionStateList)
+                .hasSize(3);
+            assertThat(subscriptionStateList)
+                .anyMatch(x => x.subscriptionName === "sub1");
+            assertThat(subscriptionStateList)
+                .anyMatch(x => x.subscriptionName === "sub2");
+
+            {
+                const session = store2.openSession();
+                const user = new User();
+                user.name = "oren";
+                await session.store(user, "users/1");
+                await session.saveChanges();
+            }
+
+            const worker = store2.subscriptions.getSubscriptionWorker<User>({
+                subscriptionName: "sub1",
+                documentType: User,
+                maxDocsPerBatch: 5,
+                timeToWaitBeforeConnectionRetry: 1000
+            });
+
+            try {
+                await new Promise<void>((resolve, reject) => {
+                    worker.on("error", reject);
+                    worker.on("batch", (batch, callback) => {
+                        resolve();
+                        callback();
+                    });
+                });
+            } finally {
+                worker.dispose();
+            }
+        } finally {
+            await disposeTestDocumentStore(store2);
+            temporaryDirContext.dispose();
+        }
+    });
+
+    it("canUseNestedPropertiesInSubscriptionCriteria", async () => {
+        {
+            const session = store.openSession();
+            for (let i = 0; i < 10; i++) {
+                const firstStreetPerson = new PersonWithAddress();
+                firstStreetPerson.address = new Address();
+                firstStreetPerson.address.street = "1st Street";
+                firstStreetPerson.address.zipCode = i % 2 === 0 ? "999" : "12345";
+                await session.store(firstStreetPerson);
+
+                const secondStreetPerson = new PersonWithAddress();
+                secondStreetPerson.address = new Address();
+                secondStreetPerson.address.street = "2nd Street";
+                secondStreetPerson.address.zipCode = "12345";
+                await session.store(secondStreetPerson);
+
+                await session.store(new Company());
+            }
+
+            await session.saveChanges();
+        }
+
+        await store.subscriptions.create(User);
+
+        const id = await store.subscriptions.create({
+            query: "from PersonWithAddresses where address.street = '1st Street' and address.zipCode != '999'"
+        });
+
+        const subscription = store.subscriptions.getSubscriptionWorker<PersonWithAddress>({
+            subscriptionName: id,
+            documentType: PersonWithAddress,
+            maxDocsPerBatch: 5,
+            timeToWaitBeforeConnectionRetry: 5000
+        });
+
+        try {
+            const streets: string[] = [];
+
+            await new Promise<void>((resolve, reject) => {
+                subscription.on("error", reject);
+                subscription.on("batch", (batch, callback) => {
+                    streets.push(...batch.items.map(x => x.result.address.street));
+
+                    if (streets.length >= 5) {
+                        resolve();
+                    }
+
+                    callback();
+                });
+            });
+
+            assertThat(streets)
+                .allMatch(x => x === "1st Street");
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("shouldIncrementFailingTests", async () => {
+        const docsAmount = 50;
+        let lastCompany: Company;
+
+        {
+            const bulkInsert = store.bulkInsert();
+            for (let i = 0; i < docsAmount; i++) {
+                lastCompany = new Company();
+                lastCompany.name = "Something Inc. #" + i;
+                await bulkInsert.store(lastCompany);
+            }
+
+            await bulkInsert.finish();
+        }
+
+        let lastChangeVector: string;
+
+        {
+            const session = store.openSession();
+            const company = await session.load(lastCompany.id, Company);
+            lastChangeVector = session.advanced.getChangeVectorFor(company);
+        }
+
+        const id = await store.subscriptions.create(Company);
+
+        const subscription = store.subscriptions.getSubscriptionWorker<Company>({
+            subscriptionName: id,
+            documentType: Company,
+            maxDocsPerBatch: 1,
+            ignoreSubscriberErrors: true,
+            timeToWaitBeforeConnectionRetry: 5000
+        });
+
+        try {
+            await new Promise<void>(resolve => {
+                let acknowledged = 0;
+
+                subscription.on("afterAcknowledgment", batch => {
+                    acknowledged += batch.getNumberOfItemsInBatch();
+
+                    if (acknowledged === docsAmount) {
+                        resolve();
+                    }
+                });
+
+                subscription.on("batch", (batch, callback) => {
+                    callback(getError("InvalidOperationException", "Fake exception"));
+                });
+            });
+
+            const subscriptionStatus = await store.subscriptions.getSubscriptions(0, 1024);
+
+            assertThat(subscriptionStatus[0].changeVectorForNextBatchStartingPoint)
+                .isEqualTo(lastChangeVector);
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    async function putUser(name: string, age: number) {
+        const session = store.openSession();
+        const user = new User();
+        user.name = name;
+        user.age = age;
+        await session.store(user);
+        await session.saveChanges();
+    }
+
+    function assertClosedBecauseQueryModified(error: Error & { canReconnect?: boolean }, subscriptionName: string) {
+        assertThat(error.name)
+            .isEqualTo("SubscriptionClosedException");
+        assertThat(error.canReconnect)
+            .isTrue();
+        assertThat(error.message)
+            .isEqualTo(`Subscription with id '${subscriptionName}' was closed. `
+                + "Raven.Client.Exceptions.Documents.Subscriptions.SubscriptionClosedException: "
+                + `The subscription ${subscriptionName} query has been modified, connection must be restarted`);
+    }
+
+    it("canUpdateSubscriptionToStartFromBeginningOfTime", async () => {
+        const count = 10;
+        await store.subscriptions.create(User);
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(subscriptions)
+            .hasSize(1);
+
+        const state = subscriptions[0];
+        assertThat(state.query)
+            .isEqualTo("from 'Users' as doc");
+
+        const newQuery = "from Users where age > 18";
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: state.subscriptionName,
+            documentType: User,
+            timeToWaitBeforeConnectionRetry: 16
+        });
+
+        try {
+            const retryErrors: Error[] = [];
+            let connections = 0;
+            let processed = 0;
+
+            subscription.on("connectionRetry", error => retryErrors.push(error));
+            subscription.on("onEstablishedSubscriptionConnection", () => connections++);
+            subscription.on("batch", (batch, callback) => {
+                processed += batch.getNumberOfItemsInBatch();
+                callback();
+            });
+
+            for (let i = 0; i < count; i++) {
+                await putUser("EGR_" + i, i < count / 2 ? 18 : 19);
+            }
+
+            const processedBeforeUpdate = await testContext.waitForValue(async () => processed, count);
+            assertThat(processedBeforeUpdate)
+                .isEqualTo(count);
+
+            await store.subscriptions.update({
+                name: state.subscriptionName,
+                query: newQuery,
+                changeVector: "BeginningOfTime"
+            });
+
+            const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+            const newState = newSubscriptions[0];
+            assertThat(newSubscriptions)
+                .hasSize(1);
+            assertThat(newState.subscriptionName)
+                .isEqualTo(state.subscriptionName);
+            assertThat(newState.query)
+                .isEqualTo(newQuery);
+            assertThat(newState.subscriptionId)
+                .isEqualTo(state.subscriptionId);
+
+            const reconnected = await testContext.waitForValue(async () => connections > 1, true);
+            assertThat(reconnected)
+                .isTrue();
+
+            const processedAfterUpdate = await testContext.waitForValue(async () => processed, count + count / 2);
+            assertThat(processedAfterUpdate)
+                .isEqualTo(count + count / 2);
+
+            for (const error of retryErrors) {
+                if (error.name === "SubscriptionClosedException") {
+                    assertClosedBecauseQueryModified(error, state.subscriptionName);
+                } else if (error.name === "SubscriptionChangeVectorUpdateConcurrencyException") {
+                    assertThat(error.message)
+                        .startsWith(`Can't acknowledge subscription with name '${state.subscriptionName}' `
+                            + "due to inconsistency in change vector progress. "
+                            + "Probably there was an admin intervention that changed the change vector value. "
+                            + "Stored value: , received value: A:11");
+                }
+            }
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("canUpdateSubscriptionToStartFromLastDocument", async () => {
+        const count = 10;
+        await store.subscriptions.create(User);
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(subscriptions)
+            .hasSize(1);
+
+        const state = subscriptions[0];
+        assertThat(state.query)
+            .isEqualTo("from 'Users' as doc");
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: state.subscriptionName,
+            documentType: User,
+            timeToWaitBeforeConnectionRetry: 16
+        });
+
+        try {
+            const retryErrors: Error[] = [];
+            const names: string[] = [];
+            let connections = 0;
+
+            subscription.on("connectionRetry", error => retryErrors.push(error));
+            subscription.on("onEstablishedSubscriptionConnection", () => connections++);
+            subscription.on("batch", (batch, callback) => {
+                names.push(...batch.items.map(x => x.result.name));
+                callback();
+            });
+
+            for (let i = 0; i < count / 2; i++) {
+                await putUser("EGR_" + i, 18);
+            }
+
+            const processedBeforeUpdate = await testContext.waitForValue(async () => names.length, count / 2);
+            assertThat(processedBeforeUpdate)
+                .isEqualTo(count / 2);
+
+            const newQuery = "from Users where age > 18";
+
+            await store.subscriptions.update({
+                name: state.subscriptionName,
+                query: newQuery,
+                changeVector: "LastDocument"
+            });
+
+            const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+            const newState = newSubscriptions[0];
+            assertThat(newSubscriptions)
+                .hasSize(1);
+            assertThat(newState.subscriptionName)
+                .isEqualTo(state.subscriptionName);
+            assertThat(newState.query)
+                .isEqualTo(newQuery);
+            assertThat(newState.subscriptionId)
+                .isEqualTo(state.subscriptionId);
+
+            const reconnected = await testContext.waitForValue(async () => connections > 1, true);
+            assertThat(reconnected)
+                .isTrue();
+
+            for (let i = count / 2; i < count; i++) {
+                await putUser("EGR_" + i, 18);
+            }
+
+            await putUser("EGR_" + count, 19);
+
+            await testContext.waitForValue(async () => names.length, count / 2 + 1);
+            assert.deepStrictEqual(names, ["EGR_0", "EGR_1", "EGR_2", "EGR_3", "EGR_4", "EGR_10"]);
+
+            for (const error of retryErrors) {
+                assertClosedBecauseQueryModified(error, state.subscriptionName);
+            }
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("canUpdateSubscriptionToStartFromDoNotChange", async () => {
+        const count = 10;
+        await store.subscriptions.create(User);
+        const subscriptions = await store.subscriptions.getSubscriptions(0, 5);
+        assertThat(subscriptions)
+            .hasSize(1);
+
+        const state = subscriptions[0];
+        assertThat(state.query)
+            .isEqualTo("from 'Users' as doc");
+
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: state.subscriptionName,
+            documentType: User,
+            timeToWaitBeforeConnectionRetry: 16
+        });
+
+        try {
+            const retryErrors: Error[] = [];
+            let connections = 0;
+            let processed = 0;
+
+            subscription.on("connectionRetry", error => retryErrors.push(error));
+            subscription.on("onEstablishedSubscriptionConnection", () => connections++);
+            subscription.on("batch", (batch, callback) => {
+                processed += batch.getNumberOfItemsInBatch();
+                callback();
+            });
+
+            for (let i = 0; i < count / 2; i++) {
+                await putUser("EGR_" + i, 18);
+            }
+
+            const processedBeforeUpdate = await testContext.waitForValue(async () => processed, count / 2);
+            assertThat(processedBeforeUpdate)
+                .isEqualTo(count / 2);
+
+            const newQuery = "from Users where age > 18";
+
+            await store.subscriptions.update({
+                name: state.subscriptionName,
+                query: newQuery,
+                changeVector: "DoNotChange"
+            });
+
+            const newSubscriptions = await store.subscriptions.getSubscriptions(0, 5);
+            const newState = newSubscriptions[0];
+            assertThat(newSubscriptions)
+                .hasSize(1);
+            assertThat(newState.subscriptionName)
+                .isEqualTo(state.subscriptionName);
+            assertThat(newState.query)
+                .isEqualTo(newQuery);
+            assertThat(newState.subscriptionId)
+                .isEqualTo(state.subscriptionId);
+
+            const reconnected = await testContext.waitForValue(async () => connections > 1, true);
+            assertThat(reconnected)
+                .isTrue();
+
+            for (let i = 0; i < count / 2; i++) {
+                await putUser("EGR_" + i, 19);
+            }
+
+            const processedAfterUpdate = await testContext.waitForValue(async () => processed, count);
+            assertThat(processedAfterUpdate)
+                .isEqualTo(count);
+
+            for (const error of retryErrors) {
+                assertClosedBecauseQueryModified(error, state.subscriptionName);
+            }
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("acknowledgeSubscriptionBatchWhenDBisBeingDeletedShouldThrow", async () => {
+        const id = await store.subscriptions.create(User);
+        const subscription = store.subscriptions.getSubscriptionWorker(id);
+
+        try {
+            {
+                const session = store.openSession();
+                const user = new User();
+                user.name = "EGR";
+                user.age = 39;
+                await session.store(user);
+                await session.saveChanges();
+            }
+
+            const deleteDatabase = store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [store.database],
+                hardDelete: true
+            }));
+
+            const error = await new Promise<Error>(resolve => {
+                let lastError: Error;
+                subscription.on("error", e => lastError = e);
+                subscription.on("end", () => resolve(lastError));
+                subscription.on("batch", (batch, callback) => callback());
+            });
+
+            assert.ok(
+                error.name === "DatabaseDoesNotExistException" || error.name === "SubscriptionDoesNotExistException",
+                error.stack);
+            assertThat(error.message)
+                .contains(error.name === "SubscriptionDoesNotExistException"
+                    ? `Stopping subscription '${subscription.subscriptionName}' on node A, because database '${store.database}' is being deleted.`
+                    : store.database);
+
+            await deleteDatabase;
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("waitingSubscriptionShouldBeRegisteredInSubscriptionConnections", async () => {
+        const name = await store.subscriptions.create({
+            query: "from Users",
+            name: "Subscription0"
+        });
+
+        const assertRunningSubscriptionAndDrop = async () => {
+            const taskInfo = await store.maintenance.send(new GetOngoingTaskInfoOperation(name, "Subscription"));
+            assertThat(taskInfo.taskConnectionStatus)
+                .isEqualTo("Active");
+
+            await store.subscriptions.dropConnection(name);
+        };
+
+        const worker1 = store.subscriptions.getSubscriptionWorker({
+            subscriptionName: name,
+            strategy: "WaitForFree"
+        });
+
+        const worker2 = store.subscriptions.getSubscriptionWorker({
+            subscriptionName: name,
+            strategy: "WaitForFree"
+        });
+
+        try {
+            worker1.on("error", TypeUtil.NOOP);
+            const worker1Finished = new Promise<void>(resolve => worker1.on("end", () => resolve()));
+            const worker1Connected = new Promise<void>(resolve =>
+                worker1.on("onEstablishedSubscriptionConnection", () => resolve()));
+            const worker1Processed = new Promise<void>(resolve =>
+                worker1.on("batch", (batch, callback) => {
+                    resolve();
+                    callback();
+                }));
+
+            await worker1Connected;
+
+            worker2.on("error", TypeUtil.NOOP);
+            const worker2Finished = new Promise<void>(resolve => worker2.on("end", () => resolve()));
+            const worker2Connected = new Promise<void>(resolve =>
+                worker2.on("onEstablishedSubscriptionConnection", () => resolve()));
+            const worker2Processed = new Promise<void>(resolve =>
+                worker2.on("batch", (batch, callback) => {
+                    resolve();
+                    callback();
+                }));
+
+            await putUserDoc(store);
+            await worker1Processed;
+
+            await assertRunningSubscriptionAndDrop();
+
+            await worker2Connected;
+            await putUserDoc(store);
+            await worker2Processed;
+
+            await assertRunningSubscriptionAndDrop();
+
+            await Promise.all([worker1Finished, worker2Finished]);
+        } finally {
+            worker1.dispose();
+            worker2.dispose();
+        }
+    });
 
     it("canUseEmoji", async () => {
         let user1: User;
