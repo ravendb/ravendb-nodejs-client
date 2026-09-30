@@ -1,5 +1,5 @@
 import { Company, User } from "../../Assets/Entities.js";
-import { testContext, disposeTestDocumentStore, RavenTestContext, TemporaryDirContext } from "../../Utils/TestUtil.js";
+import { testContext, disposeTestDocumentStore, RavenTestContext } from "../../Utils/TestUtil.js";
 
 import DocumentStore, {
     IDocumentStore,
@@ -11,7 +11,7 @@ import DocumentStore, {
 } from "../../../src/index.js";
 import assert from "node:assert"
 import fs from "node:fs";
-import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
 // skipped for the time being
@@ -508,6 +508,13 @@ interface RevisionMetadata {
     "@id": string;
 }
 
+interface RevisionsDump {
+    RevisionDocuments: { "@metadata": RevisionMetadata }[];
+}
+
+const revisionsDumpPath = fileURLToPath(new URL("../../Assets/revisionsSubscriptionsDump.json", import.meta.url));
+const revisionsDump: RevisionsDump = JSON.parse(fs.readFileSync(revisionsDumpPath, "utf8"));
+
 async function configureRevisions(store: IDocumentStore, ...collectionNames: string[]) {
     const defaultCollection = new RevisionsCollectionConfiguration();
     defaultCollection.disabled = false;
@@ -527,20 +534,11 @@ async function configureRevisions(store: IDocumentStore, ...collectionNames: str
 }
 
 async function importRevisionsDump(store: IDocumentStore) {
-    const temporaryDirContext = new TemporaryDirContext();
+    const options = new DatabaseSmugglerImportOptions();
+    options.operateOnTypes = ["RevisionDocuments"];
 
-    try {
-        const dumpFile = path.join(temporaryDirContext.tempDir, "revisions.ravendbdump");
-        fs.writeFileSync(dumpFile, JSON.stringify(revisionsDump));
-
-        const options = new DatabaseSmugglerImportOptions();
-        options.operateOnTypes = ["RevisionDocuments"];
-
-        const operation = await store.smuggler.import(options, dumpFile);
-        await operation.waitForCompletion();
-    } finally {
-        temporaryDirContext.dispose();
-    }
+    const operation = await store.smuggler.import(options, revisionsDumpPath);
+    await operation.waitForCompletion();
 }
 
 async function collectRevisionsWithMetadata(store: IDocumentStore, query: string, count: number) {
@@ -601,378 +599,3 @@ function assertNoPreviousRevision(revision: RevisionWithMetadata) {
     assertThat(revision.PreviousId).isNull();
     assertThat(revision.PreviousChangeVector).isNull();
 }
-
-const revisionsDump = {
-    "BuildVersion": 54,
-    "DatabaseRecord": {
-        "DatabaseName": "test111",
-        "Encrypted": false,
-        "UnusedDatabaseIds": [],
-        "LockMode": "Unlock",
-        "ConflictSolverConfig": null,
-        "Settings": [],
-        "Revisions": {
-            "Default": null,
-            "Collections": {
-                "Orders": {
-                    "Disabled": false,
-                    "MinimumRevisionsToKeep": null,
-                    "MinimumRevisionAgeToKeep": null,
-                    "PurgeOnDelete": false,
-                    "MaximumRevisionsToDeleteUponDocumentUpdate": null
-                }
-            }
-        },
-        "TimeSeries": {},
-        "DocumentsCompression": {
-            "Collections": [],
-            "CompressAllCollections": false,
-            "CompressRevisions": true
-        },
-        "Expiration": null,
-        "Refresh": null,
-        "Client": null,
-        "Sorters": {},
-        "Analyzers": {},
-        "RavenConnectionStrings": {},
-        "SqlConnectionStrings": {},
-        "PeriodicBackups": [],
-        "ExternalReplications": [],
-        "RavenEtls": [],
-        "SqlEtls": [],
-        "HubPullReplications": [],
-        "SinkPullReplications": [],
-        "OlapConnectionStrings": {},
-        "OlapEtls": [],
-        "ElasticSearchConnectionStrings": {},
-        "ElasticSearchEtls": [],
-        "QueueConnectionStrings": {},
-        "QueueEtls": []
-    },
-    "Docs": [],
-    "RevisionDocuments": [
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                },
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 2,
-                    "Product": "products/33-A",
-                    "ProductName": "Geitost",
-                    "Quantity": 25
-                },
-                {
-                    "Discount": 0,
-                    "PricePerUnit": 27.2,
-                    "Product": "products/60-A",
-                    "ProductName": "Camembert Pierrot",
-                    "Quantity": 40
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:93-OSKWIRBEDEGoAxbEIiFJeQ",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:53.0456146Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                },
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 2,
-                    "Product": "products/33-A",
-                    "ProductName": "Geitost",
-                    "Quantity": 25
-                },
-                {
-                    "Discount": 0,
-                    "PricePerUnit": 27.2,
-                    "Product": "products/60-A",
-                    "ProductName": "Camembert Pierrot",
-                    "Quantity": 40
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:93-F9I6Egqwm0Kz+K0oFVIR9Q",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:53.0456146Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                },
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 2,
-                    "Product": "products/33-A",
-                    "ProductName": "Geitost",
-                    "Quantity": 25
-                },
-                {
-                    "Discount": 0,
-                    "PricePerUnit": 27.2,
-                    "Product": "products/60-A",
-                    "ProductName": "Camembert Pierrot",
-                    "Quantity": 40
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:2144-IG4VwBTOnkqoT/uwgm2OQg",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:53.8295488Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "ShipTo": {
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "City": "Charleroi",
-                "Region": null,
-                "PostalCode": "B-6000",
-                "Country": "Belgium",
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                }
-            },
-            "ShipVia": "shippers/2-A",
-            "Freight": 51.3,
-            "Lines": [],
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:3804-IG4VwBTOnkqoT/uwgm2OQg",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:53.9801503Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:5478-IG4VwBTOnkqoT/uwgm2OQg",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:54.1021446Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                },
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 2,
-                    "Product": "products/33-A",
-                    "ProductName": "Geitost",
-                    "Quantity": 25
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:5480-IG4VwBTOnkqoT/uwgm2OQg",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:54.1022519Z"
-            }
-        },
-        {
-            "Company": "companies/76-A",
-            "Employee": "employees/4-A",
-            "Freight": 51.3,
-            "Lines": [
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 64.8,
-                    "Product": "products/20-A",
-                    "ProductName": "Sir Rodney's Marmalade",
-                    "Quantity": 40
-                },
-                {
-                    "Discount": 0.05,
-                    "PricePerUnit": 2,
-                    "Product": "products/33-A",
-                    "ProductName": "Geitost",
-                    "Quantity": 25
-                },
-                {
-                    "Discount": 0,
-                    "PricePerUnit": 27.2,
-                    "Product": "products/60-A",
-                    "ProductName": "Camembert Pierrot",
-                    "Quantity": 40
-                }
-            ],
-            "OrderedAt": "1996-07-09T00:00:00.0000000",
-            "RequireAt": "1996-08-06T00:00:00.0000000",
-            "ShipTo": {
-                "City": "Charleroi",
-                "Country": "Belgium",
-                "Line1": "Boulevard Tirou, 255",
-                "Line2": null,
-                "Location": {
-                    "Latitude": 50.4062634,
-                    "Longitude": 4.4470125
-                },
-                "PostalCode": "B-6000",
-                "Region": null
-            },
-            "ShipVia": "shippers/2-A",
-            "ShippedAt": "1996-07-11T00:00:00.0000000",
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:5482-IG4VwBTOnkqoT/uwgm2OQg",
-                "@flags": "HasRevisions, Revision",
-                "@id": "orders/5-A",
-                "@last-modified": "2018-07-27T12:11:54.1024494Z"
-            }
-        },
-        {
-            "@metadata": {
-                "@collection": "Orders",
-                "@change-vector": "A:2568-F9I6Egqwm0Kz+K0oFVIR9Q, A:13366-IG4VwBTOnkqoT/uwgm2OQg, A:2568-OSKWIRBEDEGoAxbEIiFJeQ, A:17614-jxcHZAmE70Kb2y3I+eaWdw",
-                "@flags": "HasRevisions, DeleteRevision",
-                "@id": "orders/5-A",
-                "@last-modified": "2024-01-18T12:12:36.5474797Z"
-            }
-        }
-    ]
-};
