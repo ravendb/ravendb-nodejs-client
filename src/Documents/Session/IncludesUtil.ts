@@ -7,8 +7,8 @@ interface IncludePath {
     isPrefix: boolean;
 }
 
-const INCLUDE_PREFIX_REGEX = /(\([^)]+\))$/;
-const INCLUDE_SUFFIX_REGEX = /(\[[{0}/][^\]]+\])$/;
+const INCLUDE_PREFIX_REGEX = /(\([^()]+\))$/;
+const INCLUDE_SUFFIX_REGEX = /(\[[{0}/][^[\]]+\])$/;
 const COLLECTION_SEPARATOR = "[].";
 
 export class IncludesUtil {
