@@ -225,6 +225,27 @@ await session.delete('products/1-A');
 > <small>[cannot delete untracked entity](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/TrackEntityTest.ts#L20)</small>  
 > <small>[loading deleted doc returns null](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/TrackEntityTest.ts#L32)</small>
 
+### Register a concurrency check
+
+```javascript
+// Capture the change vector of a document in one session
+const readSession = store.openSession();
+const order = await readSession.load('orders/1-A');
+const changeVector = readSession.advanced.getChangeVectorFor(order);
+
+// Later, in another session, make the save depend on that document being unchanged
+const session = store.openSession();
+const invoice = await session.load('invoices/1-A');
+invoice.status = 'Approved';
+// No request is sent here, the check runs with the next saveChanges()
+session.advanced.registerForConcurrencyCheck('orders/1-A', changeVector);
+// Throws ConcurrencyException and saves nothing if 'orders/1-A' was modified meanwhile
+await session.saveChanges();
+
+// An empty string asserts that the document does not exist, null cancels the check
+session.advanced.registerForConcurrencyCheck('orders/2-A', '');
+```
+
 ## Query documents
 
 1. Use `query()` session method:  
