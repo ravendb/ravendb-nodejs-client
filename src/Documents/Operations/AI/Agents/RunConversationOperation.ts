@@ -14,7 +14,8 @@ import { IRaftCommand } from "../../../../Http/IRaftCommand.js";
 import { RaftIdGenerator } from "../../../../Utility/RaftIdGenerator.js";
 import { ServerNode } from "../../../../Http/ServerNode.js";
 import { HttpRequestParameters, HttpResponse } from "../../../../Primitives/Http.js";
-import { throwError } from "../../../../Exceptions/index.js";
+import { ExceptionDispatcher, ExceptionSchema, throwError } from "../../../../Exceptions/index.js";
+import { StatusCodes } from "../../../../Http/StatusCode.js";
 import { JsonSerializer } from "../../../../Mapping/Json/Serializer.js";
 import { ObjectUtil } from "../../../../Utility/ObjectUtil.js";
 import { StringUtil } from "../../../../Utility/StringUtil.js";
@@ -351,7 +352,15 @@ class RunConversationCommand<TAnswer>
             if (line.startsWith("{")) {
                 const jsonStream = Readable.from([line]);
                 let body: string = null;
-                this.result = await this._defaultPipeline(_ => body = _).process(jsonStream);
+                const final = await this._defaultPipeline<ConversationResult<TAnswer> & Partial<ExceptionSchema>>(_ => body = _)
+                    .process(jsonStream);
+
+                // A server error raised after streaming started (HTTP 200) arrives as the standard error payload
+                if (final.type) {
+                    throw ExceptionDispatcher.get(final as ExceptionSchema, StatusCodes.Ok);
+                }
+
+                this.result = final;
                 return body;
             }
 
