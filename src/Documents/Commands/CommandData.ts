@@ -206,6 +206,7 @@ export class ActionsToRunOnSuccess {
 
         this._session.deferredCommands.length = 0;
         this._session.deferredCommandsMap.clear();
+        this._session.trackedEntities.clearForcedRegistrations();
     }
 
     public clearDeletedEntities() {

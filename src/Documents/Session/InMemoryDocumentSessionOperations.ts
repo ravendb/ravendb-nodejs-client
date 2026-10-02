@@ -399,6 +399,14 @@ export abstract class InMemoryDocumentSessionOperations
         return null;
     }
 
+    public registerForConcurrencyCheck(id: string, changeVector: string): void {
+        if (!id) {
+            throwError("InvalidArgumentException", "Id cannot be null or empty.");
+        }
+
+        this.trackedEntities.forceRegister(id, changeVector);
+    }
+
     public getLastModifiedFor<T extends object>(instance: T): Date {
         if (!instance) {
             throwError("InvalidArgumentException", "Instance cannot be null or undefined.");
@@ -1527,27 +1535,20 @@ export abstract class InMemoryDocumentSessionOperations
             }
         }
 
-        // WritesAndReads: send change vectors for all tracked docs not already in batch
-        if (this._optimisticConcurrencyMode === "WritesAndReads") {
-            const trackedEntities: Record<string, string> = {};
-            const idsInBatch = new Set(result.sessionCommands.map(c => c.id?.toLowerCase()));
-            for (const [id, changeVector] of this.trackedEntities) {
-                if (!idsInBatch.has(id.toLowerCase()) && !TypeUtil.isNullOrUndefined(changeVector)) {
-                    trackedEntities[id] = changeVector;
-                }
-            }
-            if (Object.keys(trackedEntities).length > 0) {
-                result.sessionCommands.push({
-                    id: null,
-                    name: null,
-                    changeVector: null,
-                    type: "BatchTrackChanges",
-                    serialize: (_conventions) => ({
-                        Type: "BatchTrackChanges",
-                        TrackedEntities: trackedEntities
-                    })
-                } satisfies ICommandData);
-            }
+        const idsInBatch = new Set(result.sessionCommands.map(c => c.id?.toLowerCase()));
+        const entitiesToCheck = this.trackedEntities.getEntitiesToCheck(
+            this._optimisticConcurrencyMode === "WritesAndReads", idsInBatch);
+        if (entitiesToCheck) {
+            result.sessionCommands.unshift({
+                id: null,
+                name: null,
+                changeVector: null,
+                type: "BatchTrackChanges",
+                serialize: (_conventions) => ({
+                    Type: "BatchTrackChanges",
+                    TrackedEntities: entitiesToCheck
+                })
+            } satisfies ICommandData);
         }
 
         return result;
@@ -1579,6 +1580,12 @@ export abstract class InMemoryDocumentSessionOperations
                 }
                 case "CompareExchangeDELETE":
                 case "CompareExchangePUT": {
+                    break;
+                }
+                case "BatchTrackChanges": {
+                    throwError(
+                        "InvalidOperationException",
+                        "registerForConcurrencyCheck is not supported when using a cluster transaction.");
                     break;
                 }
                 default: {
@@ -2561,6 +2568,40 @@ export interface DeletedEntitiesEnumeratorResult {
 
 export class TrackedEntitiesHolder implements Iterable<[string, string]> {
     private readonly _changeVectorsById: Map<string, string> = CaseInsensitiveKeysMap.create();
+    private _forcedChangeVectorsById: Map<string, string> = null;
+
+    public forceRegister(id: string, changeVector: string): void {
+        this._forcedChangeVectorsById ??= CaseInsensitiveKeysMap.create();
+        this._forcedChangeVectorsById.set(id, changeVector);
+    }
+
+    public clearForcedRegistrations(): void {
+        this._forcedChangeVectorsById = null;
+    }
+
+    public getEntitiesToCheck(includeTracked: boolean, idsInBatch: Set<string>): Record<string, string> {
+        const entitiesToCheck: Map<string, string> = CaseInsensitiveKeysMap.create();
+
+        if (includeTracked) {
+            for (const [id, changeVector] of this._changeVectorsById) {
+                if (!idsInBatch.has(id.toLowerCase()) && !TypeUtil.isNullOrUndefined(changeVector)) {
+                    entitiesToCheck.set(id, changeVector);
+                }
+            }
+        }
+
+        if (this._forcedChangeVectorsById) {
+            for (const [id, changeVector] of this._forcedChangeVectorsById) {
+                if (TypeUtil.isNullOrUndefined(changeVector)) {
+                    entitiesToCheck.delete(id);
+                } else {
+                    entitiesToCheck.set(id, changeVector);
+                }
+            }
+        }
+
+        return entitiesToCheck.size > 0 ? Object.fromEntries(entitiesToCheck) : null;
+    }
 
     public tryAdd(id: string, changeVector: string): void {
         if (!this._changeVectorsById.has(id)) {
@@ -2584,6 +2625,7 @@ export class TrackedEntitiesHolder implements Iterable<[string, string]> {
 
     public clear(): void {
         this._changeVectorsById.clear();
+        this._forcedChangeVectorsById = null;
     }
 
     [Symbol.iterator](): Iterator<[string, string]> {

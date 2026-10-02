@@ -82,6 +82,7 @@ export class BatchOperation {
         }
 
         const results = result.results;
+        let skip = 0;
         for (let i = 0; i < this._sessionCommandsCount; i++) {
             const batchResult = results[i];
             if (!batchResult) {
@@ -92,7 +93,7 @@ export class BatchOperation {
 
             switch (type) {
                 case "PUT": {
-                    this._handlePut(i, batchResult, false);
+                    this._handlePut(i - skip, batchResult, false);
                     break;
                 }
                 case "ForceRevisionCreation": {
@@ -112,6 +113,7 @@ export class BatchOperation {
                     break;
                 }
                 case "BatchTrackChanges": {
+                    skip++;
                     break;
                 }
                 default: {
