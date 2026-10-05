@@ -507,7 +507,7 @@ export abstract class InMemoryDocumentSessionOperations
 
                 IncludesUtil.include(documentInfo.document, include, (includeId: string) => {
                     hasAll = hasAll && this.isLoaded(includeId);
-                });
+                }, this.conventions.identityPartsSeparator);
 
                 if (!hasAll) {
                     return false;
@@ -761,7 +761,7 @@ export abstract class InMemoryDocumentSessionOperations
                     }
 
                     this.registerMissing(id);
-                });
+                }, this.conventions.identityPartsSeparator);
             }
         }
     }

@@ -14,12 +14,17 @@ const COLLECTION_SEPARATOR = "[].";
 export class IncludesUtil {
 
     public static include(
-        document: object, include: string, loadId: (id: string) => void): void {
+        document: object, include: string, loadId: (id: string) => void, identityPartsSeparator = "/"): void {
         if (!include || !document) {
             return;
         }
 
-        const { path, addition, isPrefix } = IncludesUtil._getIncludePath(include);
+        const includePath = IncludesUtil._getIncludePath(include, identityPartsSeparator);
+        if (!includePath) {
+            return;
+        }
+
+        const { path, addition, isPrefix } = includePath;
 
         for (const token of IncludesUtil._selectTokens(document, path)) {
             IncludesUtil._executeInternal(token, addition, (value, valueAddition) => {
@@ -32,19 +37,25 @@ export class IncludesUtil {
         }
     }
 
-    private static _getIncludePath(include: string): IncludePath {
+    private static _getIncludePath(include: string, identityPartsSeparator: string): IncludePath | null {
         const prefixMatch = INCLUDE_PREFIX_REGEX.exec(include);
         const match = prefixMatch ?? INCLUDE_SUFFIX_REGEX.exec(include);
         if (!match) {
             return { path: include, addition: null, isPrefix: false };
         }
 
-        const addition = match[1];
-        return {
-            path: include.split(addition).join(""),
-            addition: addition.substring(1, addition.length - 1),
-            isPrefix: !!prefixMatch
-        };
+        const path = include.slice(0, match.index);
+        const addition = match[1].slice(1, -1);
+
+        if (prefixMatch) {
+            return { path, addition: addition.endsWith(identityPartsSeparator) ? addition : null, isPrefix: true };
+        }
+
+        if (!addition.startsWith("{0}" + identityPartsSeparator)) {
+            return null;
+        }
+
+        return { path, addition, isPrefix: false };
     }
 
     private static _selectTokens(document: object, path: string): unknown[] {
@@ -62,10 +73,11 @@ export class IncludesUtil {
                 TypeUtil.isObject(item) ? IncludesUtil._selectTokens(item, nestedPath) : [item]);
         }
 
-        if (TypeUtil.isObject(result)) {
+        if (TypeUtil.isObject(result) && nestedPaths.length === 1) {
             return Object.values(result)
                 .filter(value => TypeUtil.isObject(value))
-                .flatMap(value => IncludesUtil._selectTokens(value, nestedPath));
+                .map(value => IncludesUtil._readPath(value, nestedPath))
+                .filter(value => !TypeUtil.isArray(value));
         }
 
         return [];
@@ -87,18 +99,16 @@ export class IncludesUtil {
 
     private static _executeInternal(
         token: unknown, addition: string, loadId: (value: string, addition: string) => void): void {
-        if (TypeUtil.isArray(token)) {
-            for (const item of token) {
-                IncludesUtil._executeInternal(item, addition, loadId);
-            }
-        } else if (TypeUtil.isString(token) && token) {
-            loadId(token, addition);
+        for (const value of TypeUtil.isArray(token) ? token : [token]) {
+            if (TypeUtil.isString(value) && value) {
+                loadId(value, addition);
 
-            if (addition) {
-                loadId(token, null);
+                if (addition) {
+                    loadId(value, null);
+                }
+            } else if (Number.isInteger(value)) {
+                loadId(String(value), addition);
             }
-        } else if (Number.isInteger(token)) {
-            loadId(String(token), addition);
         }
     }
 
