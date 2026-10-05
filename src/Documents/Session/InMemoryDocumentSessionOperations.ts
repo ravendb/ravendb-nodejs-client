@@ -740,6 +740,10 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
+        if (this.conventions.serverToLocalFieldNameConverter) {
+            return;
+        }
+
         for (const result of results) {
             for (const include of includePaths) {
                 if (include === CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME) {
