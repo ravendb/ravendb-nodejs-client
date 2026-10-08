@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import {Readable} from "node:stream";
-import {assertThat} from "../../../Utils/AssertExtensions.js";
+import {assertThat, assertThrows} from "../../../Utils/AssertExtensions.js";
 import {DocumentConventions} from "../../../../src/Documents/Conventions/DocumentConventions.js";
 import {RunConversationOperation} from "../../../../src/Documents/Operations/AI/Agents/RunConversationOperation.js";
 import {RavenTestContext} from "../../../Utils/TestUtil.js";
@@ -228,5 +228,25 @@ import type {AiStreamCallback} from "../../../../src/Documents/Operations/AI/AiS
 
         assert.deepStrictEqual(receivedChunks, ["Hello", " world"]);
         assertThat(command.result.response).isEqualTo("Hello world");
+    });
+
+    it("should throw the server error written into the stream after streaming started", async () => {
+        const streamingResponse = `"Hello"
+{"Url":"/databases/db/ai/agent","Type":"Raven.Client.Exceptions.AiException","Message":"Failed to talk to the agent","Error":"Raven.Client.Exceptions.AiException: Failed to talk to the agent ---> Raven.Client.Exceptions.RefusedToAnswerException: I'm sorry, I can't help with that."}
+`;
+
+        const receivedChunks: string[] = [];
+        const { command } = requestFor(undefined, "answer", async chunk => {
+            receivedChunks.push(chunk);
+        });
+
+        await assertThrows(() => command.setResponseAsync(Readable.from([streamingResponse]), false), err => {
+            assertThat(err.name).isEqualTo("AiException");
+            assertThat(err.message).contains("RefusedToAnswerException");
+            assertThat(err.message).contains("I'm sorry, I can't help with that.");
+        });
+
+        assert.deepStrictEqual(receivedChunks, ["Hello"]);
+        assertThat(command.result).isUndefined();
     });
 });
