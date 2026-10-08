@@ -148,6 +148,7 @@ class GetConversationMessagesCommand extends RavenCommand<AiConversationMessages
             {
                 nestedTypes: {
                     lastMessageAt: "date",
+                    createdAt: "date",
                     "messages[].timestamp": "date"
                 }
             });
