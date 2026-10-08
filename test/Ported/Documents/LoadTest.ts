@@ -2,7 +2,9 @@ import assert from "node:assert"
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 
 import {
+    DocumentStore,
     IDocumentStore,
+    ObjectUtil,
 } from "../../../src/index.js";
 import { Order, OrderLine } from "../../Assets/Entities.js";
 
@@ -112,6 +114,29 @@ describe("Load test", function () {
         const foo = await newSession.load<Foo>("foos/1", Foo);
 
         assert.strictEqual(foo?.name, "Beginning");
+    });
+
+    it("does not treat a document as missing when field names are converted", async () => {
+        const convertingStore = new DocumentStore(store.urls, store.database);
+        convertingStore.conventions.serverToLocalFieldNameConverter = ObjectUtil.camel;
+        convertingStore.conventions.localToServerFieldNameConverter = ObjectUtil.pascal;
+        convertingStore.initialize();
+
+        try {
+            const session = convertingStore.openSession();
+            await session.store(Object.assign(new Foo(), { name: "Beginning" }), "foos/1");
+            await session.store(Object.assign(new Bar(), { name: "End", fooId: "foos/1" }), "bars/1");
+            await session.saveChanges();
+
+            const newSession = convertingStore.openSession();
+            await newSession.include("fooId").load<Bar>("bars/1", Bar);
+
+            const foo = await newSession.load<Foo>("foos/1", Foo);
+
+            assert.strictEqual(foo?.name, "Beginning");
+        } finally {
+            convertingStore.dispose();
+        }
     });
 
     it("does not request includes again when the included id is empty", async () => {

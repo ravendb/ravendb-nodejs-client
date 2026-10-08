@@ -515,7 +515,7 @@ export abstract class InMemoryDocumentSessionOperations
 
                 IncludesUtil.include(documentInfo.document, include, (includeId: string) => {
                     hasAll = hasAll && this.isLoaded(includeId);
-                });
+                }, this.conventions.identityPartsSeparator);
 
                 if (!hasAll) {
                     return false;
@@ -748,6 +748,10 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
+        if (this.conventions.serverToLocalFieldNameConverter) {
+            return;
+        }
+
         for (const result of results) {
             for (const include of includePaths) {
                 if (include === CONSTANTS.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME) {
@@ -769,7 +773,7 @@ export abstract class InMemoryDocumentSessionOperations
                     }
 
                     this.registerMissing(id);
-                });
+                }, this.conventions.identityPartsSeparator);
             }
         }
     }
