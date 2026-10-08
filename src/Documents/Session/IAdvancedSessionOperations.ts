@@ -292,6 +292,34 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
     getChangeVectorFor<T extends object>(instance: T): string;
 
     /**
+     * Registers an explicit optimistic concurrency check for a document, without loading it into the
+     * session and without a remote call. The next saveChanges verifies the document against the server
+     * and throws a ConcurrencyException if it no longer matches. The check is honored regardless of the
+     * session's optimisticConcurrencyMode.
+     *
+     * The change vector is typically obtained from another session via getChangeVectorFor. Its value controls the check:
+     * - a non-empty change vector: the document must still have this change vector
+     * - an empty string: the document must not exist
+     * - null: disables the concurrency check for this id
+     *
+     * The registration always wins over what the session itself knows about the id. Loading the document
+     * afterwards does not replace the registered change vector, and a document written in the same batch
+     * with its own change vector check does not suppress the registered check. Registering the same id
+     * twice keeps the last value.
+     *
+     * The registration is one shot. A successful saveChanges consumes it, so later calls on the same session
+     * do not check the id again. A failed saveChanges keeps it, so it can be retried. Call this method with
+     * a null change vector, or clear(), to cancel it earlier.
+     *
+     * Not supported when transactionMode is "ClusterWide", and not supported in a noTracking session,
+     * because such a session cannot call saveChanges at all.
+     * @param id The document id to verify during the next saveChanges.
+     * @param changeVector The change vector the document is expected to still have, an empty string to assert
+     * absence, or null to disable the check for this id.
+     */
+    registerForConcurrencyCheck(id: string, changeVector: string): void;
+
+    /**
      * Gets all the counter names for the specified entity.
      */
     getCountersFor<T extends object>(instance: T): string[];
