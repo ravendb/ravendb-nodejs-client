@@ -32,6 +32,11 @@ export interface AiConversationMessagesResult {
     lastMessageAt: Date;
 
     /**
+     * When the conversation was created.
+     */
+    createdAt: Date;
+
+    /**
      * Messages in chronological order (oldest first).
      */
     messages: AiConversationMessage[];

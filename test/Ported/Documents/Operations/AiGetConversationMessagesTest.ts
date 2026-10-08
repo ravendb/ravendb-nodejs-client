@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { DocumentConventions, GetConversationMessagesOperation, IDocumentStore, ServerNode } from "../../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../../../Utils/AssertExtensions.js";
@@ -50,6 +51,29 @@ describe("AiGetConversationMessagesTest - validation", function () {
             .getCommand(DocumentConventions.defaultConventions)
             .createRequest(node);
         assertThat(withPageSize.uri.includes("pageSize=50")).isTrue();
+    });
+
+    it("parses createdAt and lastMessageAt as dates", async () => {
+        const response = JSON.stringify({
+            ConversationId: "chats/1",
+            Agent: "agents/1",
+            Parameters: {},
+            TotalUsage: null,
+            LastMessageAt: "2026-09-01T10:30:00.0000000Z",
+            CreatedAt: "2026-09-01T10:00:00.0000000Z",
+            Messages: [],
+            HasMoreMessages: false,
+            SubConversationIds: null,
+            Attachments: null
+        });
+
+        const command = new GetConversationMessagesOperation("chats/1")
+            .getCommand(DocumentConventions.defaultConventions);
+        await command.setResponseAsync(Readable.from([response]), false);
+
+        assertThat(command.result.createdAt instanceof Date).isTrue();
+        assertThat(command.result.createdAt.toISOString()).isEqualTo("2026-09-01T10:00:00.000Z");
+        assertThat(command.result.lastMessageAt.toISOString()).isEqualTo("2026-09-01T10:30:00.000Z");
     });
 });
 
