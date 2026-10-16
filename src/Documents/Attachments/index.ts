@@ -43,4 +43,9 @@ export class AttachmentResult {
     }
 }
 
+export interface AttachmentEnumeratorResult {
+    details: AttachmentDetails;
+    data: Readable;
+}
+
 export type AttachmentData = Readable | Buffer;
