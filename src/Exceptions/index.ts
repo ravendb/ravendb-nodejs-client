@@ -181,7 +181,9 @@ export type RavenErrorType = "RavenException"
     | "InsufficientQuotaException"
     | "TooManyTokensException"
     | "MissingAiAgentParameterException"
-    | "QueryToolFailedException";
+    | "QueryToolFailedException"
+    | "UnsupportedAiQueryParameterException"
+    | "AiAgentParameterCollisionException";
 
 export interface ExceptionSchema {
     url: string;
