@@ -1,3 +1,5 @@
+import { throwError } from "../../../Exceptions/index.js";
+
 export class AiTaskIdentifierHelper {
     /**
      * Validates an AI task identifier.
@@ -69,10 +71,31 @@ export class AiTaskIdentifierHelper {
      *
      * @param input The input string to generate an identifier from
      * @returns A normalized identifier, or "AiConnectionStringIdentifier" if input is empty
+     * @throws InvalidOperationException if input contains no ASCII letters or digits
      */
     public static generateIdentifier(input: string): string {
         if (!input || input.trim().length === 0) {
             return "AiConnectionStringIdentifier";
+        }
+
+        const identifier = AiTaskIdentifierHelper.tryGenerateIdentifier(input);
+        if (!identifier) {
+            throwError("InvalidOperationException",
+                `Can't generate an identifier from name '${input}' because it contains no ASCII letters or digits. Set the identifier explicitly.`);
+        }
+
+        return identifier;
+    }
+
+    /**
+     * Generates a normalized identifier from an input string, without throwing.
+     *
+     * @param input The input string to generate an identifier from
+     * @returns A normalized identifier, or null if input is empty or contains no ASCII letters or digits
+     */
+    public static tryGenerateIdentifier(input: string): string | null {
+        if (!input || input.trim().length === 0) {
+            return null;
         }
 
         const result: string[] = [];
@@ -98,7 +121,7 @@ export class AiTaskIdentifierHelper {
             finalResult = finalResult.slice(0, -1);
         }
 
-        return finalResult.length > 0 ? finalResult : "AiConnectionStringIdentifier";
+        return finalResult.length > 0 ? finalResult : null;
     }
 }
 
