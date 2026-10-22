@@ -124,9 +124,23 @@ describe("AiTaskIdentifierHelper", () => {
             assert.strictEqual(result, "AiConnectionStringIdentifier");
         });
 
-        it("should return default identifier for input with only invalid characters", () => {
-            const result = AiTaskIdentifierHelper.generateIdentifier("@@@###$$$");
-            assert.strictEqual(result, "AiConnectionStringIdentifier");
+        it("should throw for input with only invalid characters", () => {
+            assert.throws(() => AiTaskIdentifierHelper.generateIdentifier("@@@###$$$"), (err: Error) =>
+                err.name === "InvalidOperationException"
+                && err.message.includes("Can't generate an identifier from name '@@@###$$$' because it contains no ASCII letters or digits"));
+        });
+
+        it("should throw for input without ASCII letters or digits", () => {
+            assert.throws(() => AiTaskIdentifierHelper.generateIdentifier("日本語"), (err: Error) =>
+                err.name === "InvalidOperationException");
+        });
+
+        it("tryGenerateIdentifier should return null when no identifier can be generated", () => {
+            assert.strictEqual(AiTaskIdentifierHelper.tryGenerateIdentifier(""), null);
+            assert.strictEqual(AiTaskIdentifierHelper.tryGenerateIdentifier("   "), null);
+            assert.strictEqual(AiTaskIdentifierHelper.tryGenerateIdentifier("@@@###$$$"), null);
+            assert.strictEqual(AiTaskIdentifierHelper.tryGenerateIdentifier("日本語"), null);
+            assert.strictEqual(AiTaskIdentifierHelper.tryGenerateIdentifier("Product Enricher"), "product-enricher");
         });
 
         it("should generate identifier that passes validation", () => {
