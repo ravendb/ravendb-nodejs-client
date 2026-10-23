@@ -10,6 +10,7 @@ import { GoogleSettings } from "./Settings/GoogleSettings.js";
 import { HuggingFaceSettings } from "./Settings/HuggingFaceSettings.js";
 import { MistralAiSettings } from "./Settings/MistralAiSettings.js";
 import { VertexSettings } from "./Settings/VertexSettings.js";
+import { AnthropicSettings } from "./Settings/AnthropicSettings.js";
 
 
 const PROVIDER_KEYS = [
@@ -20,12 +21,13 @@ const PROVIDER_KEYS = [
     "googleSettings",
     "huggingFaceSettings",
     "mistralAiSettings",
-    "vertexSettings"
+    "vertexSettings",
+    "anthropicSettings"
 ] as const;
 
 /**
  * Represents an AI service connection string configuration.
- * Supports multiple AI providers (OpenAI, Azure OpenAI, Ollama, Google, HuggingFace, Mistral AI, Vertex AI, Embedded).
+ * Supports multiple AI providers (OpenAI, Azure OpenAI, Ollama, Google, HuggingFace, Mistral AI, Vertex AI, Anthropic, Embedded).
  * Only one provider can be configured per connection string.
  */
 export class AiConnectionString extends ConnectionString {
@@ -38,6 +40,10 @@ export class AiConnectionString extends ConnectionString {
     public huggingFaceSettings?: HuggingFaceSettings;
     public mistralAiSettings?: MistralAiSettings;
     public vertexSettings?: VertexSettings;
+    /**
+     * Anthropic (native Claude) provider configuration. Chat model type only.
+     */
+    public anthropicSettings?: AnthropicSettings;
     public modelType?: AiModelType;
     public type: ConnectionStringType = "Ai"
 
@@ -66,6 +72,10 @@ export class AiConnectionString extends ConnectionString {
             errors.push(`Only one of the following settings can be set: ${configuredSettingsNames.join(", ")}`);
         }
 
+        if (this.anthropicSettings && this.modelType === "TextEmbeddings") {
+            errors.push("'Anthropic' does not support the 'TextEmbeddings' model type; it can only be used for 'Chat'.");
+        }
+
         return errors;
     }
 
@@ -82,6 +92,7 @@ export class AiConnectionString extends ConnectionString {
         if (this.huggingFaceSettings) return "HuggingFace";
         if (this.mistralAiSettings) return "MistralAi";
         if (this.vertexSettings) return "Vertex";
+        if (this.anthropicSettings) return "Anthropic";
         return "None";
     }
 
@@ -97,7 +108,8 @@ export class AiConnectionString extends ConnectionString {
             this.googleSettings ??
             this.huggingFaceSettings ??
             this.mistralAiSettings ??
-            this.vertexSettings;
+            this.vertexSettings ??
+            this.anthropicSettings;
     }
 
     /**
@@ -191,6 +203,10 @@ export class AiConnectionString extends ConnectionString {
                 // Endpoint is optional for HuggingFace, default endpoint is HTTPS
                 return !this.huggingFaceSettings?.endpoint ||
                     this.huggingFaceSettings.endpoint.startsWith("https");
+            case "Anthropic":
+                // Endpoint is optional for Anthropic, default endpoint is HTTPS
+                return !this.anthropicSettings?.endpoint ||
+                    this.anthropicSettings.endpoint.startsWith("https");
             case "Embedded":
             case "Google":
             case "Vertex":

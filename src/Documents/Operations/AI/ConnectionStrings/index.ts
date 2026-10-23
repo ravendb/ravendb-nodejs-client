@@ -12,4 +12,5 @@ export * from "./Settings/GoogleSettings.js";
 export * from "./Settings/HuggingFaceSettings.js";
 export * from "./Settings/MistralAiSettings.js";
 export * from "./Settings/VertexSettings.js";
+export * from "./Settings/AnthropicSettings.js";
 export * from "./Settings/EmbeddedSettings.js";

@@ -39,6 +39,7 @@ export abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
      * When true, enables server-side prompt caching for eligible requests.
      * Reduces cost and latency by reusing the KV cache from previous requests
      * with shared prefixes.
+     * When undefined, caching is used for AI agents and for GenAI tasks with query tools, and never for Google.
      */
     public enablePromptCache?: boolean;
 
