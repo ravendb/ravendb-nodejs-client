@@ -76,6 +76,27 @@ describe("Request executor", function () {
             }
         });
 
+        it("reuses connection across requests", async function () {
+            const httpAgent = await store.getRequestExecutor().getHttpAgent();
+            if (!httpAgent) {
+                this.skip();
+            }
+
+            let connectCount = 0;
+            const onConnect = () => connectCount++;
+            httpAgent.on("connect", onConnect);
+            try {
+                for (let i = 0; i < 20; i++) {
+                    const session = store.openSession();
+                    await session.load("users/1");
+                }
+            } finally {
+                httpAgent.off("connect", onConnect);
+            }
+
+            assert.ok(connectCount < 5, `Expected connection reuse, got ${connectCount} new connections for 20 requests`);
+        });
+
         it("can fetch database names", async () => {
             try {
                 executor = RequestExecutor.create(store.urls, store.database, {

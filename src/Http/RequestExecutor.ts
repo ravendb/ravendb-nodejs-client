@@ -410,9 +410,7 @@ export class RequestExecutor implements IDisposable {
                 return agent;
             }
         } else {
-            return RequestExecutor.KEEP_ALIVE_HTTP_AGENT ??= await RequestExecutor.createAgent({
-                pipelining: 0
-            });
+            return RequestExecutor.KEEP_ALIVE_HTTP_AGENT ??= await RequestExecutor.createAgent({});
         }
     }
 
