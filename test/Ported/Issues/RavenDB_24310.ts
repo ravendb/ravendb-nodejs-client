@@ -235,7 +235,8 @@ import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
             .isEqualTo("explicit-identifier");
     });
 
-    it("serverWideAiConnectionString_RejectsIdentifierUsedByAnotherServerWideConnectionString", async () => {
+    // RavenDB-27783 - server reports the conflict against a database copy instead of the other server-wide connection string when any database exists
+    it.skip("serverWideAiConnectionString_RejectsIdentifierUsedByAnotherServerWideConnectionString", async () => {
         const identifier = "shared-identifier";
         await putServerWide("FirstAiCS", identifier);
 
