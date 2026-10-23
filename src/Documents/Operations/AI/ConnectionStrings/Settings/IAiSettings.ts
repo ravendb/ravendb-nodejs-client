@@ -5,5 +5,6 @@ export interface IAiSettings {
     apiKey?: string;
     model: string;
     endpoint?: string;
+    enablePromptCache?: boolean;
     getBaseEndpointUri(): string;
 }
