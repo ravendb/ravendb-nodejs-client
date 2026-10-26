@@ -212,6 +212,7 @@ export class RequestExecutor implements IDisposable {
       see: https://github.com/cloudflare/miniflare/issues/292
     */
     private static KEEP_ALIVE_HTTP_AGENT: Dispatcher = null;
+    private static readonly MIN_COMPRESSED_BODY_LENGTH = 1024;
 
     private static readonly HTTPS_AGENT_CACHE = new Map<string, Dispatcher>();
 
@@ -454,19 +455,24 @@ export class RequestExecutor implements IDisposable {
         }
 
         if (this._conventions.useHttpCompression && typeof params.body === "string" && !headers["Content-Encoding"]) {
-            const compressed = await compressRequestBody(params.body, algorithm);
+            // compressing a small body costs more (both sides, ~0.1 ms) than it saves
+            const compressed = params.body.length >= RequestExecutor.MIN_COMPRESSED_BODY_LENGTH
+                ? await compressRequestBody(params.body, algorithm)
+                : null;
             if (compressed) {
-                // chunked like the C# client's streamed content: RavenDB on Windows answers ~3 ms
-                // slower on a connection until it has received a chunked request body
-                params.body = new ReadableStream({
-                    start(controller) {
-                        controller.enqueue(compressed);
-                        controller.close();
-                    }
-                });
-                params.duplex = "half";
                 headers["Content-Encoding"] = contentEncodingOf(algorithm);
             }
+
+            // chunked like the C# client's streamed content: RavenDB on Windows answers ~3 ms
+            // slower on a connection until it has received a chunked request body
+            const chunk = compressed ?? new TextEncoder().encode(params.body);
+            params.body = new ReadableStream({
+                start(controller) {
+                    controller.enqueue(chunk);
+                    controller.close();
+                }
+            });
+            params.duplex = "half";
         }
     }
 

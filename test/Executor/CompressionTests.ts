@@ -114,6 +114,19 @@ describe("Compression", function () {
         assert.ok(save.request.body instanceof ReadableStream);
     });
 
+    it("streams small request bodies uncompressed", async () => {
+        const requests: SucceedRequestEventArgs[] = [];
+        store.getRequestExecutor().on("succeedRequest", e => requests.push(e));
+
+        const session = store.openSession();
+        session.delete("items/does-not-exist");
+        await session.saveChanges();
+
+        const save = requests.find(e => e.url.includes("/bulk_docs"));
+        assert.strictEqual(save.request.headers["Content-Encoding"], undefined);
+        assert.ok(save.request.body instanceof ReadableStream);
+    });
+
     it("sends plain request bodies when compression is turned off", async () => {
         const { save } = await storeAndLoad(conventions => conventions.useHttpCompression = false);
 
