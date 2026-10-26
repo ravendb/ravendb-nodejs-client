@@ -65,32 +65,29 @@ export class MetadataInternal {
     }
 
     public static getChangeTrackingProxy(instance) {
-        const proxy = new Proxy<MetadataAsDictionary>(instance, {
-            get(obj, prop, value) {
-                return Reflect.get(obj, prop, value);
-            },
-            set(obj, prop, value) {
-                metadataDirtiness.set(obj, true);
-                return Reflect.set(obj, prop, value);
-            },
-            deleteProperty(obj, prop) {
-                metadataDirtiness.set(obj, true);
-                return Reflect.deleteProperty(obj, prop);
-            },
-            ownKeys(target) {
-                return Reflect.ownKeys(target)
-                    .filter(x =>
-                        x !== "getParentKey"
-                        && x !== "getParent"
-                        && x !== "isDirty"
-                        && x !== "_metadataConvertValue");
-            }
-        });
+        const proxy = new Proxy<MetadataAsDictionary>(instance, changeTrackingHandler);
 
         metadataProxyTargets.set(proxy, instance);
         return proxy;
     }
 }
+
+const hiddenMetadataKeys = new Set<string | symbol>(["getParentKey", "getParent", "isDirty", "_metadataConvertValue"]);
+
+// shared by every metadata proxy; reads use the default behavior, so there is no get trap
+const changeTrackingHandler: ProxyHandler<MetadataAsDictionary> = {
+    set(obj, prop, value) {
+        metadataDirtiness.set(obj, true);
+        return Reflect.set(obj, prop, value);
+    },
+    deleteProperty(obj, prop) {
+        metadataDirtiness.set(obj, true);
+        return Reflect.deleteProperty(obj, prop);
+    },
+    ownKeys(target) {
+        return Reflect.ownKeys(target).filter(x => !hiddenMetadataKeys.has(x));
+    }
+};
 
 export class MetadataDictionary {
     public static create(raw?: object) {
