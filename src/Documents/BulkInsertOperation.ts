@@ -283,12 +283,14 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         public async store(id: string, name: string, bytes: Buffer, contentType: string): Promise<void>;
         public async store(id: string, name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
         public async store(id: string, name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
 
             try {
                 this._operation._endPreviousCommandIfNeeded();
 
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 try {
                     if (!this._operation._first) {
@@ -603,7 +605,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         idOrMetadata?: string | IMetadataDictionary,
         optionalMetadata?: IMetadataDictionary): Promise<void> {
 
-        const check = await this._concurrencyCheck();
+        const check = this._tryConcurrencyCheckSync() ?? await this._concurrencyCheck();
         let id: string;
         try {
 
@@ -613,15 +615,19 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
             id = opts.getId ? await this._getId(entity) : opts.id;
             BulkInsertOperation._verifyValidId(id);
 
-            await this._executeBeforeStore();
+            if (!this._isReadyForStore) {
+                await this._executeBeforeStore();
+            }
             metadata = this.handleMetadata(metadata, entity);
 
             this._endPreviousCommandIfNeeded();
 
             try {
                 this._writeToStream(entity, id, metadata, "PUT");
-                await this.flushIfNeeded();
-            } catch (e) {   
+                if (this.isFlushNeeded()) {
+                    await this.flushIfNeeded();
+                }
+            } catch (e) {
                 await this._handleErrors(id, e);
             }
         } finally {
@@ -653,11 +659,8 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
     // in node.js we handle errors outside of this method
     private _writeToStream(entity: object, id: string, metadata: IMetadataDictionary, type: CommandType) {
-        if (this._first) {
-            this._first = false;
-        } else {
-            this._writeComma();
-        }
+        const separator = this._first ? "" : ",";
+        this._first = false;
 
         this._inProgressCommand = "None";
 
@@ -667,10 +670,8 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
         json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
 
-        this._writer.write(`{"Id":"`);
-        this._writeString(id);
         const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._writer.write(`","Type":"PUT","Document":${jsonString}}`);
+        this._writer.write(`${separator}{"Id":"${BulkInsertOperation._escapeString(id)}","Type":"PUT","Document":${jsonString}}`);
     }
 
     private async _handleErrors(documentId: string, e: Error) {
