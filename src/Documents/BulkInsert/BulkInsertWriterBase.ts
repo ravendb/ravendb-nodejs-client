@@ -15,7 +15,7 @@ export class BulkInsertWriterBase implements IDisposable {
     private _backgroundWriter: BulkInsertStream;
     private _isInitialWrite: boolean = true;
 
-    public lastFlushToStream: Date;
+    public lastFlushToStream: number;
 
     public requestBodyStream: RequestBodyStream;
     public requestBodyStreamFinished: boolean = false;
@@ -74,7 +74,7 @@ export class BulkInsertWriterBase implements IDisposable {
     }
 
     private _updateFlushTime(): void {
-        this.lastFlushToStream = new Date();
+        this.lastFlushToStream = Date.now();
     }
 
     protected onCurrentWriteStreamSet(currentWriteStream: BulkInsertStream): void {

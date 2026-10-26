@@ -53,10 +53,12 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         public async increment(id: string, name: string): Promise<void>;
         public async increment(id: string, name: string, delta: number): Promise<void>;
         public async increment(id: string, name: string, delta: number = 1): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
 
             try {
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 if (this._operation._inProgressCommand === "TimeSeries") {
                     BulkInsertOperation._timeSeriesBulkInsertBaseClass.throwAlreadyRunningTimeSeries();
@@ -89,19 +91,14 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._countersInBatch++;
 
-                    if (!this._first) {
-                        this._operation._writeComma();
-                    }
-
+                    this._operation._writer.write((this._first ? "" : ",")
+                        + `{"Type":"Increment","CounterName":"` + BulkInsertOperation._escapeString(name)
+                        + `","Delta":` + delta + "}");
                     this._first = false;
 
-                    this._operation._writer.write(`{"Type":"Increment","CounterName":"`);
-                    this._operation._writeString(name);
-                    this._operation._writer.write(`","Delta":`);
-                    this._operation._writer.write(delta.toString());
-                    this._operation._writer.write("}");
-
-                    await this._operation.flushIfNeeded();
+                    if (this._operation.isFlushNeeded()) {
+                        await this._operation.flushIfNeeded();
+                    }
 
                 } catch (e) {
                     await this._operation._handleErrors(this._id, e);
@@ -150,9 +147,11 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         }
 
         protected async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
             try {
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 try {
                     if (this._first) {
@@ -168,39 +167,22 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._timeSeriesInBatch++;
 
-                    if (!this._first) {
-                        this._operation._writeComma();
-                    }
-
+                    let entry = (this._first ? "[" : ",[") + timestamp.getTime() + "," + values.length;
                     this._first = false;
 
-                    this._operation._writer.write("[");
-                    this._operation._writer.write(timestamp.getTime().toString());
-                    this._operation._writeComma();
-
-                    this._operation._writer.write(values.length.toString());
-                    this._operation._writeComma();
-
-                    let firstValue = true;
-
                     for (const value of values) {
-                        if (!firstValue) {
-                            this._operation._writeComma();
-                        }
-
-                        firstValue = false;
-                        this._operation._writer.write(((value ?? 0).toString()));
+                        entry += "," + (value ?? 0);
                     }
 
                     if (tag) {
-                        this._operation._writer.write(`,"`);
-                        this._operation._writeString(tag);
-                        this._operation._writer.write(`"`);
+                        entry += `,"` + BulkInsertOperation._escapeString(tag) + `"`;
                     }
 
-                    this._operation._writer.write("]");
+                    this._operation._writer.write(entry + "]");
 
-                    await this._operation.flushIfNeeded();
+                    if (this._operation.isFlushNeeded()) {
+                        await this._operation.flushIfNeeded();
+                    }
                 } catch (e) {
                     await this._operation._handleErrors(this._id, e);
                 }
@@ -720,6 +702,24 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         }
     }
 
+    // takes the stream lock synchronously when it is free; null means the caller waits in _concurrencyCheck()
+    private _tryConcurrencyCheckSync(): IDisposable | null {
+        if (this._concurrentCheck || !this._streamLock.available()) {
+            return null;
+        }
+
+        this._concurrentCheck = 1;
+        this._streamLock.take(TypeUtil.NOOP);
+        return this._syncConcurrencyCheckRelease;
+    }
+
+    private readonly _syncConcurrencyCheckRelease: IDisposable = {
+        dispose: () => {
+            this._streamLock.leave();
+            this._concurrentCheck = 0;
+        }
+    };
+
     private _endPreviousCommandIfNeeded() {
         if (this._inProgressCommand === "Counters") {
             this._countersOperation.endPreviousCommandIfNeeded();
@@ -729,16 +729,12 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
     }
 
     private _writeString(input: string): void {
-        for (let i = 0; i < input.length; i++) {
-            const c = input[i];
-            if (`"` === c) {
-                if (i === 0 || input[i - 1] !== `\\`) {
-                    this._writer.write("\\");
-                }
-            }
+        this._writer.write(BulkInsertOperation._escapeString(input));
+    }
 
-            this._writer.write(c);
-        }
+    // escapes each quote not already preceded by a backslash
+    private static _escapeString(input: string): string {
+        return input.includes(`"`) ? input.replace(/(?<!\\)"/g, `\\"`) : input;
     }
 
     private _writeComma() {
@@ -925,7 +921,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
     }
 
     private isHeartbeatIntervalExceeded(): boolean {
-        return Date.now() - this._writer.lastFlushToStream.getTime() >= this._heartbeatCheckInterval;
+        return Date.now() - this._writer.lastFlushToStream >= this._heartbeatCheckInterval;
     }
 
     private static readonly _countersBulkInsertClass = class CountersBulkInsert implements ICountersBulkInsert {

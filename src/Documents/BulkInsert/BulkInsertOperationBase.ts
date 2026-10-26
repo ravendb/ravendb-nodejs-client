@@ -9,6 +9,10 @@ export abstract class BulkInsertOperationBase<T> {
 
     public abstract store(entity: T, id: string): Promise<void>;
 
+    protected get _isReadyForStore(): boolean {
+        return this._streamEnsured && !this._bulkInsertExecuteTaskErrored;
+    }
+
     protected async _executeBeforeStore() {
         if (!this._streamEnsured) {
             await this._waitForId();
