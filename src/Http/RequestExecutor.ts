@@ -456,7 +456,15 @@ export class RequestExecutor implements IDisposable {
         if (this._conventions.useHttpCompression && typeof params.body === "string" && !headers["Content-Encoding"]) {
             const compressed = await compressRequestBody(params.body, algorithm);
             if (compressed) {
-                params.body = compressed;
+                // chunked like the C# client's streamed content: RavenDB on Windows answers ~3 ms
+                // slower on a connection until it has received a chunked request body
+                params.body = new ReadableStream({
+                    start(controller) {
+                        controller.enqueue(compressed);
+                        controller.close();
+                    }
+                });
+                params.duplex = "half";
                 headers["Content-Encoding"] = contentEncodingOf(algorithm);
             }
         }

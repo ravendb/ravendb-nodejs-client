@@ -104,14 +104,14 @@ describe("Compression", function () {
         const { save } = await storeAndLoad(() => {});
 
         assert.strictEqual(save.request.headers["Content-Encoding"], "zstd");
-        assert.ok(save.request.body instanceof Uint8Array);
+        assert.ok(save.request.body instanceof ReadableStream);
     });
 
     it("compresses request bodies with gzip when configured", async () => {
         const { save } = await storeAndLoad(conventions => conventions.httpCompressionAlgorithm = "Gzip");
 
         assert.strictEqual(save.request.headers["Content-Encoding"], "gzip");
-        assert.ok(save.request.body instanceof Uint8Array);
+        assert.ok(save.request.body instanceof ReadableStream);
     });
 
     it("sends plain request bodies when compression is turned off", async () => {
