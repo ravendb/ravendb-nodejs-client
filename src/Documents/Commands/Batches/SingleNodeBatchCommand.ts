@@ -14,6 +14,7 @@ import { JsonSerializer } from "../../../Mapping/Json/Serializer.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline.js";
 import { Readable, Stream } from "node:stream";
+import { Buffer } from "node:buffer";
 import { TimeUtil } from "../../../Utility/TimeUtil.js";
 import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper.js";
 import { TypeUtil } from "../../../Utility/TypeUtil.js";
@@ -26,6 +27,7 @@ import { ShardedBatchOptions } from "./ShardedBatchOptions.js";
 export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements IDisposable {
     private _supportsAtomicWrites: boolean | null;
     private readonly _attachmentStreams: Set<AttachmentData>;
+    private _multipartCommands: string = null;
     private readonly _conventions: DocumentConventions;
     private readonly _commands: ICommandData[];
     private readonly _options: BatchOptions;
@@ -78,23 +80,26 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         response: HttpResponse;
         bodyStream: Readable
     }> {
-        const { body } = requestOptions;
-        if (body instanceof FormData) {
-            const attachments = [...this._attachmentStreams]
-                .map(attStream => {
-                    return {
-                        body: attStream,
-                        headers: {
-                            "Command-Type": "AttachmentStream"
-                        }
-                    };
-                });
+        if (this._multipartCommands) {
+            // built as bytes rather than FormData, so it is a buffered body the Node transport sends directly
+            const boundary = "RavenDB-" + globalThis.crypto.randomUUID();
+            const parts: Buffer[] = [
+                Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="main"\r\nContent-Type: application/json\r\n\r\n`),
+                Buffer.from(this._multipartCommands)
+            ];
 
-            for (let i = 0; i < attachments.length; i++) {
-                const part = attachments[i].body;
-                const payload = part instanceof Readable ? await readToBuffer(part) : part;
-                body.append("attachment_" + i, new Blob([payload], { type: "application/octet-stream" }));
+            let index = 0;
+            for (const attachment of this._attachmentStreams) {
+                const payload = attachment instanceof Readable ? await readToBuffer(attachment) : attachment;
+                parts.push(
+                    Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="attachment_${index++}"\r\n`
+                        + "Command-Type: AttachmentStream\r\nContent-Type: application/octet-stream\r\n\r\n"),
+                    payload);
             }
+
+            parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+            requestOptions.body = Buffer.concat(parts);
+            requestOptions.headers["Content-Type"] = "multipart/form-data; boundary=" + boundary;
         }
 
         return super.send(agent, requestOptions);
@@ -129,20 +134,10 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         };
 
         if (this._attachmentStreams && this._attachmentStreams.size > 0) {
-            // NOTE: payload is created in send method in async fashion - to support conversion from readable to buffers
-
-            // strip out content type, see: https://stackoverflow.com/questions/39280438/fetch-missing-boundary-in-multipart-form-data-post
-            if (request.headers && "Content-Type" in request.headers) {
-                const { "Content-Type": contentType, ...restHeaders } = request.headers;
-                request.headers = restHeaders;
-            }
-
-            const multipart = new FormData();
-            multipart.append("main", new Blob([body], { type: "application/json" }));
-
-            request.body = multipart;
-
+            // the multipart body is built in send(), which can await attachment streams
+            this._multipartCommands = body;
         } else {
+            this._multipartCommands = null;
             request.body = body;
             request.headers = headers;
         }
