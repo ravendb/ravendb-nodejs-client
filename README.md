@@ -10,6 +10,8 @@
 npm install --save ravendb
 ```
 
+Requires Node.js 22.15.0 or newer.
+
 ## Releases
 
 * [Click here](https://github.com/ravendb/ravendb-nodejs-client/releases) to view all Releases and Changelog.
@@ -42,6 +44,7 @@ npm install --save ravendb
    [Using classes](#using-classes-for-entities),  
    [Typescript usage](#usage-with-typescript),  
    [Working with secure server](#working-with-a-secure-server),  
+   [HTTP compression](#http-compression),  
    [Building & running tests](#building)  
 
 * For more information go to the online [RavenDB Documentation](https://ravendb.net/docs/article-page/latest/nodejs/client-api/what-is-a-document-store).
@@ -2649,6 +2652,20 @@ let authOptions = {
 
 ```javascript
 let store = new DocumentStore('url', 'databaseName', authOptions);
+store.initialize();
+```
+
+## HTTP compression
+
+Like the C# client, request bodies are compressed with zstd by default. Responses are accepted as zstd
+wherever the runtime's `fetch` decodes it (Node.js with undici 7.11+, which ships with Node.js 24);
+elsewhere the runtime's default encodings (gzip, deflate, br) are used.
+
+```javascript
+const store = new DocumentStore(urls, database);
+store.conventions.httpCompressionAlgorithm = "Gzip"; // "Zstd" (default) or "Gzip"
+store.conventions.useHttpCompression = false;        // send request bodies uncompressed
+store.conventions.useHttpDecompression = false;      // ask the server for uncompressed responses
 store.initialize();
 ```
 

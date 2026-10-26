@@ -35,6 +35,7 @@ import { BulkInsertOperationBase } from "./BulkInsert/BulkInsertOperationBase.js
 import { BulkInsertOptions } from "./BulkInsert/BulkInsertOptions.js";
 import { BulkInsertWriter } from "./BulkInsert/BulkInsertWriter.js";
 import { HttpCompressionAlgorithm } from "../Http/HttpCompressionAlgorithm.js";
+import { contentEncodingOf } from "../Http/HttpCompression.js";
 import { RemoteAttachmentParameters } from "./Operations/Attachments/RemoteAttachmentParameters.js";
 
 export class BulkInsertOperation extends BulkInsertOperationBase<object> {
@@ -998,8 +999,8 @@ export class BulkInsertCommand extends RavenCommand<void> {
             + "&skipOverwriteIfUnchanged=" + (this._skipOverwriteIfUnchanged ? "true" : "false");
 
         const headersBuilder = this._headers().typeAppJson();
-        if (this._compressionAlgorithm === "Gzip") {
-            headersBuilder.with("Content-Encoding", "gzip");
+        if (this._compressionAlgorithm) {
+            headersBuilder.with("Content-Encoding", contentEncodingOf(this._compressionAlgorithm));
         }
 
         const headers = headersBuilder.build();

@@ -156,7 +156,7 @@ export abstract class RavenCommand<TResult> {
         // paths must not carry an undici dispatcher into their fetch init.
         const { body, uri, fetcher, dispatcher, ...restOptions } = requestOptions;
 
-        log.info(`Send command ${this.constructor.name} to ${uri}${body ? " with body " + body : ""}.`);
+        log.info(`Send command ${this.constructor.name} to ${uri}${typeof body === "string" ? " with body " + body : ""}.`);
 
         const bodyToUse = fetcher ? RavenCommand.maybeWrapBody(body, fetcher) : body;
 

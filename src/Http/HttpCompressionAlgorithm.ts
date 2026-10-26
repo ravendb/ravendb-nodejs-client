@@ -1,3 +1,3 @@
 
 
-export type HttpCompressionAlgorithm = "Gzip";
+export type HttpCompressionAlgorithm = "Gzip" | "Zstd";

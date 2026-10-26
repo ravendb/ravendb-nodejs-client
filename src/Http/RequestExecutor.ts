@@ -50,6 +50,7 @@ import { Dispatcher, Agent } from "undici-types";
 import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
+import { compressRequestBody, contentEncodingOf } from "./HttpCompression.js";
 import { createDenoHttpClient, DenoHttpClient, validateDenoCertificateSupport } from "../Utility/DenoHttpUtil.js";
 import {
     BunHttpTransport,
@@ -442,16 +443,22 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private compressionHeaders(params: HttpRequestParameters) {
-        if (this._conventions.useHttpDecompression) {
-            // do nothing - node.js sends 'accept-encoding: gzip, deflate' by default
-        } else {
-            // disable response compression
-            let { headers} = params;
-            if (!headers) {
-                params.headers = headers = {};
-            }
+    private async applyHttpCompression(params: HttpRequestParameters) {
+        const headers = params.headers ??= {};
+        const algorithm = this._conventions.httpCompressionAlgorithm;
+
+        if (!this._conventions.useHttpDecompression) {
             headers["Accept-Encoding"] = "identity";
+        } else if (algorithm === "Zstd" && !this._conventions.customFetch && RuntimeUtil.fetchDecodesZstd()) {
+            headers["Accept-Encoding"] = "zstd, gzip, deflate, br";
+        }
+
+        if (this._conventions.useHttpCompression && typeof params.body === "string" && !headers["Content-Encoding"]) {
+            const compressed = await compressRequestBody(params.body, algorithm);
+            if (compressed) {
+                params.body = compressed;
+                headers["Content-Encoding"] = contentEncodingOf(algorithm);
+            }
         }
     }
 
@@ -1272,7 +1279,7 @@ export class RequestExecutor implements IDisposable {
         if (this._shouldExecuteOnAll(chosenNode, command)) {
             responseAndStream = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
         } else {
-            this.compressionHeaders(request);
+            await this.applyHttpCompression(request);
             responseAndStream = await command.send(await this.getHttpAgent(), request);
         }
 
@@ -1436,13 +1443,13 @@ export class RequestExecutor implements IDisposable {
             const agent = await this.getHttpAgent();
 
             task = Promise.resolve()
-                .then(() => {
+                .then(async () => {
                     const req = this._createRequest(nodes[taskNumber], command, TypeUtil.NOOP);
                     if (!req) {
                         return;
                     }
                     this._setRequestHeaders(null, null, req);
-                    this.compressionHeaders(req);
+                    await this.applyHttpCompression(req);
                     return command.send(agent, req);
                 })
                 .then(commandResult => new IndexAndResponse(taskNumber, commandResult.response, commandResult.bodyStream))

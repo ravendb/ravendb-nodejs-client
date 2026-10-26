@@ -51,7 +51,7 @@
     "Hibernating Rhinos"
   ],
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=22.15.0"
   },
   "keywords": [
     "ravendb",
