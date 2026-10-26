@@ -3,7 +3,7 @@ import {
     ObjectKeyCaseTransformStreamOptions,
     ObjectKeyCaseTransformStream
 } from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream.js";
-import { pipelineAsync, readToBuffer } from "../Utility/StreamUtil.js";
+import { pipelineAsync, finishedAsync } from "../Utility/StreamUtil.js";
 import { Stream, Transform, Readable, Writable, pipeline } from "node:stream";
 import {
     CollectResultStream,
@@ -184,10 +184,14 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
             throwError("MappingError", "Body stream cannot be null.");
         }
 
-        const bytes = await readToBuffer(src);
+        // string chunks are accepted like the Transform in _buildUp accepts them
+        const chunks: Buffer[] = [];
+        src.on("data", (chunk: Buffer | string) => chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk));
+        await finishedAsync(src);
+
         let str: string = null;
         try {
-            str = bytes.toString("utf8");
+            str = Buffer.concat(chunks).toString("utf8");
         } catch (err) {
             throw getError("InvalidDataException", "Failed to concat / decode server response", err);
         }
