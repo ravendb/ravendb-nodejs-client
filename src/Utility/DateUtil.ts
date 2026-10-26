@@ -110,10 +110,24 @@ export class DateUtil {
 
             return this.opts.withTimezone ? utcString + "0000+00:00" : utcString + "0000Z";
         }
-        const dateFormat = this.opts.withTimezone
-            ? DateUtil.DEFAULT_DATE_TZ_FORMAT
-            : DateUtil.DEFAULT_DATE_FORMAT;
-        return format(date, dateFormat);
+        if (this.opts.withTimezone) {
+            return format(date, DateUtil.DEFAULT_DATE_TZ_FORMAT);
+        }
+
+        return DateUtil.formatLocalDate(date) ?? format(date, DateUtil.DEFAULT_DATE_FORMAT);
+    }
+
+    // same output as date-fns format(DEFAULT_DATE_FORMAT); null (date-fns decides) for invalid dates and years outside 0-9999
+    private static formatLocalDate(date: Date): string | null {
+        const year = date.getFullYear();
+        if (!(year >= 0 && year <= 9999)) {
+            return null;
+        }
+
+        const pad = (value: number, width = 2) => String(value).padStart(width, "0");
+        return pad(year, 4) + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate())
+            + "T" + pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds())
+            + "." + pad(date.getMilliseconds(), 3) + "0000";
     }
 
 }

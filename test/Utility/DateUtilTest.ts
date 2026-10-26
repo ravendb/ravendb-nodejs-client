@@ -1,5 +1,5 @@
 import { DateUtil } from "../../src/index.js";
-import { parse } from "date-fns";
+import { format, parse } from "date-fns";
 import assert from "node:assert";
 
 function toServerLocalFormat(date: Date): string {
@@ -64,5 +64,27 @@ describe("DateUtil.parse", function () {
         const parsed = DateUtil.default.parse("2026-01-01T01:06:00.1239999");
 
         assert.strictEqual(parsed.getTime(), new Date(2026, 0, 1, 1, 6, 0, 123).getTime());
+    });
+});
+
+describe("DateUtil.stringify", function () {
+
+    it("formats local dates the same as date-fns across years and DST transitions", function () {
+        const samples = [
+            ...instantsAcross(2026, 17),
+            ...[1, 99, 100, 1582, 1900, 1970, 2000, 2038, 9999].flatMap(year => instantsAcross(year, 24 * 60 + 61)),
+        ];
+
+        for (const sample of samples) {
+            assert.strictEqual(DateUtil.default.stringify(sample), format(sample, DateUtil.DEFAULT_DATE_FORMAT), sample.toISOString());
+        }
+    });
+
+    it("formats years outside 0-9999 and rejects invalid dates like date-fns", function () {
+        const farFuture = new Date(0);
+        farFuture.setFullYear(12345, 5, 6);
+
+        assert.strictEqual(DateUtil.default.stringify(farFuture), format(farFuture, DateUtil.DEFAULT_DATE_FORMAT));
+        assert.throws(() => DateUtil.default.stringify(new Date(NaN)), RangeError);
     });
 });
