@@ -1,9 +1,28 @@
+import type { Transform } from "node:stream";
 import { HttpCompressionAlgorithm } from "./HttpCompressionAlgorithm.js";
 
 let zlibModule: Promise<typeof import("node:zlib") | null>;
 
-function loadZlib() {
+export function loadZlib() {
     return zlibModule ??= import("node:zlib").catch(() => null);
+}
+
+export function createDecompressor(zlib: typeof import("node:zlib"), encoding: string | string[]): Transform {
+    const name = (Array.isArray(encoding) ? encoding[0] : encoding ?? "").trim().toLowerCase();
+
+    switch (name) {
+        case "gzip":
+        case "x-gzip":
+            return zlib.createGunzip();
+        case "deflate":
+            return zlib.createInflate();
+        case "br":
+            return zlib.createBrotliDecompress();
+        case "zstd":
+            return typeof zlib.createZstdDecompress === "function" ? zlib.createZstdDecompress() : null;
+        default:
+            return null;
+    }
 }
 
 export function contentEncodingOf(algorithm: HttpCompressionAlgorithm): string {

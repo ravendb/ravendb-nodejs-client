@@ -67,18 +67,4 @@ export class RuntimeUtil {
      */
     public static supportsUndiciDispatcher(): boolean {
         return !this.isBun() && !this.isWorkerd() && !this.isDeno();
-    }
-
-    /**
-     * Whether the global fetch decodes `Content-Encoding: zstd` responses: undici 7.11+
-     * (bundled from Node 23.x / 24.x). Node 22's undici 6.x and Deno pass zstd bytes through.
-     */
-    public static fetchDecodesZstd(): boolean {
-        if (!this.supportsUndiciDispatcher()) {
-            return false;
-        }
-
-        const [major, minor] = (process.versions.undici ?? "0.0").split(".").map(Number);
-        return major > 7 || (major === 7 && minor >= 11);
-    }
-}
+    }}

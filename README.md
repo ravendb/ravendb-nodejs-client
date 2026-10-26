@@ -2657,9 +2657,8 @@ store.initialize();
 
 ## HTTP compression
 
-Like the C# client, request bodies are compressed with zstd by default. Responses are accepted as zstd
-wherever the runtime's `fetch` decodes it (Node.js with undici 7.11+, which ships with Node.js 24);
-elsewhere the runtime's default encodings (gzip, deflate, br) are used.
+Like the C# client, request bodies are compressed with zstd by default. On Node.js responses are accepted
+as zstd too; on Bun, Deno and Cloudflare Workers the runtime's `fetch` negotiates its default encodings.
 
 ```javascript
 const store = new DocumentStore(urls, database);

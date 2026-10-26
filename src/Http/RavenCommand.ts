@@ -1,7 +1,7 @@
 import { ServerNode } from "./ServerNode.js";
 import { HttpCache } from "./HttpCache.js";
 import { StatusCodes } from "./StatusCode.js";
-import { Stream, Readable, PassThrough } from "node:stream";
+import { Stream, Readable, PassThrough, pipeline } from "node:stream";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http.js";
 import { getLogger } from "../Utility/LogUtil.js";
 import { getError, throwError } from "../Exceptions/index.js";
@@ -18,6 +18,8 @@ import { HEADERS } from "../Constants.js";
 import { DefaultCommandResponseBehavior } from "./Behaviors/DefaultCommandResponseBehavior.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
 import { BunFetchRequestInit } from "../Types/BunTypes.js";
+import { TypeUtil } from "../Utility/TypeUtil.js";
+import { createDecompressor, loadZlib } from "./HttpCompression.js";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -166,6 +168,14 @@ export abstract class RavenCommand<TResult> {
             if (dispatcher) { // support for fiddler
                 agent = dispatcher;
             }
+
+            // streamed uploads (bulk insert, attachments) stay on fetch: undici's request API does not
+            // encode FormData and does not settle on an early server response while the body is open
+            const isBufferedBody = body === undefined || body === null || typeof body === "string"
+                || ArrayBuffer.isView(body) || body instanceof ReadableStream;
+            if (agent && !fetcher && isBufferedBody) {
+                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions);
+            }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         } else {
             // Bun, Cloudflare Workers (workerd) and Deno have no undici `dispatcher`
@@ -203,6 +213,51 @@ export abstract class RavenCommand<TResult> {
         return {
             response,
             bodyStream: passthrough
+        };
+    }
+
+    // undici's request API skips fetch's WHATWG layers (Request/Response objects, web streams),
+    // which cost several times the CPU per request; responses are decoded here instead of by fetch
+    private static async _sendWithDispatcher(
+        agent: Dispatcher, uri: string, body: RequestInit["body"], { method, headers, signal }: RequestInit): Promise<{ response: HttpResponse, bodyStream: Readable }> {
+
+        const url = new URL(uri);
+        let result: Dispatcher.ResponseData;
+        try {
+            result = await agent.request({
+                origin: url.origin,
+                path: url.pathname + url.search,
+                method: (method ?? "GET") as Dispatcher.HttpMethod,
+                headers: headers as Record<string, string>,
+                body: body as Dispatcher.DispatchOptions["body"],
+                signal
+            });
+        } catch (err) {
+            if (err.name === "AbortError") {
+                throw err;
+            }
+            // same shape as a fetch network failure, which RequestExecutor inspects via `cause`
+            throw new TypeError("fetch failed", { cause: err });
+        }
+
+        const responseHeaders = new Headers();
+        for (const [name, value] of Object.entries(result.headers)) {
+            responseHeaders.set(name, Array.isArray(value) ? value.join(", ") : value);
+        }
+
+        let bodyStream: Readable = result.body;
+        const encoding = responseHeaders.get("content-encoding");
+        if (encoding) {
+            const decompressor = createDecompressor(await loadZlib(), encoding);
+            if (decompressor) {
+                bodyStream = pipeline(result.body, decompressor, TypeUtil.NOOP);
+            }
+        }
+        bodyStream.pause();
+
+        return {
+            response: new Response(null, { status: result.statusCode, headers: responseHeaders }),
+            bodyStream
         };
     }
 

@@ -450,8 +450,9 @@ export class RequestExecutor implements IDisposable {
 
         if (!this._conventions.useHttpDecompression) {
             headers["Accept-Encoding"] = "identity";
-        } else if (algorithm === "Zstd" && !this._conventions.customFetch && RuntimeUtil.fetchDecodesZstd()) {
-            headers["Accept-Encoding"] = "zstd, gzip, deflate, br";
+        } else if (!this._conventions.customFetch && RuntimeUtil.supportsUndiciDispatcher()) {
+            // the Node transport (RavenCommand._sendWithDispatcher) decodes responses itself; fetch elsewhere sets its own
+            headers["Accept-Encoding"] = algorithm === "Zstd" ? "zstd, gzip, deflate, br" : "gzip, deflate, br";
         }
 
         if (this._conventions.useHttpCompression && typeof params.body === "string" && !headers["Content-Encoding"]) {
@@ -1179,6 +1180,8 @@ export class RequestExecutor implements IDisposable {
         } finally {
             if (responseDispose === "Automatic") {
                 closeHttpResponse(response);
+                // an unread undici body keeps its connection busy until drained
+                bodyStream.resume();
             }
 
             await refreshTask;
