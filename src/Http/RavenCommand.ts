@@ -1,7 +1,7 @@
 import { ServerNode } from "./ServerNode.js";
 import { HttpCache } from "./HttpCache.js";
 import { StatusCodes } from "./StatusCode.js";
-import { Stream, Readable, PassThrough, pipeline } from "node:stream";
+import { Stream, Readable, PassThrough } from "node:stream";
 import { HttpRequestParameters, HttpResponse } from "../Primitives/Http.js";
 import { getLogger } from "../Utility/LogUtil.js";
 import { getError, throwError } from "../Exceptions/index.js";
@@ -18,8 +18,7 @@ import { HEADERS } from "../Constants.js";
 import { DefaultCommandResponseBehavior } from "./Behaviors/DefaultCommandResponseBehavior.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
 import { BunFetchRequestInit } from "../Types/BunTypes.js";
-import { TypeUtil } from "../Utility/TypeUtil.js";
-import { createDecompressor, loadZlib } from "./HttpCompression.js";
+import { createDecompressor, decompressSync, loadZlib } from "./HttpCompression.js";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -174,7 +173,7 @@ export abstract class RavenCommand<TResult> {
             const isBufferedBody = body === undefined || body === null || typeof body === "string"
                 || ArrayBuffer.isView(body) || body instanceof ReadableStream;
             if (agent && !fetcher && isBufferedBody) {
-                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions);
+                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._responseType === "Object");
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         } else {
@@ -219,7 +218,8 @@ export abstract class RavenCommand<TResult> {
     // undici's request API skips fetch's WHATWG layers (Request/Response objects, web streams),
     // which cost several times the CPU per request; responses are decoded here instead of by fetch
     private static async _sendWithDispatcher(
-        agent: Dispatcher, uri: string, body: RequestInit["body"], { method, headers, signal }: RequestInit): Promise<{ response: HttpResponse, bodyStream: Readable }> {
+        agent: Dispatcher, uri: string, body: RequestInit["body"], { method, headers, signal }: RequestInit,
+        readWholeBody: boolean): Promise<{ response: HttpResponse, bodyStream: Readable }> {
 
         const url = new URL(uri);
         let result: Dispatcher.ResponseData;
@@ -247,10 +247,17 @@ export abstract class RavenCommand<TResult> {
 
         let bodyStream: Readable = result.body;
         const encoding = responseHeaders.get("content-encoding");
-        if (encoding) {
+        if (encoding && readWholeBody) {
+            // a streaming zlib context per response costs ~10x the CPU of a one-shot decode of a typical body
+            const raw = Buffer.from(await result.body.arrayBuffer());
+            const decoded = decompressSync(await loadZlib(), encoding, raw);
+            bodyStream = Readable.from([decoded ?? raw], { objectMode: false });
+        } else if (encoding) {
             const decompressor = createDecompressor(await loadZlib(), encoding);
             if (decompressor) {
-                bodyStream = pipeline(result.body, decompressor, TypeUtil.NOOP);
+                // not stream.pipeline: it builds an AbortController and a DOMException per response
+                result.body.on("error", err => decompressor.destroy(err));
+                bodyStream = result.body.pipe(decompressor);
             }
         }
         bodyStream.pause();

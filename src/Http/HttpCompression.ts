@@ -25,6 +25,22 @@ export function createDecompressor(zlib: typeof import("node:zlib"), encoding: s
     }
 }
 
+export function decompressSync(zlib: typeof import("node:zlib"), encoding: string, data: Buffer): Buffer | null {
+    switch (encoding.trim().toLowerCase()) {
+        case "gzip":
+        case "x-gzip":
+            return zlib.gunzipSync(data);
+        case "deflate":
+            return zlib.inflateSync(data);
+        case "br":
+            return zlib.brotliDecompressSync(data);
+        case "zstd":
+            return typeof zlib.zstdDecompressSync === "function" ? zlib.zstdDecompressSync(data) : null;
+        default:
+            return null;
+    }
+}
+
 export function contentEncodingOf(algorithm: HttpCompressionAlgorithm): string {
     return algorithm === "Zstd" ? "zstd" : "gzip";
 }
