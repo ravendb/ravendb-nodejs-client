@@ -45,7 +45,8 @@ export class DateUtil {
             }
             parsed = parseISO(dateString);
         } else {
-            parsed = parse(dateString, DateUtil.DEFAULT_DATE_FORMAT, new Date());
+            parsed = DateUtil.parseLocalDate(dateString)
+                ?? parse(dateString, DateUtil.DEFAULT_DATE_FORMAT, new Date());
         }
 
         if (isNaN(parsed.getTime())) {
@@ -53,6 +54,31 @@ export class DateUtil {
         }
 
         return parsed;
+    }
+
+    private static readonly LOCAL_DATE_REGEX = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})0000$/;
+
+    // date-fns format-string parsing is ~10x slower; returns null (date-fns decides) for out-of-range or DST-gap values
+    private static parseLocalDate(dateString: string): Date | null {
+        const match = DateUtil.LOCAL_DATE_REGEX.exec(dateString);
+        if (!match) {
+            return null;
+        }
+
+        const [, year, month, day, hours, minutes, seconds, milliseconds] = match.map(Number);
+        const date = new Date(0);
+        date.setFullYear(year, month - 1, day);
+        date.setHours(hours, minutes, seconds, milliseconds);
+
+        const isExact = year > 0
+            && date.getFullYear() === year
+            && date.getMonth() === month - 1
+            && date.getDate() === day
+            && date.getHours() === hours
+            && date.getMinutes() === minutes
+            && date.getSeconds() === seconds;
+
+        return isExact ? date : null;
     }
 
     private static alignPrecision(date: string) {
