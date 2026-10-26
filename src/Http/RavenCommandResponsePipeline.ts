@@ -3,7 +3,7 @@ import {
     ObjectKeyCaseTransformStreamOptions,
     ObjectKeyCaseTransformStream
 } from "../Mapping/Json/Streams/ObjectKeyCaseTransformStream.js";
-import { pipelineAsync } from "../Utility/StreamUtil.js";
+import { pipelineAsync, readToBuffer } from "../Utility/StreamUtil.js";
 import { Stream, Transform, Readable, Writable, pipeline } from "node:stream";
 import {
     CollectResultStream,
@@ -156,6 +156,10 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
     }
 
     public async process(src: Stream): Promise<TStreamResult> {
+        if (this._opts.jsonSync && !this._opts.jsonlAsync) {
+            return this._processJson(src);
+        }
+
         const streams = this._buildUp(src);
         const opts = this._opts;
 
@@ -168,13 +172,51 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         const result = await resultPromise;
 
         if (opts.collectBody) {
-            const body = this._body.toString();
-            this.emit("body", body);
-            if (typeof opts.collectBody === "function") {
-                opts.collectBody(body);
-            }
+            this._emitBody(this._body.toString());
         }
 
         return result;
+    }
+
+    // same result as the stream chain built by _buildUp, without allocating streams and a pipeline per response
+    private async _processJson(src: Stream): Promise<TStreamResult> {
+        if (!src) {
+            throwError("MappingError", "Body stream cannot be null.");
+        }
+
+        const bytes = await readToBuffer(src);
+        let str: string = null;
+        try {
+            str = bytes.toString("utf8");
+        } catch (err) {
+            throw getError("InvalidDataException", "Failed to concat / decode server response", err);
+        }
+
+        let parsed: any;
+        try {
+            parsed = JSON.parse(str);
+        } catch (err) {
+            throw getError("InvalidOperationException", `Error parsing response: '${str}'.`, err);
+        }
+
+        if (this._opts.collectBody) {
+            this._emitBody(str);
+        }
+
+        // a null chunk never reaches the collecting stream, so the stream chain resolves undefined for it
+        if (parsed === null) {
+            return undefined;
+        }
+
+        return this._opts.streamKeyCaseTransform
+            ? ObjectKeyCaseTransformStream.transformKeys(parsed, Object.assign({}, this._opts.streamKeyCaseTransform, { handlePath: false }))
+            : parsed;
+    }
+
+    private _emitBody(body: string) {
+        this.emit("body", body);
+        if (typeof this._opts.collectBody === "function") {
+            this._opts.collectBody(body);
+        }
     }
 }
