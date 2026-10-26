@@ -48,6 +48,10 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
         this._responseType = "Raw";
     }
 
+    protected get _readsWholeResponse(): boolean {
+        return true;
+    }
+
     private _getCacheKey(command: GetRequest): string {
         const url = this._baseUrl + command.urlAndQuery;
         return (command.method || "GET") + "-" + url;

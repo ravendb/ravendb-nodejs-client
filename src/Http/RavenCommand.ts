@@ -61,6 +61,11 @@ export abstract class RavenCommand<TResult> {
         return this._responseType;
     }
 
+    // whether the command parses the whole response body instead of handing a stream to the caller
+    protected get _readsWholeResponse(): boolean {
+        return this._responseType === "Object";
+    }
+
     public set etag(value: string) {
         this._etag = value;
     }
@@ -173,7 +178,7 @@ export abstract class RavenCommand<TResult> {
             const isBufferedBody = body === undefined || body === null || typeof body === "string"
                 || ArrayBuffer.isView(body) || body instanceof ReadableStream;
             if (agent && !fetcher && isBufferedBody) {
-                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._responseType === "Object");
+                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         } else {
