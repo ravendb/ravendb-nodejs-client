@@ -5,6 +5,7 @@ import type { Gzip, ZstdCompress } from "node:zlib";
 import { promisify } from "node:util";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
+import { RuntimeUtil } from "../../Utility/RuntimeUtil.js";
 
 export class BulkInsertWriterBase implements IDisposable {
     private readonly _maxSizeInBuffer = 1024 * 1024;
@@ -120,6 +121,10 @@ export class BulkInsertStream {
     // copying a large attachment into the flushed buffer doubles its memory until GC
     private static readonly PASS_THROUGH_SIZE = 1024 * 1024;
 
+    // Deno's fetch transfers each chunk's ArrayBuffer: a pooled buffer cannot be detached, and a passed-through
+    // attachment would be detached from the caller
+    private static readonly _transportKeepsBuffers = RuntimeUtil.supportsUndiciDispatcher();
+
     private readonly _items: Array<string | Buffer> = [];
     private totalLength = 0;
     private _hasPassThroughBuffer = false;
@@ -166,11 +171,13 @@ export class BulkInsertStream {
     }
 
     private static _isPassThrough(item: string | Buffer): item is Buffer {
-        return Buffer.isBuffer(item) && item.length >= BulkInsertStream.PASS_THROUGH_SIZE;
+        return BulkInsertStream._transportKeepsBuffers
+            && Buffer.isBuffer(item)
+            && item.length >= BulkInsertStream.PASS_THROUGH_SIZE;
     }
 
     private static _concat(items: Array<string | Buffer>, length: number): Buffer {
-        const result = Buffer.allocUnsafe(length);
+        const result = BulkInsertStream._transportKeepsBuffers ? Buffer.allocUnsafe(length) : Buffer.allocUnsafeSlow(length);
         let idx = 0;
         for (const item of items) {
             if (Buffer.isBuffer(item)) {
