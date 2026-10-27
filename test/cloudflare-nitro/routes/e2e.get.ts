@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
         }
 
         const id = "items/1";
-        const payload = { message: "hello from workerd", at: "e2e" };
+        // over 1 KB, so the request body takes the compression path
+        const payload = { message: "hello from workerd", at: "e2e", padding: "x".repeat(4096) };
         {
             const session = store.openSession();
             await session.store(payload, id);
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
         const session = store.openSession();
         const loaded = await session.load<typeof payload>(id);
 
-        return { ok: loaded?.message === payload.message, loaded };
+        return { ok: loaded?.message === payload.message && loaded?.padding === payload.padding, id: loaded?.id };
     } catch (err) {
         return { ok: false, error: `${(err as Error).name}: ${(err as Error).message}` };
     } finally {
