@@ -961,8 +961,13 @@ export interface ITypedTimeSeriesBulkInsert<T extends object> extends IDisposabl
 }
 
 export interface IAttachmentsBulkInsert {
+    /**
+     * Attachments of 1 MB or more are sent without copying, so do not modify `bytes` until `finish()` resolves.
+     */
     store(name: string, bytes: Buffer): Promise<void>;
+    /** @see store */
     store(name: string, bytes: Buffer, contentType: string): Promise<void>;
+    /** @see store */
     store(name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
 }
 

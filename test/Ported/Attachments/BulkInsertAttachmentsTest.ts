@@ -44,6 +44,10 @@ describe("BulkInsertAttachmentsTest", function () {
         await storeManyAttachments(1000, 16 * 1024);
     });
 
+    it("storeAttachmentsLargerThanTheWriteBuffer", async () => {
+        await storeManyAttachments(5, 3 * 1024 * 1024);
+    });
+
     async function storeManyAttachments(count: number, size: number) {
         const userId = "user/1";
 
