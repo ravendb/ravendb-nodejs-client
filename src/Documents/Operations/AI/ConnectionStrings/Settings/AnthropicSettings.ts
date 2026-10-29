@@ -2,6 +2,9 @@ import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { IAiSettings } from "./IAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
 import { StringUtil } from "../../../../../Utility/StringUtil.js";
+import { LiteralUnion } from "../../../../../Types/index.js";
+
+export type AnthropicReasoningEffort = LiteralUnion<"low" | "medium" | "high" | "xhigh" | "max">;
 
 const DEFAULT_ENDPOINT = "https://api.anthropic.com/v1/";
 
@@ -41,7 +44,7 @@ export class AnthropicSettings extends AbstractAiSettings implements IAiSettings
      * all of them, and a model without effort support rejects the request. The value is trimmed and sent in lowercase
      * without further validation, so a new provider value can be used without waiting for a RavenDB release.
      */
-    public reasoningEffort?: string;
+    public reasoningEffort?: AnthropicReasoningEffort;
 
     /**
      * Enables prompt caching for AI agents and GenAI tasks. Anthropic bills a cache write above the normal input price and a
@@ -62,7 +65,7 @@ export class AnthropicSettings extends AbstractAiSettings implements IAiSettings
         model: string,
         endpoint?: string,
         maxOutputTokens?: number,
-        reasoningEffort?: string
+        reasoningEffort?: AnthropicReasoningEffort
     ) {
         super();
         this.apiKey = apiKey;

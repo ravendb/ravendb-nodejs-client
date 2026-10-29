@@ -11,6 +11,7 @@ import { HuggingFaceSettings } from "./Settings/HuggingFaceSettings.js";
 import { MistralAiSettings } from "./Settings/MistralAiSettings.js";
 import { VertexSettings } from "./Settings/VertexSettings.js";
 import { AnthropicSettings } from "./Settings/AnthropicSettings.js";
+import { StringUtil } from "../../../../Utility/StringUtil.js";
 
 
 const PROVIDER_KEYS = [
@@ -205,7 +206,7 @@ export class AiConnectionString extends ConnectionString {
                     this.huggingFaceSettings.endpoint.startsWith("https");
             case "Anthropic":
                 // Endpoint is optional for Anthropic, default endpoint is HTTPS
-                return !this.anthropicSettings?.endpoint ||
+                return StringUtil.isNullOrWhitespace(this.anthropicSettings?.endpoint) ||
                     this.anthropicSettings.endpoint.startsWith("https");
             case "Embedded":
             case "Google":
