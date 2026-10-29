@@ -1151,7 +1151,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         const docsReadable = streamOperation.setResult(command.result);
 
         const result = this._getStreamResultTransform(
-            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken, query.isProjectInto);
+            this, (query as any).getQueryType(), (query as any).fieldsToFetchToken, query.isProjectInto,
+            doc => query._invokeAfterStreamExecuted(doc));
 
         docsReadable.once("stats", stats => {
             (streamQueryStatsCallback || TypeUtil.NOOP)(stats);
@@ -1177,11 +1178,13 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         session: DocumentSession,
         clazz: ObjectTypeDescriptor<TEntity>,
         fieldsToFetchToken: any,
-        isProjectInto: boolean) {
+        isProjectInto: boolean,
+        onResult?: (doc: object) => void) {
         return new Transform({
             objectMode: true,
             transform(chunk: object, encoding: string, callback: TransformCallback) {
                 const doc = chunk["value"];
+                onResult?.(doc);
                 const metadata = doc[CONSTANTS.Documents.Metadata.KEY];
                 let changeVector: string = null;
                 // MapReduce indexes return reduce results that don't have @id property

@@ -82,36 +82,32 @@ describe("IDocumentQueryCustomizationMethodsTest", function () {
         
     });
 
-    // TBD - enable test when RDBC-713 is done
-    it("afterStreamExecuted", async () => {
+    it("afterStreamExecuted is raised for every streamed result", async () => {
         const session = store.openSession();
-        
-        // prepare data
-        for (let i = 0; i < 200; i++) {
-            const docToStore= Object.assign(new BlogPost(),
-                {body: "postBody_" + i, title: "postTitle_" + i, tags: ["Oren_" + i, "Danielle_" + i]});
-            await session.store(docToStore);
+        for (let i = 0; i < 3; i++) {
+            await session.store(Object.assign(new BlogPost(), { title: "postTitle_" + i }));
         }
-       
         await session.saveChanges();
 
-        // define query
-        let totalStreamedResultsSize = 0;
-        let counter = 0;
-
+        const streamedResults: object[] = [];
         const query = session
-            .query<BlogPost>({ collection: "blogPosts" })
-            .on("afterStreamExecuted", streamResult => {
-                totalStreamedResultsSize += streamResult.durationInMs;
-                counter++;
-            });
+            .query(BlogPost)
+            .on("afterStreamExecuted", result => streamedResults.push(result));
 
-        // stream query
         const queryStream = await session.advanced.stream(query);
-        
-        queryStream.on("end", () => {
-            assert.strictEqual(counter, 200);
-        });
+        const titles: string[] = [];
+        for await (const item of queryStream) {
+            titles.push(item.document.title);
+        }
+
+        assert.strictEqual(titles.length, 3);
+        assert.strictEqual(streamedResults.length, 3);
+        assert.deepStrictEqual(
+            streamedResults.map(x => x["title"]).sort(),
+            titles.sort());
+        for (const result of streamedResults) {
+            assert.ok(result["@metadata"]);
+        }
     });
 
     it("noCaching", async () => {

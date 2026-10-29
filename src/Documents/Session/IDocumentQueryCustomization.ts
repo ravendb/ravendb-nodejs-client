@@ -45,8 +45,6 @@ export interface IDocumentQueryCustomization {
     removeListener(
         eventName: "afterQueryExecuted", eventHandler: (eventArgs: QueryResult) => void): IDocumentQueryCustomization;
 
-    //TBD IDocumentQueryCustomization AfterStreamExecutedCallback
-
     /**
      * Disables caching for query results.
      */
