@@ -1,6 +1,5 @@
 import fs, { rmSync } from "node:fs";
 import path from "node:path";
-import url from "node:url";
 import { RavenTestDriver } from "../TestDriver/index.js";
 import { RavenServerLocator } from "../TestDriver/RavenServerLocator.js";
 import { getError, throwError } from "../../src/Exceptions/index.js";
@@ -51,7 +50,6 @@ class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
         const cliOpts = [
             "--ServerUrl=http://127.0.0.1:0",
-            "--ServerUrl.Tcp=tcp://127.0.0.1:38884",
             "--Features.Availability=Experimental"
         ];
 
@@ -79,7 +77,6 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         return [
             "--Security.Certificate.Path=" + certPath,
             "--ServerUrl=" + this._getHttpsServerUrl(),
-            "--ServerUrl.Tcp=" + this._getHttpsServerTcpUrl(),
             "--Features.Availability=Experimental"
         ];
     }
@@ -95,11 +92,6 @@ class TestSecuredServiceLocator extends RavenServerLocator {
         }
 
         return httpsServerUrl;
-    }
-
-    private _getHttpsServerTcpUrl() {
-        const https = this._getHttpsServerUrl();
-        return "tcp://" + url.parse(https).hostname + ":38882";
     }
 
     public getServerCertificatePath() {
