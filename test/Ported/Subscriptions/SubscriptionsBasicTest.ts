@@ -2054,6 +2054,59 @@ describe("SubscriptionsBasicTest", function () {
         }
     });
 
+    it("afterAcknowledgment callback handler sees the batch until it calls back", async () => {
+        await putUser("John", 3);
+
+        const id = await store.subscriptions.create(User);
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: id,
+            documentType: User
+        });
+
+        try {
+            const itemsAfterAsyncWork = await new Promise<number>((resolve, reject) => {
+                subscription.on("afterAcknowledgment", async (batch, callback) => {
+                    await new Promise(setImmediate);
+                    resolve(batch.items.length);
+                    callback();
+                });
+                subscription.on("batch", (batch, callback) => callback());
+                subscription.on("error", reject);
+            });
+
+            assertThat(itemsAfterAsyncWork)
+                .isEqualTo(1);
+        } finally {
+            subscription.dispose();
+        }
+    });
+
+    it("afterAcknowledgment async handler sees the batch until its promise settles", async () => {
+        await putUser("John", 3);
+
+        const id = await store.subscriptions.create(User);
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: id,
+            documentType: User
+        });
+
+        try {
+            const itemsAfterAsyncWork = await new Promise<number>((resolve, reject) => {
+                subscription.on("afterAcknowledgment", async batch => {
+                    await new Promise(setImmediate);
+                    resolve(batch.items.length);
+                });
+                subscription.on("batch", (batch, callback) => callback());
+                subscription.on("error", reject);
+            });
+
+            assertThat(itemsAfterAsyncWork)
+                .isEqualTo(1);
+        } finally {
+            subscription.dispose();
+        }
+    });
+
     async function putUser(name: string, age: number) {
         const session = store.openSession();
         const user = new User();
