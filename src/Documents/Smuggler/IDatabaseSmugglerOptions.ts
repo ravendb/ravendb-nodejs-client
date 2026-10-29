@@ -11,7 +11,11 @@ export interface IDatabaseSmugglerOptions {
     maxStepsForTransformScript: number;
     skipRevisionCreation: boolean;
     collections: string[];
-    operateOnDatabaseRecordType: DatabaseRecordItemType[];
+    operateOnDatabaseRecordTypes: DatabaseRecordItemType[];
+    /**
+     * @deprecated Use operateOnDatabaseRecordTypes instead. When set, it takes precedence over operateOnDatabaseRecordTypes.
+     */
+    operateOnDatabaseRecordType?: DatabaseRecordItemType[];
     maxReadOpsPerSecond?: number;
     skipCorruptedData?: boolean;
 }

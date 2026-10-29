@@ -13,7 +13,7 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         "RavenEtls", "Revisions", "Settings", "SqlConnectionStrings", "Sorters", "SqlEtls",
         "HubPullReplications", "SinkPullReplications", "TimeSeries", "DocumentsCompression",
         "Analyzers", "LockMode", "OlapConnectionStrings", "OlapEtls", "ElasticSearchConnectionStrings",
-        "ElasticSearchEtls", "PostgreSqlIntegration", "QueueConnectionStrings", "QueueEtls",
+        "ElasticSearchEtls", "PostgreSQLIntegration", "QueueConnectionStrings", "QueueEtls",
         "IndexesHistory", "Refresh", "QueueSinks", "DataArchival",
         "SnowflakeConnectionStrings", "SnowflakeEtls", "EmbeddingsGenerations", "AiConnectionStrings",
         "GenAiEtls", "AiAgents", "RemoteAttachments", "SchemaValidation", "CdcSinks"
@@ -22,7 +22,11 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private static readonly DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT: number = 10 * 1_000;
 
     public operateOnTypes: DatabaseItemType[];
-    public operateOnDatabaseRecordType: DatabaseRecordItemType[];
+    public operateOnDatabaseRecordTypes: DatabaseRecordItemType[];
+    /**
+     * @deprecated Use operateOnDatabaseRecordTypes instead. When set, it takes precedence over operateOnDatabaseRecordTypes.
+     */
+    public operateOnDatabaseRecordType?: DatabaseRecordItemType[];
     public includeExpired: boolean;
     public includeArtificial: boolean;
     public includeArchived: boolean;
@@ -41,7 +45,7 @@ export class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     constructor() {
         this.operateOnTypes = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_TYPES];
-        this.operateOnDatabaseRecordType = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES];
+        this.operateOnDatabaseRecordTypes = [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES];
         this.maxStepsForTransformScript = DatabaseSmugglerOptions.DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT;
         this.includeExpired = true;
         this.includeArchived = true;

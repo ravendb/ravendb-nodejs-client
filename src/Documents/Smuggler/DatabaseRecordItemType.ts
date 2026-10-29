@@ -22,6 +22,10 @@ export type DatabaseRecordItemType =
     | "OlapEtls"
     | "ElasticSearchConnectionStrings"
     | "ElasticSearchEtls"
+    | "PostgreSQLIntegration"
+    /**
+     * @deprecated The server-side enum member is "PostgreSQLIntegration". Use "PostgreSQLIntegration" instead.
+     */
     | "PostgreSqlIntegration"
     | "QueueConnectionStrings"
     /**
