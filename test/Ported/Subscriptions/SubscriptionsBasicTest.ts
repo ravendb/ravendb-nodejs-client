@@ -2505,6 +2505,18 @@ describe("SubscriptionsBasicTest", function () {
         }
     });
 
+    it("worker disposed before processing is removed from the store", () => {
+        const subscription = store.subscriptions.getSubscriptionWorker<User>({
+            subscriptionName: "never-started",
+            documentType: User
+        });
+
+        subscription.dispose();
+
+        assertThat((store.subscriptions as any)._subscriptions.size)
+            .isEqualTo(0);
+    });
+
     it("removeListener detaches batch handler", async () => {
         const id = await store.subscriptions.create(User);
 

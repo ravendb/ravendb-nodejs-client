@@ -215,6 +215,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
 
         if (!this._subscriptionTask) {
             this._setState("Stopped");
+            this._emitter.emit("end");
         }
     }
 
