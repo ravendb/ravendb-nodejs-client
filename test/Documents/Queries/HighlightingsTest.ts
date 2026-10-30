@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { Highlightings } from "../../../src/Documents/Queries/Highlighting/Hightlightings.js";
 
 describe("Highlightings", function () {

@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { DocumentConventions } from "../../src/Documents/Conventions/DocumentConventions.js";
 
 describe("DocumentConventions.identityPartsSeparator", function () {

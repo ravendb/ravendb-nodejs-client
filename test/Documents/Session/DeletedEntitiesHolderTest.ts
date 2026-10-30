@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 
 // Import the holder class (it's not directly exported, so we access it via the module)
 // The class is defined at the bottom of InMemoryDocumentSessionOperations.ts

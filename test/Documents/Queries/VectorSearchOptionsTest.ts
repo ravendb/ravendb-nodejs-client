@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { VectorOptions, AutoVectorOptions } from "../../../src/Documents/Queries/VectorSearch/VectorSearchOptions.js";
 
 describe("VectorOptions.fromJson", function () {
