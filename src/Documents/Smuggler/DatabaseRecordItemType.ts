@@ -24,7 +24,7 @@ export type DatabaseRecordItemType =
     | "ElasticSearchEtls"
     | "PostgreSQLIntegration"
     /**
-     * @deprecated The server-side enum member is "PostgreSQLIntegration". Use "PostgreSQLIntegration" instead.
+     * @deprecated Use "PostgreSQLIntegration" instead.
      */
     | "PostgreSqlIntegration"
     | "QueueConnectionStrings"
