@@ -132,6 +132,10 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
     public on(event: "unexpectedSubscriptionError",
               handler: (error?: Error) => void): this;
     public on(event: "onEstablishedSubscriptionConnection", handler: (value: SubscriptionWorker<any>) => void): this;
+    /**
+     * The batch is cleared once every handler finishes: a handler that declares the callback
+     * parameter must call it, a handler returning a promise is awaited.
+     */
     public on(event: "afterAcknowledgment",
               handler: (value: TBatch, callback: EmptyCallback) => void): this;
     public on(event: "connectionRetry",
@@ -695,6 +699,19 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         });
     }
 
+    private async _emitAfterAcknowledgmentAndWait(batch: TBatch): Promise<void> {
+        for (const listener of this._emitter.listeners("afterAcknowledgment")) {
+            if (listener.length < 2) {
+                await listener(batch);
+                continue;
+            }
+
+            await new Promise<void>((resolve, reject) => {
+                listener(batch, (error?: Error) => error ? reject(error) : resolve());
+            });
+        }
+    }
+
     private async _readSingleSubscriptionBatchFromServer(batch: TBatch):
         Promise<BatchFromServer> {
         const incomingBatch = [] as SubscriptionConnectionServerMessage[];
@@ -732,7 +749,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                     break;
                 }
                 case "Confirm": {
-                    this._emitter.emit("afterAcknowledgment", batch);
+                    await this._emitAfterAcknowledgmentAndWait(batch);
 
                     incomingBatch.length = 0;
                     batch.items.length = 0;
