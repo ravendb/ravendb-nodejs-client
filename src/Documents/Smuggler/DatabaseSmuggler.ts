@@ -160,7 +160,8 @@ function serializeOptions(conventions: DocumentConventions, options: DatabaseSmu
 }
 
 function toServerFlags(recordTypes: DatabaseRecordItemType[]): string {
-    if (!recordTypes) {
+    // the server applies its own default, older servers reject record types they do not know
+    if (!recordTypes || isDefaultSelection(recordTypes)) {
         return undefined;
     }
 
@@ -169,6 +170,11 @@ function toServerFlags(recordTypes: DatabaseRecordItemType[]): string {
     }
 
     return recordTypes.map(x => SERVER_DATABASE_RECORD_ITEM_TYPES[x] ?? x).join(",");
+}
+
+function isDefaultSelection(recordTypes: DatabaseRecordItemType[]): boolean {
+    const defaults = DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES;
+    return recordTypes.length === defaults.length && defaults.every(x => recordTypes.includes(x));
 }
 
 class ExportCommand extends RavenCommand<void> {
