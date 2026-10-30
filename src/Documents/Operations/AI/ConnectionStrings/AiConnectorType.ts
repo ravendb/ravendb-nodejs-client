@@ -7,4 +7,5 @@ export type AiConnectorType =
     | "Google"
     | "HuggingFace"
     | "MistralAi"
-    | "Vertex";
+    | "Vertex"
+    | "Anthropic";
