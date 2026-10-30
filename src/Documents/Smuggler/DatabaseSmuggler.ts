@@ -7,6 +7,7 @@ import { DatabaseSmugglerExportOptions } from "./DatabaseSmugglerExportOptions.j
 import { HttpCache } from "../../Http/HttpCache.js";
 import { HeadersBuilder } from "../../Utility/HttpUtil.js";
 import { DatabaseSmugglerOptions } from "./DatabaseSmugglerOptions.js";
+import { DatabaseRecordItemType } from "./DatabaseRecordItemType.js";
 import { pipelineAsync } from "../../Utility/StreamUtil.js";
 import { dirname, resolve, extname } from "node:path";
 import { BackupUtils } from "./BackupUtils.js";
@@ -116,24 +117,7 @@ export class DatabaseSmuggler {
         return oldOperateOnTypes;
     }
 
-    public async import(options: DatabaseSmugglerImportOptions, fromFile: string): Promise<OperationCompletionAwaiter> {
-        let countOfFileParts = 0;
-
-        const { existsSync } = await import("node:fs");
-
-        let result: OperationCompletionAwaiter;
-
-        do {
-            result = await this._import(options, fromFile);
-
-            countOfFileParts++;
-            fromFile = StringUtil.format("{0}.part{1}", fromFile, countOfFileParts);
-        } while (existsSync(fromFile));
-
-        return result;
-    }
-
-    private async _import(options: DatabaseSmugglerImportOptions, file: string): Promise<OperationCompletionAwaiter> {
+    public async import(options: DatabaseSmugglerImportOptions, file: string): Promise<OperationCompletionAwaiter> {
         if (!options) {
             throwError("InvalidArgumentException", "Options cannot be null");
         }
@@ -159,6 +143,40 @@ export class DatabaseSmuggler {
     }
 }
 
+const SERVER_DATABASE_RECORD_ITEM_TYPES: Partial<Record<DatabaseRecordItemType, DatabaseRecordItemType>> = {
+    QueueEtl: "QueueEtls",
+    PostgreSqlIntegration: "PostgreSQLIntegration"
+};
+
+function serializeOptions(conventions: DocumentConventions, options: DatabaseSmugglerOptions): object {
+    const { operateOnTypes, operateOnDatabaseRecordTypes, operateOnDatabaseRecordType, ...restOptions } = options;
+    const recordTypes = operateOnDatabaseRecordType ?? operateOnDatabaseRecordTypes;
+
+    return conventions.objectMapper.toObjectLiteral({
+        operateOnTypes: operateOnTypes.join(","),
+        operateOnDatabaseRecordTypes: toServerFlags(recordTypes),
+        ...restOptions
+    });
+}
+
+function toServerFlags(recordTypes: DatabaseRecordItemType[]): string {
+    // the server applies its own default, older servers reject record types they do not know
+    if (!recordTypes || isDefaultSelection(recordTypes)) {
+        return undefined;
+    }
+
+    if (!recordTypes.length) {
+        return "None";
+    }
+
+    return recordTypes.map(x => SERVER_DATABASE_RECORD_ITEM_TYPES[x] ?? x).join(",");
+}
+
+function isDefaultSelection(recordTypes: DatabaseRecordItemType[]): boolean {
+    const defaults = DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES;
+    return recordTypes.length === defaults.length && defaults.every(x => recordTypes.includes(x));
+}
+
 class ExportCommand extends RavenCommand<void> {
     private readonly _options: object;
     private readonly _handleStreamResponse: (stream: Readable) => Promise<void>;
@@ -179,12 +197,7 @@ class ExportCommand extends RavenCommand<void> {
 
         this._handleStreamResponse = handleStreamResponse;
 
-        const { operateOnTypes, ...restOptions } = options;
-
-        this._options = conventions.objectMapper.toObjectLiteral({
-            operateOnTypes: operateOnTypes.join(","),
-            ...restOptions
-        });
+        this._options = serializeOptions(conventions, options);
         this._operationId = operationId;
         this._selectedNodeTag = nodeTag;
     }
@@ -248,11 +261,7 @@ class ImportCommand extends RavenCommand<void> {
 
         this._file = file;
 
-        const { operateOnTypes, ...restOptions } = options;
-        this._options = conventions.objectMapper.toObjectLiteral({
-            operateOnTypes: operateOnTypes.join(","),
-            ...restOptions
-        });
+        this._options = serializeOptions(conventions, options);
         this._operationId = operationId;
         this._selectedNodeTag = nodeTag;
     }

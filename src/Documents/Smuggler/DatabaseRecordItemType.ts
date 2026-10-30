@@ -22,6 +22,10 @@ export type DatabaseRecordItemType =
     | "OlapEtls"
     | "ElasticSearchConnectionStrings"
     | "ElasticSearchEtls"
+    | "PostgreSQLIntegration"
+    /**
+     * @deprecated Use "PostgreSQLIntegration" instead.
+     */
     | "PostgreSqlIntegration"
     | "QueueConnectionStrings"
     /**

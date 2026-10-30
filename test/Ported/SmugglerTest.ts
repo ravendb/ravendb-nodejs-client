@@ -3,9 +3,15 @@ import {
     IDocumentStore,
     DatabaseSmugglerExportOptions,
     DatabaseSmugglerImportOptions,
-    CONSTANTS
+    DatabaseSmugglerOptions,
+    CONSTANTS,
+    ConfigureRevisionsOperation,
+    GetDatabaseRecordOperation,
+    PutClientConfigurationOperation,
+    RevisionsCollectionConfiguration,
+    RevisionsConfiguration
 } from "../../src/index.js";
-import { disposeTestDocumentStore, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
 import { User } from "../Assets/Entities.js";
 import { UsersByName } from "./QueryTest.js";
 import { assertThat } from "../Utils/AssertExtensions.js";
@@ -118,6 +124,66 @@ describe("SmugglerTest", function () {
         }
     });
 
+    (RavenTestContext.isPullRequest ? it.skip : it)("exports only the selected database record types", async () => {
+        const options: DatabaseSmugglerExportOptions = {
+            operateOnTypes: [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_TYPES],
+            operateOnDatabaseRecordTypes: ["Client", "QueueEtl", "PostgreSqlIntegration"],
+            includeExpired: true,
+            includeArtificial: false,
+            includeArchived: true,
+            removeAnalyzers: false,
+            transformScript: null,
+            maxStepsForTransformScript: 10_000,
+            skipRevisionCreation: false,
+            encryptionKey: null,
+            collections: [],
+            skipCorruptedData: false
+        };
+
+        const record = await exportAndImportDatabaseRecord(options, "exported-db-4");
+
+        assertThat(record.client.maxNumberOfRequestsPerSession)
+            .isEqualTo(80);
+        assertThat(record.revisions)
+            .isNull();
+    });
+
+    (RavenTestContext.isPullRequest ? it.skip : it)("exports only the database record types set with the deprecated option name", async () => {
+        const options = new DatabaseSmugglerExportOptions();
+        options.operateOnDatabaseRecordType = ["Client"];
+
+        const record = await exportAndImportDatabaseRecord(options, "exported-db-6");
+
+        assertThat(record.client.maxNumberOfRequestsPerSession)
+            .isEqualTo(80);
+        assertThat(record.revisions)
+            .isNull();
+    });
+
+    it("imports a single file even when a .part1 file exists next to it", async () => {
+        const exportFile = path.join(temporaryDirContext.tempDir, "exported-db-5." + CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+
+        await addUsers(store);
+
+        const exportOperation = await store.smuggler.export(new DatabaseSmugglerExportOptions(), exportFile);
+        await exportOperation.waitForCompletion();
+
+        fs.writeFileSync(exportFile + ".part1", "not a ravendb dump");
+
+        const dstStore = await testContext.getDocumentStore();
+
+        try {
+            const importOperation = await dstStore.smuggler.import(new DatabaseSmugglerImportOptions(), exportFile);
+            await importOperation.waitForCompletion();
+
+            const stats = await dstStore.maintenance.send(new GetStatisticsOperation());
+            assertThat(stats.countOfDocuments)
+                .isEqualTo(3);
+        } finally {
+            dstStore.dispose();
+        }
+    });
+
     it("can sort files", () => {
         const files = [
             "2018-11-08-10-47.ravendb-incremental-backup",
@@ -134,6 +200,38 @@ describe("SmugglerTest", function () {
         assertThat(sortedFiles[2])
             .isEqualTo("2018-11-08-10-47.ravendb-incremental-backup");
     })
+
+    const exportAndImportDatabaseRecord = async (options: DatabaseSmugglerExportOptions, fileName: string) => {
+        const exportFile = path.join(temporaryDirContext.tempDir, fileName + "." + CONSTANTS.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION);
+
+        const sourceStore = await testContext.getDocumentStore();
+
+        try {
+            const revisions = new RevisionsConfiguration();
+            revisions.defaultConfig = new RevisionsCollectionConfiguration();
+            await sourceStore.maintenance.send(new ConfigureRevisionsOperation(revisions));
+            await sourceStore.maintenance.send(new PutClientConfigurationOperation({
+                maxNumberOfRequestsPerSession: 80,
+                disabled: false
+            }));
+
+            const operation = await sourceStore.smuggler.export(options, exportFile);
+            await operation.waitForCompletion();
+        } finally {
+            sourceStore.dispose();
+        }
+
+        const dstStore = await testContext.getDocumentStore();
+
+        try {
+            const operation = await dstStore.smuggler.import(new DatabaseSmugglerImportOptions(), exportFile);
+            await operation.waitForCompletion();
+
+            return await dstStore.maintenance.server.send(new GetDatabaseRecordOperation(dstStore.database));
+        } finally {
+            dstStore.dispose();
+        }
+    }
 
     const addUsers = async (store: IDocumentStore) => {
         const session = store.openSession();
