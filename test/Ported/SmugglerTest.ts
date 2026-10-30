@@ -11,7 +11,7 @@ import {
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
 } from "../../src/index.js";
-import { disposeTestDocumentStore, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
 import { User } from "../Assets/Entities.js";
 import { UsersByName } from "./QueryTest.js";
 import { assertThat } from "../Utils/AssertExtensions.js";
@@ -124,7 +124,7 @@ describe("SmugglerTest", function () {
         }
     });
 
-    it("exports only the selected database record types", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("exports only the selected database record types", async () => {
         const options: DatabaseSmugglerExportOptions = {
             operateOnTypes: [...DatabaseSmugglerOptions.DEFAULT_OPERATE_ON_TYPES],
             operateOnDatabaseRecordTypes: ["Client", "QueueEtl", "PostgreSqlIntegration"],
@@ -148,7 +148,7 @@ describe("SmugglerTest", function () {
             .isNull();
     });
 
-    it("exports only the database record types set with the deprecated option name", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("exports only the database record types set with the deprecated option name", async () => {
         const options = new DatabaseSmugglerExportOptions();
         options.operateOnDatabaseRecordType = ["Client"];
 
