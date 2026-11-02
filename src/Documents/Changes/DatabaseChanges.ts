@@ -439,7 +439,7 @@ export class DatabaseChanges implements IDatabaseChanges {
                 switch (type) {
                     case "Error": {
                         const exceptionAsString = message.Exception;
-                        this._notifyAboutError(exceptionAsString);
+                        this._notifyAboutError(new Error(exceptionAsString));
                         break;
                     }
                     case "Confirm": {

@@ -366,6 +366,18 @@ describe("ChangesTest", function () {
         }
     });
 
+    it("reports server errors as Error instances", async () => {
+        const changes = store.changes();
+        await changes.ensureConnectedNow();
+
+        const error = new Promise<Error>(resolve => changes.on("error", resolve));
+        await (changes as any)._processChanges(JSON.stringify([{ Type: "Error", Exception: "System.Exception: boom" }]));
+
+        const received = await error;
+        assert.ok(received instanceof Error);
+        assert.strictEqual(received.message, "System.Exception: boom");
+    });
+
     it("doesn't crush the server if listening on non existing database", async () => {
         const changesList = new AsyncQueue<DocumentChange>();
 
