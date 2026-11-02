@@ -274,9 +274,6 @@ export class DocumentQuery<T extends object>
 
     // TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
 
-    // TBD void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-    // TBD void IQueryBase<T, IRawDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-
     public openSubclause(): IDocumentQuery<T> {
         this._openSubclause();
         return this;

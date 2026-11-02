@@ -1531,7 +1531,9 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         statsCallback(this._queryStats);
     }
 
-    // TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
+    public _invokeAfterStreamExecuted(result: object): void {
+        this.emit("afterStreamExecuted", result);
+    }
 
     /**
      * Generates the index query.
@@ -1948,15 +1950,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return results;
     }
 
-    // TBD protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
-
     protected _queryOperation: QueryOperation;
 
     public queryOperation(): QueryOperation {
         return this._queryOperation;
     }
-
-    // TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
 
     public _noTracking(): void {
         this._disableEntitiesTracking = true;
