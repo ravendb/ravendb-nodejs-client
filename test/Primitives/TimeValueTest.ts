@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { TimeValue } from "../../src/Primitives/TimeValue.js";
 
 describe("TimeValue.compareTo", function () {

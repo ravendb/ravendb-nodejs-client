@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { LazyGetCompareExchangeValuesOperation } from "../../../src/Documents/Session/Operations/Lazy/LazyGetCompareExchangeValuesOperation.js";
 import { DocumentConventions } from "../../../src/Documents/Conventions/DocumentConventions.js";
 

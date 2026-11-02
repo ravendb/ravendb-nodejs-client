@@ -1,5 +1,4 @@
 import assert from "node:assert";
-import { describe, it } from "node:test";
 import { BatchPatchCommandData } from "../../../src/Documents/Commands/Batches/BatchPatchCommandData.js";
 import { PatchRequest } from "../../../src/Documents/Operations/PatchRequest.js";
 
