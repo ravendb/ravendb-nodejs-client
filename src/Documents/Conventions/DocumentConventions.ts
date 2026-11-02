@@ -898,10 +898,10 @@ export class DocumentConventions {
                                                          converter: IValueForQueryConverter<T>) {
         this._assertNotFrozen();
 
-        let index: number;
-        for (let index = 0; index < this._listOfQueryValueToObjectConverters.length; index++) {
+        let index = 0;
+        for (; index < this._listOfQueryValueToObjectConverters.length; index++) {
             const entry = this._listOfQueryValueToObjectConverters[index];
-            if (type instanceof entry.Type) {
+            if (type === entry.Type || type.prototype instanceof entry.Type) {
                 break;
             }
         }
