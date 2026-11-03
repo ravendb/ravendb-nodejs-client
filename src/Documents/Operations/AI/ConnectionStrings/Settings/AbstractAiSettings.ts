@@ -12,9 +12,14 @@ export abstract class AbstractAiSettings {
 
     /**
      * Validates the settings fields and adds any errors to the provided array.
+     * Provider-specific settings extend this validation and must call `super.validate(errors)`.
      * @param errors Array to collect validation error messages
      */
-    public abstract validate(errors: string[]): void;
+    public validate(errors: string[]): void {
+        if (this.embeddingsMaxConcurrentBatches != null && this.embeddingsMaxConcurrentBatches <= 0) {
+            errors.push("Value of 'embeddingsMaxConcurrentBatches' field must be a positive number.");
+        }
+    }
 
     /**
      * Compares this settings instance with another to detect differences.
