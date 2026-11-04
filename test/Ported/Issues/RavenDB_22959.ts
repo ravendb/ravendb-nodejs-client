@@ -44,6 +44,13 @@ describe("RavenDB_22959", function () {
         }
     }
 
+    async function assertEntriesBeforeRangeNotIncluded(session: IDocumentSession, user: User, expectedRequests: number) {
+        const entries = await session.timeSeriesFor(user, "TimeSeries1").get(baseTime, addHours(baseTime, 1));
+        assert.strictEqual(entries.length, 1);
+        assert.strictEqual(entries[0].tag, tags[0]);
+        assert.strictEqual(session.advanced.numberOfRequests, expectedRequests);
+    }
+
     async function assertAllEntries(session: IDocumentSession, user: User) {
         for (let t = 1; t <= 3; t++) {
             const entries = await session.timeSeriesFor(user, "TimeSeries" + t).get();
@@ -72,6 +79,8 @@ describe("RavenDB_22959", function () {
             await assertRangeEntries(session, queryResults[0]);
 
             assert.strictEqual(session.advanced.numberOfRequests, 1);
+
+            await assertEntriesBeforeRangeNotIncluded(session, queryResults[0], 2);
         }
 
         {
@@ -84,6 +93,8 @@ describe("RavenDB_22959", function () {
             await assertRangeEntries(session, user);
 
             assert.strictEqual(session.advanced.numberOfRequests, 1);
+
+            await assertEntriesBeforeRangeNotIncluded(session, user, 2);
         }
 
         {
@@ -128,29 +139,31 @@ describe("RavenDB_22959", function () {
 
         for (const includeRange of [true, false]) {
             const session = store.openSession();
-            let queryResults = await session.query(User)
+            const shaharResults = await session.query(User)
                 .whereEquals("name", "Shahar")
                 .waitForNonStaleResults()
                 .include(i => includeRange ? i.includeAllTimeSeries(from, to) : i.includeAllTimeSeries())
                 .all();
 
-            assert.strictEqual(queryResults.length, 2);
-            for (const user of queryResults) {
+            assert.strictEqual(shaharResults.length, 2);
+            for (const user of shaharResults) {
                 await assertRangeEntries(session, user);
             }
 
             assert.strictEqual(session.advanced.numberOfRequests, 1);
 
-            queryResults = await session.query(User)
+            const omerResults = await session.query(User)
                 .whereEquals("name", "Omer")
                 .waitForNonStaleResults()
                 .all();
 
-            for (const user of queryResults) {
+            for (const user of omerResults) {
                 await assertRangeEntries(session, user);
             }
 
             assert.strictEqual(session.advanced.numberOfRequests, 8);
+
+            await assertEntriesBeforeRangeNotIncluded(session, shaharResults[0], includeRange ? 9 : 8);
         }
     });
 
