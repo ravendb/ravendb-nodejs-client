@@ -54,7 +54,7 @@ export class MaintenanceOperationExecutor {
     }
 
     public forNode(nodeTag: string): MaintenanceOperationExecutor {
-        if (StringUtil.equalsIgnoreCase(this._nodeTag, nodeTag)) {
+        if (this._nodeTag === nodeTag || StringUtil.equalsIgnoreCase(this._nodeTag, nodeTag)) {
             return this;
         }
 
@@ -63,6 +63,10 @@ export class MaintenanceOperationExecutor {
 
     public forShard(shardNumber: number): MaintenanceOperationExecutor {
         this._assertDatabaseNameSet();
+
+        if (!Number.isInteger(shardNumber) || shardNumber < 0) {
+            throwError("InvalidArgumentException", "Shard number must be a non-negative integer, got: " + shardNumber);
+        }
 
         const databaseName = ClientShardHelper.toDatabaseName(this._databaseName);
         const shardDatabaseName = ClientShardHelper.toShardName(databaseName, shardNumber);

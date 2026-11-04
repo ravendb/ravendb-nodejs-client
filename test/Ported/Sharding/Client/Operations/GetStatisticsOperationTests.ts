@@ -23,7 +23,23 @@ describe("GetStatisticsOperationTests", function () {
         assert.ok(statistics);
         assert.strictEqual(statistics.countOfDocuments, 0);
 
-        await assert.rejects(() => store.maintenance.forNode("Z").send(new GetStatisticsOperation()));
+        await assert.rejects(() => store.maintenance.forNode("Z").send(new GetStatisticsOperation()),
+            /Could not find requested node Z/);
+    });
+
+    it("forNodeAndForShardReuseOrRejectArguments", () => {
+        const maintenance = store.maintenance;
+
+        const noNode = maintenance.forNode(null);
+        assert.strictEqual(noNode.forNode(null), noNode);
+
+        const shard1 = maintenance.forNode("A").forShard(1);
+        assert.strictEqual(shard1.forNode("a"), shard1);
+        assert.strictEqual(shard1.forShard(1), shard1);
+
+        for (const shardNumber of [-1, 1.5, undefined, Number.NaN]) {
+            assert.throws(() => maintenance.forShard(shardNumber), { name: "InvalidArgumentException" });
+        }
     });
 });
 
@@ -78,10 +94,10 @@ describe("GetStatisticsOperationTests", function () {
         await assert.rejects(() => store.maintenance.forNode("A").send(new GetStatisticsOperation()),
             /Query string shardNumber is mandatory, but wasn't specified/);
 
-            await assert.rejects(() => store.maintenance.send(new GetDetailedStatisticsOperation()),
-                /Query string nodeTag is mandatory, but wasn't specified/);
+        await assert.rejects(() => store.maintenance.send(new GetDetailedStatisticsOperation()),
+            /Query string nodeTag is mandatory, but wasn't specified/);
 
-            await assert.rejects(() => store.maintenance.forNode("A").send(new GetDetailedStatisticsOperation()),
-                /Query string shardNumber is mandatory, but wasn't specified/);
+        await assert.rejects(() => store.maintenance.forNode("A").send(new GetDetailedStatisticsOperation()),
+            /Query string shardNumber is mandatory, but wasn't specified/);
     });
 });
