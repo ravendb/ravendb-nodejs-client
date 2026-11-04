@@ -65,6 +65,19 @@ describe("RavenDB_19049", function () {
         }
     });
 
+    it("returnsSuffixRangeWhenFromIsNull", async () => {
+        await setup();
+
+        const session = store.openSession();
+        const attachment = await session.advanced.attachments.getRange(id, name, null, 2);
+        try {
+            const bytes = await readAll(attachment.data);
+            assert.deepStrictEqual([...bytes], [8, 9]);
+        } finally {
+            attachment.dispose();
+        }
+    });
+
     it("throwsForUnsupportedRange", async () => {
         await setup();
 
@@ -78,5 +91,12 @@ describe("RavenDB_19049", function () {
 
         await assert.rejects(() => session.advanced.attachments.getRange(id, name, 10, 5),
             { name: "ArgumentOutOfRangeException" });
+
+        for (const bound of [Number.NaN, 1.5, Number.POSITIVE_INFINITY]) {
+            await assert.rejects(() => session.advanced.attachments.getRange(id, name, bound, 5),
+                { name: "ArgumentOutOfRangeException" });
+            await assert.rejects(() => session.advanced.attachments.getRange(id, name, 0, bound),
+                { name: "ArgumentOutOfRangeException" });
+        }
     });
 });

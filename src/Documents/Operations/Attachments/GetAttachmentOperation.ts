@@ -22,14 +22,14 @@ export class GetAttachmentOperation implements IOperation<AttachmentResult> {
     private readonly _name: string;
     private readonly _type: AttachmentType;
     private readonly _changeVector: string;
-    private readonly _from: number;
-    private readonly _to: number;
+    private readonly _from: number | null;
+    private readonly _to: number | null;
 
     public get resultType(): OperationResultType {
         return "CommandResult";
     }
 
-    public constructor(documentId: string, name: string, type: AttachmentType, changeVector: string, from?: number, to?: number) {
+    public constructor(documentId: string, name: string, type: AttachmentType, changeVector: string, from?: number | null, to?: number | null) {
         this._documentId = documentId;
         this._name = name;
         this._type = type;
@@ -57,10 +57,10 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
     private readonly _name: string;
     private readonly _type: AttachmentType;
     private readonly _changeVector: string;
-    private readonly _from: number;
-    private readonly _to: number;
+    private readonly _from: number | null;
+    private readonly _to: number | null;
 
-    public constructor(documentId: string, name: string, type: AttachmentType, changeVector: string, from?: number, to?: number) {
+    public constructor(documentId: string, name: string, type: AttachmentType, changeVector: string, from?: number | null, to?: number | null) {
         super();
 
         this.result = null;
@@ -74,8 +74,10 @@ export class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
         if (type !== "Document" && !changeVector) {
             throwError("InvalidArgumentException", "Change vector cannot be null for attachment type " + type);
         }
-        if (from < 0 || to < 0) {
-            throwError("ArgumentOutOfRangeException", "Range bounds cannot be negative");
+        for (const bound of [from, to]) {
+            if (!TypeUtil.isNullOrUndefined(bound) && (!Number.isSafeInteger(bound) || bound < 0)) {
+                throwError("ArgumentOutOfRangeException", "Range bounds must be non-negative integers, got: " + bound);
+            }
         }
         if (!TypeUtil.isNullOrUndefined(from) && !TypeUtil.isNullOrUndefined(to) && from > to) {
             throwError("ArgumentOutOfRangeException", "Range start cannot be greater than range end");
