@@ -6,6 +6,8 @@ import { ServerOperationExecutor } from "./ServerOperationExecutor.js";
 import { throwError } from "../../Exceptions/index.js";
 import { RequestExecutor } from "../../Http/RequestExecutor.js";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
+import { StringUtil } from "../../Utility/StringUtil.js";
+import { ClientShardHelper } from "../../Utility/ClientShardHelper.js";
 
 export class MaintenanceOperationExecutor {
 
@@ -49,6 +51,26 @@ export class MaintenanceOperationExecutor {
         }
 
         return new MaintenanceOperationExecutor(this._store, databaseName, this._nodeTag, this._shardNumber);
+    }
+
+    public forNode(nodeTag: string): MaintenanceOperationExecutor {
+        if (StringUtil.equalsIgnoreCase(this._nodeTag, nodeTag)) {
+            return this;
+        }
+
+        return new MaintenanceOperationExecutor(this._store, this._databaseName, nodeTag, this._shardNumber);
+    }
+
+    public forShard(shardNumber: number): MaintenanceOperationExecutor {
+        this._assertDatabaseNameSet();
+
+        const databaseName = ClientShardHelper.toDatabaseName(this._databaseName);
+        const shardDatabaseName = ClientShardHelper.toShardName(databaseName, shardNumber);
+        if (StringUtil.equalsIgnoreCase(this._databaseName, shardDatabaseName)) {
+            return this;
+        }
+
+        return new MaintenanceOperationExecutor(this._store, shardDatabaseName, this._nodeTag, null);
     }
 
     public async send(operation: AwaitableMaintenanceOperation): Promise<OperationCompletionAwaiter>;
