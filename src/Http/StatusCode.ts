@@ -14,6 +14,7 @@ export type StatusCode = 200
     | 408
     | 409
     | 410
+    | 416
     | 417
     | 425
     | 500
@@ -37,6 +38,7 @@ export class StatusCodes {
     public static readonly RequestTimeout: StatusCode = 408;
     public static readonly Conflict: StatusCode = 409;
     public static readonly PreconditionFailed: StatusCode = 412;
+    public static readonly RequestedRangeNotSatisfiable: StatusCode = 416;
     public static readonly ExpectationFailed: StatusCode = 417;
     public static readonly TooEarly: StatusCode = 425;
     public static readonly InternalServerError: StatusCode = 500;
