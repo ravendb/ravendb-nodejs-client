@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { hoursToSeconds } from "date-fns";
 import {
     AbstractJavaScriptIndexCreationTask,
     ConfigureDataArchivalOperation,
@@ -42,28 +43,24 @@ describe("ConfigurationFieldsTest", function () {
         return store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
     }
 
-    it("stores maxItemsToProcess of expiration, refresh and data archival", async () => {
+    it("stores maxItemsToProcess of expiration and refresh", async () => {
+        const frequencyAllowedByCommunityLicense = hoursToSeconds(36);
+
         await store.maintenance.send(new ConfigureExpirationOperation({
             disabled: false,
-            deleteFrequencyInSec: 60,
+            deleteFrequencyInSec: frequencyAllowedByCommunityLicense,
             maxItemsToProcess: 10
         }));
         await store.maintenance.send(new ConfigureRefreshOperation({
             disabled: false,
-            refreshFrequencyInSec: 60,
+            refreshFrequencyInSec: frequencyAllowedByCommunityLicense,
             maxItemsToProcess: 20
-        }));
-        await store.maintenance.send(new ConfigureDataArchivalOperation({
-            disabled: false,
-            archiveFrequencyInSec: 60,
-            maxItemsToProcess: 30
         }));
 
         const record = await getDatabaseRecord();
 
         assert.strictEqual(record.expiration.maxItemsToProcess, 10);
         assert.strictEqual(record.refresh.maxItemsToProcess, 20);
-        assert.strictEqual(record.dataArchival.maxItemsToProcess, 30);
     });
 
     it("returns stale index names in statistics", async () => {
@@ -113,6 +110,16 @@ describe("ConfigurationFieldsTest", function () {
         });
 
     (RavenTestContext.isPullRequest ? describe.skip : describe)("licensed tasks", function () {
+
+        it("stores maxItemsToProcess of data archival", async () => {
+            await store.maintenance.send(new ConfigureDataArchivalOperation({
+                disabled: false,
+                archiveFrequencyInSec: 60,
+                maxItemsToProcess: 30
+            }));
+
+            assert.strictEqual((await getDatabaseRecord()).dataArchival.maxItemsToProcess, 30);
+        });
 
         it("stores pinToMentorNode and maxReadOpsPerSecond of a periodic backup", async () => {
             const backupConfiguration: PeriodicBackupConfiguration = {
