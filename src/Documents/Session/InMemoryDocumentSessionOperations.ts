@@ -75,6 +75,7 @@ export abstract class InMemoryDocumentSessionOperations
     private _operationExecutor: OperationExecutor;
 
     protected _pendingLazyOperations: ILazyOperation[] = [];
+    protected _onEvaluateLazy = new Map<ILazyOperation, (result: any) => void>();
 
     protected static _instancesCounter: number = 0;
 
@@ -2192,6 +2193,7 @@ export abstract class InMemoryDocumentSessionOperations
         this._clearClusterSession();
 
         this._pendingLazyOperations.length = 0;
+        this._onEvaluateLazy.clear();
         this.entityToJson.clear();
         this.trackedEntities.clear();
     }

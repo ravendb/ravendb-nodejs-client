@@ -194,4 +194,44 @@ describe("LazyTest", function () {
             assert.strictEqual(session.advanced.numberOfRequests, oldRequestCount);
         }
     });
+
+    it("calls the query lazily callback when pending lazy operations are executed", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "oren", age: 0 }));
+            await session.store(Object.assign(new User(), { age: 0 }));
+            await session.store(Object.assign(new User(), { name: "ayende", age: 0 }));
+            await session.store(Object.assign(new User(), { age: 0 }));
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let users: User[];
+            session.query(User).whereEquals("age", 0).skip(1).take(2).lazily(result => users = result);
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.strictEqual(users.length, 2);
+        }
+    });
+
+    it("calls the query lazily callback once when the lazy value is read", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "oren" }), "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const evaluated: User[][] = [];
+            const lazyUsers = session.query(User).lazily(result => evaluated.push(result));
+
+            const users = await lazyUsers.getValue();
+            await lazyUsers.getValue();
+
+            assert.strictEqual(evaluated.length, 1);
+            assert.strictEqual(evaluated[0], users);
+        }
+    });
 });

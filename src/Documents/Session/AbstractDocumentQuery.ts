@@ -2406,11 +2406,11 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._selectTokens.push(FacetToken.create(facetSetupDocumentId));
     }
 
-    public lazily(): Lazy<T[]> {
+    public lazily(onEval?: (list: T[]) => void): Lazy<T[]> {
         const lazyQueryOperation = this._getLazyQueryOperation();
 
         return (this._theSession as DocumentSession)
-            .addLazyOperation(lazyQueryOperation);
+            .addLazyOperation(lazyQueryOperation, onEval);
     }
 
     public countLazily(): Lazy<number> {

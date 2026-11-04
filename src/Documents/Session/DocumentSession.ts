@@ -990,11 +990,17 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             }
 
             responseTimeDuration.computeServerTotal();
+
+            for (const pendingLazyOperation of this._pendingLazyOperations) {
+                this._onEvaluateLazy.get(pendingLazyOperation)?.(pendingLazyOperation.result);
+            }
+
             sw.stop();
             responseTimeDuration.totalClientDuration = sw.elapsed;
             return responseTimeDuration;
         } finally {
             this._pendingLazyOperations.length = 0;
+            this._onEvaluateLazy.clear();
         }
     }
 
@@ -1039,8 +1045,12 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
         return false;
     }
 
-    public addLazyOperation<TLazyResult>(operation: ILazyOperation): Lazy<TLazyResult> {
+    public addLazyOperation<TLazyResult>(operation: ILazyOperation, onEval?: (result: TLazyResult) => void): Lazy<TLazyResult> {
         this._pendingLazyOperations.push(operation);
+        if (onEval) {
+            this._onEvaluateLazy.set(operation, onEval);
+        }
+
         return new Lazy<TLazyResult>(async () => {
             await this.executeAllPendingLazyOperations();
             return operation.result as TLazyResult;
