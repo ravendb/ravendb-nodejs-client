@@ -254,7 +254,9 @@ export abstract class RavenCommand<TResult> {
         }
 
         let bodyStream: Readable = result.body;
-        const encoding = responseHeaders.get("content-encoding");
+        // like fetch, never decode a response that has no body: some servers label HEAD and 204/304 replies with an encoding
+        const hasBody = method !== "HEAD" && result.statusCode !== 204 && result.statusCode !== 304;
+        const encoding = hasBody ? responseHeaders.get("content-encoding") : null;
         if (encoding && readWholeBody) {
             // a streaming zlib context per response costs ~10x the CPU of a one-shot decode of a typical body
             const raw = Buffer.from(await result.body.arrayBuffer());
