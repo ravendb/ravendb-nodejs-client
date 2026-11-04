@@ -7,6 +7,7 @@ import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { RequestExecutor } from "../../Http/RequestExecutor.js";
 import { delay } from "../../Utility/PromiseUtil.js";
 import { KillOperationCommand } from "../Commands/KillOperationCommand.js";
+import { IOperationResult } from "./IOperationResult.js";
 
 type OperationStatus = "Completed" | "Canceled" | "Faulted";
 
@@ -46,34 +47,38 @@ export class OperationCompletionAwaiter {
         this._nodeTag = nodeTag;
     }
 
-    public waitForCompletion(): Promise<void> {
-        const operationStatusPolling = () => {
-            return Promise.resolve()
-                .then(() => this._fetchOperationStatus())
-                .then((operationStatusResult) => {
-                    const operationStatus = operationStatusResult.status as OperationStatus;
-                    switch (operationStatus) {
-                        case "Completed": {
-                            return;
-                        }
-                        case "Canceled": {
-                            throwError("OperationCanceledException",
-                                `Operation of ID ${this._id} has been canceled.`);
-                            break;
-                        }
-                        case "Faulted": {
-                            const faultResult: OperationExceptionResult = operationStatusResult.result;
-                            const errorSchema = Object.assign({}, faultResult, {url: this._requestExecutor.getUrl()});
-                            throw ExceptionDispatcher.get(errorSchema, faultResult.statusCode);
-                        }
-                    }
+    /**
+     * Polls the operation state until the operation completes and returns its result.
+     * @param timeout Milliseconds to wait before a TimeoutException is thrown. The operation keeps running on the server.
+     */
+    public async waitForCompletion<TResult extends IOperationResult = IOperationResult>(timeout?: number): Promise<TResult> {
+        const deadline = timeout == null ? null : Date.now() + timeout;
 
-                    return delay(500)
-                        .then(() => operationStatusPolling());
-                });
-        };
+        for (;;) {
+            const operationStatusResult = await this._fetchOperationStatus();
+            const operationStatus = operationStatusResult.status as OperationStatus;
+            switch (operationStatus) {
+                case "Completed": {
+                    return operationStatusResult.result;
+                }
+                case "Canceled": {
+                    throwError("OperationCanceledException",
+                        `Operation of ID ${this._id} has been canceled.`);
+                    break;
+                }
+                case "Faulted": {
+                    const faultResult: OperationExceptionResult = operationStatusResult.result;
+                    const errorSchema = Object.assign({}, faultResult, {url: this._requestExecutor.getUrl()});
+                    throw ExceptionDispatcher.get(errorSchema, faultResult.statusCode);
+                }
+            }
 
-        return Promise.resolve(operationStatusPolling());
+            if (deadline !== null && Date.now() >= deadline) {
+                throwError("TimeoutException", `Did not get a reply for operation '${this._id}'.`);
+            }
+
+            await delay(deadline === null ? 500 : Math.min(500, deadline - Date.now()));
+        }
     }
 
     protected _getKillOperationCommand(id: number, nodeTag: string): RavenCommand<void> {

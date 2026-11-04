@@ -3,6 +3,8 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
+    IndexQuery,
+    IOperationResult,
     PatchOperation,
     PatchByQueryOperation,
     PatchRequest
@@ -114,4 +116,38 @@ describe("PatchTest", function () {
 
         assert.fail("it should have thrown");
     });
+
+    it("returns the operation result from waitForCompletion", async () => {
+        await storeUsers(3);
+
+        const op = await store.operations.send(new PatchByQueryOperation("from Users update { this.name = \"Patched\" }"));
+        const result = await op.waitForCompletion<BulkOperationResult>();
+
+        assert.strictEqual(result.total, 3);
+    });
+
+    it("throws TimeoutException when the operation does not complete within the timeout", async () => {
+        await storeUsers(20);
+
+        const op = await store.operations.send(new PatchByQueryOperation(
+            new IndexQuery("from Users update { this.name = \"Patched\" }"),
+            { maxOpsPerSecond: 1, allowStale: false, staleTimeout: null, retrieveDetails: false }));
+        try {
+            await assert.rejects(op.waitForCompletion(100), { name: "TimeoutException" });
+        } finally {
+            await op.kill();
+        }
+    });
+
+    async function storeUsers(count: number) {
+        const session = store.openSession();
+        for (let i = 0; i < count; i++) {
+            await session.store(Object.assign(new User(), { name: "RavenDB" }));
+        }
+        await session.saveChanges();
+    }
 });
+
+interface BulkOperationResult extends IOperationResult {
+    total: number;
+}
