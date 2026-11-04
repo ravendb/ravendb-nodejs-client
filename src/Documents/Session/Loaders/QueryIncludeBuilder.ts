@@ -89,11 +89,14 @@ export class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
 
     public includeAllTimeSeries(type: TimeSeriesRangeType, time: TimeValue): IQueryIncludeBuilder;
     public includeAllTimeSeries(type: TimeSeriesRangeType, count: number): IQueryIncludeBuilder;
-    public includeAllTimeSeries(type: TimeSeriesRangeType, timeOrCount: number | TimeValue): IQueryIncludeBuilder {
-        if (TypeUtil.isNumber(timeOrCount)) {
-            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, type, timeOrCount);
+    public includeAllTimeSeries(from?: Date, to?: Date): IQueryIncludeBuilder;
+    public includeAllTimeSeries(typeOrFrom?: TimeSeriesRangeType | Date, timeOrCountOrTo?: number | TimeValue | Date): IQueryIncludeBuilder {
+        if (!typeOrFrom || typeOrFrom instanceof Date) {
+            this._includeTimeSeriesFromTo("", TIME_SERIES.ALL, typeOrFrom as Date, timeOrCountOrTo as Date);
+        } else if (TypeUtil.isNumber(timeOrCountOrTo)) {
+            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo);
         } else {
-            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, type, timeOrCount);
+            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo as TimeValue);
         }
 
         return this;

@@ -80,11 +80,14 @@ export class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
 
     public includeAllTimeSeries(type: TimeSeriesRangeType, time: TimeValue): IIncludeBuilder;
     public includeAllTimeSeries(type: TimeSeriesRangeType, count: number): IIncludeBuilder;
-    public includeAllTimeSeries(type: TimeSeriesRangeType, timeOrCount: number | TimeValue): IIncludeBuilder {
-        if (TypeUtil.isNumber(timeOrCount)) {
-            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, type, timeOrCount);
+    public includeAllTimeSeries(from?: Date, to?: Date): IIncludeBuilder;
+    public includeAllTimeSeries(typeOrFrom?: TimeSeriesRangeType | Date, timeOrCountOrTo?: number | TimeValue | Date): IIncludeBuilder {
+        if (!typeOrFrom || typeOrFrom instanceof Date) {
+            this._includeTimeSeriesFromTo("", TIME_SERIES.ALL, typeOrFrom as Date, timeOrCountOrTo as Date);
+        } else if (TypeUtil.isNumber(timeOrCountOrTo)) {
+            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo);
         } else {
-            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, type, timeOrCount);
+            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo as TimeValue);
         }
 
         return this;
