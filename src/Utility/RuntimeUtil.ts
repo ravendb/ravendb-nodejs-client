@@ -67,4 +67,5 @@ export class RuntimeUtil {
      */
     public static supportsUndiciDispatcher(): boolean {
         return !this.isBun() && !this.isWorkerd() && !this.isDeno();
-    }}
+    }
+}

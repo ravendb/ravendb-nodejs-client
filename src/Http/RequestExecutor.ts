@@ -450,8 +450,10 @@ export class RequestExecutor implements IDisposable {
 
         if (!this._conventions.useHttpDecompression) {
             headers["Accept-Encoding"] = "identity";
-        } else if (!this._conventions.customFetch && RuntimeUtil.supportsUndiciDispatcher()) {
-            // the Node transport (RavenCommand._sendWithDispatcher) decodes responses itself; fetch elsewhere sets its own
+        } else if (!this._conventions.customFetch && RuntimeUtil.supportsUndiciDispatcher()
+            && RavenCommand.isBufferedBody(params.body)) {
+            // the Node transport (RavenCommand._sendWithDispatcher) decodes responses itself; fetch, used for
+            // streamed uploads and elsewhere, sets its own and may not decode zstd
             headers["Accept-Encoding"] = algorithm === "Zstd" ? "zstd, gzip, deflate, br" : "gzip, deflate, br";
         }
 

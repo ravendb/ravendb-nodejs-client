@@ -173,11 +173,7 @@ export abstract class RavenCommand<TResult> {
                 agent = dispatcher;
             }
 
-            // streamed uploads (bulk insert, attachments) stay on fetch: undici's request API does not
-            // encode FormData and does not settle on an early server response while the body is open
-            const isBufferedBody = body === undefined || body === null || typeof body === "string"
-                || ArrayBuffer.isView(body) || body instanceof ReadableStream;
-            if (agent && !fetcher && isBufferedBody) {
+            if (agent && !fetcher && RavenCommand.isBufferedBody(body)) {
                 return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
@@ -218,6 +214,13 @@ export abstract class RavenCommand<TResult> {
             response,
             bodyStream: passthrough
         };
+    }
+
+    // streamed uploads (bulk insert, attachments) stay on fetch: undici's request API does not
+    // encode FormData and does not settle on an early server response while the body is open
+    public static isBufferedBody(body: unknown): boolean {
+        return body === undefined || body === null || typeof body === "string"
+            || ArrayBuffer.isView(body) || body instanceof ReadableStream;
     }
 
     // undici's request API skips fetch's WHATWG layers (Request/Response objects, web streams),
