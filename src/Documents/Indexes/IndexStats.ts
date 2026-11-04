@@ -43,6 +43,7 @@ export class CollectionStats {
     public lastProcessedTombstoneEtag: number;
     public documentLag: number;
     public tombstoneLag: number;
+    public lastProcessedTimeSeriesDeletedRangeEtag: number;
 
     public constructor() {
         this.documentLag = -1;

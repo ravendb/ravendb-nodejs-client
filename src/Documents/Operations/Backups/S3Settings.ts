@@ -1,4 +1,5 @@
 import { AmazonSettings } from "./AmazonSettings.js";
+import { S3StorageClass } from "./S3StorageClass.js";
 
 export interface S3Settings extends AmazonSettings {
     bucketName: string;
@@ -11,4 +12,6 @@ export interface S3Settings extends AmazonSettings {
      * Set this to true if your S3-compatible storage does not support modern object integrity checks.
      */
     disableChecksumValidation?: boolean;
+
+    storageClass?: S3StorageClass;
 }

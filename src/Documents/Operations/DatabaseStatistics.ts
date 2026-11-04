@@ -15,4 +15,5 @@ export interface DatabaseStatistics extends AbstractDatabaseStatistics<IndexInfo
     sizeOnDisk: Size;
     tempBuffersSizeOnDisk: Size;
     numberOfTransactionMergerQueueOperations: number;
+    staleIndexes: string[];
 }

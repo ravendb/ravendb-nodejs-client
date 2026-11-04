@@ -5,6 +5,7 @@ export interface PullReplicationDefinition {
     delayReplicationFor?: string;
     disabled?: boolean;
     mentorNode?: string;
+    pinToMentorNode?: boolean;
 
     mode?: PullReplicationMode;
     name: string;

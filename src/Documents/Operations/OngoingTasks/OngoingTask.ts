@@ -24,6 +24,7 @@ export interface OngoingTask {
     taskName: string;
     error: string;
     mentorNode: string;
+    pinToMentorNode: boolean;
 }
 
 export interface OngoingTaskBackup extends OngoingTask {

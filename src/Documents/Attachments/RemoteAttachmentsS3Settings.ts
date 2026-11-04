@@ -1,3 +1,5 @@
+import { S3StorageClass } from "../Operations/Backups/S3StorageClass.js";
+
 /**
  * Configuration settings for storing remote attachments in Amazon S3 or S3-compatible storage.
  *
@@ -99,6 +101,11 @@ export class RemoteAttachmentsS3Settings {
      * Set this to true if your S3-compatible storage does not support modern object integrity checks.
      */
     public disableChecksumValidation: boolean = false;
+
+    /**
+     * S3 storage class for uploaded attachments. When not set, the bucket default (usually Standard) is used.
+     */
+    public storageClass?: S3StorageClass;
 
     public isConfigured(): boolean {
         return !!this.bucketName && !!this.awsAccessKey && !!this.awsSecretKey;

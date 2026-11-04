@@ -4,5 +4,6 @@ export interface IExternalReplication {
     taskId?: number;
     name?: string;
     mentorNode?: string;
+    pinToMentorNode?: boolean;
     delayReplicationFor?: string;
 }

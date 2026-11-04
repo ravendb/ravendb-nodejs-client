@@ -9,6 +9,7 @@ export interface RestoreBackupConfigurationBase {
     encryptionKey: string;
     disableOngoingTasks: boolean;
     skipIndexes: boolean;
+    maxReadOpsPerSecond?: number;
 
     type: RestoreType;
 

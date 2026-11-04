@@ -385,6 +385,7 @@ export * from "./Documents/Operations/Backups/GlacierSettings.js";
 export * from "./Documents/Operations/Backups/LocalSettings.js";
 export * from "./Documents/Operations/Backups/PeriodicBackupConfiguration.js";
 export * from "./Documents/Operations/Backups/S3Settings.js";
+export * from "./Documents/Operations/Backups/S3StorageClass.js";
 export * from "./Documents/Operations/Backups/BackupSettings.js";
 export * from "./Documents/Operations/Backups/BackupStatus.js";
 export * from "./Documents/Operations/Backups/GetPeriodicBackupStatusOperation.js";

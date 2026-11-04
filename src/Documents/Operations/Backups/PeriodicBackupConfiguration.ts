@@ -6,6 +6,7 @@ export interface PeriodicBackupConfiguration extends BackupConfiguration {
     taskId?: number;
     disabled?: boolean;
     mentorNode?: string;
+    pinToMentorNode?: boolean;
     retentionPolicy?: RetentionPolicy;
     createdAt?: string;
 
