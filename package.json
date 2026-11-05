@@ -69,7 +69,7 @@
     "@types/sinon": "^17.0.3",
     "@types/unzipper": "^0.10.10",
     "class-transformer": "^0.5.1",
-    "glob": "^11.0.0",
+    "glob": "^14.0.3",
     "http-proxy-agent": "^7.0.2",
     "lodash.orderby": "^4.6.0",
     "mocha": "^11.0.0",
@@ -78,7 +78,7 @@
     "reflect-metadata": "^0.2.2",
     "sinon": "^18.0.0",
     "ts-node": "^10.9.2",
-    "tshy": "^3.0.2",
+    "tshy": "^4.1.4",
     "typescript": "^5.5.4",
     "unzipper": "^0.12.3"
   },
