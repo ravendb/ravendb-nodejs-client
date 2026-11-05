@@ -52,6 +52,10 @@ export class OperationCompletionAwaiter {
      * @param timeout Milliseconds to wait before a TimeoutException is thrown. The operation keeps running on the server.
      */
     public async waitForCompletion<TResult extends IOperationResult = IOperationResult>(timeout?: number): Promise<TResult> {
+        if (timeout != null && !(timeout >= 0)) {
+            throwError("InvalidArgumentException", "Timeout must be a non-negative number of milliseconds.");
+        }
+
         const deadline = timeout == null ? null : Date.now() + timeout;
 
         for (;;) {

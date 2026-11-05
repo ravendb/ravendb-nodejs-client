@@ -135,7 +135,7 @@ describe("PatchTest", function () {
         try {
             await assert.rejects(op.waitForCompletion(100), { name: "TimeoutException" });
         } finally {
-            await op.kill();
+            await op.kill().catch(() => {});
         }
     });
 
