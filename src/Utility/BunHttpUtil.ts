@@ -1,10 +1,11 @@
 import type { Agent as HttpAgent, IncomingMessage, RequestOptions } from "node:http";
 import type { Agent as HttpsAgent } from "node:https";
-import type { Readable, Transform } from "node:stream";
+import type { Readable } from "node:stream";
 import type { ConnectionOptions } from "node:tls";
 import { ICertificate } from "../Auth/Certificate.js";
 import { throwError } from "../Exceptions/index.js";
 import { RuntimeUtil } from "./RuntimeUtil.js";
+import { createDecompressor } from "../Http/HttpCompression.js";
 
 /**
  * A `fetch` replacement backed by `node:https`, plus the connection pool behind it.
@@ -287,24 +288,6 @@ function supportedEncodings(zlib: typeof import("node:zlib")): string[] {
     }
 
     return encodings;
-}
-
-function createDecompressor(zlib: typeof import("node:zlib"), encoding: string | string[]): Transform {
-    const name = (Array.isArray(encoding) ? encoding[0] : encoding ?? "").trim().toLowerCase();
-
-    switch (name) {
-        case "gzip":
-        case "x-gzip":
-            return zlib.createGunzip();
-        case "deflate":
-            return zlib.createInflate();
-        case "br":
-            return zlib.createBrotliDecompress();
-        case "zstd":
-            return typeof zlib.createZstdDecompress === "function" ? zlib.createZstdDecompress() : null;
-        default:
-            return null;
-    }
 }
 
 function toWebStream(stream: Readable, signal: AbortSignal): ReadableStream<Uint8Array> {

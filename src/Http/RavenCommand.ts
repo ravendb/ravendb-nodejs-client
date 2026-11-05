@@ -18,6 +18,7 @@ import { HEADERS } from "../Constants.js";
 import { DefaultCommandResponseBehavior } from "./Behaviors/DefaultCommandResponseBehavior.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
 import { BunFetchRequestInit } from "../Types/BunTypes.js";
+import { createDecompressor, decompressSync, loadZlib } from "./HttpCompression.js";
 
 const log = getLogger({ module: "RavenCommand" });
 
@@ -58,6 +59,10 @@ export abstract class RavenCommand<TResult> {
 
     public get responseType() {
         return this._responseType;
+    }
+
+    protected get _readsWholeResponse(): boolean {
+        return this._responseType === "Object";
     }
 
     public set etag(value: string) {
@@ -166,6 +171,10 @@ export abstract class RavenCommand<TResult> {
             if (dispatcher) { // support for fiddler
                 agent = dispatcher;
             }
+
+            if (RavenCommand.sendsWithDispatcher(agent, requestOptions)) {
+                return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
+            }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
         } else {
             // Bun, Cloudflare Workers (workerd) and Deno have no undici `dispatcher`
@@ -203,6 +212,74 @@ export abstract class RavenCommand<TResult> {
         return {
             response,
             bodyStream: passthrough
+        };
+    }
+
+    public static sendsWithDispatcher(agent: Dispatcher, { body, fetcher, dispatcher }: HttpRequestParameters): boolean {
+        return RuntimeUtil.supportsUndiciDispatcher() && !!(dispatcher ?? agent) && !fetcher && RavenCommand.isBufferedBody(body);
+    }
+
+    // node Readable uploads (bulk insert, attachments) and FormData stay on fetch: undici's request API does not
+    // encode FormData and does not settle on an early server response while the body is open. The only
+    // ReadableStream body is the single-chunk one RequestExecutor.applyHttpCompression builds.
+    private static isBufferedBody(body: unknown): boolean {
+        return body === undefined || body === null || typeof body === "string"
+            || ArrayBuffer.isView(body) || body instanceof ReadableStream;
+    }
+
+    // undici's request API skips fetch's WHATWG layers (Request/Response objects, web streams),
+    // which cost several times the CPU per request; responses are decoded here instead of by fetch
+    private static async _sendWithDispatcher(
+        agent: Dispatcher, uri: string, body: RequestInit["body"], { method, headers, signal }: RequestInit,
+        readWholeBody: boolean): Promise<{ response: HttpResponse, bodyStream: Readable }> {
+
+        const url = new URL(uri);
+        let result: Dispatcher.ResponseData;
+        try {
+            result = await agent.request({
+                origin: url.origin,
+                path: url.pathname + url.search,
+                method: (method ?? "GET") as Dispatcher.HttpMethod,
+                headers: headers as Record<string, string>,
+                body: body as Dispatcher.DispatchOptions["body"],
+                signal
+            });
+        } catch (err) {
+            if (err.name === "AbortError") {
+                throw err;
+            }
+            // same shape as a fetch network failure, which RequestExecutor inspects via `cause`
+            throw new TypeError("fetch failed", { cause: err });
+        }
+
+        const responseHeaders = new Headers();
+        for (const [name, value] of Object.entries(result.headers)) {
+            responseHeaders.set(name, Array.isArray(value) ? value.join(", ") : value);
+        }
+
+        let bodyStream: Readable = result.body;
+        // like fetch, never decode a response that has no body: some servers label HEAD and 204/304 replies with an encoding
+        const hasBody = method !== "HEAD" && result.statusCode !== 204 && result.statusCode !== 304;
+        const encoding = hasBody ? responseHeaders.get("content-encoding") : null;
+        if (encoding && readWholeBody) {
+            // a streaming zlib context per response costs ~10x the CPU of a one-shot decode of a typical body
+            const raw = Buffer.from(await result.body.arrayBuffer());
+            const decoded = decompressSync(await loadZlib(), encoding, raw);
+            bodyStream = Readable.from([decoded ?? raw], { objectMode: false });
+        } else if (encoding) {
+            const decompressor = createDecompressor(await loadZlib(), encoding);
+            if (decompressor) {
+                // not stream.pipeline: it builds an AbortController and a DOMException per response
+                result.body.on("error", err => decompressor.destroy(err));
+                decompressor.once("close", () => result.body.destroy());
+                bodyStream = result.body.pipe(decompressor);
+            }
+        }
+        bodyStream.pause();
+
+        return {
+            response: new Response(null, { status: result.statusCode, headers: responseHeaders }),
+            bodyStream
         };
     }
 

@@ -22,7 +22,7 @@ describe("Compression", function () {
     afterEach(async () =>
         await disposeTestDocumentStore(store));
 
-    const expectedDefaultAcceptEncoding = () => RuntimeUtil.fetchDecodesZstd() ? "zstd, gzip, deflate, br" : null;
+    const expectedDefaultAcceptEncoding = () => RuntimeUtil.supportsUndiciDispatcher() ? "zstd, gzip, deflate, br" : null;
 
     it("is active by default", async () => {
         const exec = store.getRequestExecutor();
@@ -134,10 +134,10 @@ describe("Compression", function () {
         assert.strictEqual(typeof save.request.body, "string");
     });
 
-    it("accepts zstd responses only where fetch decodes them", async () => {
+    it("accepts zstd responses on the Node transport", async () => {
         const { load } = await storeAndLoad(conventions => conventions.useHttpDecompression = true);
 
-        if (RuntimeUtil.fetchDecodesZstd()) {
+        if (RuntimeUtil.supportsUndiciDispatcher()) {
             assert.strictEqual(load.request.headers["Accept-Encoding"], "zstd, gzip, deflate, br");
             assert.strictEqual(load.response.headers.get("Content-Encoding"), "zstd");
         } else {
