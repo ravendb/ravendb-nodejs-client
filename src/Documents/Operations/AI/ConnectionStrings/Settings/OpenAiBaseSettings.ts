@@ -69,6 +69,8 @@ export abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
     }
 
     public validate(errors: string[]): void {
+        super.validate(errors);
+
         if (StringUtil.isNullOrWhitespace(this.apiKey)) {
             errors.push("Value of 'apiKey' field cannot be empty.");
         }

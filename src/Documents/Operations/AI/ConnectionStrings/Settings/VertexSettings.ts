@@ -71,6 +71,8 @@ export class VertexSettings extends AbstractAiSettings {
     }
 
     public validate(errors: string[]): void {
+        super.validate(errors);
+
         if (StringUtil.isNullOrWhitespace(this.model)) {
             errors.push("Value of 'model' field cannot be empty.");
         }

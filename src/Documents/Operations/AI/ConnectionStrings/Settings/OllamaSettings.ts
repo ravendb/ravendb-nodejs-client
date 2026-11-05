@@ -39,6 +39,8 @@ export class OllamaSettings extends AbstractAiSettings {
     }
 
     public validate(errors: string[]): void {
+        super.validate(errors);
+
         if (StringUtil.isNullOrWhitespace(this.uri)) {
             errors.push("Value of 'uri' field cannot be empty.");
         }
