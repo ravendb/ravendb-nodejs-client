@@ -24,16 +24,17 @@ export class ObjectKeyCaseTransformStream extends Transform {
     }
 
     public _transform(chunk: any, enc: string, callback) {
-        let entry = chunk;
-        const key = chunk["key"];
+        callback(null, ObjectKeyCaseTransformStream.transformKeys(chunk, this._opts));
+    }
+
+    public static transformKeys(entry: any, transformOpts: ObjectKeyCaseTransformStreamOptions) {
         if (TypeUtil.isPrimitive(entry) || TypeUtil.isNullOrUndefined(entry)) {
-            return callback(null, chunk);
+            return entry;
         }
 
-        const opts = Object.assign({}, this._opts);
+        const opts = Object.assign({}, DEFAULT_OBJECT_KEY_CASE_TRANSFORM_OPTS, transformOpts);
         opts.ignorePaths = [...new Set(opts.ignorePaths || [])];
 
-        entry = ObjectUtil.transformObjectKeys(entry, opts);
-        callback(null, entry);
+        return ObjectUtil.transformObjectKeys(entry, opts);
     }
 }
