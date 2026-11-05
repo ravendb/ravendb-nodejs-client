@@ -107,7 +107,8 @@ export class DocumentConventions {
     private _dateUtil: DateUtil;
 
     private _useHttpDecompression: boolean | null = null;
-    private _httpCompressionAlgorithm: HttpCompressionAlgorithm = "Gzip";
+    private _useHttpCompression = true;
+    private _httpCompressionAlgorithm: HttpCompressionAlgorithm = "Zstd";
 
     private _sendApplicationIdentifier: boolean;
 
@@ -521,8 +522,28 @@ export class DocumentConventions {
         this._useHttpDecompression = value;
     }
 
+    /**
+     * Compress the content of HTTP requests using httpCompressionAlgorithm
+     */
+    public get useHttpCompression() {
+        return this._useHttpCompression;
+    }
+
+    /**
+     * Compress the content of HTTP requests using httpCompressionAlgorithm
+     */
+    public set useHttpCompression(value: boolean) {
+        this._assertNotFrozen();
+        this._useHttpCompression = value;
+    }
+
     public get httpCompressionAlgorithm() {
         return this._httpCompressionAlgorithm;
+    }
+
+    public set httpCompressionAlgorithm(value: HttpCompressionAlgorithm) {
+        this._assertNotFrozen();
+        this._httpCompressionAlgorithm = value;
     }
 
     private _dateUtilOpts: DateUtilOpts;

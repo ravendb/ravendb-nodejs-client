@@ -1,7 +1,7 @@
 import { IDisposable } from "../../Types/Contracts.js";
 import { Buffer } from "node:buffer";
 import { pipeline, Readable } from "node:stream";
-import type { Gzip } from "node:zlib";
+import type { Gzip, ZstdCompress } from "node:zlib";
 import { promisify } from "node:util";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
@@ -19,7 +19,7 @@ export class BulkInsertWriterBase implements IDisposable {
 
     public requestBodyStream: RequestBodyStream;
     public requestBodyStreamFinished: boolean = false;
-    public compressedStream: Gzip;
+    public compressedStream: Gzip | ZstdCompress;
 
     protected constructor() {
         this.requestBodyStream = new RequestBodyStream();
@@ -98,14 +98,18 @@ export class BulkInsertWriterBase implements IDisposable {
         }
     }
 
-    public async ensureStream(compression: HttpCompressionAlgorithm) {
-        if (compression === "Gzip") {
-            const { createGzip } = await import("node:zlib");
-            this.compressedStream = createGzip();
+    public async ensureStream(compression: HttpCompressionAlgorithm): Promise<HttpCompressionAlgorithm> {
+        if (compression) {
+            const { createGzip, createZstdCompress } = await import("node:zlib");
+            if (typeof createZstdCompress !== "function") {
+                compression = "Gzip";
+            }
+            this.compressedStream = compression === "Zstd" ? createZstdCompress() : createGzip();
             pipeline(this.requestBodyStream, this.compressedStream, TypeUtil.NOOP);
         }
 
         this._currentWriter.push("[");
+        return compression;
     }
 }
 

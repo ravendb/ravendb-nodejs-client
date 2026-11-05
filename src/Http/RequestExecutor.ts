@@ -50,6 +50,7 @@ import { Dispatcher, Agent } from "undici-types";
 import { EOL } from "../Utility/OsUtil.js";
 import { importFix } from "../Utility/ImportUtil.js";
 import { RuntimeUtil } from "../Utility/RuntimeUtil.js";
+import { compressRequestBody, contentEncodingOf } from "./HttpCompression.js";
 import { createDenoHttpClient, DenoHttpClient, validateDenoCertificateSupport } from "../Utility/DenoHttpUtil.js";
 import {
     BunHttpTransport,
@@ -211,6 +212,7 @@ export class RequestExecutor implements IDisposable {
       see: https://github.com/cloudflare/miniflare/issues/292
     */
     private static KEEP_ALIVE_HTTP_AGENT: Dispatcher = null;
+    private static readonly MIN_COMPRESSED_BODY_LENGTH = 1024;
 
     private static readonly HTTPS_AGENT_CACHE = new Map<string, Dispatcher>();
 
@@ -442,16 +444,35 @@ export class RequestExecutor implements IDisposable {
         }
     }
 
-    private compressionHeaders(params: HttpRequestParameters) {
-        if (this._conventions.useHttpDecompression) {
-            // do nothing - node.js sends 'accept-encoding: gzip, deflate' by default
-        } else {
-            // disable response compression
-            let { headers} = params;
-            if (!headers) {
-                params.headers = headers = {};
-            }
+    private async applyHttpCompression(params: HttpRequestParameters) {
+        const headers = params.headers ??= {};
+        const algorithm = this._conventions.httpCompressionAlgorithm;
+
+        if (!this._conventions.useHttpDecompression) {
             headers["Accept-Encoding"] = "identity";
+        } else if (algorithm === "Zstd" && !this._conventions.customFetch && RuntimeUtil.fetchDecodesZstd()) {
+            headers["Accept-Encoding"] = "zstd, gzip, deflate, br";
+        }
+
+        if (this._conventions.useHttpCompression && typeof params.body === "string" && !headers["Content-Encoding"]) {
+            // compressing a small body costs more (both sides, ~0.1 ms) than it saves
+            const compressed = params.body.length >= RequestExecutor.MIN_COMPRESSED_BODY_LENGTH
+                ? await compressRequestBody(params.body, algorithm)
+                : null;
+            if (compressed) {
+                headers["Content-Encoding"] = contentEncodingOf(algorithm);
+            }
+
+            // chunked like the C# client's streamed content: RavenDB on Windows answers ~3 ms
+            // slower on a connection until it has received a chunked request body
+            const chunk = compressed ?? new TextEncoder().encode(params.body);
+            params.body = new ReadableStream({
+                start(controller) {
+                    controller.enqueue(chunk);
+                    controller.close();
+                }
+            });
+            params.duplex = "half";
         }
     }
 
@@ -1272,7 +1293,7 @@ export class RequestExecutor implements IDisposable {
         if (this._shouldExecuteOnAll(chosenNode, command)) {
             responseAndStream = await this._executeOnAllToFigureOutTheFastest(chosenNode, command);
         } else {
-            this.compressionHeaders(request);
+            await this.applyHttpCompression(request);
             responseAndStream = await command.send(await this.getHttpAgent(), request);
         }
 
@@ -1436,13 +1457,13 @@ export class RequestExecutor implements IDisposable {
             const agent = await this.getHttpAgent();
 
             task = Promise.resolve()
-                .then(() => {
+                .then(async () => {
                     const req = this._createRequest(nodes[taskNumber], command, TypeUtil.NOOP);
                     if (!req) {
                         return;
                     }
                     this._setRequestHeaders(null, null, req);
-                    this.compressionHeaders(req);
+                    await this.applyHttpCompression(req);
                     return command.send(agent, req);
                 })
                 .then(commandResult => new IndexAndResponse(taskNumber, commandResult.response, commandResult.bodyStream))
