@@ -53,10 +53,12 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         public async increment(id: string, name: string): Promise<void>;
         public async increment(id: string, name: string, delta: number): Promise<void>;
         public async increment(id: string, name: string, delta: number = 1): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
 
             try {
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 if (this._operation._inProgressCommand === "TimeSeries") {
                     BulkInsertOperation._timeSeriesBulkInsertBaseClass.throwAlreadyRunningTimeSeries();
@@ -89,19 +91,14 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._countersInBatch++;
 
-                    if (!this._first) {
-                        this._operation._writeComma();
-                    }
-
+                    this._operation._writer.write((this._first ? "" : ",")
+                        + `{"Type":"Increment","CounterName":"` + BulkInsertOperation._escapeString(name)
+                        + `","Delta":` + delta.toString() + "}");
                     this._first = false;
 
-                    this._operation._writer.write(`{"Type":"Increment","CounterName":"`);
-                    this._operation._writeString(name);
-                    this._operation._writer.write(`","Delta":`);
-                    this._operation._writer.write(delta.toString());
-                    this._operation._writer.write("}");
-
-                    await this._operation.flushIfNeeded();
+                    if (this._operation.isFlushNeeded()) {
+                        await this._operation.flushIfNeeded();
+                    }
 
                 } catch (e) {
                     await this._operation._handleErrors(this._id, e);
@@ -150,9 +147,11 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         }
 
         protected async _appendInternal(timestamp: Date, values: number[], tag: string): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
             try {
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 try {
                     if (this._first) {
@@ -168,39 +167,23 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._timeSeriesInBatch++;
 
-                    if (!this._first) {
-                        this._operation._writeComma();
-                    }
-
-                    this._first = false;
-
-                    this._operation._writer.write("[");
-                    this._operation._writer.write(timestamp.getTime().toString());
-                    this._operation._writeComma();
-
-                    this._operation._writer.write(values.length.toString());
-                    this._operation._writeComma();
-
-                    let firstValue = true;
+                    let entry = "[" + timestamp.getTime() + "," + values.length;
 
                     for (const value of values) {
-                        if (!firstValue) {
-                            this._operation._writeComma();
-                        }
-
-                        firstValue = false;
-                        this._operation._writer.write(((value ?? 0).toString()));
+                        entry += "," + (value ?? 0);
                     }
 
                     if (tag) {
-                        this._operation._writer.write(`,"`);
-                        this._operation._writeString(tag);
-                        this._operation._writer.write(`"`);
+                        entry += `,"` + BulkInsertOperation._escapeString(tag) + `"`;
                     }
 
-                    this._operation._writer.write("]");
+                    const separator = this._first ? "" : ",";
+                    this._first = false;
+                    this._operation._writer.write(separator + entry + "]");
 
-                    await this._operation.flushIfNeeded();
+                    if (this._operation.isFlushNeeded()) {
+                        await this._operation.flushIfNeeded();
+                    }
                 } catch (e) {
                     await this._operation._handleErrors(this._id, e);
                 }
@@ -301,12 +284,14 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         public async store(id: string, name: string, bytes: Buffer, contentType: string): Promise<void>;
         public async store(id: string, name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
         public async store(id: string, name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
-            const check = await this._operation._concurrencyCheck();
+            const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
 
             try {
                 this._operation._endPreviousCommandIfNeeded();
 
-                await this._operation._executeBeforeStore();
+                if (!this._operation._isReadyForStore) {
+                    await this._operation._executeBeforeStore();
+                }
 
                 try {
                     if (!this._operation._first) {
@@ -621,7 +606,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         idOrMetadata?: string | IMetadataDictionary,
         optionalMetadata?: IMetadataDictionary): Promise<void> {
 
-        const check = await this._concurrencyCheck();
+        const check = this._tryConcurrencyCheckSync() ?? await this._concurrencyCheck();
         let id: string;
         try {
 
@@ -631,15 +616,19 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
             id = opts.getId ? await this._getId(entity) : opts.id;
             BulkInsertOperation._verifyValidId(id);
 
-            await this._executeBeforeStore();
+            if (!this._isReadyForStore) {
+                await this._executeBeforeStore();
+            }
             metadata = this.handleMetadata(metadata, entity);
 
             this._endPreviousCommandIfNeeded();
 
             try {
                 this._writeToStream(entity, id, metadata, "PUT");
-                await this.flushIfNeeded();
-            } catch (e) {   
+                if (this.isFlushNeeded()) {
+                    await this.flushIfNeeded();
+                }
+            } catch (e) {
                 await this._handleErrors(id, e);
             }
         } finally {
@@ -671,12 +660,6 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
     // in node.js we handle errors outside of this method
     private _writeToStream(entity: object, id: string, metadata: IMetadataDictionary, type: CommandType) {
-        if (this._first) {
-            this._first = false;
-        } else {
-            this._writeComma();
-        }
-
         this._inProgressCommand = "None";
 
         const documentInfo = new DocumentInfo();
@@ -685,10 +668,10 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
         json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
 
-        this._writer.write(`{"Id":"`);
-        this._writeString(id);
-        const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._writer.write(`","Type":"PUT","Document":${jsonString}}`);
+        const entry = `{"Id":"${BulkInsertOperation._escapeString(id)}","Type":"PUT","Document":${JsonSerializer.getDefault().serialize(json)}}`;
+        const separator = this._first ? "" : ",";
+        this._first = false;
+        this._writer.write(separator + entry);
     }
 
     private async _handleErrors(documentId: string, e: Error) {
@@ -720,6 +703,23 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         }
     }
 
+    private _tryConcurrencyCheckSync(): IDisposable | null {
+        if (this._concurrentCheck || !this._streamLock.available()) {
+            return null;
+        }
+
+        this._concurrentCheck = 1;
+        this._streamLock.take(TypeUtil.NOOP);
+        return this._syncConcurrencyCheckRelease;
+    }
+
+    private readonly _syncConcurrencyCheckRelease: IDisposable = {
+        dispose: () => {
+            this._streamLock.leave();
+            this._concurrentCheck = 0;
+        }
+    };
+
     private _endPreviousCommandIfNeeded() {
         if (this._inProgressCommand === "Counters") {
             this._countersOperation.endPreviousCommandIfNeeded();
@@ -729,16 +729,11 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
     }
 
     private _writeString(input: string): void {
-        for (let i = 0; i < input.length; i++) {
-            const c = input[i];
-            if (`"` === c) {
-                if (i === 0 || input[i - 1] !== `\\`) {
-                    this._writer.write("\\");
-                }
-            }
+        this._writer.write(BulkInsertOperation._escapeString(input));
+    }
 
-            this._writer.write(c);
-        }
+    private static _escapeString(input: string): string {
+        return input.includes(`"`) ? input.replace(/(?<!\\)"/g, `\\"`) : input;
     }
 
     private _writeComma() {
@@ -925,7 +920,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
     }
 
     private isHeartbeatIntervalExceeded(): boolean {
-        return Date.now() - this._writer.lastFlushToStream.getTime() >= this._heartbeatCheckInterval;
+        return Date.now() - this._writer.lastFlushToStream >= this._heartbeatCheckInterval;
     }
 
     private static readonly _countersBulkInsertClass = class CountersBulkInsert implements ICountersBulkInsert {
