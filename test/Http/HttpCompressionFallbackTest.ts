@@ -37,6 +37,20 @@ describe("HTTP compression without zstd support", function () {
         assert.strictEqual(await new Response(params.body as ReadableStream).text(), body);
     });
 
+    it("leaves Accept-Encoding to fetch when the request does not go through the Node transport", async function () {
+        const executor = new LocalRequestExecutor();
+        sinon.stub(executor, "getHttpAgent").resolves(null);
+        const params: HttpRequestParameters = { uri: "http://127.0.0.1/", method: "GET" };
+
+        try {
+            await executor["applyHttpCompression"](params);
+        } finally {
+            executor.dispose();
+        }
+
+        assert.strictEqual(params.headers["Accept-Encoding"], undefined);
+    });
+
     it("falls back to gzip for bulk insert when zstd streams are unavailable", async function () {
         sinon.stub(zlib, "createZstdCompress").value(undefined);
         syncBuiltinESMExports();

@@ -61,7 +61,6 @@ export abstract class RavenCommand<TResult> {
         return this._responseType;
     }
 
-    // whether the command parses the whole response body instead of handing a stream to the caller
     protected get _readsWholeResponse(): boolean {
         return this._responseType === "Object";
     }
@@ -173,7 +172,7 @@ export abstract class RavenCommand<TResult> {
                 agent = dispatcher;
             }
 
-            if (agent && !fetcher && RavenCommand.isBufferedBody(body)) {
+            if (RavenCommand.sendsWithDispatcher(agent, requestOptions)) {
                 return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
             optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
@@ -216,9 +215,14 @@ export abstract class RavenCommand<TResult> {
         };
     }
 
-    // streamed uploads (bulk insert, attachments) stay on fetch: undici's request API does not
-    // encode FormData and does not settle on an early server response while the body is open
-    public static isBufferedBody(body: unknown): boolean {
+    public static sendsWithDispatcher(agent: Dispatcher, { body, fetcher, dispatcher }: HttpRequestParameters): boolean {
+        return RuntimeUtil.supportsUndiciDispatcher() && !!(dispatcher ?? agent) && !fetcher && RavenCommand.isBufferedBody(body);
+    }
+
+    // node Readable uploads (bulk insert, attachments) and FormData stay on fetch: undici's request API does not
+    // encode FormData and does not settle on an early server response while the body is open. The only
+    // ReadableStream body is the single-chunk one RequestExecutor.applyHttpCompression builds.
+    private static isBufferedBody(body: unknown): boolean {
         return body === undefined || body === null || typeof body === "string"
             || ArrayBuffer.isView(body) || body instanceof ReadableStream;
     }
@@ -267,6 +271,7 @@ export abstract class RavenCommand<TResult> {
             if (decompressor) {
                 // not stream.pipeline: it builds an AbortController and a DOMException per response
                 result.body.on("error", err => decompressor.destroy(err));
+                decompressor.once("close", () => result.body.destroy());
                 bodyStream = result.body.pipe(decompressor);
             }
         }
