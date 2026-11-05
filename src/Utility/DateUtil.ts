@@ -117,10 +117,10 @@ export class DateUtil {
         return DateUtil.formatLocalDate(date) ?? format(date, DateUtil.DEFAULT_DATE_FORMAT);
     }
 
-    // same output as date-fns format(DEFAULT_DATE_FORMAT); null (date-fns decides) for invalid dates and years outside 0-9999
+    // same output as date-fns format(DEFAULT_DATE_FORMAT); null (date-fns decides) for invalid dates and years outside 1-9999
     private static formatLocalDate(date: Date): string | null {
         const year = date.getFullYear();
-        if (!(year >= 0 && year <= 9999)) {
+        if (!(year >= 1 && year <= 9999)) {
             return null;
         }
 

@@ -80,11 +80,17 @@ describe("DateUtil.stringify", function () {
         }
     });
 
-    it("formats years outside 0-9999 and rejects invalid dates like date-fns", function () {
+    it("formats years outside 1-9999 and rejects invalid dates like date-fns", function () {
         const farFuture = new Date(0);
         farFuture.setFullYear(12345, 5, 6);
+        const yearZero = new Date(0);
+        yearZero.setFullYear(0, 5, 6);
+        const negativeYear = new Date(0);
+        negativeYear.setFullYear(-44, 2, 15);
 
-        assert.strictEqual(DateUtil.default.stringify(farFuture), format(farFuture, DateUtil.DEFAULT_DATE_FORMAT));
+        for (const sample of [farFuture, yearZero, negativeYear]) {
+            assert.strictEqual(DateUtil.default.stringify(sample), format(sample, DateUtil.DEFAULT_DATE_FORMAT), sample.toISOString());
+        }
         assert.throws(() => DateUtil.default.stringify(new Date(NaN)), RangeError);
     });
 });
