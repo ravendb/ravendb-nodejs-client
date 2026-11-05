@@ -38,26 +38,22 @@ export class ObjectUtil {
     }
 
     public static deepLiteralClone(item) {
-        if (!item) {
+        if (typeof item !== "object" || item === null) {
             return item;
         }
 
-        let result;
-
         if (Array.isArray(item)) {
-            result = [];
+            const result = new Array(item.length);
             for (let index = 0; index < item.length; index++) {
                 result[index] = ObjectUtil.deepLiteralClone(item[index]);
             }
-        } else if (TypeUtil.isObject(item)) {
-            result = {};
-            for (const prop in item) {
-                result[prop] = ObjectUtil.deepLiteralClone(item[prop]);
-            }
-        } else {
-            result = item;
+            return result;
         }
 
+        const result = {};
+        for (const prop in item) {
+            result[prop] = ObjectUtil.deepLiteralClone(item[prop]);
+        }
         return result;
     }
 

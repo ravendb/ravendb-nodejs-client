@@ -371,6 +371,10 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         knownTypes: ObjectTypeDescriptor[],
         skipTypes: boolean = false): any {
 
+        if (typeof obj !== "object" || obj === null) {
+            return obj;
+        }
+
         if (TypeUtil.isDate(obj)) {
             if (!skipTypes) {
                 typeInfoCallback({
@@ -414,7 +418,9 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
         }
 
         if (Array.isArray(obj)) {
-            return obj.map((x, index) => this._makeObjectLiteral(x, `${objPathPrefix}.${index}`, typeInfoCallback, knownTypes));
+            return obj.map((x, index) => typeof x !== "object" || x === null
+                ? x
+                : this._makeObjectLiteral(x, `${objPathPrefix}.${index}`, typeInfoCallback, knownTypes));
         }
 
         if (TypeUtil.isObject(obj)) {
@@ -427,22 +433,29 @@ export class TypesAwareObjectMapper implements ITypesAwareObjectMapper {
                 }
             }
 
-            return Object.keys(obj)
-                .reduce((result, key) => {
-                    let nestedTypeInfoKey = key;
-                    if (this._conventions.localToServerFieldNameConverter) {
-                        nestedTypeInfoKey = this._conventions.localToServerFieldNameConverter(key);
-                    }
+            const result = {};
+            for (const key of Object.keys(obj)) {
+                const value = obj[key];
+                if (typeof value !== "object" || value === null) {
+                    result[key] = value;
+                    continue;
+                }
 
-                    let innerSkipTypes = skipTypes
-                    if (!skipTypes) {
-                        innerSkipTypes = key === CONSTANTS.Documents.Metadata.KEY;
-                    }
+                let nestedTypeInfoKey = key;
+                if (this._conventions.localToServerFieldNameConverter) {
+                    nestedTypeInfoKey = this._conventions.localToServerFieldNameConverter(key);
+                }
 
-                    const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
-                    result[key] = this._makeObjectLiteral(obj[key], fullPath, typeInfoCallback, knownTypes, innerSkipTypes);
-                    return result;
-                }, {});
+                let innerSkipTypes = skipTypes
+                if (!skipTypes) {
+                    innerSkipTypes = key === CONSTANTS.Documents.Metadata.KEY;
+                }
+
+                const fullPath = objPathPrefix ? `${objPathPrefix}.${nestedTypeInfoKey}` : nestedTypeInfoKey;
+                result[key] = this._makeObjectLiteral(value, fullPath, typeInfoCallback, knownTypes, innerSkipTypes);
+            }
+
+            return result;
         }
 
         return obj;
