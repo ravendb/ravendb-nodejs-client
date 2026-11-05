@@ -774,8 +774,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
     }
 
     protected async _ensureStream() {
-        const compressionAlgorithm = this._useCompression ? this._conventions.httpCompressionAlgorithm : null;
-        await this._writer.ensureStream(compressionAlgorithm);
+        const compressionAlgorithm = await this._writer.ensureStream(this._useCompression ? this._conventions.httpCompressionAlgorithm : null);
 
         const bulkCommand =
             new BulkInsertCommand(this._operationId, compressionAlgorithm, this._writer.compressedStream ?? this._writer.requestBodyStream, this._nodeTag, this._options.skipOverwriteIfUnchanged);

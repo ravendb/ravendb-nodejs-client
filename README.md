@@ -2664,7 +2664,7 @@ elsewhere the runtime's default encodings (gzip, deflate, br) are used.
 ```javascript
 const store = new DocumentStore(urls, database);
 store.conventions.httpCompressionAlgorithm = "Gzip"; // "Zstd" (default) or "Gzip"
-store.conventions.useHttpCompression = false;        // send request bodies uncompressed
+store.conventions.useHttpCompression = false;        // send request bodies uncompressed and not chunked
 store.conventions.useHttpDecompression = false;      // ask the server for uncompressed responses
 store.initialize();
 ```

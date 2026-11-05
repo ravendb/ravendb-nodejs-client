@@ -98,14 +98,18 @@ export class BulkInsertWriterBase implements IDisposable {
         }
     }
 
-    public async ensureStream(compression: HttpCompressionAlgorithm) {
+    public async ensureStream(compression: HttpCompressionAlgorithm): Promise<HttpCompressionAlgorithm> {
         if (compression) {
             const { createGzip, createZstdCompress } = await import("node:zlib");
+            if (typeof createZstdCompress !== "function") {
+                compression = "Gzip";
+            }
             this.compressedStream = compression === "Zstd" ? createZstdCompress() : createGzip();
             pipeline(this.requestBodyStream, this.compressedStream, TypeUtil.NOOP);
         }
 
         this._currentWriter.push("[");
+        return compression;
     }
 }
 
