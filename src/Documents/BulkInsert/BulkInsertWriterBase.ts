@@ -121,8 +121,8 @@ export class BulkInsertStream {
     // copying a large attachment into the flushed buffer doubles its memory until GC
     private static readonly PASS_THROUGH_SIZE = 1024 * 1024;
 
-    // Deno's fetch transfers each chunk's ArrayBuffer: a pooled buffer cannot be detached, and a passed-through
-    // attachment would be detached from the caller
+    // only undici's fetch is known to keep each chunk's ArrayBuffer; Bun, Deno and workerd may transfer it, as Deno's
+    // does: a pooled buffer cannot be detached, and a passed-through attachment would be detached from the caller
     private static readonly _transportKeepsBuffers = RuntimeUtil.supportsUndiciDispatcher();
 
     private readonly _items: Array<string | Buffer> = [];

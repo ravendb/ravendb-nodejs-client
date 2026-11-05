@@ -175,9 +175,11 @@ export abstract class RavenCommand<TResult> {
             if (RavenCommand.sendsWithDispatcher(agent, requestOptions)) {
                 return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
-            optionsToUse = body instanceof Readable
-                ? { body: RavenCommand._toWebStream(body), ...restOptions, duplex: "half", dispatcher: agent } as RequestInit
-                : { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
+            optionsToUse = {
+                body: body instanceof Readable ? RavenCommand._toWebStream(body) : bodyToUse,
+                ...restOptions,
+                dispatcher: agent
+            } as RequestInit;
         } else {
             // Bun, Cloudflare Workers (workerd) and Deno have no undici `dispatcher`
             // concept, so one must never leak into their fetch init. On workerd mTLS is

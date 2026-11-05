@@ -962,7 +962,7 @@ export interface ITypedTimeSeriesBulkInsert<T extends object> extends IDisposabl
 
 export interface IAttachmentsBulkInsert {
     /**
-     * Attachments of 1 MB or more are sent without copying, so do not modify `bytes` until `finish()` resolves.
+     * The bulk insert may send `bytes` without copying them, so do not modify `bytes` until `finish()` resolves.
      */
     store(name: string, bytes: Buffer): Promise<void>;
     /** @see store */

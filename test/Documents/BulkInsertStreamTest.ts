@@ -37,4 +37,41 @@ describe("BulkInsertStream", function () {
         assert.strictEqual(buffers[1], large);
         assert.strictEqual(buffers[2].toString(), ",]");
     });
+
+    it("passes a buffer of exactly 1 MB through on Node", () => {
+        const boundary = Buffer.alloc(1024 * 1024, 7);
+        const stream = new BulkInsertStream();
+        stream.push("[");
+        stream.push(boundary);
+
+        const buffers = stream.toBuffers();
+
+        if (!RuntimeUtil.supportsUndiciDispatcher()) {
+            assert.strictEqual(buffers.length, 1);
+            return;
+        }
+
+        assert.strictEqual(buffers.length, 2);
+        assert.strictEqual(buffers[0].toString(), "[");
+        assert.strictEqual(buffers[1], boundary);
+    });
+
+    it("passes adjacent large buffers through without an empty buffer between them on Node", () => {
+        const first = Buffer.alloc(2 * 1024 * 1024, 1);
+        const second = Buffer.alloc(2 * 1024 * 1024, 2);
+        const stream = new BulkInsertStream();
+        stream.push(first);
+        stream.push(second);
+
+        const buffers = stream.toBuffers();
+
+        if (!RuntimeUtil.supportsUndiciDispatcher()) {
+            assert.strictEqual(buffers.length, 1);
+            return;
+        }
+
+        assert.strictEqual(buffers.length, 2);
+        assert.strictEqual(buffers[0], first);
+        assert.strictEqual(buffers[1], second);
+    });
 });
