@@ -417,6 +417,7 @@ export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperat
 export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation.js";
 export * from "./Documents/Indexes/Enums.js";
 export * from "./Documents/Indexes/IndexDeploymentMode.js";
+export * from "./Documents/Indexes/IndexResetMode.js";
 export * from "./Documents/Indexes/IndexDefinition.js";
 export * from "./Documents/Indexes/AbstractCommonApiForIndexes.js";
 export * from "./Documents/Indexes/AbstractIndexDefinitionBuilder.js";
