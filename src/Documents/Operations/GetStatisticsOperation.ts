@@ -50,7 +50,9 @@ export class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
     }
 
     public async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
-        return this._parseResponseDefaultAsync(bodyStream);
+        const body = await this._parseResponseDefaultAsync(bodyStream);
+        this.result.staleIndexes = this.result.indexes?.filter(x => x.isStale).map(x => x.name);
+        return body;
     }
 
     public get isReadRequest() {

@@ -6,4 +6,5 @@ export interface ExternalReplicationBase extends ReplicationNode {
     name?: string;
     connectionStringName: string;
     mentorNode?: string;
+    pinToMentorNode?: boolean;
 }

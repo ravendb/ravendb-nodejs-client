@@ -5,4 +5,5 @@ export interface DetailedDatabaseStatistics extends DatabaseStatistics {
     countOfCompareExchange: number;
     countOfCompareExchangeTombstones: number;
     countOfTimeSeriesDeletedRanges: number;
+    countOfRemoteAttachments: number;
 }

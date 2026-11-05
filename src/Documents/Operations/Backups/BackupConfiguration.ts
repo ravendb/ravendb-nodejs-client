@@ -21,4 +21,6 @@ export interface BackupConfiguration {
     azureSettings?: AzureSettings;
     ftpSettings?: FtpSettings;
     googleCloudSettings?: GoogleCloudSettings;
+
+    maxReadOpsPerSecond?: number;
 }

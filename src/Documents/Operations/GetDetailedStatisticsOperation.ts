@@ -41,7 +41,9 @@ export class DetailedDatabaseStatisticsCommand extends RavenCommand<DetailedData
     }
 
     public async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
-        return await this._parseResponseDefaultAsync(bodyStream);
+        const body = await this._parseResponseDefaultAsync(bodyStream);
+        this.result.staleIndexes = this.result.indexes?.filter(x => x.isStale).map(x => x.name);
+        return body;
     }
 
     public get isReadRequest(): boolean {
