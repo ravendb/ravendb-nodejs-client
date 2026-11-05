@@ -175,7 +175,11 @@ export abstract class RavenCommand<TResult> {
             if (RavenCommand.sendsWithDispatcher(agent, requestOptions)) {
                 return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
-            optionsToUse = { body: bodyToUse, ...restOptions, dispatcher: agent } as RequestInit;
+            optionsToUse = {
+                body: body instanceof Readable ? RavenCommand._toWebStream(body) : bodyToUse,
+                ...restOptions,
+                dispatcher: agent
+            } as RequestInit;
         } else {
             // Bun, Cloudflare Workers (workerd) and Deno have no undici `dispatcher`
             // concept, so one must never leak into their fetch init. On workerd mTLS is
@@ -281,6 +285,30 @@ export abstract class RavenCommand<TResult> {
             response: new Response(null, { status: result.statusCode, headers: responseHeaders }),
             bodyStream
         };
+    }
+
+    // fetch's own wrapper for a Readable body, Readable.toWeb and the paused-mode read() behind the async
+    // iterator all copy chunks, so a 32 MB bulk insert attachment would be held twice; flowing mode passes
+    // the same buffers through
+    private static _toWebStream(stream: Readable): ReadableStream<Uint8Array> {
+        return new ReadableStream<Uint8Array>({
+            start(controller) {
+                stream.on("data", (chunk: Buffer | string) => {
+                    controller.enqueue(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+                    if (controller.desiredSize <= 0) {
+                        stream.pause();
+                    }
+                });
+                stream.once("end", () => controller.close());
+                stream.once("error", err => controller.error(err));
+            },
+            pull() {
+                stream.resume();
+            },
+            cancel(reason) {
+                stream.destroy(reason);
+            }
+        }, { highWaterMark: 0 });
     }
 
     // Runs a `node:stream` operation, translating an incomplete-polyfill failure into an

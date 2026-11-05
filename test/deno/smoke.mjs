@@ -13,6 +13,7 @@
 //   RAVENDB_CA           optional path to a PEM CA bundle for the server certificate
 import { DocumentStore } from "ravendb";
 import { readFileSync } from "node:fs";
+import { Buffer } from "node:buffer";
 
 const url = Deno.env.get("RAVENDB_URL") ?? "https://ravendb:8080";
 const database = Deno.env.get("RAVENDB_DATABASE") ?? "smoke";
@@ -40,7 +41,29 @@ try {
         throw new Error(`load mismatch: ${JSON.stringify(loaded)}`);
     }
 
-    console.log(`SMOKE OK: stored and loaded ${id}`);
+    // Deno's fetch transfers request body chunks, which pooled or caller-owned buffers do not survive
+    const bulkId = "deno-smoke-bulk/" + crypto.randomUUID();
+    const bytes = Buffer.alloc(2 * 1024 * 1024, 7);
+    const bulk = store.bulkInsert();
+    await bulk.store({ name: "deno-smoke-bulk" }, bulkId);
+    const attachments = bulk.attachmentsFor(bulkId);
+    await attachments.store("first", bytes);
+    await attachments.store("second", bytes);
+    await bulk.finish();
+
+    for (const name of ["first", "second"]) {
+        const attachment = await store.openSession().advanced.attachments.get(bulkId, name);
+        const chunks = [];
+        for await (const chunk of attachment.data) {
+            chunks.push(chunk);
+        }
+        attachment.dispose();
+        if (!Buffer.concat(chunks).equals(bytes)) {
+            throw new Error(`bulk insert attachment ${name} mismatch`);
+        }
+    }
+
+    console.log(`SMOKE OK: stored and loaded ${id}, bulk inserted ${bulkId} with attachments`);
 } finally {
     store.dispose();
 }

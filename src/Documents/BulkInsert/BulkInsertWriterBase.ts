@@ -5,6 +5,7 @@ import type { Gzip, ZstdCompress } from "node:zlib";
 import { promisify } from "node:util";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
+import { RuntimeUtil } from "../../Utility/RuntimeUtil.js";
 
 export class BulkInsertWriterBase implements IDisposable {
     private readonly _maxSizeInBuffer = 1024 * 1024;
@@ -40,7 +41,7 @@ export class BulkInsertWriterBase implements IDisposable {
                 this._currentWriter.push("]");
                 await this._asyncWrite;
 
-                await this.writeToStream(this._currentWriter.toBuffer());
+                await this.writeToStream(this._currentWriter.toBuffers());
                 await this.requestBodyStream.flush();
             }
         } finally {
@@ -66,10 +67,10 @@ export class BulkInsertWriterBase implements IDisposable {
 
             this._currentWriter = new BulkInsertStream();
 
-            const buffer = this._backgroundWriter.toBuffer();
+            const buffers = this._backgroundWriter.toBuffers();
             force = true; // original version: force || this.isHeartbeatIntervalExceeded() || ; in node.js we need to force flush to use backpressure in steams
             this._asyncWriteDone = false;
-            this._asyncWrite = this.writeToStream(buffer, force);
+            this._asyncWrite = this.writeToStream(buffers, force);
         }
     }
 
@@ -81,9 +82,11 @@ export class BulkInsertWriterBase implements IDisposable {
         // empty by design
     }
 
-    private async writeToStream(buffer: Buffer, forceDstFlush: boolean = false): Promise<void> {
+    private async writeToStream(buffers: Buffer[], forceDstFlush: boolean = false): Promise<void> {
         try {
-            this.requestBodyStream.write(buffer);
+            for (const buffer of buffers) {
+                this.requestBodyStream.write(buffer);
+            }
 
             if (forceDstFlush) {
                 this._updateFlushTime();
@@ -115,24 +118,73 @@ export class BulkInsertWriterBase implements IDisposable {
 
 export class BulkInsertStream {
 
+    // copying a large attachment into the flushed buffer doubles its memory until GC
+    private static readonly PASS_THROUGH_SIZE = 1024 * 1024;
+
+    // only undici's fetch is known to keep each chunk's ArrayBuffer; Bun, Deno and workerd may transfer it, as Deno's
+    // does: a pooled buffer cannot be detached, and a passed-through attachment would be detached from the caller
+    private static readonly _transportKeepsBuffers = RuntimeUtil.supportsUndiciDispatcher();
+
     private readonly _items: Array<string | Buffer> = [];
     private totalLength = 0;
+    private _hasPassThroughBuffer = false;
 
     public push(data: string | Buffer) {
         this._items.push(data);
-        this.totalLength += Buffer.isBuffer(data) ? data.length : Buffer.byteLength(data);
+
+        if (Buffer.isBuffer(data)) {
+            this.totalLength += data.length;
+            this._hasPassThroughBuffer ||= BulkInsertStream._isPassThrough(data);
+        } else {
+            this.totalLength += Buffer.byteLength(data);
+        }
     }
 
-    public toBuffer(): Buffer {
-        const result = Buffer.allocUnsafe(this.totalLength);
-        let idx = 0;
-        for (const inputElement of this._items) {
-            if (Buffer.isBuffer(inputElement)) {
-                inputElement.copy(result, idx);
-                idx += inputElement.length;
+    public toBuffers(): Buffer[] {
+        if (!this._hasPassThroughBuffer) {
+            return [BulkInsertStream._concat(this._items, this.totalLength)];
+        }
+
+        const buffers: Buffer[] = [];
+        let pending: Array<string | Buffer> = [];
+        let pendingLength = 0;
+
+        for (const item of this._items) {
+            if (BulkInsertStream._isPassThrough(item)) {
+                if (pending.length) {
+                    buffers.push(BulkInsertStream._concat(pending, pendingLength));
+                    pending = [];
+                    pendingLength = 0;
+                }
+                buffers.push(item);
             } else {
-                result.write(inputElement, idx);
-                idx += Buffer.byteLength(inputElement);
+                pending.push(item);
+                pendingLength += Buffer.isBuffer(item) ? item.length : Buffer.byteLength(item);
+            }
+        }
+
+        if (pending.length) {
+            buffers.push(BulkInsertStream._concat(pending, pendingLength));
+        }
+
+        return buffers;
+    }
+
+    private static _isPassThrough(item: string | Buffer): item is Buffer {
+        return BulkInsertStream._transportKeepsBuffers
+            && Buffer.isBuffer(item)
+            && item.length >= BulkInsertStream.PASS_THROUGH_SIZE;
+    }
+
+    private static _concat(items: Array<string | Buffer>, length: number): Buffer {
+        const result = BulkInsertStream._transportKeepsBuffers ? Buffer.allocUnsafe(length) : Buffer.allocUnsafeSlow(length);
+        let idx = 0;
+        for (const item of items) {
+            if (Buffer.isBuffer(item)) {
+                item.copy(result, idx);
+                idx += item.length;
+            } else {
+                idx += result.write(item, idx);
             }
         }
 
