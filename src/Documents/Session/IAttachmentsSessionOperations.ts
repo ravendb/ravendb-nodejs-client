@@ -18,6 +18,18 @@ export interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
     get(entity: object, name: string): Promise<AttachmentResult | null>;
 
     /**
+     * Returns the inclusive byte range [from, to] of the attachment by the document id and attachment name.
+     * When to is null the range ends at the last byte; when from is null, to is a suffix length (the last to bytes).
+     */
+    getRange(documentId: string, name: string, from: number | null, to: number | null): Promise<AttachmentResult | null>;
+
+    /**
+     * Returns the inclusive byte range [from, to] of the attachment by the entity and attachment name.
+     * When to is null the range ends at the last byte; when from is null, to is a suffix length (the last to bytes).
+     */
+    getRange(entity: object, name: string, from: number | null, to: number | null): Promise<AttachmentResult | null>;
+
+    /**
      * Returns the revision attachment by the document id and attachment name.
      */
     getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult | null>;

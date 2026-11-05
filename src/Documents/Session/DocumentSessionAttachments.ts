@@ -24,22 +24,35 @@ export class DocumentSessionAttachments
     public async get(
         idOrEntity: string | object,
         name: string): Promise<AttachmentResult> {
-        let docId;
-        if (typeof idOrEntity !== "string") {
-            const document = this._session.documentsByEntity.get(idOrEntity);
-            if (!document) {
-                this._throwEntityNotInSessionOrMissingId(idOrEntity);
-            }
-
-            docId = document.id;
-        } else {
-            docId = idOrEntity;
-        }
-
         const operation: GetAttachmentOperation =
-            new GetAttachmentOperation(docId, name, "Document", null);
+            new GetAttachmentOperation(this._getDocumentId(idOrEntity), name, "Document", null);
         this._session.incrementRequestCount();
         return await this._session.operations.send(operation, this._sessionInfo);
+    }
+
+    public async getRange(entity: object, name: string, from: number | null, to: number | null): Promise<AttachmentResult>;
+    public async getRange(documentId: string, name: string, from: number | null, to: number | null): Promise<AttachmentResult>;
+    public async getRange(
+        idOrEntity: string | object,
+        name: string,
+        from: number | null,
+        to: number | null): Promise<AttachmentResult> {
+        const operation = new GetAttachmentOperation(this._getDocumentId(idOrEntity), name, "Document", null, from, to);
+        this._session.incrementRequestCount();
+        return await this._session.operations.send(operation, this._sessionInfo);
+    }
+
+    private _getDocumentId(idOrEntity: string | object): string {
+        if (typeof idOrEntity === "string") {
+            return idOrEntity;
+        }
+
+        const document = this._session.documentsByEntity.get(idOrEntity);
+        if (!document) {
+            this._throwEntityNotInSessionOrMissingId(idOrEntity);
+        }
+
+        return document.id;
     }
 
     public async getRevision(documentId: string, name: string, changeVector: string): Promise<AttachmentResult> {
