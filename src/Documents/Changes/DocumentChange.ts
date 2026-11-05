@@ -12,4 +12,8 @@ export type DocumentChangeTypes =
     | "Put"
     | "Delete"
     | "Conflict"
-    | "Common";
+    | "Common"
+    | "BulkInsertStarted"
+    | "BulkInsertEnded"
+    | "BulkInsertError"
+    | "DeleteOnTombstoneReplication";

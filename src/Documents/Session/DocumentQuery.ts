@@ -115,6 +115,8 @@ export class DocumentQuery<T extends object>
     public selectFields<TProjection extends object>(
         properties: string[]): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
+        queryData: QueryData): IDocumentQuery<TProjection>;
+    public selectFields<TProjection extends object>(
         queryData: QueryData,
         projectionType: DocumentType<TProjection>): IDocumentQuery<TProjection>;
     public selectFields<TProjection extends object>(
@@ -260,9 +262,9 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    public addOrder(fieldName: Field<T>, descending: boolean): IDocumentQuery<T>;
+    public addOrder(fieldName: Field<T>, descending?: boolean): IDocumentQuery<T>;
     public addOrder(fieldName: Field<T>, descending: boolean, ordering: OrderingType): IDocumentQuery<T>;
-    public addOrder(fieldName: Field<T>, descending: boolean, ordering: OrderingType = "String"): IDocumentQuery<T> {
+    public addOrder(fieldName: Field<T>, descending: boolean = false, ordering: OrderingType = "String"): IDocumentQuery<T> {
         if (descending) {
             this.orderByDescending(fieldName, ordering);
         } else {
@@ -520,8 +522,6 @@ export class DocumentQuery<T extends object>
         return this;
     }
 
-    // TBD 4.1 public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
-
     public groupBy(fieldName: Field<T>, ...fieldNames: string[]): IGroupByDocumentQuery<T>;
     public groupBy(field: GroupBy, ...fields: GroupBy[]): IGroupByDocumentQuery<T>;
     public groupBy(...args: any[]): IGroupByDocumentQuery<T> {
@@ -772,7 +772,7 @@ export class DocumentQuery<T extends object>
         shapeWkt: string,
         relation: SpatialRelation,
         units: SpatialUnits,
-        distanceErrorPct: number): IDocumentQuery<T>;
+        distanceErrorPct?: number): IDocumentQuery<T>;
     public relatesToShape(
         fieldName: Field<T>,
         shapeWkt: string,
@@ -807,6 +807,7 @@ export class DocumentQuery<T extends object>
     public orderByDistance(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
+    public orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number): IDocumentQuery<T>;
     public orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistance(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistance as any)(...args);
@@ -823,6 +824,7 @@ export class DocumentQuery<T extends object>
     public orderByDistanceDescending(fieldName: Field<T>, latitude: number, longitude: number, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
+    public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number): IDocumentQuery<T>;
     public orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): IDocumentQuery<T>;
     public orderByDistanceDescending(...args: any[]): IDocumentQuery<T> {
         (this._orderByDistanceDescending as any)(...args);

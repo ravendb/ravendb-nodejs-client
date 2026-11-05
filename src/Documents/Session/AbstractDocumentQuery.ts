@@ -679,9 +679,6 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         this._orderByTokens.push(OrderByToken.createRandom(seed));
     }
 
-    // TBD public void _customSortUsing(String typeName)
-    // TBD public void _customSortUsing(String typeName, boolean descending)
-
     public _projection(projectionBehavior: ProjectionBehavior) {
         this.projectionBehavior = projectionBehavior;
     }

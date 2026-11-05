@@ -92,6 +92,12 @@ export interface IDocumentQuery<T extends object>
      * Selects the specified fields directly from the index if the are stored.
      * If the field is not stored in index, value will come from document directly.
      */
+    selectFields<TProjection extends object>(queryData: QueryData): IDocumentQuery<TProjection>;
+
+    /**
+     * Selects the specified fields directly from the index if the are stored.
+     * If the field is not stored in index, value will come from document directly.
+     */
     selectFields<TProjection extends object>(
         queryData: QueryData, projectionClass: DocumentType<TProjection>): IDocumentQuery<TProjection>;
 
@@ -153,8 +159,6 @@ export interface IDocumentQuery<T extends object>
      * @param limit Limits the number of documents processed by Filter.
      */
     filter(builder: (factory: IFilterFactory<T>) => void, limit: number): IDocumentQuery<T>;
-
-    //TBD MoreLikeThis
 
     suggestUsing(suggestion: SuggestionBase): ISuggestionDocumentQuery<T>;
 

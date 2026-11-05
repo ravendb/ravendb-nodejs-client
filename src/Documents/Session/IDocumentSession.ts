@@ -5,7 +5,7 @@ import { DocumentType } from "../DocumentAbstractions.js";
 import { ClassConstructor, EntitiesCollectionObject, ObjectTypeDescriptor } from "../../Types/index.js";
 import { IAdvancedSessionOperations } from "./IAdvancedSessionOperations.js";
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude.js";
-import { DocumentQueryOptions } from "./QueryOptions.js";
+import { AdvancedDocumentQueryOptions } from "./QueryOptions.js";
 import { IDocumentQuery } from "./IDocumentQuery.js";
 import { IIncludeBuilder } from "./Loaders/IIncludeBuilder.js";
 import { ISessionDocumentCounters } from "./ISessionDocumentCounters.js";
@@ -240,7 +240,7 @@ export interface IDocumentSession extends IDisposable {
     /**
      * Queries collection or index.
      */
-    query<T extends object>(opts: DocumentQueryOptions<T>): IDocumentQuery<T>;
+    query<T extends object>(opts: AdvancedDocumentQueryOptions<T>): IDocumentQuery<T>;
 
     /**
      * Queries collection. Collection name is determined from documentType using document store conventions.

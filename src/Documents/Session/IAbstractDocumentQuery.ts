@@ -51,10 +51,6 @@ export interface IAbstractDocumentQuery<T> {
      */
     _randomOrdering(seed: string): void;
 
-    //TBD 4.1 void _customSortUsing(String typeName);
-
-    //TBD 4.1 void _customSortUsing(String typeName, boolean descending);
-
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
@@ -393,10 +389,6 @@ export interface IAbstractDocumentQuery<T> {
     addFromAliasToOrderByTokens(fromAlias: string): void;
 
     addAliasToIncludesTokens(fromAlias: string): string;
-
-    // TBD void AggregateBy(FacetBase facet);
-    // TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
-    // TBD void AggregateUsing(string facetSetupDocumentId);
 
     _suggestUsing(suggestion: SuggestionBase);
 

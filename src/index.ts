@@ -213,6 +213,7 @@ export { NextIdentityForOperation } from "./Documents/Operations/Identities/Next
 export { SeedIdentityForOperation } from "./Documents/Operations/Identities/SeedIdentityForOperation.js";
 export type { IOperationProgress } from "./Documents/Operations/IOperationProgress.js";
 export type { IOperationResult } from "./Documents/Operations/IOperationResult.js";
+export type { OperationState, OperationStatus } from "./Documents/Operations/OperationState.js";
 export {
     UpdateExternalReplicationOperation
 }

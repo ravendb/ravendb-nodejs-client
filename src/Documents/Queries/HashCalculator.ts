@@ -23,8 +23,6 @@ export class HashCalculator {
         return createHash("md5").update(buffer).digest("hex");
     }
 
-    //TBD 4.1 public void Write(HighlightedField[] highlightedFields)
-
     public write(o: any, mapper?: ITypesAwareObjectMapper) {
         if (TypeUtil.isNullOrUndefined(o)) {
             this._buffers.push(Buffer.from("null"));

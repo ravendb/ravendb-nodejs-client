@@ -1,8 +1,6 @@
 import { Lazy } from "../Lazy.js";
 
 export interface IDocumentQueryBaseSingle<T extends object> {
-    //TBD  Lazy<int> CountLazily();
-
     /**
      * Returns first element or throws if sequence is empty.
      */
