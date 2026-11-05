@@ -81,7 +81,6 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         bodyStream: Readable
     }> {
         if (this._multipartCommands) {
-            // built as bytes rather than FormData, so it is a buffered body the Node transport sends directly
             const boundary = "RavenDB-" + globalThis.crypto.randomUUID();
             const parts: Buffer[] = [
                 Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="main"\r\nContent-Type: application/json\r\n\r\n`),
@@ -134,7 +133,6 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         };
 
         if (this._attachmentStreams && this._attachmentStreams.size > 0) {
-            // the multipart body is built in send(), which can await attachment streams
             this._multipartCommands = body;
         } else {
             this._multipartCommands = null;
