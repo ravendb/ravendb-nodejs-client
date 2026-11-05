@@ -1,5 +1,5 @@
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
-import { IDocumentStore, InMemoryDocumentSessionOperations } from "../../../src/index.js";
+import { IDocumentStore, InMemoryDocumentSessionOperations, TimeSeriesEntry } from "../../../src/index.js";
 import { User } from "../../Assets/Entities.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 import { addDays, addHours, addMinutes, addSeconds } from "date-fns";
@@ -1008,4 +1008,63 @@ describe("TimeSeriesRangesCacheTest", function () {
                 .isEqualTo(addMinutes(baseLine, 1).getTime());
         }
     })
+
+    describe("cached range boundaries between entries", () => {
+        const baseLine = new Date("2024-01-01T01:30:00Z");
+        const timestamps = (entries: TimeSeriesEntry[]) => entries.map(x => x.timestamp.toISOString()).join();
+        const days = (...offsets: number[]) => offsets.map(day => addDays(baseLine, day).toISOString()).join();
+
+        beforeEach(async () => {
+            const session = store.openSession();
+            await session.store(new User(), "users/1");
+            const ts = session.timeSeriesFor("users/1", "HR");
+            for (let day = 0; day < 5; day++) {
+                ts.append(addDays(baseLine, day), [ day ]);
+            }
+            await session.saveChanges();
+        });
+
+        it("shouldMergeOpenEndedRangeWithCachedRange", async () => {
+            const session = store.openSession();
+            const ts = session.timeSeriesFor("users/1", "HR");
+
+            assertThat(await ts.get(addHours(baseLine, 12), addHours(baseLine, 60)))
+                .hasSize(2);
+
+            assertThat(timestamps(await ts.get()))
+                .isEqualTo(days(0, 1, 2, 3, 4));
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+
+            assertThat(timestamps(await ts.get()))
+                .isEqualTo(days(0, 1, 2, 3, 4));
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        });
+
+        it("shouldMergeGapsBetweenDisjointCachedRanges", async () => {
+            const session = store.openSession();
+            const ts = session.timeSeriesFor("users/1", "HR");
+
+            await ts.get(addHours(baseLine, 12), addHours(baseLine, 36));
+            await ts.get(addHours(baseLine, 60), addHours(baseLine, 84));
+
+            assertThat(timestamps(await ts.get(null, addHours(baseLine, 80))))
+                .isEqualTo(days(0, 1, 2, 3));
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(3);
+        });
+
+        it("shouldMergeOpenEndedRangeWithIncludedRange", async () => {
+            const session = store.openSession();
+            await session.load("users/1", {
+                includes: i => i.includeTimeSeries("HR", addHours(baseLine, 12), addHours(baseLine, 60))
+            });
+
+            assertThat(timestamps(await session.timeSeriesFor("users/1", "HR").get()))
+                .isEqualTo(days(0, 1, 2, 3, 4));
+            assertThat(session.advanced.numberOfRequests)
+                .isEqualTo(2);
+        });
+    });
 });

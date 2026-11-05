@@ -428,14 +428,10 @@ export class SessionTimeSeriesBase {
             if (currentResultIndex < resultFromServer.length
                 && DatesComparator.compare(leftDate(resultFromServer[currentResultIndex].from), leftDate(ranges[i].from)) < 0) {
                 // add current result from server to the merged list
-                // in order to avoid duplication, skip first item in range
-                // (unless this is the first time we're adding to the merged list)
+                // in order to avoid duplication, skip first item in range if needed
 
-                const toAdd = resultFromServer[currentResultIndex++]
-                    .entries
-                    .slice(mergedValues.length === 0 ? 0 : 1);
-
-                mergedValues.push(...toAdd);
+                const entries = resultFromServer[currentResultIndex++].entries;
+                mergedValues.push(...entries.slice(SessionTimeSeriesBase._duplicatesToSkip(mergedValues, entries)));
             }
 
             if (i === toRangeIndex) {
@@ -444,7 +440,7 @@ export class SessionTimeSeriesBase {
                     // so we might need to trim a part of it when we return the
                     // result to the user (i.e. trim [to, toRange.to])
 
-                    for (let index = mergedValues.length === 0 ? 0 : 1; index < ranges[i].entries.length; index++) {
+                    for (let index = SessionTimeSeriesBase._duplicatesToSkip(mergedValues, ranges[i].entries); index < ranges[i].entries.length; index++) {
                         mergedValues.push(ranges[i].entries[index]);
                         if (DatesComparator.compare(definedDate(ranges[i].entries[index].timestamp), rightDate(to)) > 0) {
                             trim++;
@@ -458,13 +454,7 @@ export class SessionTimeSeriesBase {
             // add current range from cache to the merged list.
             // in order to avoid duplication, skip first item in range if needed
 
-            let shouldSkip = false;
-            if (mergedValues.length > 0) {
-                shouldSkip = ranges[i].entries[0].timestamp.getTime() === mergedValues.at(-1).timestamp.getTime();
-            }
-
-            const toAdd = ranges[i].entries.slice(!shouldSkip ? 0 : 1);
-            mergedValues.push(...toAdd);
+            mergedValues.push(...ranges[i].entries.slice(SessionTimeSeriesBase._duplicatesToSkip(mergedValues, ranges[i].entries)));
         }
 
         if (currentResultIndex < resultFromServer.length) {
@@ -472,10 +462,8 @@ export class SessionTimeSeriesBase {
             // so the last missing part is from server
             // add last missing part to the merged list
 
-            const toAdd = resultFromServer[currentResultIndex++]
-                .entries
-                .slice(mergedValues.length === 0 ? 0 : 1);
-            mergedValues.push(...toAdd);
+            const entries = resultFromServer[currentResultIndex++].entries;
+            mergedValues.push(...entries.slice(SessionTimeSeriesBase._duplicatesToSkip(mergedValues, entries)));
         }
 
         resultToUserSetter(SessionTimeSeriesBase._skipAndTrimRangeIfNeeded(from,
@@ -487,6 +475,12 @@ export class SessionTimeSeriesBase {
             trim));
 
         return mergedValues;
+    }
+
+    private static _duplicatesToSkip(mergedValues: TimeSeriesEntry[], entries: TimeSeriesEntry[]): number {
+        return mergedValues.length > 0
+            && entries.length > 0
+            && entries[0].timestamp.getTime() === mergedValues.at(-1).timestamp.getTime() ? 1 : 0;
     }
 
     private static _chopRelevantRange(range: TimeSeriesRangeResult, from: Date, to: Date, start: number, pageSize: number): TimeSeriesEntry[] {
