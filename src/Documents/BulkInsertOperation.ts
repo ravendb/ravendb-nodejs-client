@@ -93,7 +93,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._operation._writer.write((this._first ? "" : ",")
                         + `{"Type":"Increment","CounterName":"` + BulkInsertOperation._escapeString(name)
-                        + `","Delta":` + delta + "}");
+                        + `","Delta":` + delta.toString() + "}");
                     this._first = false;
 
                     if (this._operation.isFlushNeeded()) {
@@ -167,8 +167,7 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
                     this._timeSeriesInBatch++;
 
-                    let entry = (this._first ? "[" : ",[") + timestamp.getTime() + "," + values.length;
-                    this._first = false;
+                    let entry = "[" + timestamp.getTime() + "," + values.length;
 
                     for (const value of values) {
                         entry += "," + (value ?? 0);
@@ -178,7 +177,9 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
                         entry += `,"` + BulkInsertOperation._escapeString(tag) + `"`;
                     }
 
-                    this._operation._writer.write(entry + "]");
+                    const separator = this._first ? "" : ",";
+                    this._first = false;
+                    this._operation._writer.write(separator + entry + "]");
 
                     if (this._operation.isFlushNeeded()) {
                         await this._operation.flushIfNeeded();
@@ -659,9 +660,6 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
     // in node.js we handle errors outside of this method
     private _writeToStream(entity: object, id: string, metadata: IMetadataDictionary, type: CommandType) {
-        const separator = this._first ? "" : ",";
-        this._first = false;
-
         this._inProgressCommand = "None";
 
         const documentInfo = new DocumentInfo();
@@ -670,8 +668,10 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
 
         json = this._conventions.transformObjectKeysToRemoteFieldNameConvention(json);
 
-        const jsonString = JsonSerializer.getDefault().serialize(json);
-        this._writer.write(`${separator}{"Id":"${BulkInsertOperation._escapeString(id)}","Type":"PUT","Document":${jsonString}}`);
+        const entry = `{"Id":"${BulkInsertOperation._escapeString(id)}","Type":"PUT","Document":${JsonSerializer.getDefault().serialize(json)}}`;
+        const separator = this._first ? "" : ",";
+        this._first = false;
+        this._writer.write(separator + entry);
     }
 
     private async _handleErrors(documentId: string, e: Error) {
@@ -703,7 +703,6 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         }
     }
 
-    // takes the stream lock synchronously when it is free; null means the caller waits in _concurrencyCheck()
     private _tryConcurrencyCheckSync(): IDisposable | null {
         if (this._concurrentCheck || !this._streamLock.available()) {
             return null;
@@ -733,7 +732,6 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
         this._writer.write(BulkInsertOperation._escapeString(input));
     }
 
-    // escapes each quote not already preceded by a backslash
     private static _escapeString(input: string): string {
         return input.includes(`"`) ? input.replace(/(?<!\\)"/g, `\\"`) : input;
     }

@@ -101,6 +101,59 @@ describe("bulk insert", function () {
         await bulkInsert.finish();
     })
 
+    it("rejects a non-awaited call only while the previous call is still awaiting", async () => {
+        const concurrentCallError = { name: "BulkInsertInvalidOperationException" };
+
+        const bulkInsert = store.bulkInsert();
+        const writer = (bulkInsert as any)._writer;
+        try {
+            const firstStore = bulkInsert.store(new FooBar(), "foobars/1");
+            await assert.rejects(bulkInsert.store(new FooBar(), "foobars/2"), concurrentCallError);
+            await firstStore;
+
+            await writer._asyncWrite;
+            // a background write in flight means no call awaits a flush, so each one completes synchronously
+            writer._asyncWriteDone = false;
+
+            const counters = bulkInsert.countersFor("foobars/1");
+            await Promise.all([
+                bulkInsert.store(new FooBar(), "foobars/3"),
+                bulkInsert.store(new FooBar(), "foobars/4"),
+                counters.increment("likes"),
+                counters.increment("likes")
+            ]);
+
+            const timeSeries = bulkInsert.timeSeriesFor("foobars/1", "heartrate");
+            await Promise.all([
+                timeSeries.append(new Date(2026, 0, 1), 60),
+                timeSeries.append(new Date(2026, 0, 2), 70)
+            ]);
+            timeSeries.dispose();
+
+            writer._asyncWriteDone = true;
+
+            const storeWithGeneratedId = bulkInsert.store(new FooBar());
+            await assert.rejects(bulkInsert.store(new FooBar(), "foobars/5"), concurrentCallError);
+            await storeWithGeneratedId;
+        } finally {
+            await bulkInsert.finish();
+        }
+
+        const session = store.openSession();
+        const docs = await session.load<FooBar>(["foobars/1", "foobars/2", "foobars/3", "foobars/4", "foobars/5"]);
+        assert.ok(docs["foobars/1"]);
+        assert.ok(!docs["foobars/2"]);
+        assert.ok(docs["foobars/3"]);
+        assert.ok(docs["foobars/4"]);
+        assert.ok(!docs["foobars/5"]);
+        assertThat(await session.query({ collection: "fooBars" }).count())
+            .isEqualTo(4);
+        assertThat(await session.countersFor("foobars/1").get("likes"))
+            .isEqualTo(2);
+        assertThat(await session.timeSeriesFor("foobars/1", "heartrate").get())
+            .hasSize(2);
+    });
+
     it ("can send heartbeats", async () => {
 
         const bulkInsert = store.bulkInsert();
