@@ -315,7 +315,7 @@ export interface IFilterDocumentQueryBase<T extends object, TSelf extends IDocum
         shapeWkt: string,
         relation: SpatialRelation,
         units: SpatialUnits,
-        distanceErrorPct: number): TSelf;
+        distanceErrorPct?: number): TSelf;
 
 
     // TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);

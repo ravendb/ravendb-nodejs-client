@@ -57,6 +57,12 @@ export class DocumentSubscriptions implements IDisposable {
      * Creates a data subscription in a database. The subscription will expose all
      * documents that match the specified subscription options for a given type.
      */
+    public async create(documentType: DocumentType, database: string): Promise<string>;
+
+    /**
+     * Creates a data subscription in a database. The subscription will expose all
+     * documents that match the specified subscription options for a given type.
+     */
     public async create(optionsOrDocumentType: SubscriptionCreationOptions | DocumentType,
                         database?: string): Promise<string> {
 

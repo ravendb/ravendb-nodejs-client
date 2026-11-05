@@ -68,10 +68,6 @@ export interface IDocumentQueryCustomization {
      */
     randomOrdering(seed: string): IDocumentQueryCustomization;
 
-    //TBD IDocumentQueryCustomization CustomSortUsing(string typeName);
-    //TBD IDocumentQueryCustomization CustomSortUsing(string typeName, bool descending);
-    //TBD IDocumentQueryCustomization ShowTimings();
-
     /**
      * Instruct the query to wait for non stale results.
      * This shouldn't be used outside of unit tests unless you are well aware of the implications

@@ -24,7 +24,7 @@ import { LoadStartingWithOperation } from "./Operations/LoadStartingWithOperatio
 import { ILoaderWithInclude } from "./Loaders/ILoaderWithInclude.js";
 import { IRawDocumentQuery } from "./IRawDocumentQuery.js";
 import { RawDocumentQuery } from "./RawDocumentQuery.js";
-import { AdvancedDocumentQueryOptions, DocumentQueryOptions } from "./QueryOptions.js";
+import { AdvancedDocumentQueryOptions } from "./QueryOptions.js";
 import { IDocumentQuery } from "./IDocumentQuery.js";
 import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations.js";
 import { DocumentSessionAttachments } from "./DocumentSessionAttachments.js";
@@ -848,9 +848,9 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
 
     public query<TEntity extends object>(documentType: DocumentType<TEntity>): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(documentType: DocumentType<TEntity>, index: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity>;
-    public query<TEntity extends object>(opts: DocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
+    public query<TEntity extends object>(opts: AdvancedDocumentQueryOptions<TEntity>): IDocumentQuery<TEntity>;
     public query<TEntity extends object>(
-        docTypeOrOpts: DocumentType<TEntity> | DocumentQueryOptions<TEntity>, index?: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity> {
+        docTypeOrOpts: DocumentType<TEntity> | AdvancedDocumentQueryOptions<TEntity>, index?: new () => AbstractCommonApiForIndexes): IDocumentQuery<TEntity> {
         if (TypeUtil.isDocumentType(docTypeOrOpts)) {
             return this.documentQuery({
                 documentType: docTypeOrOpts as DocumentType<TEntity>,
@@ -858,7 +858,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             });
         }
 
-        return this.documentQuery(docTypeOrOpts as DocumentQueryOptions<TEntity>);
+        return this.documentQuery(docTypeOrOpts as AdvancedDocumentQueryOptions<TEntity>);
     }
 
     public documentQuery<T extends object>(opts: AdvancedDocumentQueryOptions<T>): IDocumentQuery<T>;

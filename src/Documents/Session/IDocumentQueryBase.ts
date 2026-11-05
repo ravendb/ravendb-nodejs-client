@@ -17,7 +17,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
     /**
      * Adds an ordering for a specific field to the query
      */
-    addOrder(fieldName: Field<T>, descending: boolean): TSelf;
+    addOrder(fieldName: Field<T>, descending?: boolean): TSelf;
 
     /**
      * Adds an ordering for a specific field to the query
@@ -159,8 +159,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     randomOrdering(seed: string): TSelf;
 
-    // TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
-
     /**
      * Sorts the query results by distance.
      */
@@ -197,6 +195,7 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderByDistance(fieldName: Field<T>, shapeWkt: string): TSelf;
     orderByDistance(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
+    orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number): TSelf;
     orderByDistance(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 
     /**
@@ -236,5 +235,6 @@ export interface IDocumentQueryBase<T extends object, TSelf extends IDocumentQue
      */
     orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string): TSelf;
     orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, nullsOrdering: NullsOrdering): TSelf;
+    orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number): TSelf;
     orderByDistanceDescending(fieldName: Field<T>, shapeWkt: string, roundFactor: number, nullsOrdering: NullsOrdering): TSelf;
 }
