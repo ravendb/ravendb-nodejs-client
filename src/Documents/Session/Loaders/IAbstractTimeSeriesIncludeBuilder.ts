@@ -11,5 +11,6 @@ export interface IAbstractTimeSeriesIncludeBuilder<TBuilder> {
 
     includeAllTimeSeries(type: TimeSeriesRangeType, time: TimeValue): TBuilder;
     includeAllTimeSeries(type: TimeSeriesRangeType, count: number): TBuilder;
+    includeAllTimeSeries(from?: Date, to?: Date): TBuilder;
 
 }

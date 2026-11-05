@@ -52,11 +52,14 @@ export class SubscriptionIncludeBuilder extends IncludeBuilderBase implements IS
 
     public includeAllTimeSeries(type: TimeSeriesRangeType, time: TimeValue): ISubscriptionIncludeBuilder;
     public includeAllTimeSeries(type: TimeSeriesRangeType, count: number): ISubscriptionIncludeBuilder;
-    public includeAllTimeSeries(type: TimeSeriesRangeType, timeOrCount: number | TimeValue): ISubscriptionIncludeBuilder {
-        if (TypeUtil.isNumber(timeOrCount)) {
-            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, type, timeOrCount);
+    public includeAllTimeSeries(from?: Date, to?: Date): ISubscriptionIncludeBuilder;
+    public includeAllTimeSeries(typeOrFrom?: TimeSeriesRangeType | Date, timeOrCountOrTo?: number | TimeValue | Date): ISubscriptionIncludeBuilder {
+        if (!typeOrFrom || typeOrFrom instanceof Date) {
+            this._includeTimeSeriesFromTo("", TIME_SERIES.ALL, typeOrFrom as Date, timeOrCountOrTo as Date);
+        } else if (TypeUtil.isNumber(timeOrCountOrTo)) {
+            this._includeTimeSeriesByRangeTypeAndCount("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo);
         } else {
-            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, type, timeOrCount);
+            this._includeTimeSeriesByRangeTypeAndTime("", TIME_SERIES.ALL, typeOrFrom, timeOrCountOrTo as TimeValue);
         }
 
         return this;
