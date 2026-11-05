@@ -11,6 +11,7 @@ import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { QueryOperationOptions } from "../Queries/QueryOperationOptions.js";
 import { Stream } from "node:stream";
 import { StringBuilder } from "../../Utility/StringBuilder.js";
+import { PatchByQueryCommand } from "./PatchByQueryOperation.js";
 
 export class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
@@ -78,6 +79,8 @@ export class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
             path.append("&staleTimeout=")
                 .append(this._options.staleTimeout);
         }
+
+        path.append(PatchByQueryCommand.indexPatchOptionsToQueryString(this._options));
 
         const body = writeIndexQuery(this._conventions, this._queryToDelete);
 

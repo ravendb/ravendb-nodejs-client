@@ -10,6 +10,7 @@ import { HttpCache } from "../../Http/HttpCache.js";
 import { RavenCommand } from "../../Http/RavenCommand.js";
 import { ServerNode } from "../../Http/ServerNode.js";
 import { Stream } from "node:stream";
+import { TimeUtil } from "../../Utility/TimeUtil.js";
 
 export class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
@@ -79,6 +80,8 @@ export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
             path += "&ignoreMaxStepsForScript=true";
         }
 
+        path += PatchByQueryCommand.indexPatchOptionsToQueryString(this._options);
+
         const body = `{ "Query": ${writeIndexQuery(this._conventions, this._queryToUpdate)} }`;
 
         return {
@@ -95,5 +98,21 @@ export class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
         }
 
         return this._parseResponseDefaultAsync(bodyStream);
+    }
+
+    public static indexPatchOptionsToQueryString(options: QueryOperationOptions): string {
+        const indexPatchOptions = options.indexPatchOptions;
+        if (!indexPatchOptions) {
+            return "";
+        }
+
+        let result = "&waitForIndexesTimeout=" + TimeUtil.millisToTimeSpan(indexPatchOptions.waitForIndexesTimeout ?? 15_000)
+            + "&throwOnTimeoutInWaitForIndexes=" + !!indexPatchOptions.throwOnTimeoutInWaitForIndexes;
+
+        for (const specificIndex of indexPatchOptions.waitForSpecificIndexes ?? []) {
+            result += "&waitForSpecificIndexes=" + encodeURIComponent(specificIndex);
+        }
+
+        return result;
     }
 }
