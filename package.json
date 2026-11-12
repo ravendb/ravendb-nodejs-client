@@ -95,6 +95,8 @@
   "overrides": {
     "mocha": {
       "diff": "^8.0.3",
+      "glob": "$glob",
+      "minimatch": "^11.0.4",
       "serialize-javascript": "^7.0.5"
     }
   },
