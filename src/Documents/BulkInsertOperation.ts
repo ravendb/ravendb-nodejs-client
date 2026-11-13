@@ -8,6 +8,8 @@ import { CONSTANTS, HEADERS } from "../Constants.js";
 import { getError, throwError } from "../Exceptions/index.js";
 import { GetOperationStateCommand } from "./Operations/GetOperationStateOperation.js";
 import { StringUtil } from "../Utility/StringUtil.js";
+import { readToBuffer } from "../Utility/StreamUtil.js";
+import { AttachmentData } from "./Attachments/index.js";
 import { JsonSerializer } from "../Mapping/Json/Serializer.js";
 import { RequestExecutor } from "../Http/RequestExecutor.js";
 import { IDocumentStore } from "./IDocumentStore.js";
@@ -267,9 +269,9 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
             this._id = id;
         }
 
-        public store(name: string, bytes: Buffer): Promise<void>;
-        public store(name: string, bytes: Buffer, contentType: string): Promise<void>;
-        public store(name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
+        public store(name: string, bytes: AttachmentData): Promise<void>;
+        public store(name: string, bytes: AttachmentData, contentType: string): Promise<void>;
+        public store(name: string, bytes: AttachmentData, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
             return this._operation._attachmentsOperation.store(this._id, name, bytes, contentType, remoteParameters);
         }
     }
@@ -281,10 +283,18 @@ export class BulkInsertOperation extends BulkInsertOperationBase<object> {
             this._operation = operation;
         }
 
-        public async store(id: string, name: string, bytes: Buffer): Promise<void>;
-        public async store(id: string, name: string, bytes: Buffer, contentType: string): Promise<void>;
-        public async store(id: string, name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
-        public async store(id: string, name: string, bytes: Buffer, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
+        public async store(id: string, name: string, bytes: AttachmentData): Promise<void>;
+        public async store(id: string, name: string, bytes: AttachmentData, contentType: string): Promise<void>;
+        public async store(id: string, name: string, bytes: AttachmentData, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
+        public async store(id: string, name: string, data: AttachmentData, contentType?: string, remoteParameters?: RemoteAttachmentParameters): Promise<void> {
+            if (!data) {
+                throwError("InvalidArgumentException", "Attachment data cannot be null");
+            }
+
+            // the command carries ContentLength before the content, so a stream is read up front
+            // shortcut: buffers the whole stream in memory, accept a known length if large streams are needed
+            const bytes = Buffer.isBuffer(data) ? data : await readToBuffer(data);
+
             const check = this._operation._tryConcurrencyCheckSync() ?? await this._operation._concurrencyCheck();
 
             try {
@@ -963,12 +973,13 @@ export interface ITypedTimeSeriesBulkInsert<T extends object> extends IDisposabl
 export interface IAttachmentsBulkInsert {
     /**
      * The bulk insert may send `bytes` without copying them, so do not modify `bytes` until `finish()` resolves.
+     * A stream is read to its end before the attachment is written.
      */
-    store(name: string, bytes: Buffer): Promise<void>;
+    store(name: string, bytes: AttachmentData): Promise<void>;
     /** @see store */
-    store(name: string, bytes: Buffer, contentType: string): Promise<void>;
+    store(name: string, bytes: AttachmentData, contentType: string): Promise<void>;
     /** @see store */
-    store(name: string, bytes: Buffer, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
+    store(name: string, bytes: AttachmentData, contentType: string, remoteParameters: RemoteAttachmentParameters): Promise<void>;
 }
 
 export class BulkInsertCommand extends RavenCommand<void> {
