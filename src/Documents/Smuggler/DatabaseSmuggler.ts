@@ -17,7 +17,9 @@ import { GetNextOperationIdCommand } from "../Commands/GetNextOperationIdCommand
 import { RavenCommand, ResponseDisposeHandling } from "../../Http/RavenCommand.js";
 import { DocumentConventions } from "../Conventions/DocumentConventions.js";
 import { ServerNode } from "../../Http/ServerNode.js";
-import { Readable } from "node:stream";
+import { Readable, Writable } from "node:stream";
+import { once } from "node:events";
+import { randomUUID } from "node:crypto";
 import { Dispatcher } from "undici-types";
 
 export class DatabaseSmuggler {
@@ -45,7 +47,26 @@ export class DatabaseSmuggler {
         return new DatabaseSmuggler(this._store, databaseName);
     }
 
-    public async export(options: DatabaseSmugglerExportOptions, toFile: string): Promise<OperationCompletionAwaiter> {
+    public export(options: DatabaseSmugglerExportOptions, toFile: string): Promise<OperationCompletionAwaiter>;
+    /**
+     * Writes the export to the stream and leaves it open.
+     */
+    public export(options: DatabaseSmugglerExportOptions, toStream: Writable): Promise<OperationCompletionAwaiter>;
+    /**
+     * Streams the export straight into another database and returns the import operation.
+     */
+    public export(options: DatabaseSmugglerExportOptions, toDatabase: DatabaseSmuggler): Promise<OperationCompletionAwaiter>;
+    public async export(options: DatabaseSmugglerExportOptions,
+                        target: string | Writable | DatabaseSmuggler): Promise<OperationCompletionAwaiter> {
+        if (target instanceof DatabaseSmuggler) {
+            return this._exportToDatabase(options, target);
+        }
+
+        if (typeof target !== "string") {
+            return this._exportToStream(options, target);
+        }
+
+        const toFile = target;
         const directory = dirname(resolve(toFile));
         const { existsSync, mkdirSync , createWriteStream} = await import("node:fs");
         if (!existsSync(directory)) {
@@ -57,6 +78,39 @@ export class DatabaseSmuggler {
             await pipelineAsync(response, fileStream);
         });
 
+    }
+
+    private async _exportToStream(options: DatabaseSmugglerExportOptions, toStream: Writable): Promise<OperationCompletionAwaiter> {
+        if (!toStream) {
+            throwError("InvalidArgumentException", "Stream cannot be null");
+        }
+
+        return this._export(options, async response => {
+            for await (const chunk of response) {
+                if (!toStream.write(chunk)) {
+                    await once(toStream, "drain");
+                }
+            }
+        });
+    }
+
+    private async _exportToDatabase(options: DatabaseSmugglerExportOptions, toDatabase: DatabaseSmuggler): Promise<OperationCompletionAwaiter> {
+        if (!options) {
+            throwError("InvalidArgumentException", "Options cannot be null");
+        }
+
+        if (!toDatabase) {
+            throwError("InvalidArgumentException", "ToDatabase cannot be null");
+        }
+
+        const importOptions = new DatabaseSmugglerImportOptions(options);
+        let importOperation: OperationCompletionAwaiter;
+
+        await this._export(options, async response => {
+            importOperation = await toDatabase.import(importOptions, response);
+        });
+
+        return importOperation;
     }
 
     private async _export(options: DatabaseSmugglerExportOptions, handleStreamResponse: (stream: Readable) => Promise<void>) {
@@ -117,13 +171,18 @@ export class DatabaseSmuggler {
         return oldOperateOnTypes;
     }
 
-    public async import(options: DatabaseSmugglerImportOptions, file: string): Promise<OperationCompletionAwaiter> {
+    public import(options: DatabaseSmugglerImportOptions, file: string): Promise<OperationCompletionAwaiter>;
+    /**
+     * Imports from the stream without buffering it. The stream is read to its end but not closed.
+     */
+    public import(options: DatabaseSmugglerImportOptions, stream: Readable): Promise<OperationCompletionAwaiter>;
+    public async import(options: DatabaseSmugglerImportOptions, file: string | Readable): Promise<OperationCompletionAwaiter> {
         if (!options) {
             throwError("InvalidArgumentException", "Options cannot be null");
         }
 
         if (!file) {
-            throwError("InvalidArgumentException", "File cannot be null");
+            throwError("InvalidArgumentException", typeof file === "string" ? "File cannot be null" : "Stream cannot be null");
         }
 
         if (!this._requestExecutor) {
@@ -231,7 +290,7 @@ class ExportCommand extends RavenCommand<void> {
 
 class ImportCommand extends RavenCommand<void> {
     private readonly _options: object;
-    private readonly _file: string;
+    private readonly _file: string | Readable;
     private readonly _operationId: number;
 
     get isReadRequest(): boolean {
@@ -240,7 +299,7 @@ class ImportCommand extends RavenCommand<void> {
 
     public constructor(conventions: DocumentConventions,
                        options: DatabaseSmugglerImportOptions,
-                       file: string,
+                       file: string | Readable,
                        operationId: number,
                        nodeTag: string) {
         super();
@@ -274,7 +333,7 @@ class ImportCommand extends RavenCommand<void> {
 
         const { readFileSync } = await import("node:fs");
 
-        if (body instanceof FormData) {
+        if (body instanceof FormData && typeof this._file === "string") {
             const buffer = readFileSync(this._file);
             body.append("name", new Blob([buffer], { type: "text/plain" }));
         }
@@ -284,6 +343,17 @@ class ImportCommand extends RavenCommand<void> {
 
     createRequest(node: ServerNode): HttpRequestParameters {
         const uri = node.url + "/databases/" + node.database + "/smuggler/import?operationId=" + this._operationId;
+
+        if (typeof this._file !== "string") {
+            const boundary = "RavenDB-" + randomUUID();
+            return {
+                method: "POST",
+                uri,
+                body: Readable.from(streamMultipart(boundary, this._serializer.serialize(this._options), this._file)),
+                duplex: "half",
+                headers: HeadersBuilder.create().with("content-type", "multipart/form-data; boundary=" + boundary).build()
+            };
+        }
 
         const multipart = new FormData();
         multipart.append("importOptions", this._serializer.serialize(this._options));
@@ -296,4 +366,22 @@ class ImportCommand extends RavenCommand<void> {
         };
     }
 
+}
+
+async function* streamMultipart(boundary: string, importOptions: string, file: Readable): AsyncGenerator<Buffer> {
+    const lineBreak = "\r\n";
+
+    yield Buffer.from(`--${boundary}${lineBreak}`
+        + `Content-Disposition: form-data; name="importOptions"${lineBreak}${lineBreak}`
+        + `${importOptions}${lineBreak}`);
+
+    yield Buffer.from(`--${boundary}${lineBreak}`
+        + `Content-Disposition: form-data; name="file"; filename="name"${lineBreak}`
+        + `Content-Type: application/octet-stream${lineBreak}${lineBreak}`);
+
+    for await (const chunk of file) {
+        yield Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    }
+
+    yield Buffer.from(`${lineBreak}--${boundary}--${lineBreak}`);
 }
