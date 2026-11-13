@@ -6,9 +6,15 @@ import {
     SetDatabasesLockOperation,
     SetDatabasesLockParameters,
     IDocumentStore,
-    ToggleDatabasesStateOperation
+    ToggleDatabasesStateOperation,
+    BackupOperation,
+    IOperationResult,
+    RestoreBackupConfiguration,
+    RestoreBackupOperation
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import path from "node:path";
+import { disposeTestDocumentStore, TemporaryDirContext, testContext } from "../../Utils/TestUtil.js";
+import { Company } from "../../Assets/Entities.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 
 
@@ -202,7 +208,72 @@ describe("RavenDB_16367Test", function () {
             hardDelete: true
         }));
     });
+
+    it("canLockDatabase_Backup_Restore", async () => {
+        const temporaryDirContext = new TemporaryDirContext();
+        const backupPath = path.join(temporaryDirContext.tempDir, "backup");
+        const databaseName1 = store.database + "_LockMode_1";
+        const databaseName2 = store.database + "_LockMode_2";
+
+        try {
+            await store.maintenance.server.send(new CreateDatabaseOperation({
+                databaseName: databaseName1,
+                lockMode: "PreventDeletesError"
+            }));
+
+            await assertLockMode(store, databaseName1, "PreventDeletesError");
+
+            const session = store.openSession(databaseName1);
+            await session.store(Object.assign(new Company(), { name: "HR" }));
+            await session.saveChanges();
+
+            const operation = await store.maintenance.forDatabase(databaseName1).send(new BackupOperation({
+                localSettings: {
+                    folderPath: backupPath
+                }
+            }));
+
+            const result = await operation.waitForCompletion<BackupResult>(30_000);
+
+            await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName1, "Unlock"));
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [ databaseName1 ],
+                hardDelete: true
+            }));
+
+            const restoreOperation = await store.maintenance.server.send(new RestoreBackupOperation({
+                databaseName: databaseName2,
+                backupLocation: path.join(backupPath, result.localBackup.backupDirectory),
+                type: "Local"
+            } as RestoreBackupConfiguration));
+            await restoreOperation.waitForCompletion(30_000);
+
+            await assertLockMode(store, databaseName2, "PreventDeletesError");
+
+            await assertThrows(() => store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [ databaseName2 ],
+                hardDelete: true
+            })), err => {
+                assertThat(err.message)
+                    .contains("cannot be deleted because of the set lock mode ('PreventDeletesError')");
+            });
+
+            await store.maintenance.server.send(new SetDatabasesLockOperation(databaseName2, "Unlock"));
+        } finally {
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [ databaseName2 ],
+                hardDelete: true
+            }));
+            temporaryDirContext.dispose();
+        }
+    });
 });
+
+interface BackupResult extends IOperationResult {
+    localBackup: {
+        backupDirectory: string;
+    };
+}
 
 async function assertLockMode(store: IDocumentStore, databaseName: string, mode: DatabaseLockMode) {
     const databaseRecord = await store.maintenance.server.send(new GetDatabaseRecordOperation(databaseName));
