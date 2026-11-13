@@ -34,7 +34,7 @@ export class JsonPatchCommandData implements ICommandData {
             Id: this.id,
             ChangeVector: null,
             JsonPatch: {
-                Operations: this.jsonPatch.operations.map(operation => JsonPatchCommandData._serializeOperation(operation, conventions))
+                Operations: this.jsonPatch.operations.map(operation => JsonPatchCommandData.serializeOperation(operation, conventions))
             },
             ReturnDocument: this.returnDocument,
             Type: this.type
@@ -45,7 +45,7 @@ export class JsonPatchCommandData implements ICommandData {
         this.returnDocument = session.isLoaded(this.id);
     }
 
-    private static _serializeOperation(operation: JsonPatchOperation, conventions: DocumentConventions): Record<string, unknown> {
+    public static serializeOperation(operation: JsonPatchOperation, conventions: DocumentConventions): Record<string, unknown> {
         const serialized: Record<string, unknown> = { op: operation.op };
 
         if (operation.from !== undefined) {
