@@ -22,7 +22,10 @@ export class GetIndexesStatisticsOperation implements IMaintenanceOperation<Inde
 const typeInfo = {
     nestedTypes: {
         "results[].collections": "Map",
-        "results[].collections$MAP": "CollectionStats"
+        "results[].collections$MAP": "CollectionStats",
+        "results[].lastQueryingTime": "date",
+        "results[].createdTimestamp": "date",
+        "results[].lastIndexingTime": "date"
     }
 };
 

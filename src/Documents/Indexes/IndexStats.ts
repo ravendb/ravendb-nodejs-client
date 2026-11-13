@@ -2,6 +2,7 @@ import { IndexState, IndexPriority, IndexLockMode, IndexType, SearchEngineType }
 import { IndexRunningStatus } from "./IndexingStatus.js";
 import { IndexSourceType } from "./IndexSourceType.js";
 import { ArchivedDataProcessingBehavior } from "../DataArchival/ArchivedDataProcessingBehavior.js";
+import { Size } from "../../Utility/SizeUtil.js";
 
 export interface IndexStats {
     name: string;
@@ -26,7 +27,7 @@ export interface IndexStats {
     priority: IndexPriority;
     createdTimestamp: Date;
     lastIndexingTime: Date;
-    stale: boolean;
+    isStale: boolean;
     lockMode: IndexLockMode;
     type: IndexType;
     searchEngineType: SearchEngineType;
@@ -36,6 +37,29 @@ export interface IndexStats {
     errorsCount: number;
     sourceType: IndexSourceType;
     isTestIndex: boolean;
+    referencedCollections: string[];
+    isInvalidIndex: boolean;
+    memory: IndexStatsMemory;
+    lastBatchStats: IndexingPerformanceBasicStats;
+}
+
+export interface IndexStatsMemory {
+    diskSize: Size;
+    threadAllocations: Size;
+    memoryBudget: Size;
+}
+
+export interface IndexingPerformanceBasicStats {
+    inputCount: number;
+    failedCount: number;
+    outputCount: number;
+    successCount: number;
+    started: string;
+    durationInMs: number;
+    allocatedManagedBytes: Size;
+    allocatedUnmanagedBytes: Size;
+    documentsSize: Size;
+    tombstoneDeleteSuccesses: number;
 }
 
 export class CollectionStats {
