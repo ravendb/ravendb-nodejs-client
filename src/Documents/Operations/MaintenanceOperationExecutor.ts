@@ -92,9 +92,10 @@ export class MaintenanceOperationExecutor {
 
         if (operation.resultType === "OperationId") {
             const idResult = command.result as OperationIdResult;
+            const nodeTag = command.selectedNodeTag || idResult.operationNodeTag;
             return new OperationCompletionAwaiter(
-                this.requestExecutor, this.requestExecutor.conventions, idResult.operationId,
-                command.selectedNodeTag || idResult.operationNodeTag);
+                this.requestExecutor, this.requestExecutor.conventions, idResult.operationId, nodeTag,
+                () => this._store.changes(this._databaseName, nodeTag));
         }
 
         return command.result as TResult;
