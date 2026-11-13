@@ -746,6 +746,7 @@ export * from "./Documents/Attachments/RemoteAttachmentsDestinationConfiguration
 export * from "./Documents/Attachments/RemoteAttachmentsConfiguration.js";
 export * from "./Documents/Operations/Attachments/GetAttachmentOperation.js";
 export * from "./Documents/Operations/Attachments/GetAttachmentsOperation.js";
+export * from "./Documents/Operations/Attachments/DeleteAttachmentsOperation.js";
 export * from "./Documents/Operations/Attachments/AttachmentRequest.js";
 export * from "./Documents/Operations/Attachments/RemoteAttachmentParameters.js";
 export * from "./Documents/Operations/Attachments/IStoreAttachmentParameters.js";
