@@ -395,6 +395,7 @@ export * from "./Documents/Operations/Backups/LastRaftIndex.js";
 export * from "./Documents/Operations/Backups/PeriodicBackupStatus.js";
 export * from "./Documents/Operations/Backups/RestoreBackupConfiguration.js";
 export * from "./Documents/Operations/Backups/RestoreBackupOperation.js";
+export * from "./Documents/Operations/Backups/BackupOperation.js";
 export * from "./Documents/Operations/Backups/StartBackupOperation.js";
 export * from "./Documents/Operations/Backups/StartBackupOperationResult.js";
 export * from "./Documents/Operations/Backups/UpdatePeriodicBackupOperation.js";
