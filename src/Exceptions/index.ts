@@ -184,7 +184,19 @@ export type RavenErrorType = "RavenException"
     | "MissingAiAgentParameterException"
     | "QueryToolFailedException"
     | "UnsupportedAiQueryParameterException"
-    | "AiAgentParameterCollisionException";
+    | "AiAgentParameterCollisionException"
+    | "LicenseLimitException"
+    | "PortInUseException"
+    | "BackupAlreadyRunningException"
+    | "DatabaseNotRelevantException"
+    | "SchemaValidationException"
+    | "InsufficientTransportLayerProtectionException"
+    | "ExecutionForShardException"
+    | "IndexAlreadyExistException"
+    | "IndexCreationException"
+    | "IndexDeletionException"
+    | "RevisionsDisabledException"
+    | "LegacyReplicationViolationException";
 
 export interface ExceptionSchema {
     url: string;
@@ -252,7 +264,11 @@ export class ExceptionDispatcher {
 
     private static _fillException(exception: Error, json: any) {
         if (exception.name === "RavenTimeoutException") {
-            (exception as any).failImmediately = !!json.FailImmediately;
+            (exception as any).failImmediately = !!json.failImmediately;
+        }
+
+        if (exception.name === "LicenseLimitException" && json.limitType) {
+            (exception as any).limitType = json.limitType;
         }
     }
 
