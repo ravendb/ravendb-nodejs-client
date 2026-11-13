@@ -25,6 +25,7 @@ import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js
 import {RuntimeUtil} from "../../Utility/RuntimeUtil.js";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
+export type OperationStatusFetchMode = "ChangesApi" | "Polling";
 export type IValueForQueryConverter<T> =
     (fieldName: Field<T>, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
@@ -90,6 +91,7 @@ export class DocumentConventions {
     private _waitForIndexesAfterSaveChangesTimeout: number | undefined;
     private _waitForReplicationAfterSaveChangesTimeout: number | undefined;
     private _waitForNonStaleResultsTimeout: number | undefined;
+    private _operationStatusFetchMode: OperationStatusFetchMode;
 
     private _loadBalancerContextSeed: number;
     private _loadBalanceBehavior: LoadBalanceBehavior;
@@ -196,6 +198,7 @@ export class DocumentConventions {
         this._waitForIndexesAfterSaveChangesTimeout = 15_000;
         this._waitForReplicationAfterSaveChangesTimeout = 15_000;
         this._waitForNonStaleResultsTimeout = 15_000;
+        this._operationStatusFetchMode = "Polling";
 
         this._sendApplicationIdentifier = true;
     }
@@ -480,6 +483,20 @@ export class DocumentConventions {
     public set waitForIndexesAfterSaveChangesTimeout(value: number) {
         this._assertNotFrozen();
         this._waitForIndexesAfterSaveChangesTimeout = value;
+    }
+
+    /**
+     * How an awaited operation learns its status: by polling the server (default)
+     * or through the Changes API, which uses one websocket per database and node.
+     * Server-wide operations always poll.
+     */
+    public get operationStatusFetchMode(): OperationStatusFetchMode {
+        return this._operationStatusFetchMode;
+    }
+
+    public set operationStatusFetchMode(value: OperationStatusFetchMode) {
+        this._assertNotFrozen();
+        this._operationStatusFetchMode = value;
     }
 
     public get waitForNonStaleResultsTimeout() {

@@ -77,7 +77,8 @@ export class DatabaseSmuggler {
 
         await this._requestExecutor.execute(command);
 
-        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag);
+        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag,
+            () => this._store.changes(this._databaseName, getOperationIdCommand.nodeTag));
     }
 
     public async importIncremental(options: DatabaseSmugglerImportOptions, fromDirectory: string) {
@@ -139,7 +140,8 @@ export class DatabaseSmuggler {
 
         await this._requestExecutor.execute(command);
 
-        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag);
+        return new OperationCompletionAwaiter(this._requestExecutor, this._requestExecutor.conventions, operationId, getOperationIdCommand.nodeTag,
+            () => this._store.changes(this._databaseName, getOperationIdCommand.nodeTag));
     }
 }
 
