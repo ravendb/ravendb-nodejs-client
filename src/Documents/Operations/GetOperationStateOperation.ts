@@ -4,6 +4,7 @@ import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand.js";
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions.js";
 import { Stream } from "node:stream";
 import { DocumentConventions } from "../Conventions/DocumentConventions.js";
+import { ObjectUtil } from "../../Utility/ObjectUtil.js";
 
 export class GetOperationStateOperation implements IMaintenanceOperation<IRavenResponse> {
 
@@ -51,6 +52,14 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
             return;
         }
 
-        return this._parseResponseDefaultAsync(bodyStream);
+        let body: string = null;
+        this.result = await this._defaultPipeline(_ => body = _)
+            .collectBody()
+            .objectKeysTransform({
+                defaultTransform: ObjectUtil.camel,
+                ignorePaths: [/^result\.errors\.[^.]+$/i]
+            })
+            .process(bodyStream);
+        return body;
     }
 }
