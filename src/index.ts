@@ -249,6 +249,7 @@ export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData.js";
 export * from "./Documents/Commands/Batches/PatchCommandData.js";
 export * from "./Documents/Commands/Batches/JsonPatchCommandData.js";
 export * from "./Documents/Operations/JsonPatchDocument.js";
+export * from "./Documents/Operations/JsonPatchDocumentOperation.js";
 export * from "./Documents/Commands/Batches/PutAttachmentCommandData.js";
 export * from "./Documents/Commands/Batches/PutAttachmentCommandHelper.js";
 export * from "./Documents/Commands/CommandData.js";
