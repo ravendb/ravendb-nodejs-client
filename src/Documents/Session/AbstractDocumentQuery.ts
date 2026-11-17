@@ -690,7 +690,7 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         const documentIds = Array.from(builderImpl.documentIds);
 
-        // the object form needs server 6.2+, so plain document ids keep the older format
+        // servers before 6.2 accept only an id or an array of ids
         const shardContext = builderImpl.prefixes.size > 0
             ? { DocumentIds: documentIds, Prefixes: Array.from(builderImpl.prefixes) }
             : documentIds.length === 1 ? documentIds[0] : documentIds;
