@@ -7,7 +7,7 @@ import {
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 
 class User {
     public id: string;
@@ -67,7 +67,7 @@ describe("RavenDB_22456", function () {
         assert.strictEqual(await session.advanced.revisions.getCountFor(id), revisionsCount);
     }
 
-    it("revertByDocumentEP", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("revertByDocumentEP", async () => {
         const user1 = Object.assign(new User(), { id: "Users/1-A", name: "Shahar1" });
         const user2 = Object.assign(new User(), { id: "Users/2-B", name: "Shahar2" });
 
@@ -81,7 +81,7 @@ describe("RavenDB_22456", function () {
         await assertNameAndRevisionsCount(user2.id, "Shahar2_9", 11);
     });
 
-    it("revertByDocumentEpMultipleDocs", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("revertByDocumentEpMultipleDocs", async () => {
         const user1 = Object.assign(new User(), { id: "Users/1-A", name: "Shahar1" });
         const user2 = Object.assign(new User(), { id: "Users/2-B", name: "Shahar2" });
         const company1 = Object.assign(new User(), { id: "Companies/1-A", name: "RavenDB1" });
@@ -103,7 +103,7 @@ describe("RavenDB_22456", function () {
         await assertNameAndRevisionsCount(company2.id, "RavenDB2_9", 11);
     });
 
-    it("revertByDocumentEpFail", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("revertByDocumentEpFail", async () => {
         const user1 = Object.assign(new User(), { id: "Users/1-A", name: "Shahar1" });
         const user2 = Object.assign(new User(), { id: "Users/2-B", name: "Shahar2" });
 

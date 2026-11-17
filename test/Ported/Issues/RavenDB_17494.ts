@@ -8,7 +8,7 @@ import {
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 
 class User {
     public id: string;
@@ -62,7 +62,7 @@ describe("RavenDB_17494", function () {
         await session.saveChanges();
     }
 
-    it("deleteRevisionsManuallyEPTest", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("deleteRevisionsManuallyEPTest", async () => {
         const user1 = Object.assign(new User(), { id: "Users/1-A", name: "Shahar1" });
         const user2 = Object.assign(new User(), { id: "Users/2-B", name: "Shahar2" });
         const company1 = Object.assign(new Company(), { id: "Companies/1-A", name: "Shahar1" });
@@ -129,7 +129,7 @@ describe("RavenDB_17494", function () {
         }
     });
 
-    it("deleteRevisionsManuallyEpMultipleIDsTest", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("deleteRevisionsManuallyEpMultipleIDsTest", async () => {
         const companies = ["Companies/1-A", "Companies/2-B", "Companies/3-C", "Companies/4-C"]
             .map(id => Object.assign(new Company(), { id, name: "RavenDB_0" }));
         const [company1, company2, company3, company4] = companies;
