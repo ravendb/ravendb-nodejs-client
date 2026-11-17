@@ -26,7 +26,8 @@ import {
     DeleteIndexOperation,
     QueryStatistics,
     MoreLikeThisOptions,
-    IndexCreation
+    IndexCreation,
+    GetIndexPerformanceStatisticsOperation
 } from "../../../src/index.js";
 import { delay } from "../../../src/Utility/PromiseUtil.js";
 
@@ -269,6 +270,56 @@ describe("Indexes from client", function () {
 
         assert.strictEqual(indexNames.length, 1);
         assert.ok(indexNames.find(x => x === indexName));
+    });
+
+    it("can get performance statistics", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Fitzchak" }));
+            await session.store(Object.assign(new User(), { name: "Arek" }));
+            await session.saveChanges();
+        }
+
+        let indexName1: string;
+        let indexName2: string;
+        {
+            const session = store.openSession();
+            let statsRef: QueryStatistics;
+
+            await session.query(User)
+                .waitForNonStaleResults()
+                .statistics(s => statsRef = s)
+                .whereEquals("name", "Arek")
+                .all();
+            indexName1 = statsRef.indexName;
+
+            await session.query(User)
+                .waitForNonStaleResults()
+                .statistics(s => statsRef = s)
+                .whereEquals("lastName", "Arek")
+                .all();
+            indexName2 = statsRef.indexName;
+        }
+
+        let performanceStats = await store.maintenance.send(new GetIndexPerformanceStatisticsOperation());
+        performanceStats.sort((x, y) => x.name.length - y.name.length);
+        assert.strictEqual(performanceStats.length, 2);
+        assert.strictEqual(performanceStats[0].name, indexName1);
+        assert.ok(performanceStats[0].performance.length > 0);
+        assert.strictEqual(performanceStats[1].name, indexName2);
+        assert.ok(performanceStats[1].performance.length > 0);
+
+        const performance = performanceStats[0].performance[0];
+        assert.ok(performance.started instanceof Date);
+        assert.ok(performance.inputCount >= 0);
+        assert.ok(performance.details.operations.length > 0);
+
+        performanceStats = await store.maintenance.send(new GetIndexPerformanceStatisticsOperation([indexName1]));
+        assert.strictEqual(performanceStats.length, 1);
+        assert.strictEqual(performanceStats[0].name, indexName1);
+        assert.ok(performanceStats[0].performance.length > 0);
+
+        assert.throws(() => new GetIndexPerformanceStatisticsOperation(null), { name: "InvalidArgumentException" });
     });
 
     it("can explain query", async () => {
