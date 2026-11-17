@@ -291,6 +291,8 @@ export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/GetRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/EnforceRevisionsConfigurationOperation.js";
 export * from "./Documents/Operations/Revisions/RevisionsResult.js";
+export * from "./Documents/Operations/Revisions/ConfigureRevisionsBinCleanerOperation.js";
+export type { RevisionsBinConfiguration } from "./Documents/Operations/Revisions/RevisionsBinConfiguration.js";
 export * from "./Documents/Operations/RevisionsCollectionConfiguration.js";
 export * from "./Documents/Operations/RevisionsConfiguration.js";
 export * from "./Documents/Operations/DetailedDatabaseStatistics.js";

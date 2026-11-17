@@ -33,6 +33,7 @@ import { IntegrationConfigurations } from "./Operations/Integrations/PostgreSql/
 import { ElasticSearchEtlConfiguration } from "../Documents/Operations/Etl/ElasticSearch/ElasticSearchEtlConfiguration.js";
 import { QueueEtlConfiguration } from "../Documents/Operations/Etl/Queue/QueueEtlConfiguration.js";
 import { DataArchivalConfiguration } from "../Documents/Operations/DataArchival/DataArchivalConfiguration.js";
+import { RevisionsBinConfiguration } from "../Documents/Operations/Revisions/RevisionsBinConfiguration.js";
 import { QueueSinkConfiguration } from "../Documents/Operations/QueueSink/QueueSinkConfiguration.js";
 import { CdcSinkConfiguration } from "../Documents/Operations/CdcSink/CdcSinkConfiguration.js";
 import { ShardingConfiguration } from "./Sharding/ShardingConfiguration.js";
@@ -75,6 +76,7 @@ export interface DatabaseRecord {
     revisions?: RevisionsConfiguration;
     timeSeries?: TimeSeriesConfiguration;
     revisionsForConflicts?: RevisionsCollectionConfiguration;
+    revisionsBin?: RevisionsBinConfiguration;
     expiration?: ExpirationConfiguration;
     refresh?: RefreshConfiguration;
     dataArchival?: DataArchivalConfiguration;
