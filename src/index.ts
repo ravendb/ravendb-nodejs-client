@@ -828,6 +828,7 @@ export * from "./ServerWide/Operations/Integrations/PostgreSql/IntegrationConfig
 export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlAuthenticationConfiguration.js";
 export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlUser.js";
 export * from "./ServerWide/Operations/Integrations/PostgreSql/PostgreSqlConfiguration.js";
+export * from "./Documents/Operations/Integrations/PostgreSql/ConfigurePostgreSqlOperation.js";
 
 
 export * from "./ServerWide/Operations/ModifyDatabaseTopologyOperation.js";
