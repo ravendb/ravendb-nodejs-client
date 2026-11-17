@@ -2,7 +2,6 @@ import assert from "node:assert";
 import {
     AddPrefixedShardingSettingOperation,
     CONSTANTS,
-    DatabaseRecordBuilder,
     DeletePrefixedShardingSettingOperation,
     DocumentStore,
     GetDatabaseRecordOperation,
@@ -11,7 +10,8 @@ import {
     ShardingConfiguration,
     UpdatePrefixedShardingSettingOperation
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore } from "../../Utils/TestUtil.js";
+import { getShardedDocumentStore } from "../../Utils/ShardingTestUtil.js";
 import { User } from "../../Assets/Entities.js";
 import { Company, Order, Product } from "../../Assets/Orders.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
@@ -31,30 +31,13 @@ describe("PrefixedSharding", function () {
     let store: DocumentStore;
 
     afterEach(async () => {
-        testContext.customizeDbRecord = null;
         if (store) {
             await disposeTestDocumentStore(store);
             store = null;
         }
     });
 
-    async function getShardedStore(prefixed: PrefixedShardingSetting[] = []): Promise<DocumentStore> {
-        testContext.customizeDbRecord = record => {
-            record.sharding = DatabaseRecordBuilder.create()
-                .sharded(record.databaseName, b => b
-                    .addShard(0, s => s.addNode("A"))
-                    .addShard(1, s => s.addNode("A"))
-                    .addShard(2, s => s.addNode("A")))
-                .toDatabaseRecord()
-                .sharding;
-            record.sharding.prefixed = prefixed;
-        };
-        try {
-            return await testContext.getDocumentStore();
-        } finally {
-            testContext.customizeDbRecord = null;
-        }
-    }
+    const getShardedStore = getShardedDocumentStore;
 
     async function getShardingConfiguration(documentStore: IDocumentStore): Promise<ShardingConfiguration> {
         const record = await documentStore.maintenance.server.send(new GetDatabaseRecordOperation(documentStore.database));
