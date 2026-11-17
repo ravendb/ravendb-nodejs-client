@@ -169,6 +169,8 @@ export type {
 export { DeleteByQueryOperation } from "./Documents/Operations/DeleteByQueryOperation.js";
 export { GetCollectionStatisticsOperation } from "./Documents/Operations/GetCollectionStatisticsOperation.js";
 export type { CollectionStatistics } from "./Documents/Operations/CollectionStatistics.js";
+export { GetCollectionRevisionsStatisticsOperation } from "./Documents/Operations/GetCollectionRevisionsStatisticsOperation.js";
+export type { CollectionRevisionsStatistics } from "./Documents/Operations/CollectionRevisionsStatistics.js";
 export type { GetServerWideExternalReplicationsResponse } from "./Documents/Operations/GetServerWideExternalReplicationsResponse.js";
 export { CreateSubscriptionCommand } from "./Documents/Commands/CreateSubscriptionCommand.js";
 export { SingleNodeBatchCommand } from "./Documents/Commands/Batches/SingleNodeBatchCommand.js";
