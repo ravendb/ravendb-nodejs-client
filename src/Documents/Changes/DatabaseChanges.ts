@@ -24,6 +24,7 @@ import { UpdateTopologyParameters } from "../../Http/UpdateTopologyParameters.js
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { TimeSeriesChange } from "./TimeSeriesChange.js";
 import { AggressiveCacheChange } from "./AggressiveCacheChange.js";
+import { ChangesSupportedFeatures } from "./ChangesSupportedFeatures.js";
 import { Semaphore } from "../../Utility/Semaphore.js";
 import { DateUtil } from "../../Utility/DateUtil.js";
 
@@ -32,6 +33,9 @@ export class DatabaseChanges implements IDatabaseChanges {
     private _emitter = new EventEmitter();
     private _commandId: number = 0;
     private readonly _onConnectionStatusChangedWrapped: () => void;
+    private _resolveSupportedFeatures: (features: ChangesSupportedFeatures) => void;
+    private readonly _supportedFeatures = new Promise<ChangesSupportedFeatures>(
+        resolve => this._resolveSupportedFeatures = resolve);
 
     private _semaphore = new Semaphore();
 
@@ -155,6 +159,23 @@ export class DatabaseChanges implements IDatabaseChanges {
             notification => notification.id && notification.id.toLocaleLowerCase() === docId.toLocaleLowerCase());
     }
 
+    /**
+     * One notification per change that may invalidate aggressively cached responses.
+     */
+    public forAggressiveCaching(): IChangesObservable<AggressiveCacheChange> {
+        const counter = this._getOrAddConnectionState("aggressive-caching", "watch-aggressive-caching",
+            "unwatch-aggressive-caching", null);
+        return new ChangesObservable<AggressiveCacheChange, DatabaseConnectionState>("AggressiveCache", counter,
+            () => true);
+    }
+
+    /**
+     * Resolves with the features the server announced when the connection opened.
+     */
+    public getSupportedFeatures(): Promise<ChangesSupportedFeatures> {
+        return this._supportedFeatures;
+    }
+
     public forAllDocuments(): IChangesObservable<DocumentChange> {
         const counter = this._getOrAddConnectionState("all-docs", "watch-docs",
             "unwatch-docs", null);
@@ -217,6 +238,10 @@ export class DatabaseChanges implements IDatabaseChanges {
     }
 
     public dispose(): void {
+        if (this._isCanceled) {
+            return;
+        }
+
         for (const confirmation of this._confirmations.values()) {
             confirmation.reject();
         }
@@ -372,11 +397,14 @@ export class DatabaseChanges implements IDatabaseChanges {
                     this._serverNode = await this._requestExecutor.handleServerNotResponsive(this._url, this._serverNode, this._nodeIndex, e);
                 } catch (ee) {
                     if (ee.name === "DatabaseDoesNotExistException") {
-                        e = ee;
-                        throw ee;
-                    } else {
-                        //We don't want to stop observe for changes if server down. we will wait for one to be up
+                        // like C#: the database is gone, so stop reconnecting
+                        this._notifyAboutError(ee);
+                        this._tcs.promise.catch(TypeUtil.NOOP); // nobody may be waiting for this connection
+                        this._tcs.reject(ee);
+                        this.dispose();
+                        return;
                     }
+                    //We don't want to stop observe for changes if server down. we will wait for one to be up
                 }
                 this._notifyAboutError(e);
             });
@@ -421,6 +449,11 @@ export class DatabaseChanges implements IDatabaseChanges {
             for (const message of messages) {
                 const type = message.Type;
                 if (message.TopologyChange) {
+                    this._resolveSupportedFeatures({
+                        topologyChange: true,
+                        aggressiveCachingChange: !!message.AggressiveCachingChange
+                    });
+
                     const state = this._getOrAddConnectionState("Topology", "watch-topology-change", "", "");
                     state.addOnError(TypeUtil.NOOP);
 

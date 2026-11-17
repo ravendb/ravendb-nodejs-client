@@ -1377,7 +1377,7 @@ export class RequestExecutor implements IDisposable {
         const aggressiveCacheOptions = this.aggressiveCaching;
         if (aggressiveCacheOptions
             && cachedItem.age < aggressiveCacheOptions.duration
-            && !cachedItem.mightHaveBeenModified
+            && (!cachedItem.mightHaveBeenModified || aggressiveCacheOptions.mode !== "TrackChanges")
             && command.canCacheAggressively) {
             if (cachedItem.item.flags === "NotFound") {
                 // if this is a cached delete, we only respect it if it _came_ from an aggressively cached

@@ -7,6 +7,7 @@ import { DocumentStoreBase } from "./DocumentStoreBase.js";
 import { IDocumentStore } from "./IDocumentStore.js";
 import { AggressivelyCacheForOptions } from "./IDocumentStore.js";
 import { AggressiveCacheOptions } from "../Http/AggressiveCacheOptions.js";
+import { EvictItemsFromCacheBasedOnChanges } from "./Changes/EvictItemsFromCacheBasedOnChanges.js";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor.js";
 import { OperationExecutor } from "./Operations/OperationExecutor.js";
 import { IDocumentSession } from "./Session/IDocumentSession.js";
@@ -32,8 +33,7 @@ export class DocumentStore extends DocumentStoreBase {
         getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
 
     private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map(); //TODO: check usage - it has compound key!
-    // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges =
-    // new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
+    private readonly _aggressiveCacheChanges: Map<string, EvictItemsFromCacheBasedOnChanges> = new Map();
     // TBD: private readonly ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges> 
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
     // new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
@@ -99,14 +99,9 @@ export class DocumentStore extends DocumentStoreBase {
         this._log.info("Dispose.");
         this.emit("beforeDispose");
 
-        /* TBD
-            foreach (var value in _aggressiveCacheChanges.Values)
-            {
-                if (value.IsValueCreated == false)
-                    continue;
-
-                value.Value.Dispose();
-            }*/
+        for (const evict of this._aggressiveCacheChanges.values()) {
+            evict.dispose();
+        }
         for (const change of this._databaseChanges.values()) {
             change.dispose();
         }
@@ -341,8 +336,32 @@ export class DocumentStore extends DocumentStoreBase {
         const database = this.getEffectiveDatabase(options.database);
         const mode = options.mode ?? this.conventions.aggressiveCache.mode;
 
+        if (mode === "TrackChanges") {
+            await this._listenToChangesAndUpdateTheCache(database);
+        }
+
         return await this.getRequestExecutor(database)
             .withAggressiveCaching(new AggressiveCacheOptions(duration, mode), effectiveAction);
+    }
+
+    private async _listenToChangesAndUpdateTheCache(database: string): Promise<void> {
+        let evict = this._aggressiveCacheChanges.get(database);
+        if (!evict) {
+            const created = new EvictItemsFromCacheBasedOnChanges(this.getRequestExecutor(database), database, () => {
+                if (this._aggressiveCacheChanges.get(database) === created) {
+                    this._aggressiveCacheChanges.delete(database);
+                }
+            });
+            evict = created;
+            this._aggressiveCacheChanges.set(database, evict);
+        }
+
+        try {
+            await evict.ensureConnected();
+        } catch (err) {
+            evict.dispose(); // removes it from the map, so the next call connects again
+            throw err;
+        }
     }
 
     public disableAggressiveCaching<T>(action: () => T | Promise<T>): Promise<T>;
