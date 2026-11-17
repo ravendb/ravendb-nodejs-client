@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 /**
  * Time series synchronous session operations
  */
@@ -70,4 +71,8 @@ export interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      */
     get(from: Date, to: Date, includes: (includeBuilder: ITimeSeriesIncludeBuilder) => void, start: number, pageSize: number): Promise<TimeSeriesEntry[]>;
 
+    /**
+     * Streams the entries between from and to (inclusive, default: all), with timestamps shifted by offset milliseconds.
+     */
+    stream(from?: Date, to?: Date, offset?: number): Promise<Readable>;
 }

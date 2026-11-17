@@ -53,6 +53,11 @@ export class RavenCommandResponsePipeline<TStreamResult> extends EventEmitter {
         const extractItemTransform = new Transform({
             objectMode: true,
             transform(chunk, encoding, callback) {
+                const error = chunk["value"]?.Error;
+                if (error) {
+                    return callback(getError("RavenException", error));
+                }
+
                 const value = valueExtractor(chunk["value"]);
                 if (!value) {
                     return callback();

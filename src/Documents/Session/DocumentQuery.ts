@@ -5,7 +5,7 @@ import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOper
 import { DeclareToken } from "./Tokens/DeclareToken.js";
 import { LoadToken } from "./Tokens/LoadToken.js";
 import { throwError } from "../../Exceptions/index.js";
-import { CONSTANTS } from "../../Constants.js";
+import { CONSTANTS, TIME_SERIES } from "../../Constants.js";
 import { QueryData } from "../Queries/QueryData.js";
 import { NullsOrdering, OrderingType } from "./OrderingType.js";
 import { SearchOperator } from "../Queries/SearchOperator.js";
@@ -165,8 +165,9 @@ export class DocumentQuery<T extends object>
             propertiesOrQueryData.isProjectInto = true;
             const queryData = propertiesOrQueryData as QueryData;
 
-            // add nested object types to result, so we can properly read types
-            if (!queryData.isCustomFunction) {
+            // add nested object types to result, so we can properly read types; time series results have none,
+            // and the server cannot stream them with that extra projection
+            if (!queryData.isCustomFunction && !queryData.projections.some(x => x.startsWith(TIME_SERIES.QUERY_FUNCTION))) {
                 queryData.fields = [...queryData.fields, `${CONSTANTS.Documents.Metadata.KEY}.${CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES}`];
                 queryData.projections = [...queryData.projections, CONSTANTS.Documents.Metadata.NESTED_OBJECT_TYPES_PROJECTION_FIELD];
             }

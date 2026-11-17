@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { SessionTimeSeriesBase } from "./SessionTimeSeriesBase.js";
 import { ISessionDocumentRollupTypedTimeSeries } from "./ISessionDocumentRollupTypedTimeSeries.js";
 import { ClassConstructor } from "../../Types/index.js";
@@ -31,6 +32,10 @@ export class SessionDocumentRollupTypedTimeSeries<T extends object> extends Sess
         const results = await this._getFromCache(from, to, null, start, pageSize);
         return results
             .map(x => TypedTimeSeriesRollupEntry.fromEntry(x, this._clazz));
+    }
+
+    public stream(from?: Date, to?: Date, offset?: number): Promise<Readable> {
+        return this._streamEntries(from, to, offset, entry => TypedTimeSeriesRollupEntry.fromEntry(entry, this._clazz));
     }
 
     public append(entry: TypedTimeSeriesRollupEntry<T>) {
