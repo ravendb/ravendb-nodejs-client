@@ -5,6 +5,8 @@ import { RequestExecutor } from "../Http/RequestExecutor.js";
 import { getLogger } from "../Utility/LogUtil.js";
 import { DocumentStoreBase } from "./DocumentStoreBase.js";
 import { IDocumentStore } from "./IDocumentStore.js";
+import { AggressivelyCacheForOptions } from "./IDocumentStore.js";
+import { AggressiveCacheOptions } from "../Http/AggressiveCacheOptions.js";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor.js";
 import { OperationExecutor } from "./Operations/OperationExecutor.js";
 import { IDocumentSession } from "./Session/IDocumentSession.js";
@@ -321,38 +323,43 @@ export class DocumentStore extends DocumentStoreBase {
         super._assertValidConfiguration();
     }
 
-    /**
-     * Setup the context for no aggressive caching
-     *
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-    /* TBD 4.1
-    public disableAggressiveCaching(): IDisposable;
-    */
+    public aggressivelyCacheFor<T>(duration: number, action: () => T | Promise<T>): Promise<T>;
+    public aggressivelyCacheFor<T>(
+        duration: number, options: AggressivelyCacheForOptions, action: () => T | Promise<T>): Promise<T>;
+    public async aggressivelyCacheFor<T>(
+        duration: number,
+        optionsOrAction: AggressivelyCacheForOptions | (() => T | Promise<T>),
+        action?: () => T | Promise<T>): Promise<T> {
+        const options = typeof optionsOrAction === "function" ? {} : optionsOrAction ?? {};
+        const effectiveAction = typeof optionsOrAction === "function" ? optionsOrAction : action;
 
-    /**
-     * Setup the context for no aggressive caching
-     *
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-
-    /* TBD 4.1
-    public disableAggressiveCaching(): IDisposable;
-    public disableAggressiveCaching(database: string): IDisposable;
-    public disableAggressiveCaching(database?: string): IDisposable {
         this.assertInitialized();
-        const re: RequestExecutor = this.getRequestExecutor(database || this.database);
-        const old = re.aggressiveCaching;
-        re.aggressiveCaching = null;
-        const dispose = () => re.aggressiveCaching = old;
+        if (!effectiveAction) {
+            throwError("InvalidArgumentException", "Action cannot be null");
+        }
 
-        return { dispose };
+        const database = this.getEffectiveDatabase(options.database);
+        const mode = options.mode ?? this.conventions.aggressiveCache.mode;
+
+        return await this.getRequestExecutor(database)
+            .withAggressiveCaching(new AggressiveCacheOptions(duration, mode), effectiveAction);
     }
-     */
+
+    public disableAggressiveCaching<T>(action: () => T | Promise<T>): Promise<T>;
+    public disableAggressiveCaching<T>(database: string, action: () => T | Promise<T>): Promise<T>;
+    public async disableAggressiveCaching<T>(
+        databaseOrAction: string | (() => T | Promise<T>), action?: () => T | Promise<T>): Promise<T> {
+        const effectiveAction = typeof databaseOrAction === "function" ? databaseOrAction : action;
+
+        this.assertInitialized();
+        if (!effectiveAction) {
+            throwError("InvalidArgumentException", "Action cannot be null");
+        }
+
+        const database = this.getEffectiveDatabase(typeof databaseOrAction === "string" ? databaseOrAction : null);
+
+        return await this.getRequestExecutor(database).withAggressiveCaching(null, effectiveAction);
+    }
 
     public changes(): IDatabaseChanges;
     public changes(database: string): IDatabaseChanges;
@@ -382,7 +389,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     // TBD public override IDatabaseChanges Changes(string database = null)
     // TBD protected virtual IDatabaseChanges CreateDatabaseChanges(string database)
-    // TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     // TBD private void ListenToChangesAndUpdateTheCache(string database)
 
     /**

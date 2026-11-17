@@ -114,9 +114,10 @@ export class LazyLoadOperation<T extends object> implements ILazyOperation {
             return;
         }
 
-        const multiLoadResult: GetDocumentsResult =
-            await GetDocumentsCommand.parseDocumentsResultResponseAsync(
-                stringToReadable(response.result), this._session.conventions);
+        const multiLoadResult: GetDocumentsResult = response.result
+            ? await GetDocumentsCommand.parseDocumentsResultResponseAsync(
+                stringToReadable(response.result), this._session.conventions)
+            : null;
 
         this._handleResponse(multiLoadResult);
     }

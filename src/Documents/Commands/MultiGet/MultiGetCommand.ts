@@ -200,7 +200,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
         const cacheKey = this._getCacheKey(command);
         const result = getResponse.result;
         if (!result) {
-            this._httpCache.setNotFound(cacheKey);
+            this._httpCache.setNotFound(cacheKey, this.aggressivelyCached);
             return;
         }
 

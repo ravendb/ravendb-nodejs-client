@@ -71,9 +71,11 @@ export class HttpCache implements IDisposable {
         return new ReleaseCacheItem(null);
     }
 
-    public setNotFound(url: string) {
+    public setNotFound(url: string, aggressivelyCached: boolean) {
         const httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = NOT_FOUND_RESPONSE;
+        httpCacheItem.flags = "NotFound";
+        httpCacheItem.aggressivelyCached = aggressivelyCached;
         httpCacheItem.cache = this;
 
         this._putItem(url, httpCacheItem);
@@ -148,6 +150,8 @@ export class HttpCacheItem {
     public payload: string;
     public lastServerUpdate: Date;
     public flags: ItemFlags;
+    /** Set for a 404 received inside an aggressive caching block. */
+    public aggressivelyCached: boolean;
 
     public cache: HttpCache;
 
