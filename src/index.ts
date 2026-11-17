@@ -291,6 +291,7 @@ export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/GetRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/EnforceRevisionsConfigurationOperation.js";
 export * from "./Documents/Operations/Revisions/RevisionsResult.js";
+export * from "./Documents/Operations/Revisions/AdoptOrphanedRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/RevertResult.js";
 export * from "./Documents/Operations/Revisions/RevisionsOperationParameters.js";
 export * from "./Documents/Operations/Revisions/RevisionsOperationContinuationParameters.js";
