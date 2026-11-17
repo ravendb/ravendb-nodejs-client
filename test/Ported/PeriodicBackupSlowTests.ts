@@ -12,7 +12,7 @@ import {
     DeleteDatabasesOperation
 } from "../../src/index.js";
 import { BackupCommand } from "../../src/Documents/Operations/Backups/BackupOperation.js";
-import { disposeTestDocumentStore, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testContext } from "../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../Utils/AssertExtensions.js";
 import { User } from "../Assets/Entities.js";
 
@@ -57,7 +57,7 @@ describe("PeriodicBackupTestsSlow", function () {
     });
 
     for (const backupType of ["Backup", "Snapshot"] as BackupType[]) {
-        it(`canCreateOneTimeBackupAndRestore (${backupType})`, async () => {
+        (backupType === "Snapshot" && RavenTestContext.isPullRequest ? it.skip : it)(`canCreateOneTimeBackupAndRestore (${backupType})`, async () => {
             const backupPath = path.join(temporaryDirContext.tempDir, "BackupFolder");
             const name = "EGR";
 
