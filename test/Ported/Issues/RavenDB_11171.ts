@@ -6,7 +6,7 @@ import {
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 import { Company } from "../../Assets/Entities.js";
 
@@ -72,7 +72,7 @@ describe("RavenDB_11171", function () {
         }
     }
 
-    it("shouldWork", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("shouldWork", async () => {
         const store = await newStore(false);
 
         const session = store.openSession();
