@@ -688,7 +688,12 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
 
         action(builderImpl);
 
-        const shardContext =  builderImpl.documentIds.size === 1 ? Array.from(builderImpl.documentIds.keys())[0] : Array.from(builderImpl.documentIds);
+        const documentIds = Array.from(builderImpl.documentIds);
+
+        // the object form needs server 6.2+, so plain document ids keep the older format
+        const shardContext = builderImpl.prefixes.size > 0
+            ? { DocumentIds: documentIds, Prefixes: Array.from(builderImpl.prefixes) }
+            : documentIds.length === 1 ? documentIds[0] : documentIds;
 
         this.queryParameters[CONSTANTS.Documents.Querying.SHARD_CONTEXT_PARAMETER_NAME] = shardContext;
     }
