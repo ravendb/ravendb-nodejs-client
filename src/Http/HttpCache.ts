@@ -13,6 +13,8 @@ const ITEM_OVERHEAD = 20;
 export class HttpCache implements IDisposable {
 
     private _items: Map<string, HttpCacheItem>;
+    /** Raised when the Changes API reports a change, so items cached before it might be stale. */
+    public generation: number = 0;
     private _totalSize: number;
     private readonly _maxSize: number;
 
@@ -38,6 +40,7 @@ export class HttpCache implements IDisposable {
         httpCacheItem.changeVector = changeVector;
         httpCacheItem.payload = result;
         httpCacheItem.cache = this;
+        httpCacheItem.generation = this.generation;
 
         this._putItem(url, httpCacheItem);
     }
@@ -71,9 +74,12 @@ export class HttpCache implements IDisposable {
         return new ReleaseCacheItem(null);
     }
 
-    public setNotFound(url: string) {
+    public setNotFound(url: string, aggressivelyCached: boolean) {
         const httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = NOT_FOUND_RESPONSE;
+        httpCacheItem.flags = "NotFound";
+        httpCacheItem.aggressivelyCached = aggressivelyCached;
+        httpCacheItem.generation = this.generation;
         httpCacheItem.cache = this;
 
         this._putItem(url, httpCacheItem);
@@ -111,20 +117,20 @@ export class HttpCache implements IDisposable {
         return (item.payload ? item.payload.length : 0) + ITEM_OVERHEAD;
     }
 
-    public getMightHaveBeenModified(): boolean {
-        return false; // TBD
-    }
 }
 
 export class ReleaseCacheItem {
     public item: HttpCacheItem;
+    private readonly _cacheGeneration: number;
 
     constructor(item: HttpCacheItem) {
         this.item = item;
+        this._cacheGeneration = item?.cache.generation;
     }
 
     public notModified(): void {
         if (this.item) {
+            this.item.generation = this._cacheGeneration;
             this.item.lastServerUpdate = new Date();
         }
     }
@@ -138,8 +144,8 @@ export class ReleaseCacheItem {
         return Date.now() - this.item.lastServerUpdate.valueOf();
     }
 
-    public get mightHaveBeenModified() {
-        return false; // TBD
+    public get mightHaveBeenModified(): boolean {
+        return this.item.generation !== this._cacheGeneration;
     }
 }
 
@@ -148,6 +154,9 @@ export class HttpCacheItem {
     public payload: string;
     public lastServerUpdate: Date;
     public flags: ItemFlags;
+    /** Set for a 404 received inside an aggressive caching block. */
+    public aggressivelyCached: boolean;
+    public generation: number;
 
     public cache: HttpCache;
 

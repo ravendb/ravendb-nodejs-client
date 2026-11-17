@@ -1,9 +1,11 @@
 
 import assert from "node:assert"
+import { randomUUID } from "node:crypto";
 import { testContext, disposeTestDocumentStore } from "../../../../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
+    CreateDatabaseOperation, DeleteDatabasesOperation,
     SetIndexesPriorityOperation, GetStatisticsOperation,
     DocumentChange, IndexChange, AbstractJavaScriptIndexCreationTask
 } from "../../../../../src/index.js";
@@ -393,5 +395,65 @@ describe("ChangesTest", function () {
         }
 
         await store.maintenance.send(new GetStatisticsOperation());
+    });
+
+    it("cacheIsUpdatedAfterInitialFailure", async () => {
+        const newDatabaseName = store.database + randomUUID();
+        const oldName = "Grisha";
+        const newName = "Grisha Kotler";
+        const forever = Number.MAX_SAFE_INTEGER;
+
+        const enterAggressiveCache = async () => {
+            try {
+                await store.aggressivelyCacheFor(forever, { database: newDatabaseName }, () => {});
+                return false;
+            } catch (err) {
+                assert.strictEqual(err.name, "DatabaseDoesNotExistException");
+                return true;
+            }
+        };
+
+        const loadNameCached = () => store.aggressivelyCacheFor(forever, { database: newDatabaseName }, async () => {
+            const loaded = await store.openSession(newDatabaseName).load("users/1", User);
+            return loaded.name;
+        });
+
+        const storeUser = async (name: string) => {
+            const session = store.openSession(newDatabaseName);
+            await session.store(Object.assign(new User(), { name }), "users/1");
+            await session.saveChanges();
+        };
+
+        assert.ok(await enterAggressiveCache());
+
+        await store.maintenance.server.send(new CreateDatabaseOperation({ databaseName: newDatabaseName }));
+        try {
+            await storeUser(oldName);
+            assert.strictEqual(await loadNameCached(), oldName);
+
+            {
+                const session = store.openSession(newDatabaseName);
+                const loaded = await session.load("users/1", User);
+                loaded.name = newName;
+                await session.saveChanges();
+            }
+
+            assert.strictEqual(await testContext.waitForValue(loadNameCached, newName), newName);
+
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [newDatabaseName], hardDelete: true
+            }));
+
+            assert.ok(await testContext.waitForValue(enterAggressiveCache, true));
+
+            await store.maintenance.server.send(new CreateDatabaseOperation({ databaseName: newDatabaseName }));
+            await storeUser(oldName);
+
+            assert.strictEqual(await testContext.waitForValue(loadNameCached, oldName), oldName);
+        } finally {
+            await store.maintenance.server.send(new DeleteDatabasesOperation({
+                databaseNames: [newDatabaseName], hardDelete: true
+            }));
+        }
     });
 });

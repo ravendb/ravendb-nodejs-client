@@ -5,6 +5,9 @@ import { RequestExecutor } from "../Http/RequestExecutor.js";
 import { getLogger } from "../Utility/LogUtil.js";
 import { DocumentStoreBase } from "./DocumentStoreBase.js";
 import { IDocumentStore } from "./IDocumentStore.js";
+import { AggressivelyCacheForOptions } from "./IDocumentStore.js";
+import { AggressiveCacheOptions } from "../Http/AggressiveCacheOptions.js";
+import { EvictItemsFromCacheBasedOnChanges } from "./Changes/EvictItemsFromCacheBasedOnChanges.js";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor.js";
 import { OperationExecutor } from "./Operations/OperationExecutor.js";
 import { IDocumentSession } from "./Session/IDocumentSession.js";
@@ -30,8 +33,7 @@ export class DocumentStore extends DocumentStoreBase {
         getLogger({ module: "DocumentStore-" + Math.floor(Math.random() * 1000) });
 
     private readonly _databaseChanges: Map<string, IDatabaseChanges> = new Map(); //TODO: check usage - it has compound key!
-    // TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges =
-    // new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
+    private readonly _aggressiveCacheChanges: Map<string, EvictItemsFromCacheBasedOnChanges> = new Map();
     // TBD: private readonly ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges> 
     // _observeChangesAndEvictItemsFromCacheForDatabases = 
     // new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
@@ -97,14 +99,9 @@ export class DocumentStore extends DocumentStoreBase {
         this._log.info("Dispose.");
         this.emit("beforeDispose");
 
-        /* TBD
-            foreach (var value in _aggressiveCacheChanges.Values)
-            {
-                if (value.IsValueCreated == false)
-                    continue;
-
-                value.Value.Dispose();
-            }*/
+        for (const evict of this._aggressiveCacheChanges.values()) {
+            evict.dispose();
+        }
         for (const change of this._databaseChanges.values()) {
             change.dispose();
         }
@@ -321,38 +318,67 @@ export class DocumentStore extends DocumentStoreBase {
         super._assertValidConfiguration();
     }
 
-    /**
-     * Setup the context for no aggressive caching
-     *
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-    /* TBD 4.1
-    public disableAggressiveCaching(): IDisposable;
-    */
+    public aggressivelyCacheFor<T>(duration: number, action: () => T | Promise<T>): Promise<T>;
+    public aggressivelyCacheFor<T>(
+        duration: number, options: AggressivelyCacheForOptions, action: () => T | Promise<T>): Promise<T>;
+    public async aggressivelyCacheFor<T>(
+        duration: number,
+        optionsOrAction: AggressivelyCacheForOptions | (() => T | Promise<T>),
+        action?: () => T | Promise<T>): Promise<T> {
+        const options = typeof optionsOrAction === "function" ? {} : optionsOrAction ?? {};
+        const effectiveAction = typeof optionsOrAction === "function" ? optionsOrAction : action;
 
-    /**
-     * Setup the context for no aggressive caching
-     *
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-
-    /* TBD 4.1
-    public disableAggressiveCaching(): IDisposable;
-    public disableAggressiveCaching(database: string): IDisposable;
-    public disableAggressiveCaching(database?: string): IDisposable {
         this.assertInitialized();
-        const re: RequestExecutor = this.getRequestExecutor(database || this.database);
-        const old = re.aggressiveCaching;
-        re.aggressiveCaching = null;
-        const dispose = () => re.aggressiveCaching = old;
+        if (!effectiveAction) {
+            throwError("InvalidArgumentException", "Action cannot be null");
+        }
 
-        return { dispose };
+        const database = this.getEffectiveDatabase(options.database);
+        const mode = options.mode ?? this.conventions.aggressiveCache.mode;
+
+        if (mode === "TrackChanges") {
+            await this._listenToChangesAndUpdateTheCache(database);
+        }
+
+        return await this.getRequestExecutor(database)
+            .withAggressiveCaching(new AggressiveCacheOptions(duration, mode), effectiveAction);
     }
-     */
+
+    private async _listenToChangesAndUpdateTheCache(database: string): Promise<void> {
+        let evict = this._aggressiveCacheChanges.get(database);
+        if (!evict) {
+            const created = new EvictItemsFromCacheBasedOnChanges(this.getRequestExecutor(database), database, () => {
+                if (this._aggressiveCacheChanges.get(database) === created) {
+                    this._aggressiveCacheChanges.delete(database);
+                }
+            });
+            evict = created;
+            this._aggressiveCacheChanges.set(database, evict);
+        }
+
+        try {
+            await evict.ensureConnected();
+        } catch (err) {
+            evict.dispose(); // removes it from the map, so the next call connects again
+            throw err;
+        }
+    }
+
+    public disableAggressiveCaching<T>(action: () => T | Promise<T>): Promise<T>;
+    public disableAggressiveCaching<T>(database: string, action: () => T | Promise<T>): Promise<T>;
+    public async disableAggressiveCaching<T>(
+        databaseOrAction: string | (() => T | Promise<T>), action?: () => T | Promise<T>): Promise<T> {
+        const effectiveAction = typeof databaseOrAction === "function" ? databaseOrAction : action;
+
+        this.assertInitialized();
+        if (!effectiveAction) {
+            throwError("InvalidArgumentException", "Action cannot be null");
+        }
+
+        const database = this.getEffectiveDatabase(typeof databaseOrAction === "string" ? databaseOrAction : null);
+
+        return await this.getRequestExecutor(database).withAggressiveCaching(null, effectiveAction);
+    }
 
     public changes(): IDatabaseChanges;
     public changes(database: string): IDatabaseChanges;
@@ -382,7 +408,6 @@ export class DocumentStore extends DocumentStoreBase {
 
     // TBD public override IDatabaseChanges Changes(string database = null)
     // TBD protected virtual IDatabaseChanges CreateDatabaseChanges(string database)
-    // TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     // TBD private void ListenToChangesAndUpdateTheCache(string database)
 
     /**

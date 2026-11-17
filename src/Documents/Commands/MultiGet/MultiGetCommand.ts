@@ -54,7 +54,8 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
 
     private _getCacheKey(command: GetRequest): string {
         const url = this._baseUrl + command.urlAndQuery;
-        return (command.method || "GET") + "-" + url;
+        // like C#: without a method the key is the plain url, shared with a direct GET of the same url
+        return command.method ? command.method + "-" + url : url;
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
@@ -94,6 +95,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
         this.closeCache();
 
         let readAllFromCache = !!options;
+        const trackChanges = readAllFromCache && options.mode === "TrackChanges";
 
         for (let i = 0; i < this._commands.length; i++) {
             const command = this._commands[i];
@@ -117,7 +119,8 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
                 continue;
             }
 
-            if (readAllFromCache && cachedItem.age > options.duration || !command.canCacheAggressively) {
+            if (readAllFromCache && (trackChanges && cachedItem.mightHaveBeenModified
+                || cachedItem.age > options.duration || !command.canCacheAggressively)) {
                 readAllFromCache = false;
             }
 
@@ -200,7 +203,7 @@ export class MultiGetCommand extends RavenCommand<GetResponse[]> implements IDis
         const cacheKey = this._getCacheKey(command);
         const result = getResponse.result;
         if (!result) {
-            this._httpCache.setNotFound(cacheKey);
+            this._httpCache.setNotFound(cacheKey, this.aggressivelyCached);
             return;
         }
 

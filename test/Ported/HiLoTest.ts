@@ -76,6 +76,28 @@ describe("HiLo", function () {
 
     });
 
+    it("hiLoKeyGenerator_hangs_when_aggressive_caching_enabled", async () => {
+        await store.aggressivelyCache(async () => {
+            const hiLoKeyGenerator = new HiloIdGenerator("users", store, store.database, "/");
+            assertThat(await getNextId(hiLoKeyGenerator)).isEqualTo(1);
+            assertThat(await getNextId(hiLoKeyGenerator)).isEqualTo(2);
+        });
+    });
+
+    it("hiLoKeyGenerator_hangs_when_aggressive_caching_enabled_on_other_documentstore", async () => {
+        const otherStore = await testContext.getDocumentStore();
+        try {
+            // the other store is never used, aggressive caching is only enabled on it
+            await otherStore.aggressivelyCache(async () => {
+                const hiLoKeyGenerator = new HiloIdGenerator("users", store, store.database, "/");
+                assertThat(await getNextId(hiLoKeyGenerator)).isEqualTo(1);
+                assertThat(await getNextId(hiLoKeyGenerator)).isEqualTo(2);
+            });
+        } finally {
+            await disposeTestDocumentStore(otherStore);
+        }
+    });
+
     it("cannot go down", async () => {
         const session = store.openSession();
         const hiloDoc: HiloDoc = Object.assign(new HiloDoc(), { Max: 32 });
