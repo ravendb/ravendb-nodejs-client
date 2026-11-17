@@ -41,7 +41,6 @@ describe("RavenDB_21326", function () {
         const revisionsConfiguration = new RevisionsConfiguration();
         const usersConfiguration = new RevisionsCollectionConfiguration();
         usersConfiguration.disabled = false;
-        usersConfiguration.minimumRevisionsToKeep = 100;
         revisionsConfiguration.collections = new Map([["Users", usersConfiguration]]);
         await store.maintenance.send(new ConfigureRevisionsOperation(revisionsConfiguration));
 
