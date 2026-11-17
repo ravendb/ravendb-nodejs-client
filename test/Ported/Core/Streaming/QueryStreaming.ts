@@ -107,7 +107,7 @@ describe("query streaming", function () {
         }
     });
 
-    it.skip("can stream query results with time series", async () => {
+    it("can stream query results with time series", async () => {
         await prepareData(store, 200, true);
 
         await usersByNameIndex.execute(store);

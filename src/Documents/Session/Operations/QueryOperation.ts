@@ -236,7 +236,10 @@ export class QueryOperation {
 
             const isTimeSeriesField = fieldsToFetch.projections[0].startsWith(TIME_SERIES.QUERY_FUNCTION);
 
-            if (!isProjectInto || isTimeSeriesField) {
+            if (isTimeSeriesField && TypeUtil.isArray(jsonNode)) {
+                // streamed queries send the entries without the Count and Results wrapper
+                document = { Count: jsonNode.length, Results: jsonNode };
+            } else if (!isProjectInto || isTimeSeriesField) {
                 if (isTimeSeriesField || fieldsToFetch.fieldsToFetch[0] === fieldsToFetch.projections[0]) {
                     if (TypeUtil.isObject(jsonNode)) { // extraction from original type
                         document = jsonNode;

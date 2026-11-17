@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { SessionTimeSeriesBase } from "./SessionTimeSeriesBase.js";
 import { ISessionDocumentTimeSeries } from "./ISessionDocumentTimeSeries.js";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations.js";
@@ -53,6 +54,10 @@ export class SessionDocumentTimeSeries extends SessionTimeSeriesBase implements 
         }
 
         return resultsToUser.slice(0, pageSize);
+    }
+
+    public stream(from?: Date, to?: Date, offset?: number): Promise<Readable> {
+        return this._streamEntries(from, to, offset, entry => entry);
     }
 
     public append(timestamp: Date, value: number): void;
