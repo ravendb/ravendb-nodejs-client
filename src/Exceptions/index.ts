@@ -3,6 +3,7 @@ import { StatusCodes } from "../Http/StatusCode.js";
 import { HttpResponse } from "../Primitives/Http.js";
 import { JsonSerializer } from "../Mapping/Json/Serializer.js";
 import { EOL } from "../Utility/OsUtil.js";
+import { LimitType } from "./LimitType.js";
 
 export function throwError(errName: RavenErrorType): never;
 export function throwError(errName: RavenErrorType, message: string): never;
@@ -184,7 +185,19 @@ export type RavenErrorType = "RavenException"
     | "MissingAiAgentParameterException"
     | "QueryToolFailedException"
     | "UnsupportedAiQueryParameterException"
-    | "AiAgentParameterCollisionException";
+    | "AiAgentParameterCollisionException"
+    | "LicenseLimitException"
+    | "PortInUseException"
+    | "BackupAlreadyRunningException"
+    | "DatabaseNotRelevantException"
+    | "SchemaValidationException"
+    | "InsufficientTransportLayerProtectionException"
+    | "ExecutionForShardException"
+    | "IndexAlreadyExistException"
+    | "IndexCreationException"
+    | "IndexDeletionException"
+    | "RevisionsDisabledException"
+    | "LegacyReplicationViolationException";
 
 export interface ExceptionSchema {
     url: string;
@@ -252,7 +265,11 @@ export class ExceptionDispatcher {
 
     private static _fillException(exception: Error, json: any) {
         if (exception.name === "RavenTimeoutException") {
-            (exception as any).failImmediately = !!json.FailImmediately;
+            (exception as any).failImmediately = !!json.failImmediately;
+        }
+
+        if (exception.name === "LicenseLimitException" && json.limitType) {
+            (exception as Error & { limitType?: LimitType }).limitType = json.limitType;
         }
     }
 

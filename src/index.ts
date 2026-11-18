@@ -3,6 +3,7 @@ export { BulkInsertConventions } from "./Documents/Conventions/BulkInsertConvent
 export * from "./Documents/Conventions/SessionPatchBehavior.js";
 export type { RavenErrorType } from "./Exceptions/index.js";
 export * from "./Types/index.js";
+export type { LimitType } from "./Exceptions/LimitType.js";
 
 // HTTP
 export * from "./Http/AggressiveCacheOptions.js";

@@ -77,7 +77,7 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements
         const uri = node.url + "/databases/" + node.database 
             + (this._allJavaScriptIndexes ? "/indexes" : "/admin/indexes");
 
-        const INDEX_DEF_FIELDS_REGEX = /^Indexes\.\[]\.Fields$/;
+        const INDEX_DEF_FIELDS_REGEX = /^Indexes\.\[]\.(Fields|Configuration)$/;
 
         const bodyJson = ObjectUtil.transformObjectKeys({
             Indexes: this._indexToAdd
