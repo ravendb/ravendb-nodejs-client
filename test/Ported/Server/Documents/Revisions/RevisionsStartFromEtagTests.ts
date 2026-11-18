@@ -21,11 +21,11 @@ describe("RevisionsStartFromEtagTests", function () {
         await disposeTestDocumentStore(store));
 
     async function setupRevisions(minimumRevisionsToKeep: number) {
-        const defaultConfig = new RevisionsCollectionConfiguration();
-        defaultConfig.disabled = false;
-        defaultConfig.minimumRevisionsToKeep = minimumRevisionsToKeep;
+        const companiesConfiguration = new RevisionsCollectionConfiguration();
+        companiesConfiguration.disabled = false;
+        companiesConfiguration.minimumRevisionsToKeep = minimumRevisionsToKeep;
         const configuration = new RevisionsConfiguration();
-        configuration.defaultConfig = defaultConfig;
+        configuration.collections = new Map([["Companies", companiesConfiguration]]);
         await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
     }
 
