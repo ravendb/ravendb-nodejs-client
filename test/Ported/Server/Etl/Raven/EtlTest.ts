@@ -295,6 +295,59 @@ import { ReplicationTestContext } from "../../../../Utils/ReplicationTestContext
             src.dispose();
         }
     });
+
+    it("canUpdateEtlWithTransformationsToReset", async () => {
+        let src: DocumentStore;
+        let dst: DocumentStore;
+
+        try {
+            src = await testContext.getDocumentStore();
+            try {
+                dst = await testContext.getDocumentStore();
+
+                await insertDocument(src);
+                await createConnectionString(src, dst);
+
+                const transformation: Transformation = {
+                    applyToAllDocuments: false,
+                    collections: ["Users"],
+                    name: "Script Q&A",
+                    script: "loadToUsers(this);"
+                };
+
+                const etlConfiguration = Object.assign(new RavenEtlConfiguration(), {
+                    connectionStringName: "toDst",
+                    disabled: false,
+                    name: "etlToDst",
+                    transforms: [ transformation ]
+                } as Partial<RavenEtlConfiguration>);
+
+                const etlResult = await src.maintenance.send(new AddEtlOperation(etlConfiguration));
+
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10_000, User))
+                    .isNotNull();
+
+                {
+                    const session = dst.openSession();
+                    await session.delete("users/1");
+                    await session.saveChanges();
+                }
+
+                const updateResult = await src.maintenance.send(
+                    new UpdateEtlOperation(etlResult.taskId, etlConfiguration, [ "Script Q&A" ]));
+
+                assertThat(updateResult.taskId)
+                    .isGreaterThan(0);
+
+                assertThat(await replication.waitForDocumentToReplicate(dst, "users/1", 10_000, User))
+                    .isNotNull();
+            } finally {
+                dst.dispose();
+            }
+        } finally {
+            src.dispose();
+        }
+    });
 });
 
 function createConnectionString(src: IDocumentStore, dst: IDocumentStore) {
