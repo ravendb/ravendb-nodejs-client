@@ -23,6 +23,7 @@ export interface IVectorOptionsJson {
     Similarity?: number;
     IsExact?: boolean;
     SourceFieldName?: string;
+    EmbeddingsGenerationTaskIdentifier?: string;
 }
 
 
@@ -102,6 +103,7 @@ export class VectorOptions implements IVectorOptions {
 
 export class AutoVectorOptions extends VectorOptions {
     public sourceFieldName?: string;
+    public embeddingsGenerationTaskIdentifier?: string;
 
     constructor(
         sourceEmbeddingType: VectorEmbeddingType = "Single",
@@ -135,12 +137,14 @@ export class AutoVectorOptions extends VectorOptions {
         const vectorOptions = VectorOptions.fromJson(json);
         const autoVectorOptions = AutoVectorOptions.fromVectorOptions(vectorOptions);
         autoVectorOptions.sourceFieldName = json.SourceFieldName;
+        autoVectorOptions.embeddingsGenerationTaskIdentifier = json.EmbeddingsGenerationTaskIdentifier;
         return autoVectorOptions;
     }
 
     protected toJson(): IVectorOptionsJson {
         const json = super.toJson();
         json.SourceFieldName = this.sourceFieldName;
+        json.EmbeddingsGenerationTaskIdentifier = this.embeddingsGenerationTaskIdentifier;
         return json;
     }
 }
