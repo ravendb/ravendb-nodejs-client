@@ -3,6 +3,7 @@ import { StatusCodes } from "../Http/StatusCode.js";
 import { HttpResponse } from "../Primitives/Http.js";
 import { JsonSerializer } from "../Mapping/Json/Serializer.js";
 import { EOL } from "../Utility/OsUtil.js";
+import { LimitType } from "./LimitType.js";
 
 export function throwError(errName: RavenErrorType): never;
 export function throwError(errName: RavenErrorType, message: string): never;
@@ -268,7 +269,7 @@ export class ExceptionDispatcher {
         }
 
         if (exception.name === "LicenseLimitException" && json.limitType) {
-            (exception as any).limitType = json.limitType;
+            (exception as Error & { limitType?: LimitType }).limitType = json.limitType;
         }
     }
 

@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { ExceptionDispatcher, RavenErrorType } from "../../src/Exceptions/index.js";
 import { HttpResponse } from "../../src/Primitives/Http.js";
+import { LimitType } from "../../src/index.js";
 
 describe("ExceptionDispatcherTest", function () {
 
@@ -52,7 +53,8 @@ describe("ExceptionDispatcherTest", function () {
             LimitType: "DocumentsCompression"
         });
 
-        assert.strictEqual(error.limitType, "DocumentsCompression");
+        const limitType: LimitType = error.limitType;
+        assert.strictEqual(limitType, "DocumentsCompression");
     });
 
     it("leaves the limit type unset when the server does not send one", () => {
