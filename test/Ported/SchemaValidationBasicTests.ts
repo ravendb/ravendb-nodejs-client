@@ -146,6 +146,7 @@ import {assertThat} from "../Utils/AssertExtensions.js";
 
         // Get configuration and modify it
         const currentConfig = await store.maintenance.send(new GetSchemaValidationConfiguration());
+        assertThat(currentConfig.validatorsPerCollection["Users"].lastModifiedTime instanceof Date).isTrue();
         currentConfig.validatorsPerCollection["Companies"] = {
             schema: schemaData
         };

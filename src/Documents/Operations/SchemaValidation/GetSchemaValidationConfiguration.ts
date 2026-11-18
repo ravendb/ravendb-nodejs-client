@@ -7,6 +7,7 @@ import { ServerNode } from "../../../Http/ServerNode.js";
 import { Stream } from "node:stream";
 import { RavenCommandResponsePipeline } from "../../../Http/RavenCommandResponsePipeline.js";
 import { ObjectUtil } from "../../../Utility/ObjectUtil.js";
+import { DateUtil } from "../../../Utility/DateUtil.js";
 
 export class GetSchemaValidationConfiguration implements IMaintenanceOperation<SchemaValidationConfiguration> {
 
@@ -55,6 +56,10 @@ export class GetSchemaValidationConfigurationCommand extends RavenCommand<Schema
                 ]
             })
             .process(bodyStream);
+
+        for (const definition of Object.values(this.result.validatorsPerCollection ?? {})) {
+            definition.lastModifiedTime = DateUtil.utc.parse(definition.lastModifiedTime as unknown as string);
+        }
 
         return body;
     }
