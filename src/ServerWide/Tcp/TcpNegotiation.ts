@@ -75,7 +75,7 @@ export class TcpNegotiation {
             SourceNodeTag: parameters.sourceNodeTag,
             OperationVersion: currentVersion,
             AuthorizeInfo: parameters.authorizeInfo || null,
-            LicensedFeatures: parameters.licensedFeatures || null
+            LicensedFeatures: parameters.licensedFeatures ? { DataCompression: parameters.licensedFeatures.dataCompression } : null
         }, null, 0);
 
         return new Promise<void>((resolve, reject) => {
