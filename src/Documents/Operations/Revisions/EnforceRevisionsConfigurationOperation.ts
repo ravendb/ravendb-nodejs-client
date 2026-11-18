@@ -1,4 +1,4 @@
-import { IOperation, OperationIdResult, OperationResultType } from "../OperationAbstractions.js";
+import { AbstractAwaitableOperation, IOperation, OperationIdResult } from "../OperationAbstractions.js";
 import { IDocumentStore } from "../../IDocumentStore.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { HttpCache } from "../../../Http/HttpCache.js";
@@ -7,13 +7,15 @@ import { ServerNode } from "../../../Http/ServerNode.js";
 import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { Stream } from "node:stream";
 import { throwError } from "../../../Exceptions/index.js";
+import { RevisionsOperationParameters } from "./RevisionsOperationParameters.js";
 
-export class EnforceRevisionsConfigurationOperation implements IOperation<OperationIdResult> {
+export class EnforceRevisionsConfigurationOperation extends AbstractAwaitableOperation implements IOperation<OperationIdResult> {
     private readonly _parameters: EnforceRevisionsParameters;
 
     constructor()
     constructor(parameters: EnforceRevisionsParameters)
     constructor(parameters?: EnforceRevisionsParameters) {
+        super();
         this._parameters = parameters ?? {
             collections: null,
             includeForceCreated: false
@@ -23,18 +25,13 @@ export class EnforceRevisionsConfigurationOperation implements IOperation<Operat
         }
     }
 
-    public get resultType(): OperationResultType {
-        return "CommandResult";
-    }
-
     getCommand(store: IDocumentStore, conventions: DocumentConventions, httpCache: HttpCache): RavenCommand<OperationIdResult> {
         return new EnforceRevisionsConfigurationCommand(this._parameters, conventions);
     }
 }
 
-export interface EnforceRevisionsParameters {
+export interface EnforceRevisionsParameters extends RevisionsOperationParameters {
     includeForceCreated: boolean;
-    collections?: string[];
     /**
      * Limits the number of documents processed per second.
      * Use this to throttle the operation on large datasets.
