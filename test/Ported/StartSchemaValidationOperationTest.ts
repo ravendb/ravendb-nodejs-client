@@ -1,19 +1,12 @@
 import assert from "node:assert";
 import {
     IDocumentStore,
-    IOperationResult,
     StartSchemaValidationOperation,
-    StartSchemaValidationParameters
+    StartSchemaValidationParameters,
+    ValidateSchemaResult
 } from "../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../Utils/AssertExtensions.js";
-
-interface ValidateSchemaResult extends IOperationResult {
-    errorCount: number;
-    validatedCount: number;
-    errors: Record<string, string>;
-    lastEtag: number;
-}
 
 class User {
     public constructor(public age: number) {
@@ -81,6 +74,9 @@ const userSchema = JSON.stringify({
         assertThat(result.validatedCount).isEqualTo(2);
         assertThat(result.errorCount).isEqualTo(0);
         assertThat(Object.keys(result.errors)).hasSize(0);
+
+        const fields: (keyof ValidateSchemaResult)[] = ["errorCount", "errors", "lastEtag", "validatedCount"];
+        assert.deepStrictEqual(Object.keys(result).filter(key => key !== "$type").sort(), fields);
     });
 
     it("validates only the given collection", async () => {

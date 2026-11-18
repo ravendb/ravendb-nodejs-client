@@ -366,6 +366,7 @@ export * from "./Documents/Operations/SchemaValidation/ConfigureSchemaValidation
 export * from "./Documents/Operations/SchemaValidation/ConfigureSchemaValidationOperationResult.js";
 export * from "./Documents/Operations/SchemaValidation/GetSchemaValidationConfiguration.js";
 export * from "./Documents/Operations/SchemaValidation/StartSchemaValidationOperation.js";
+export type * from "./Documents/Operations/SchemaValidation/ValidateSchemaResult.js";
 
 export * from "./Documents/Operations/ToggleDatabasesStateOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation.js";
