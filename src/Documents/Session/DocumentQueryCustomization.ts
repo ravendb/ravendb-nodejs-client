@@ -63,6 +63,11 @@ export class DocumentQueryCustomization
         return this;
     }
 
+    public withTag(tag: string): IDocumentQueryCustomization {
+        this._query.withTag(tag);
+        return this;
+    }
+
     public noTracking(): IDocumentQueryCustomization {
         this._query._noTracking();
         return this;
