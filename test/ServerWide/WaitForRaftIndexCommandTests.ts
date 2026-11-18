@@ -1,4 +1,5 @@
 import assert from "node:assert"
+import { hoursToSeconds } from "date-fns";
 import { testContext, disposeTestDocumentStore, ClusterTestContext, RavenTestContext } from "../Utils/TestUtil.js";
 
 import {
@@ -23,7 +24,7 @@ describe("WaitForRaftIndexCommand", function () {
     it("waits for a raft index on the preferred node and on a selected node", async () => {
         const { raftCommandIndex } = await store.maintenance.send(new ConfigureExpirationOperation({
             disabled: false,
-            deleteFrequencyInSec: 60
+            deleteFrequencyInSec: hoursToSeconds(36)
         }));
 
         const executor = store.getRequestExecutor();
