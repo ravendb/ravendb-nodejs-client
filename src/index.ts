@@ -96,6 +96,8 @@ export { GetDatabaseTopologyCommand } from "./ServerWide/Commands/GetDatabaseTop
 export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopologyCommand.js";
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand.js";
 export type { NodeInfo } from "./ServerWide/Commands/NodeInfo.js";
+export type { OsInfo, OSType } from "./ServerWide/Operations/OsInfo.js";
+export type { RachisState } from "./ServerWide/RachisState.js";
 export { GetNodeInfoCommand } from "./ServerWide/Commands/GetNodeInfoCommand.js";
 export { AddClusterNodeCommand } from "./ServerWide/Commands/Cluster/AddClusterNodeCommand.js";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation.js";

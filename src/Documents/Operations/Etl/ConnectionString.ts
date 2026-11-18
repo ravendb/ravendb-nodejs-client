@@ -80,8 +80,9 @@ export class Authentication {
 }
 
 export interface ApiKeyAuthentication {
-    apiKeyId: string;
-    apiKey: string;
+    apiKeyId?: string;
+    apiKey?: string;
+    encodedApiKey?: string;
 }
 
 export interface BasicAuthentication {
