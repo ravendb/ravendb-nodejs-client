@@ -68,6 +68,8 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
                     /^\w+ConnectionStrings\./i,
                     /^rollingIndexes\.[^.]+\.activeDeployments\.[^.]+$/i,
                     /^indexesHistory\.[^.]+\.[^.]+\.rollingDeployment\.[^.]+$/i,
+                    /^schemaValidation\.validatorsPerCollection\.[^.]+$/i,
+                    /^remoteAttachments\.destinations\.[^.]+$/i,
                     /^timeSeries\./i
                 ]
             })

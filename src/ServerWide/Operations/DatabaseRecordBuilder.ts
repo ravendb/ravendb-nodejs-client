@@ -14,6 +14,7 @@ import {
     ElasticSearchConnectionString,
     OlapConnectionString, QueueConnectionString,
     RavenConnectionString,
+    SnowflakeConnectionString,
     SqlConnectionString
 } from "../../Documents/Operations/Etl/ConnectionString.js";
 import { RavenEtlConfiguration } from "../../Documents/Operations/Etl/RavenEtlConfiguration.js";
@@ -23,6 +24,7 @@ import {
 } from "../../Documents/Operations/Etl/ElasticSearch/ElasticSearchEtlConfiguration.js";
 import { OlapEtlConfiguration } from "../../Documents/Operations/Etl/Olap/OlapEtlConfiguration.js";
 import { QueueEtlConfiguration } from "../../Documents/Operations/Etl/Queue/QueueEtlConfiguration.js";
+import { SnowflakeEtlConfiguration } from "../../Documents/Operations/Etl/Snowflake/SnowflakeEtlConfiguration.js";
 import { PostgreSqlConfiguration } from "./Integrations/PostgreSql/PostgreSqlConfiguration.js";
 import { ExternalReplication } from "../../Documents/Replication/ExternalReplication.js";
 import { PullReplicationAsSink } from "../../Documents/Operations/Replication/PullReplicationAsSink.js";
@@ -43,7 +45,7 @@ import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { ShardingConfiguration } from "../Sharding/ShardingConfiguration.js";
 import { IShardTopologyConfigurationBuilder } from "./Builder/IShardTopologyConfigurationBuilder.js";
 import { ITopologyConfigurationBuilder } from "./Builder/ITopologyConfigurationBuilder.js";
-import { AiConnectionString } from "../../Documents/Operations/AI/index.js";
+import { AiConnectionString, EmbeddingsGenerationConfiguration } from "../../Documents/Operations/AI/index.js";
 
 export class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
     IDatabaseRecordBuilder,
@@ -126,6 +128,16 @@ export class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
 
         this._databaseRecord.queueConnectionStrings ??= {};
         this._databaseRecord.queueConnectionStrings[connectionString.name] = connectionString;
+        return this;
+    }
+
+    addSnowflakeConnectionString(connectionString: SnowflakeConnectionString): this {
+        if (!connectionString) {
+            throw new Error("ConnectionString cannot be null");
+        }
+
+        this._databaseRecord.snowflakeConnectionStrings ??= {};
+        this._databaseRecord.snowflakeConnectionStrings[connectionString.name] = connectionString;
         return this;
     }
 
@@ -213,6 +225,28 @@ export class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
 
         this._databaseRecord.queueEtls ??= [];
         this._databaseRecord.queueEtls.push(configuration);
+
+        return this;
+    }
+
+    addSnowflakeEtl(configuration: SnowflakeEtlConfiguration): this {
+        if (!configuration) {
+            throw new Error("Configuration cannot be null");
+        }
+
+        this._databaseRecord.snowflakeEtls ??= [];
+        this._databaseRecord.snowflakeEtls.push(configuration);
+
+        return this;
+    }
+
+    addEmbeddingsGeneration(configuration: EmbeddingsGenerationConfiguration): this {
+        if (!configuration) {
+            throw new Error("Configuration cannot be null");
+        }
+
+        this._databaseRecord.embeddingsGenerations ??= [];
+        this._databaseRecord.embeddingsGenerations.push(configuration);
 
         return this;
     }
