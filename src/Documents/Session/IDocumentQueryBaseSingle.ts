@@ -54,4 +54,10 @@ export interface IDocumentQueryBaseSingle<T extends object> {
      * instance that will evaluate the query only when needed.
      */
     countLazily(): Lazy<number>;
+
+    /**
+     * Register the query as a lazy-count query in the session and return a lazy
+     * instance that will evaluate the query only when needed.
+     */
+    longCountLazily(): Lazy<number>;
 }
