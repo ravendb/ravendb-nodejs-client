@@ -26,15 +26,18 @@ export class LazySessionOperations implements ILazySessionOperations {
 
     public load<TEntity extends object>(
         ids: string[],
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
+        clazz: ObjectTypeDescriptor<TEntity>,
+        onEval?: (results: EntitiesCollectionObject<TEntity>) => void): Lazy<EntitiesCollectionObject<TEntity>>;
     public load<TEntity extends object>(
         id: string,
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null>;
+        clazz: ObjectTypeDescriptor<TEntity>,
+        onEval?: (result: TEntity | null) => void): Lazy<TEntity | null>;
     public load<TEntity extends object>(ids: string[]): Lazy<EntitiesCollectionObject<TEntity>>;
     public load<TEntity extends object>(id: string): Lazy<TEntity | null>;
     public load<TEntity extends object>(
         idOrIds: string | string[],
-        clazz?: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null> | Lazy<EntitiesCollectionObject<TEntity>> {
+        clazz?: ObjectTypeDescriptor<TEntity>,
+        onEval?: (result: any) => void): Lazy<TEntity | null> | Lazy<EntitiesCollectionObject<TEntity>> {
         const isMultipleIds = Array.isArray(idOrIds);
         if (!isMultipleIds && this._delegate.isLoaded(idOrIds as string)) {
             return new Lazy(() =>
@@ -43,7 +46,10 @@ export class LazySessionOperations implements ILazySessionOperations {
         }
 
         const ids: string[] = isMultipleIds ? idOrIds as string[] : [idOrIds as string];
-        const result = this._delegate.lazyLoadInternal(ids, [], clazz);
+        const onEvalResults = onEval && !isMultipleIds
+            ? (results: EntitiesCollectionObject<TEntity>) => onEval(results[idOrIds as string])
+            : onEval;
+        const result = this._delegate.lazyLoadInternal(ids, [], clazz, onEvalResults);
         return isMultipleIds
             ? result
             : new Lazy(async () => (await result.getValue())[idOrIds as string]);

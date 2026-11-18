@@ -4,7 +4,8 @@ import {
     IDocumentStore,
     IndexDefinition,
     IndexFieldOptions,
-    PutIndexesOperation
+    PutIndexesOperation,
+    SuggestionsResponseObject
 } from "../../../src/index.js";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
 import { User } from "../../Assets/Entities.js";
@@ -68,6 +69,40 @@ describe("SuggestionsLazyTest", function () {
             assert.strictEqual(value["name"].suggestions[0], "oren");
 
             assert.strictEqual(s.advanced.numberOfRequests, oldRequests + 1);
+        }
+    });
+
+    it("calls the executeLazy callback when pending lazy operations are executed", async () => {
+        const indexDefinition = new IndexDefinition();
+        indexDefinition.name = "Test";
+        indexDefinition.maps = new Set<string>(["from doc in docs.Users select new { doc.name }"]);
+
+        const indexFieldOptions = new IndexFieldOptions();
+        indexFieldOptions.suggestions = true;
+        indexDefinition.fields = {
+            name: indexFieldOptions
+        };
+
+        await store.maintenance.send(new PutIndexesOperation(indexDefinition));
+
+        {
+            const s = store.openSession();
+            await s.store(Object.assign(new User(), { name: "Oren" }));
+            await s.saveChanges();
+        }
+
+        await testContext.waitForIndexing(store);
+
+        {
+            const s = store.openSession();
+            let suggestions: SuggestionsResponseObject;
+            s.query({ indexName: "test", documentType: User })
+                .suggestUsing(x => x.byField("name", "Owen"))
+                .executeLazy(x => suggestions = x);
+
+            await s.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.deepStrictEqual(suggestions["name"].suggestions, ["oren"]);
         }
     });
 });

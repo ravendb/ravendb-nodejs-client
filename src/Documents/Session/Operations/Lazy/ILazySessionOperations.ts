@@ -23,7 +23,8 @@ export interface ILazySessionOperations {
      */
     load<TEntity extends object>(
         ids: string[],
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<EntitiesCollectionObject<TEntity>>;
+        clazz: ObjectTypeDescriptor<TEntity>,
+        onEval?: (results: EntitiesCollectionObject<TEntity>) => void): Lazy<EntitiesCollectionObject<TEntity>>;
 
     /**
      * Loads the specified entities with the specified ids.
@@ -40,7 +41,8 @@ export interface ILazySessionOperations {
      */
     load<TEntity extends object>(
         id: string,
-        clazz: ObjectTypeDescriptor<TEntity>): Lazy<TEntity | null>;
+        clazz: ObjectTypeDescriptor<TEntity>,
+        onEval?: (result: TEntity | null) => void): Lazy<TEntity | null>;
 
     /**
      * Loads multiple entities that contain common prefix.

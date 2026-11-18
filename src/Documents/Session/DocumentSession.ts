@@ -1068,7 +1068,8 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     public lazyLoadInternal<TResult extends object>(
         ids: string[],
         includes: string[],
-        clazz: ObjectTypeDescriptor<TResult>): Lazy<EntitiesCollectionObject<TResult>> {
+        clazz: ObjectTypeDescriptor<TResult>,
+        onEval?: (results: EntitiesCollectionObject<TResult>) => void): Lazy<EntitiesCollectionObject<TResult>> {
 
         if (this.checkIfIdAlreadyIncluded(ids, includes)) {
             return new Lazy(() => this.load(ids, { documentType: clazz }));
@@ -1082,7 +1083,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
             .byIds(ids)
             .withIncludes(includes);
 
-        return this.addLazyOperation(lazyOp);
+        return this.addLazyOperation(lazyOp, onEval);
     }
 
     public async stream<T extends object>(query: IDocumentQuery<T>): Promise<DocumentResultStream<T>>;

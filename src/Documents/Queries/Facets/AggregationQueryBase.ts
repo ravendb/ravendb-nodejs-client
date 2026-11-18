@@ -34,7 +34,7 @@ export abstract class AggregationQueryBase {
         return this._processResults(command.result);
     }
 
-    public executeLazy(): Lazy<FacetResultObject> {
+    public executeLazy(onEval?: (result: FacetResultObject) => void): Lazy<FacetResultObject> {
         this._query = this._getIndexQuery();
         return (this._session as DocumentSession)
             .addLazyOperation(
@@ -43,7 +43,8 @@ export abstract class AggregationQueryBase {
                     this._query,
                     this,
                     (queryResult: QueryResult) =>
-                        this._processResults(queryResult)));
+                        this._processResults(queryResult)),
+                onEval);
     }
 
     protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;
