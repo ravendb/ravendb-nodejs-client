@@ -2426,6 +2426,10 @@ export abstract class AbstractDocumentQuery<T extends object, TSelf extends Abst
         return (this._theSession as DocumentSession).addLazyCountOperation(lazyQueryOperation);
     }
 
+    public longCountLazily(): Lazy<number> {
+        return this.countLazily();
+    }
+
     public _suggestUsing(suggestion: SuggestionBase) {
         if (!suggestion) {
             throwError("InvalidArgumentException", "suggestion cannot be null");
