@@ -369,6 +369,7 @@ export * from "./Documents/Operations/SchemaValidation/GetSchemaValidationConfig
 export * from "./Documents/Operations/ToggleDatabasesStateOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StartTransactionsRecordingOperation.js";
 export * from "./Documents/Operations/TransactionsRecording/StopTransactionsRecordingOperation.js";
+export * from "./Documents/Operations/TransactionsRecording/ReplayTransactionsRecordingOperation.js";
 export * from "./Documents/StartingPointChangeVector.js";
 
 // AI
