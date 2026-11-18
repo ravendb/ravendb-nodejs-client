@@ -11,6 +11,7 @@ import { ClientConfiguration } from "../Operations/Configuration/ClientConfigura
 import { ReadBalanceBehavior } from "../../Http/ReadBalanceBehavior.js";
 import { SessionPatchBehavior } from "./SessionPatchBehavior.js";
 import { throwError } from "../../Exceptions/index.js";
+import { StringUtil } from "../../Utility/StringUtil.js";
 import { CONSTANTS } from "../../Constants.js";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { DateUtil, DateUtilOpts } from "../../Utility/DateUtil.js";
@@ -63,6 +64,9 @@ export class DocumentConventions {
     private _disableAtomicDocumentWritesInClusterWideTransaction: boolean;
 
     private _disableTcpCompression = true; // not yet supported
+
+    private _disableTopologyCache = true;
+    private _topologyCacheLocation: string;
 
     private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
 
@@ -348,6 +352,28 @@ export class DocumentConventions {
 
     public get isDisableTcpCompression() {
         return this._disableTcpCompression;
+    }
+
+    public get disableTopologyCache() {
+        return this._disableTopologyCache;
+    }
+
+    public set disableTopologyCache(value: boolean) {
+        this._assertNotFrozen();
+        this._disableTopologyCache = value;
+    }
+
+    public get topologyCacheLocation() {
+        return this._topologyCacheLocation;
+    }
+
+    public set topologyCacheLocation(value: string) {
+        this._assertNotFrozen();
+        if (StringUtil.isNullOrWhitespace(value)) {
+            throwError("InvalidArgumentException", "Topology cache location cannot be null or whitespace");
+        }
+
+        this._topologyCacheLocation = value;
     }
 
     /**

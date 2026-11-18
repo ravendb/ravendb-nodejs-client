@@ -13,10 +13,13 @@ import { UpdateTopologyParameters } from "./UpdateTopologyParameters.js";
 import { HEADERS } from "../Constants.js";
 import { Semaphore } from "../Utility/Semaphore.js";
 import { EOL } from "../Utility/OsUtil.js";
+import { TopologyCacheKind, trySaveTopology } from "./TopologyLocalCache.js";
 
 const log = getLogger({ module: "ClusterRequestExecutor" });
 
 export class ClusterRequestExecutor extends RequestExecutor {
+
+    protected readonly _topologyCacheKind: TopologyCacheKind = "cluster";
 
     private _clusterTopologySemaphore = new Semaphore();
 
@@ -124,6 +127,7 @@ export class ClusterRequestExecutor extends RequestExecutor {
 
             const results = command.result;
             const newTopology = ServerNode.createFrom(results.topology, results.etag);
+            await trySaveTopology(this._topologyCacheKind, this._topologyHash, null, newTopology, this.conventions);
 
             this._updateNodeSelector(newTopology, parameters.forceUpdate);
 
