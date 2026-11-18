@@ -3,7 +3,9 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
 import {
     DatabaseRecordWithEtag,
     IDocumentStore,
-    GetDatabaseRecordOperation
+    GetDatabaseRecordOperation,
+    IndexDefinition,
+    PutIndexesOperation
 } from "../../src/index.js";
 import { CreateSampleDataOperation } from "../Utils/CreateSampleDataOperation.js";
 import { assertThat } from "../Utils/AssertExtensions.js";
@@ -48,5 +50,54 @@ describe("GetDatabaseRecordTest", function () {
                     .isTrue();
             }
         }
+    });
+
+    it("keeps server casing of dictionary keys containing dots", async () => {
+        const indexName = "Users/By.Name";
+        const indexDefinition = new IndexDefinition();
+        indexDefinition.name = indexName;
+        indexDefinition.maps = new Set(["from u in docs.Users select new { u.Name }"]);
+        indexDefinition.fields = { Name: { storage: "Yes" } };
+        indexDefinition.configuration = { "Indexing.MapTimeoutInSec": "30" };
+        indexDefinition.additionalSources = { "Helper.Src": "namespace Helpers { public static class Helper {} }" };
+        await store.maintenance.send(new PutIndexesOperation(indexDefinition));
+
+        {
+            const session = store.openSession();
+            await session.store({ Name: "John", Address: { City: "Paris" } }, "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            await session.query({ collection: "Users" })
+                .whereEquals("Address.City", "Paris")
+                .whereEquals("Name", "John")
+                .all();
+        }
+
+        const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
+
+        assert.deepStrictEqual(Object.keys(record.indexes), [indexName]);
+        assert.deepStrictEqual(Object.keys(record.indexesHistory), [indexName]);
+
+        const index = record.indexes[indexName];
+        assert.strictEqual(index.name, indexName);
+        assert.strictEqual(index.fields.Name.storage, "Yes");
+        assert.strictEqual(index.configuration["Indexing.MapTimeoutInSec"], "30");
+        assert.deepStrictEqual(Object.keys(index.additionalSources), ["Helper.Src"]);
+
+        const historyDefinition = record.indexesHistory[indexName][0].definition;
+        assert.strictEqual(historyDefinition.fields.Name.storage, "Yes");
+        assert.strictEqual(historyDefinition.configuration["Indexing.MapTimeoutInSec"], "30");
+        assert.ok(record.indexesHistory[indexName][0].createdAt instanceof Date);
+
+        const autoIndexNames = Object.keys(record.autoIndexes);
+        assert.strictEqual(autoIndexNames.length, 1);
+        const autoIndex = record.autoIndexes[autoIndexNames[0]];
+        assert.strictEqual(autoIndexNames[0], autoIndex.name);
+        assert.ok(autoIndex.name.includes("Address.City"));
+        assert.deepStrictEqual(Object.keys(autoIndex.mapFields).sort(), ["Address.City", "Name"]);
+        assert.strictEqual(autoIndex.mapFields["Address.City"].indexing, "Default");
     });
 });

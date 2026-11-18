@@ -61,28 +61,31 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             .objectKeysTransform({
                 defaultTransform: ObjectUtil.camel,
                 ignorePaths: [
-                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|rollingIndexes)\.[^.]+$/i,
-                    // Connection string names are dictionary keys and must keep their original casing.
-                    // Names may contain dots, so the whole subtree is excluded here and the fields
-                    // of each entry are camel-cased individually below.
-                    /^\w+ConnectionStrings\./i,
-                    /^rollingIndexes\.[^.]+\.activeDeployments\.[^.]+$/i,
-                    /^indexesHistory\.[^.]+\.[^.]+\.rollingDeployment\.[^.]+$/i,
+                    // Dictionary keys (names) may contain dots, so whole subtrees keep server casing and each entry is camel-cased below.
+                    /^(indexes|sorters|autoIndexes|settings|indexesHistory|rollingIndexes|\w+ConnectionStrings)\./i,
                     /^timeSeries\./i
                 ]
             })
             .process(bodyStream);
 
-        // The *ConnectionStrings subtrees were left with their server-side casing to preserve
-        // the names (dictionary keys); camel-case the fields of each entry here.
+        const indexDefinitionDictionaries = ["fields", "configuration", "additionalSources"];
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.indexes, indexDefinitionDictionaries);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.autoIndexes, ["mapFields", "groupByFields"]);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.indexesHistory, [
+            ...indexDefinitionDictionaries.map(name => "definition." + name),
+            "rollingDeployment"
+        ]);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.rollingIndexes, ["activeDeployments"]);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.sorters);
+
         // A newly added *ConnectionStrings field on the database record must be listed here too.
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.ravenConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.sqlConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.olapConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.elasticSearchConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.queueConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.snowflakeConnectionStrings);
-        GetDatabaseRecordCommand._camelCaseConnectionStringEntries(this.result.aiConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.ravenConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.sqlConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.olapConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.elasticSearchConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.queueConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.snowflakeConnectionStrings);
+        GetDatabaseRecordCommand._camelCaseEntries(this.result.aiConnectionStrings);
 
         if (this.result.rollingIndexes) {
             for (const index of Object.values(this.result.rollingIndexes)) {
@@ -117,16 +120,36 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
         return body;
     }
 
-    private static _camelCaseConnectionStringEntries(dict: Record<string, object>): void {
+    private static _camelCaseEntries(dict: Record<string, unknown>, nestedDictionaries: string[] = []): void {
         if (!dict) {
             return;
         }
 
-        for (const [name, fields] of Object.entries(dict)) {
-            if (fields) {
-                dict[name] = ObjectUtil.transformObjectKeys(fields, { defaultTransform: ObjectUtil.camel });
-            }
+        for (const [name, entry] of Object.entries(dict)) {
+            dict[name] = GetDatabaseRecordCommand._camelCaseEntry(entry, nestedDictionaries);
         }
+    }
+
+    private static _camelCaseEntry(entry: unknown, nestedDictionaries: string[]): unknown {
+        if (Array.isArray(entry)) {
+            return entry.map(item => GetDatabaseRecordCommand._camelCaseEntry(item, nestedDictionaries));
+        }
+
+        if (!entry || typeof entry !== "object") {
+            return entry;
+        }
+
+        const result = ObjectUtil.transformObjectKeys(entry, {
+            defaultTransform: ObjectUtil.camel,
+            ignorePaths: nestedDictionaries.map(path => new RegExp("^" + path.replaceAll(".", "\\.") + "\\."))
+        });
+
+        for (const path of nestedDictionaries) {
+            const nested = path.split(".").reduce((value, key) => value?.[key], result as any);
+            GetDatabaseRecordCommand._camelCaseEntries(nested);
+        }
+
+        return result;
     }
 
     static mapRollingDeployment(input: ServerResponse<Record<string, RollingIndexDeployment>>): Record<string, RollingIndexDeployment> {
