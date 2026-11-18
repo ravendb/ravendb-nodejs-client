@@ -1,7 +1,8 @@
 import assert from "node:assert"
-import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
+import { testContext, disposeTestDocumentStore, ClusterTestContext, RavenTestContext } from "../Utils/TestUtil.js";
 
 import {
+    DocumentStore,
     IDocumentStore,
     GetClusterTopologyCommand
 } from "../../src/index.js";
@@ -35,5 +36,45 @@ describe("GetClusterTopologyCommand", function () {
         assert.strictEqual(Object.keys(topology.watchers).length, 0);
         assert.strictEqual(Object.keys(topology.promotables).length, 0);
         assert.strictEqual(Object.keys(topology.getAllNodes()).length, 1);
+    });
+});
+
+(RavenTestContext.isPullRequest ? describe.skip : describe)("GetClusterTopologyCommand in a cluster", function () {
+
+    const clusterTestContext = new ClusterTestContext();
+
+    it("reports the status of the other nodes keyed by node tag", async () => {
+        const cluster = await clusterTestContext.createRaftCluster(2);
+        try {
+            const database = clusterTestContext.getDatabaseName();
+            const leader = cluster.getInitialLeader();
+            await cluster.createDatabase(database, 2, leader.url);
+
+            const store = new DocumentStore(leader.url, database);
+            try {
+                store.conventions.disableTopologyUpdates = true;
+                store.initialize();
+
+                const command = new GetClusterTopologyCommand();
+                await store.getRequestExecutor().execute(command);
+                const { status } = command.result;
+
+                const followerTag = cluster.nodes.find(x => x !== leader).nodeTag;
+                assert.deepStrictEqual([...status.keys()], [followerTag]);
+
+                const followerStatus = status.get(followerTag);
+                assert.strictEqual(followerStatus.connected, true);
+                assert.strictEqual(followerStatus.errorDetails, null);
+                assert.strictEqual(typeof followerStatus.lastSentMessage, "string");
+                assert.ok(followerStatus.lastMatchingIndex > 0);
+                assert.ok(followerStatus.lastSent instanceof Date);
+                assert.ok(followerStatus.lastReply instanceof Date);
+                assert.ok(followerStatus.lastSent.getFullYear() > 2000);
+            } finally {
+                store.dispose();
+            }
+        } finally {
+            cluster.dispose();
+        }
     });
 });
