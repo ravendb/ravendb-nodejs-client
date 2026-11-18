@@ -175,6 +175,7 @@ describe("query streaming", function () {
             function assertStats(stats) {
                 assert.ok(stats);
                 assert.strictEqual(stats.indexName, "Users/ByName");
+                assert.strictEqual(stats.isStale, false);
                 assert.strictEqual(stats.totalResults, 100);
                 assert.ok(stats.indexTimestamp instanceof Date);
                 assert.strictEqual(stats.indexTimestamp.toDateString(), new Date().toDateString());

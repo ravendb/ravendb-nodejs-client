@@ -4,6 +4,7 @@ import {
     AiConnectionString,
     EmbeddedSettings,
     EmbeddingsGenerationConfiguration,
+    GetDatabaseRecordOperation,
     GetOngoingTaskInfoOperation,
     IDocumentStore,
     PutConnectionStringOperation,
@@ -392,6 +393,46 @@ import {assertThat} from "../../../Utils/AssertExtensions.js";
         assertThat(task.taskId).isEqualTo(taskId);
         assertThat(task.taskType).isEqualTo("EmbeddingsGeneration");
         assertThat(task.taskName).isEqualTo(config.name);
+    });
+
+    it("auto index created by a vector search using the task keeps the task identifier", async () => {
+        const csName = await putEmbeddingsConnectionString(store);
+
+        const config = new EmbeddingsGenerationConfiguration();
+        config.name = "Products Embeddings Auto Index";
+        config.collection = "Products";
+        config.connectionStringName = csName;
+        config.identifier = config.generateIdentifier();
+        config.embeddingsPathConfigurations = [
+            {
+                path: "Description",
+                chunkingOptions: {
+                    chunkingMethod: "PlainTextSplit",
+                    maxTokensPerChunk: 256,
+                    overlapTokens: 0
+                }
+            }
+        ];
+        config.chunkingOptionsForQuerying = {
+            chunkingMethod: "PlainTextSplit",
+            maxTokensPerChunk: 256,
+            overlapTokens: 0
+        };
+
+        await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
+
+        await store.openSession()
+            .query({ collection: "Products" })
+            .vectorSearch(field => field.withText("Description").usingTask(config.identifier),
+                factory => factory.byText("laptop"))
+            .all();
+
+        const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
+        const [autoIndex] = Object.values(record.autoIndexes);
+        const [field] = Object.values(autoIndex.mapFields);
+
+        assertThat(field.vector.embeddingsGenerationTaskIdentifier).isEqualTo(config.identifier);
+        assertThat(field.vector.sourceFieldName).isEqualTo("Description");
     });
 });
 
