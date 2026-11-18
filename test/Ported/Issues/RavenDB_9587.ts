@@ -49,7 +49,7 @@ describe("RavenDB-9587", function () {
 
     });
 
-    it.skip("queryPlan", async function () {
+    it("queryPlan", async function () {
         {
             const session = store.openSession();
             const company = new Company();
