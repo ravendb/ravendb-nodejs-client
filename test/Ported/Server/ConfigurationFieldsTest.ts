@@ -148,6 +148,33 @@ describe("ConfigurationFieldsTest", function () {
             assert.strictEqual(task.pinToMentorNode, true);
         });
 
+        it("returns frequencies, upload mode and cloud destination of a periodic backup task", async () => {
+            const backupConfiguration: PeriodicBackupConfiguration = {
+                name: "cloudBackup",
+                disabled: true,
+                backupType: "Backup",
+                fullBackupFrequency: "0 0 1 1 *",
+                incrementalBackupFrequency: "0 0 2 1 *",
+                backupUploadMode: "DirectUpload",
+                s3Settings: {
+                    disabled: false,
+                    bucketName: "bucket",
+                    awsRegionName: "us-east-1",
+                    awsAccessKey: "access-key",
+                    awsSecretKey: "secret-key"
+                } as PeriodicBackupConfiguration["s3Settings"]
+            };
+
+            await store.maintenance.send(new UpdatePeriodicBackupOperation(backupConfiguration));
+
+            const task = await store.maintenance.send(
+                new GetOngoingTaskInfoOperation("cloudBackup", "Backup")) as OngoingTaskBackup;
+            assert.strictEqual(task.fullBackupFrequency, "0 0 1 1 *");
+            assert.strictEqual(task.incrementalBackupFrequency, "0 0 2 1 *");
+            assert.strictEqual(task.backupUploadMode, "DirectUpload");
+            assert.strictEqual(task.hasCloudBackup, true);
+        });
+
         it("stores pinToMentorNode of an external replication and a RavenDB ETL", async () => {
             const connectionString = new RavenConnectionString();
             connectionString.name = "cs";

@@ -11,6 +11,7 @@ import {
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../../Utils/TestUtil.js";
 import { ReplicationTestContext } from "../../../Utils/ReplicationTestContext.js";
 import { User } from "../../../Assets/Entities.js";
+import assert from "node:assert";
 import { assertThat } from "../../../Utils/AssertExtensions.js";
 import { delay } from "../../../../src/Utility/PromiseUtil.js";
 
@@ -111,6 +112,9 @@ import { delay } from "../../../../src/Utility/PromiseUtil.js";
                     .isEqualTo("Active");
                 assertThat(ongoing.taskType)
                     .isEqualTo("PullReplicationAsHub");
+                assert.match(ongoing.handlerId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+                assert.strictEqual(typeof ongoing.lastSentEtag, "number");
+                assert.strictEqual(typeof ongoing.lastDatabaseEtag, "number");
             } finally {
                 hub.dispose();
             }
