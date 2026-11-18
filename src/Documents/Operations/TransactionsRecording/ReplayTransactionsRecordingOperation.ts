@@ -55,7 +55,9 @@ class ReplayTransactionsRecordingCommand extends RavenCommand<ReplayTxOperationR
     public createRequest(node: ServerNode): HttpRequestParameters {
         return {
             uri: node.url + "/databases/" + node.database + "/transactions/replay?operationId=" + this._operationId,
-            method: "POST"
+            method: "POST",
+            // the file is appended in send(); the request executor picks Accept-Encoding by body type, and fetch cannot decode zstd
+            body: new FormData()
         };
     }
 
@@ -67,9 +69,8 @@ class ReplayTransactionsRecordingCommand extends RavenCommand<ReplayTxOperationR
             this._replayData = await readToBuffer(this._replayData);
         }
 
-        const form = new FormData();
-        form.append("file", new Blob([this._replayData as Buffer]), "name");
-        return super.send(agent, { ...requestOptions, body: form });
+        (requestOptions.body as FormData).append("file", new Blob([this._replayData as Buffer]), "name");
+        return super.send(agent, requestOptions);
     }
 
     public async setResponseAsync(bodyStream: Stream, fromCache: boolean): Promise<string> {
