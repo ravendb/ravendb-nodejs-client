@@ -186,11 +186,21 @@ export type RavenErrorType = "RavenException"
     | "UnsupportedAiQueryParameterException"
     | "AiAgentParameterCollisionException";
 
+export type ViolationOnType = "Document" | "CompareExchange";
+
+export interface ConcurrencyViolation {
+    type: ViolationOnType;
+    id: string;
+    expected: number;
+    actual: number;
+}
+
 export interface ExceptionSchema {
     url: string;
     type: string;
     message: string;
     error: string;
+    concurrencyViolations?: ConcurrencyViolation[];
 }
 
 export interface ExceptionDispatcherArgs {
@@ -262,7 +272,10 @@ export class ExceptionDispatcher {
         }
 
         if (schema.type.includes("ClusterTransactionConcurrencyException")) {
-            return getError("ClusterTransactionConcurrencyException", schema.message, null, { json });
+            return getError("ClusterTransactionConcurrencyException", schema.message, null, {
+                json,
+                concurrencyViolations: schema.concurrencyViolations
+            });
         }
 
         return getError("ConcurrencyException", schema.message);
