@@ -88,6 +88,10 @@ export class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements
                 {
                     path: INDEX_DEF_FIELDS_REGEX,
                     transform: x => x
+                },
+                {
+                    path: /^Indexes\.\[]\.SchemaDefinitions$/,
+                    transform: x => x
                 }
             ]
         });
