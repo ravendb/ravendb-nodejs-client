@@ -62,7 +62,7 @@ export class DocumentConventions {
 
     private _disableAtomicDocumentWritesInClusterWideTransaction: boolean;
 
-    private _disableTcpCompression = true;
+    private _disableTcpCompression = false;
 
     private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
 
