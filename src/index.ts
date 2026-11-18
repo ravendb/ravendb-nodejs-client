@@ -97,6 +97,7 @@ export { GetClusterTopologyCommand } from "./ServerWide/Commands/GetClusterTopol
 export { GetTcpInfoCommand } from "./ServerWide/Commands/GetTcpInfoCommand.js";
 export type { NodeInfo } from "./ServerWide/Commands/NodeInfo.js";
 export { GetNodeInfoCommand } from "./ServerWide/Commands/GetNodeInfoCommand.js";
+export { WaitForRaftIndexCommand } from "./ServerWide/Commands/WaitForRaftIndexCommand.js";
 export { AddClusterNodeCommand } from "./ServerWide/Commands/Cluster/AddClusterNodeCommand.js";
 export { CreateDatabaseOperation } from "./ServerWide/Operations/CreateDatabaseOperation.js";
 export type { DatabaseRecord, ConflictSolver, ScriptResolver } from "./ServerWide/index.js";
