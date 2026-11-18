@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
+import { milliseconds } from "date-fns";
 import {
     ConfigureTimeSeriesOperation,
     DeleteDatabasesOperation,
@@ -86,7 +87,7 @@ import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext, testCo
 
         const configuration = new TimeSeriesConfiguration();
         configuration.collections.set("Users", users);
-        configuration.policyCheckFrequencyInMs = 1000;
+        configuration.policyCheckFrequencyInMs = milliseconds({ seconds: 1 });
         return configuration;
     }
 
