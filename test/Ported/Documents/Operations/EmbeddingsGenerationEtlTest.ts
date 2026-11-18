@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import {disposeTestDocumentStore, RavenTestContext, testContext} from "../../../Utils/TestUtil.js";
 import {
     AddEmbeddingsGenerationOperation,
@@ -6,6 +7,7 @@ import {
     EmbeddingsGenerationConfiguration,
     GetOngoingTaskInfoOperation,
     IDocumentStore,
+    OngoingTaskEmbeddingsGeneration,
     PutConnectionStringOperation,
     UpdateEmbeddingsGenerationOperation
 } from "../../../../src/index.js";
@@ -386,12 +388,29 @@ import {assertThat} from "../../../Utils/AssertExtensions.js";
         assertThat(addResult.raftCommandIndex).isNotNull();
 
         const getOngoingTaskOp = new GetOngoingTaskInfoOperation(config.name, "EmbeddingsGeneration");
-        const task = await store.maintenance.send(getOngoingTaskOp);
+        const task = await store.maintenance.send(getOngoingTaskOp) as OngoingTaskEmbeddingsGeneration;
 
         assertThat(task).isNotNull();
         assertThat(task.taskId).isEqualTo(taskId);
         assertThat(task.taskType).isEqualTo("EmbeddingsGeneration");
         assertThat(task.taskName).isEqualTo(config.name);
+        assertThat(task.connectionStringName).isEqualTo(csName);
+
+        const configuration = task.configuration;
+        assert.ok(configuration instanceof EmbeddingsGenerationConfiguration);
+        assertThat(configuration.identifier).isEqualTo(config.identifier);
+        assertThat(configuration.collection).isEqualTo("Products");
+        assertThat(configuration.quantization).isEqualTo("Int8");
+        assertThat(configuration.embeddingsCacheExpiration).isEqualTo(config.embeddingsCacheExpiration);
+        assertThat(configuration.embeddingsCacheForQueryingExpiration).isEqualTo(config.embeddingsCacheForQueryingExpiration);
+        assert.deepStrictEqual(configuration.embeddingsPathConfigurations.map(x => x.path), ["Description"]);
+
+        configuration.storeChunkText = true;
+        await store.maintenance.send(new UpdateEmbeddingsGenerationOperation(task.taskId, configuration));
+
+        const updated = await store.maintenance.send(getOngoingTaskOp) as OngoingTaskEmbeddingsGeneration;
+        assertThat(updated.configuration.storeChunkText).isTrue();
+        assertThat(updated.configuration.embeddingsCacheExpiration).isEqualTo(config.embeddingsCacheExpiration);
     });
 });
 
