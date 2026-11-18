@@ -1,4 +1,4 @@
-import { EntitiesCollectionObject, IDocumentStore, Lazy } from "../../../src/index.js";
+import { CompareExchangeValue, EntitiesCollectionObject, IDocumentStore, Lazy, SessionOptions } from "../../../src/index.js";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
 import { Company, User } from "../../Assets/Entities.js";
 import assert from "node:assert"
@@ -232,6 +232,88 @@ describe("LazyTest", function () {
 
             assert.strictEqual(evaluated.length, 1);
             assert.strictEqual(evaluated[0], users);
+        }
+    });
+
+    it("calls the load callback with the entity when pending lazy operations are executed", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "oren" }), "users/1-A");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let user: User;
+            session.advanced.lazily.load("users/1-A", User, x => user = x);
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+            assert.strictEqual(user.name, "oren");
+        }
+    });
+
+    it("calls each load callback once the batch is executed", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Company(), { id: "companies/1" }), "companies/1");
+            await session.store(Object.assign(new Company(), { id: "companies/2" }), "companies/2");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let company1: Company;
+            let company2: Company;
+            session.advanced.lazily.load("companies/1", Company, x => company1 = x);
+            session.advanced.lazily.load("companies/2", Company, x => company2 = x);
+            assert.strictEqual(company1, undefined);
+            assert.strictEqual(company2, undefined);
+
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+            assert.strictEqual(company1.id, "companies/1");
+            assert.strictEqual(company2.id, "companies/2");
+        }
+    });
+
+    it("calls the multi load callback with the loaded entities", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "oren" }), "users/1");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            let users: EntitiesCollectionObject<User>;
+            const lazyUsers = session.advanced.lazily.load(["users/1", "users/2"], User, x => users = x);
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.strictEqual(users, await lazyUsers.getValue());
+            assert.strictEqual(users["users/1"].name, "oren");
+            assert.strictEqual(users["users/2"], null);
+        }
+    });
+
+    it("calls the compare exchange callbacks when pending lazy operations are executed", async () => {
+        const sessionOptions: SessionOptions = { transactionMode: "ClusterWide" };
+
+        {
+            const session = store.openSession(sessionOptions);
+            session.advanced.clusterTransaction.createCompareExchangeValue("emails/1", "oren@example.com");
+            session.advanced.clusterTransaction.createCompareExchangeValue("emails/2", "ayende@example.com");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession(sessionOptions);
+            let value: CompareExchangeValue<string>;
+            let values: Record<string, CompareExchangeValue<string>>;
+            session.advanced.clusterTransaction.lazily.getCompareExchangeValue<string>("emails/1", null, x => value = x);
+            session.advanced.clusterTransaction.lazily.getCompareExchangeValues<string>(["emails/1", "emails/2"], null, x => values = x);
+
+            await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+            assert.strictEqual(value.value, "oren@example.com");
+            assert.strictEqual(values["emails/2"].value, "ayende@example.com");
         }
     });
 });

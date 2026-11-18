@@ -351,5 +351,6 @@ export interface IDocumentSessionImpl extends IDocumentSession {
     lazyLoadInternal<TResult extends object>(
         ids: string[],
         includes: string[],
-        clazz: ObjectTypeDescriptor<TResult>): Lazy<EntitiesCollectionObject<TResult>>;
+        clazz: ObjectTypeDescriptor<TResult>,
+        onEval?: (results: EntitiesCollectionObject<TResult>) => void): Lazy<EntitiesCollectionObject<TResult>>;
 }
