@@ -2,7 +2,7 @@ import { NodeId } from "../../Subscriptions/NodeId.js";
 import { RunningBackup } from "./RunningBackup.js";
 import { NextBackup } from "./NextBackup.js";
 import { OngoingTaskType } from "./OngoingTaskType.js";
-import { BackupType } from "../Backups/Enums.js";
+import { BackupType, BackupUploadMode } from "../Backups/Enums.js";
 import { RavenEtlConfiguration } from "../Etl/RavenEtlConfiguration.js";
 import { SqlEtlConfiguration } from "../Etl/Sql/SqlEtlConfiguration.js";
 import { SnowflakeEtlConfiguration } from "../Etl/Snowflake/SnowflakeEtlConfiguration.js";
@@ -38,6 +38,10 @@ export interface OngoingTaskBackup extends OngoingTask {
     retentionPolicy: RetentionPolicy;
     isEncrypted: boolean;
     lastExecutingNodeTag: string;
+    fullBackupFrequency: string;
+    incrementalBackupFrequency: string;
+    backupUploadMode: BackupUploadMode;
+    hasCloudBackup: boolean;
 }
 
 export type OngoingTaskConnectionStatus =
@@ -60,11 +64,16 @@ export interface OngoingTaskRavenEtl extends OngoingTask {
 
 export interface OngoingTaskReplication extends OngoingTask {
     taskType: "Replication",
+    fromToString: string;
     destinationUrl: string;
     topologyDiscoveryUrls: string[];
     destinationDatabase: string;
     connectionStringName: string;
     delayReplicationFor: string;
+    lastAcceptedChangeVectorFromDestination: string;
+    sourceDatabaseChangeVector: string;
+    lastSentEtag: number;
+    lastDatabaseEtag: number;
 }
 
 export interface OngoingTaskElasticSearchEtl extends OngoingTask {
