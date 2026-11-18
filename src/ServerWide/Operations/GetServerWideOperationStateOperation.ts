@@ -4,6 +4,7 @@ import { RavenCommand, IRavenResponse } from "../../Http/RavenCommand.js";
 import { ServerNode } from "../../Http/ServerNode.js";
 import { Stream } from "node:stream";
 import { DocumentConventions } from "../../Documents/Conventions/DocumentConventions.js";
+import { ObjectUtil } from "../../Utility/ObjectUtil.js";
 
 export class GetServerWideOperationStateOperation implements IServerOperation<IRavenResponse> {
 
@@ -52,6 +53,14 @@ export class GetServerWideOperationStateCommand extends RavenCommand<IRavenRespo
             this._throwInvalidResponse();
         }
 
-        return this._parseResponseDefaultAsync(bodyStream);
+        let body: string = null;
+        this.result = await this._defaultPipeline(_ => body = _)
+            .collectBody()
+            .objectKeysTransform({
+                defaultTransform: ObjectUtil.camel,
+                ignorePaths: [/^(result|progress)\.indexesResults\.[^.]+$/i]
+            })
+            .process(bodyStream);
+        return body;
     }
 }
