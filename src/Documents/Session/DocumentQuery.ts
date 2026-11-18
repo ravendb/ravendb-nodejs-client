@@ -657,6 +657,7 @@ export class DocumentQuery<T extends object>
         query._highlightingTokens = this._highlightingTokens;
         query._disableEntitiesTracking = this._disableEntitiesTracking;
         query._disableCaching = this._disableCaching;
+        query._queryTag = this._queryTag;
         query.projectionBehavior = queryData ? queryData.projectionBehavior : this.projectionBehavior;
         query._isIntersect = this._isIntersect;
         query._defaultOperator = this._defaultOperator;
