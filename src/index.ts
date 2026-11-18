@@ -211,11 +211,17 @@ export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndex
 export type { GetServerWideBackupConfigurationsResponse } from "./Documents/Operations/GetServerWideBackupConfigurationsResponse.js";
 export { NextIdentityForOperation } from "./Documents/Operations/Identities/NextIdentityForOperation.js";
 export { SeedIdentityForOperation } from "./Documents/Operations/Identities/SeedIdentityForOperation.js";
-export type { IOperationProgress } from "./Documents/Operations/IOperationProgress.js";
-export type { IOperationResult } from "./Documents/Operations/IOperationResult.js";
+export type { IOperationProgress, IShardedOperationProgress } from "./Documents/Operations/IOperationProgress.js";
+export type { IOperationResult, IShardedOperationResult, IShardNodeOperationResult } from "./Documents/Operations/IOperationResult.js";
+export type { OperationMultipleExceptionsResult } from "./Documents/Operations/OperationMultipleExceptionsResult.js";
 export type * from "./Documents/Smuggler/SmugglerResult.js";
-export type { BackupResult, WithDatesAsStrings } from "./Documents/Operations/Backups/BackupResult.js";
+export type * from "./Documents/Smuggler/ShardedSmugglerResult.js";
+export type {
+    BackupResult, ShardedBackupResult, ShardNodeBackupResult, WithDatesAsStrings
+} from "./Documents/Operations/Backups/BackupResult.js";
+export type { BackupProgress, ShardedBackupProgress } from "./Documents/Operations/Backups/BackupProgress.js";
 export type { RestoreResult } from "./ServerWide/Operations/RestoreResult.js";
+export type { RestoreProgress } from "./ServerWide/Operations/RestoreProgress.js";
 export type { CompactionResult, CompactionProgress, CompactionProgressBase } from "./ServerWide/Operations/CompactionResult.js";
 export type { OperationState, OperationStatus } from "./Documents/Operations/OperationState.js";
 export {

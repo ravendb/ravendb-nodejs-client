@@ -1,4 +1,5 @@
 import { Counts, SmugglerResult } from "../../Smuggler/SmugglerResult.js";
+import { IShardedOperationResult, IShardNodeOperationResult } from "../IOperationResult.js";
 import { LocalBackup, UploadToAzure, UploadToFtp, UploadToGlacier, UploadToGoogleCloud, UploadToS3 } from "./BackupStatus.js";
 
 /** Operation results are not revived, so their dates stay ISO strings. */
@@ -13,3 +14,7 @@ export interface BackupResult extends SmugglerResult {
     ftpBackup: WithDatesAsStrings<UploadToFtp>;
     localBackup: WithDatesAsStrings<LocalBackup>;
 }
+
+export type ShardedBackupResult = IShardedOperationResult<ShardNodeBackupResult>;
+
+export type ShardNodeBackupResult = IShardNodeOperationResult<BackupResult>;

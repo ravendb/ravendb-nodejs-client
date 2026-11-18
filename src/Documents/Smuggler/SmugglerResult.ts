@@ -101,5 +101,6 @@ export interface DatabaseRecordProgress extends Counts {
     queueEtlsUpdated?: boolean;
     queueConnectionStringsUpdated?: boolean;
     queueSinksUpdated?: boolean;
+    cdcSinksUpdated?: boolean;
     indexesHistoryUpdated?: boolean;
 }
