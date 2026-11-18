@@ -662,9 +662,42 @@ export abstract class InMemoryDocumentSessionOperations
      }
 
     private _deserializeFromTransformer(clazz: ObjectTypeDescriptor, id: string, document: object, trackEntity: boolean): object {
+        if (this.conventions.findIdentityPropertyNameFromCollectionName) {
+            this._handleInternalMetadata(document);
+        }
+
         const entity = this.entityToJson.convertToEntity(clazz, id, document, trackEntity);
         this.onAfterConversionToEntityInvoke(id, document, entity);
         return entity;
+    }
+
+    private _handleInternalMetadata(value: unknown): void {
+        if (TypeUtil.isArray(value)) {
+            for (const item of value) {
+                this._handleInternalMetadata(item);
+            }
+            return;
+        }
+
+        if (!TypeUtil.isObject(value)) {
+            return;
+        }
+
+        const metadata = value[CONSTANTS.Documents.Metadata.KEY];
+        const id = metadata?.[CONSTANTS.Documents.Metadata.ID];
+        if (!id) {
+            for (const nested of Object.values(value)) {
+                this._handleInternalMetadata(nested);
+            }
+            return;
+        }
+
+        const collectionName = metadata[CONSTANTS.Documents.Metadata.COLLECTION];
+        if (!collectionName) {
+            return;
+        }
+
+        value[this.conventions.findIdentityPropertyNameFromCollectionName(collectionName)] = id;
     }
 
     public registerIncludes(includes: object, registerMissingIds: boolean = false): void {
