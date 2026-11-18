@@ -86,6 +86,36 @@ describe("RavenDB_21381", function () {
         assertThat(await lastRevisionFlags(userId)).contains("DeleteRevision");
     });
 
+    it("adoptOrphanedRevisions_WithStartFromEtag_SkipsRevisions", async () => {
+        const userId = "Users/1-A";
+        await importOrphanedRevisions(userId);
+
+        const [node] = store.getRequestExecutor().getTopologyNodes();
+        const skipped = await (await store.operations.send(new AdoptOrphanedRevisionsOperation({
+            continuationParameters: {
+                startFromEtags: { [store.database]: 0 },
+                etagBarriers: { [store.database]: 0 },
+                nodeTags: { [store.database]: node.clusterTag }
+            }
+        }))).waitForCompletion<AdoptOrphanedRevisionsResult>();
+        assertThat(skipped.adoptedCount).isEqualTo(0);
+        assertThat(skipped.scannedRevisions).isEqualTo(0);
+
+        const result = await (await store.operations.send(new AdoptOrphanedRevisionsOperation()))
+            .waitForCompletion<AdoptOrphanedRevisionsResult>();
+        assertThat(result.adoptedCount).isEqualTo(1);
+
+        const resumed = await (await store.operations.send(new AdoptOrphanedRevisionsOperation({
+            continuationParameters: {
+                startFromEtags: result.lastProcessedEtags,
+                etagBarriers: result.etagBarriersUsed,
+                nodeTags: result.nodeTags
+            }
+        }))).waitForCompletion<AdoptOrphanedRevisionsResult>();
+        assertThat(resumed.adoptedCount).isEqualTo(0);
+        assertThat(await lastRevisionFlags(userId)).contains("DeleteRevision");
+    });
+
     it("throwsOnNullParameters", async () => {
         await assertThrows(() => new AdoptOrphanedRevisionsOperation(null),
             err => assertThat(err.name).isEqualTo("InvalidArgumentException"));

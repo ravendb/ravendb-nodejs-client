@@ -1,5 +1,4 @@
 import { AbstractAwaitableOperation, IOperation, OperationIdResult } from "../OperationAbstractions.js";
-import { IOperationResult } from "../IOperationResult.js";
 import { IDocumentStore } from "../../IDocumentStore.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { HttpCache } from "../../../Http/HttpCache.js";
@@ -8,18 +7,13 @@ import { ServerNode } from "../../../Http/ServerNode.js";
 import { HttpRequestParameters } from "../../../Primitives/Http.js";
 import { Stream } from "node:stream";
 import { throwError } from "../../../Exceptions/index.js";
+import { RevisionsOperationParameters } from "./RevisionsOperationParameters.js";
+import { OperationResult } from "./RevertResult.js";
 
-export interface AdoptOrphanedRevisionsParameters {
-    /**
-     * Collections to adopt orphaned revisions from. All collections when empty.
-     */
-    collections?: string[];
-}
+export type AdoptOrphanedRevisionsParameters = RevisionsOperationParameters;
 
-export interface AdoptOrphanedRevisionsResult extends IOperationResult {
+export interface AdoptOrphanedRevisionsResult extends OperationResult {
     adoptedCount: number;
-    scannedRevisions: number;
-    scannedDocuments: number;
 }
 
 /**
