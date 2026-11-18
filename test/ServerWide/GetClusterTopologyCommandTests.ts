@@ -48,31 +48,39 @@ describe("GetClusterTopologyCommand", function () {
         try {
             const database = clusterTestContext.getDatabaseName();
             const leader = cluster.getInitialLeader();
+            const follower = cluster.nodes.find(x => x !== leader);
             await cluster.createDatabase(database, 2, leader.url);
 
-            const store = new DocumentStore(leader.url, database);
-            try {
-                store.conventions.disableTopologyUpdates = true;
-                store.initialize();
+            const getStatus = async (url: string) => {
+                const store = new DocumentStore(url, database);
+                try {
+                    store.conventions.disableTopologyUpdates = true;
+                    store.initialize();
 
-                const command = new GetClusterTopologyCommand();
-                await store.getRequestExecutor().execute(command);
-                const { status } = command.result;
+                    const command = new GetClusterTopologyCommand();
+                    await store.getRequestExecutor().execute(command);
+                    return command.result.status;
+                } finally {
+                    store.dispose();
+                }
+            };
 
-                const followerTag = cluster.nodes.find(x => x !== leader).nodeTag;
-                assert.deepStrictEqual([...status.keys()], [followerTag]);
+            const statusOnLeader = await getStatus(leader.url);
+            assert.deepStrictEqual([...statusOnLeader.keys()], [follower.nodeTag]);
 
-                const followerStatus = status.get(followerTag);
-                assert.strictEqual(followerStatus.connected, true);
-                assert.strictEqual(followerStatus.errorDetails, null);
-                assert.strictEqual(typeof followerStatus.lastSentMessage, "string");
-                assert.ok(followerStatus.lastMatchingIndex > 0);
-                assert.ok(followerStatus.lastSent instanceof Date);
-                assert.ok(followerStatus.lastReply instanceof Date);
-                assert.ok(followerStatus.lastSent.getFullYear() > 2000);
-            } finally {
-                store.dispose();
-            }
+            const followerStatus = statusOnLeader.get(follower.nodeTag);
+            assert.strictEqual(followerStatus.connected, true);
+            assert.strictEqual(followerStatus.errorDetails, null);
+            assert.strictEqual(typeof followerStatus.lastSentMessage, "string");
+            assert.ok(followerStatus.lastMatchingIndex > 0);
+            assert.ok(followerStatus.lastSent instanceof Date);
+            assert.ok(followerStatus.lastReply instanceof Date);
+            assert.ok(followerStatus.lastSent.getFullYear() > 2000);
+
+            const statusOnFollower = await getStatus(follower.url);
+            assert.deepStrictEqual([...statusOnFollower.keys()], [leader.nodeTag]);
+            assert.ok(statusOnFollower.get(leader.nodeTag).lastSent instanceof Date);
+            assert.ok(statusOnFollower.get(leader.nodeTag).lastReply instanceof Date);
         } finally {
             cluster.dispose();
         }
