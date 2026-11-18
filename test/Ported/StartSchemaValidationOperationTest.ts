@@ -62,13 +62,13 @@ const userSchema = JSON.stringify({
     }
 
     it("reports the documents that do not match the schema", async () => {
-        await storeUsers({ "Users/Young": 17, "Users/Adult": 30, "Users/Old": 80 });
+        await storeUsers({ "Users/Young": 17, "Users/Adult": 30, "Users/Old.Timer": 80 });
 
         const result = await validate();
 
         assertThat(result.validatedCount).isEqualTo(3);
         assertThat(result.errorCount).isEqualTo(2);
-        assert.deepStrictEqual(Object.keys(result.errors).sort(), ["Users/Old", "Users/Young"]);
+        assert.deepStrictEqual(Object.keys(result.errors).sort(), ["Users/Old.Timer", "Users/Young"]);
         assertThat(result.errors["Users/Young"]).contains("age");
         assertThat(result.lastEtag).isGreaterThan(0);
     });

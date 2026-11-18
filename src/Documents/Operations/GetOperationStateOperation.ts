@@ -57,7 +57,7 @@ export class GetOperationStateCommand extends RavenCommand<IRavenResponse> {
             .collectBody()
             .objectKeysTransform({
                 defaultTransform: ObjectUtil.camel,
-                ignorePaths: [/^result\.errors\.[^.]+$/i]
+                ignorePaths: [/^result\.errors\./i]
             })
             .process(bodyStream);
         return body;
