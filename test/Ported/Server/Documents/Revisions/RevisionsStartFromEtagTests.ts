@@ -50,9 +50,9 @@ describe("RevisionsStartFromEtagTests", function () {
     it("enforceRevisionConfiguration_Resume_IsIdempotent", async () => {
         store = await testContext.getDocumentStore("Revisions");
 
-        await setupRevisions(10);
-        await storeRevisions("companies/1", 10);
         await setupRevisions(2);
+        await storeRevisions("companies/1", 5);
+        await setupRevisions(1);
 
         const firstResult = await enforce({ includeForceCreated: false });
 
@@ -61,7 +61,7 @@ describe("RevisionsStartFromEtagTests", function () {
         assert.deepStrictEqual(Object.keys(firstResult.lastProcessedEtags), [store.database]);
         assert.deepStrictEqual(Object.keys(firstResult.etagBarriersUsed), [store.database]);
         assert.deepStrictEqual(Object.keys(firstResult.nodeTags), [store.database]);
-        assertThat(await revisionsCount("companies/1")).isEqualTo(2);
+        assertThat(await revisionsCount("companies/1")).isEqualTo(1);
 
         const resumeResult = await enforce({
             includeForceCreated: false,
@@ -73,7 +73,7 @@ describe("RevisionsStartFromEtagTests", function () {
         });
 
         assertThat(resumeResult.removedRevisions).isEqualTo(0);
-        assertThat(await revisionsCount("companies/1")).isEqualTo(2);
+        assertThat(await revisionsCount("companies/1")).isEqualTo(1);
     });
 
     it("enforceRevisionConfiguration_WithStartFromEtag_SkipsDocumentsCreatedAfterEtag", async () => {
@@ -107,9 +107,9 @@ describe("RevisionsStartFromEtagTests", function () {
     it("enforceRevisionConfiguration_NodeTagValidation_RejectsWrongNode", async () => {
         store = await testContext.getDocumentStore();
 
-        await setupRevisions(10);
-        await storeRevisions("companies/1", 5);
         await setupRevisions(2);
+        await storeRevisions("companies/1", 5);
+        await setupRevisions(1);
 
         const firstResult = await enforce({ includeForceCreated: false });
 
