@@ -68,7 +68,7 @@ export class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEta
             })
             .process(bodyStream);
 
-        const indexDefinitionDictionaries = ["fields", "configuration", "additionalSources"];
+        const indexDefinitionDictionaries = ["fields", "configuration", "additionalSources", "schemaDefinitions"];
         GetDatabaseRecordCommand._camelCaseEntries(this.result.indexes, indexDefinitionDictionaries);
         GetDatabaseRecordCommand._camelCaseEntries(this.result.autoIndexes, ["mapFields", "groupByFields"]);
         GetDatabaseRecordCommand._camelCaseEntries(this.result.indexesHistory, [

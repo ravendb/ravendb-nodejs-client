@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import {
+    GetDatabaseRecordOperation,
     GetIndexesOperation,
     GetIndexOperation,
     IDocumentStore,
@@ -69,6 +70,11 @@ const requiredSchema = JSON.stringify({ required: ["name"] });
 
             const [listed] = await store.maintenance.send(new GetIndexesOperation(0, 10));
             assert.deepStrictEqual(listed.schemaDefinitions, definition.schemaDefinitions);
+
+            const record = await store.maintenance.server.send(new GetDatabaseRecordOperation(store.database));
+            assert.deepStrictEqual(record.indexes[definition.name].schemaDefinitions, definition.schemaDefinitions);
+            assert.deepStrictEqual(
+                record.indexesHistory[definition.name][0].definition.schemaDefinitions, definition.schemaDefinitions);
         });
 
         it(`reports schema errors of a ${type} index`, async () => {
