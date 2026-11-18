@@ -5,6 +5,10 @@ import { SingleNodeBatchCommand } from "../../../src/Documents/Commands/Batches/
 import { PutAttachmentCommandData } from "../../../src/Documents/Commands/Batches/PutAttachmentCommandData.js";
 import { DocumentConventions } from "../../../src/Documents/Conventions/DocumentConventions.js";
 import { ServerNode } from "../../../src/Http/ServerNode.js";
+import { IDocumentStore, PutCommandDataWithJson, StopIndexingOperation } from "../../../src/index.js";
+import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { UsersIndex } from "../../Assets/Indexes.js";
+import { milliseconds } from "date-fns";
 
 describe("SingleNodeBatchCommand", function () {
 
@@ -46,6 +50,37 @@ describe("SingleNodeBatchCommand", function () {
                 Buffer.from(`\r\n--${boundary}`)
             ]);
             assert.ok(sentBody.includes(expectedPart), `attachment_${index} part is byte-exact`);
+        });
+    });
+
+    describe("requestTimeout", function () {
+
+        let store: IDocumentStore;
+
+        beforeEach(async function () {
+            store = await testContext.getDocumentStore();
+        });
+
+        afterEach(async function () {
+            await disposeTestDocumentStore(store);
+        });
+
+        it("aborts the request when the batch takes longer than requestTimeout", async function () {
+            await new UsersIndex().execute(store);
+            await store.maintenance.send(new StopIndexingOperation());
+
+            const requestTimeout = milliseconds({ seconds: 1 });
+            const command = new SingleNodeBatchCommand(store.conventions, [
+                new PutCommandDataWithJson("users/1", null, null, { name: "John", "@metadata": { "@collection": "Users" } }, "None")
+            ], {
+                indexOptions: { timeout: milliseconds({ minutes: 1 }), throwOnTimeout: true },
+                requestTimeout
+            });
+
+            assert.strictEqual(command.timeout, requestTimeout);
+
+            await assert.rejects(async () => store.getRequestExecutor().execute(command),
+                (error: Error) => error.message.includes("failed with timeout after 00:00:01"));
         });
     });
 });

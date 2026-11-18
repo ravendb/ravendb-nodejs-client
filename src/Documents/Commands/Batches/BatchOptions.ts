@@ -2,7 +2,8 @@ import { ReplicationBatchOptions, IndexBatchOptions } from "../../Session/IAdvan
 import { ShardedBatchOptions } from "./ShardedBatchOptions.js";
 
 export interface BatchOptions {
-    replicationOptions: ReplicationBatchOptions;
-    indexOptions: IndexBatchOptions;
+    replicationOptions?: ReplicationBatchOptions;
+    indexOptions?: IndexBatchOptions;
     shardedOptions?: ShardedBatchOptions;
+    requestTimeout?: number;
 }
