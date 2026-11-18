@@ -12,7 +12,7 @@ import {
     SmugglerResult
 } from "../../../src/index.js";
 import { getShardedDocumentStore } from "../../Utils/ShardingTestUtil.js";
-import { disposeTestDocumentStore, RavenTestContext, TemporaryDirContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, TemporaryDirContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 import { User } from "../../Assets/Entities.js";
 
@@ -51,7 +51,7 @@ describe("ShardedOperationResultsTest", function () {
         }
     });
 
-    (RavenTestContext.isPullRequest ? it.skip : it)("returns per-shard backup results for a sharded one-time backup", async () => {
+    it("returns per-shard backup results for a sharded one-time backup", async () => {
         const operation = await store.maintenance.send(new BackupOperation({
             localSettings: {
                 folderPath: path.join(temporaryDirContext.tempDir, "backup")
