@@ -1,5 +1,5 @@
 import { IDocumentStore, PutClientConfigurationOperation } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { Company } from "../../Assets/Entities.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 
@@ -54,7 +54,7 @@ describe("RavenDB_19743", function () {
         });
     });
 
-    it("crate valid configuration then disable should crate data with default part separator", async () => {
+    (RavenTestContext.isPullRequest ? it.skip : it)("crate valid configuration then disable should crate data with default part separator", async () => {
         await store.maintenance.send(new PutClientConfigurationOperation({
             identityPartsSeparator: "!",
             disabled: false

@@ -29,7 +29,8 @@ describe("RavenDB_25368", function () {
         const id = "testObjs/1-A";
 
         const configuration = new RevisionsConfiguration();
-        configuration.defaultConfig = new RevisionsCollectionConfiguration();
+        configuration.collections = new Map<string, RevisionsCollectionConfiguration>();
+        configuration.collections.set("TestObjV1s", new RevisionsCollectionConfiguration());
         await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
 
         {
