@@ -1,6 +1,8 @@
-import { DocumentConventions, ObjectTypeDescriptor } from "../../src/index.js";
+import { milliseconds } from "date-fns";
+import { DocumentChange, DocumentConventions, IDocumentStore, ObjectTypeDescriptor } from "../../src/index.js";
 import { disposeTestDocumentStore, testContext } from "../Utils/TestUtil.js";
 import { assertThat } from "../Utils/AssertExtensions.js";
+import { AsyncQueue } from "../Utils/AsyncQueue.js";
 
 describe("CustomEntityName", function () {
 
@@ -53,6 +55,67 @@ describe("CustomEntityName", function () {
     it("findCollectionName", async () => {
         for (const c of getCharactersToTestWithSpecial()) {
             await testWhenCollectionAndIdContainSpecialChars(c);
+        }
+    });
+
+    const getCharactersToTest = () => [ "a", "-", "'", "\"", "\\", "\b", "\f", "\n", "\r", "\t" ];
+
+    async function withSpecialCharCollectionStore(c: string, action: (store: IDocumentStore) => Promise<void>) {
+        testContext.customizeStore = async r => {
+            r.conventions.findCollectionName = (constructorOrTypeChecker: ObjectTypeDescriptor) =>
+                "Test" + c + DocumentConventions.defaultGetCollectionName(constructorOrTypeChecker);
+        };
+
+        const store = await testContext.getDocumentStore();
+        try {
+            await action(store);
+        } finally {
+            testContext.customizeStore = null;
+            await disposeTestDocumentStore(store);
+        }
+    }
+
+    it("findCollectionName when subscribe to api changes", async () => {
+        for (const c of getCharactersToTest()) {
+            await withSpecialCharCollectionStore(c, async store => {
+                const changesList = new AsyncQueue<DocumentChange>();
+
+                const changes = store.changes();
+                await changes.ensureConnectedNow();
+                const observable = changes.forDocumentsInCollection(User);
+                observable.on("data", change => changesList.push(change));
+                await observable.ensureSubscribedNow();
+
+                const session = store.openSession();
+                await session.store(new User());
+                await session.saveChanges();
+
+                assertThat(await changesList.poll(milliseconds({ seconds: 15 }))).isNotNull();
+            });
+        }
+    });
+
+    it("findCollectionName when load with include", async () => {
+        for (const c of getCharactersToTest()) {
+            await withSpecialCharCollectionStore(c, async store => {
+                const user = new User();
+                {
+                    const session = store.openSession();
+                    const car = Object.assign(new Car(), { manufacturer: "BMW" });
+                    await session.store(car);
+                    user.carId = car.id;
+                    await session.store(user);
+                    await session.saveChanges();
+                }
+
+                {
+                    const session = store.openSession();
+                    const loadedUser = await session.include("carId").load(user.id, User);
+
+                    assertThat(loadedUser).isNotNull();
+                    assertThat(session.advanced.isLoaded(user.carId)).isTrue();
+                }
+            });
         }
     });
 });
