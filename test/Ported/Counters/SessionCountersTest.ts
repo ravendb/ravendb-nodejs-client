@@ -1202,6 +1202,29 @@ describe("SessionCountersTest", function () {
         }
     });
 
+    it("increment counter and modify doc in one session", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Aviv" }), "users/1-A");
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1-A", User);
+            session.countersFor(user).increment("likes", 100);
+            user.name += "2";
+            await session.saveChanges();
+        }
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1-A", User);
+            assertThat(user.name).isEqualTo("Aviv2");
+
+            const val = await session.countersFor(user).get("likes");
+            assertThat(val).isEqualTo(100);
+        }
+    });
+
 });
 
 async function storeDoc(session: IDocumentSession, id: string, data: any, clazz: any) {
