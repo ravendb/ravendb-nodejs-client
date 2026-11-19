@@ -1,5 +1,12 @@
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
-import { IDocumentStore, InMemoryDocumentSessionOperations, TimeSeriesEntry } from "../../../src/index.js";
+import {
+    GetMultipleTimeSeriesCommand,
+    IDocumentStore,
+    InMemoryDocumentSessionOperations,
+    TimeSeriesEntry
+} from "../../../src/index.js";
+import { GetTimeSeriesCommand } from "../../../src/Documents/Operations/TimeSeries/GetTimeSeriesOperation.js";
+import { StatusCodes } from "../../../src/Http/StatusCode.js";
 import { User } from "../../Assets/Entities.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 import { addDays, addHours, addMinutes, addSeconds } from "date-fns";
@@ -1008,6 +1015,40 @@ describe("TimeSeriesRangesCacheTest", function () {
                 .isEqualTo(addMinutes(baseLine, 1).getTime());
         }
     })
+
+    it("return correct status code if no entries found", async () => {
+        const baseline = testContext.utcToday();
+
+        {
+            const session = store.openSession();
+            await session.store({ name: "Oren" }, "users/ayende");
+            session.timeSeriesFor("users/ayende", "Heartrate").append(addMinutes(baseline, 1), [59], "watches/fitbit");
+            session.timeSeriesFor("users/ayende", "Heartrate").append(addMinutes(baseline, 2), [60], "watches/fitbit");
+            session.timeSeriesFor("users/ayende", "Heartrate").append(addMinutes(baseline, 3), [61], "watches/fitbit");
+            await session.saveChanges();
+        }
+
+        const session = store.openSession();
+        const re = session.advanced.requestExecutor;
+
+        for (const expectedStatus of [StatusCodes.Ok, StatusCodes.NotModified]) {
+            const multiGet = new GetMultipleTimeSeriesCommand(
+                store.conventions, "users/ayende", [{ name: "Heartrate", from: null, to: null }], 5, 10);
+            await re.execute(multiGet);
+
+            assertThat(multiGet.result.values).hasSize(1);
+            assertThat(multiGet.result.values.get("Heartrate")[0].entries.length).isEqualTo(0);
+            assertThat(multiGet.statusCode).isEqualTo(expectedStatus);
+        }
+
+        for (const expectedStatus of [StatusCodes.Ok, StatusCodes.NotModified]) {
+            const get = new GetTimeSeriesCommand(store.conventions, "users/ayende", "HeartRate", null, null, 5, 10);
+            await re.execute(get);
+
+            assertThat(get.result.entries.length).isEqualTo(0);
+            assertThat(get.statusCode).isEqualTo(expectedStatus);
+        }
+    });
 
     describe("cached range boundaries between entries", () => {
         const baseLine = new Date("2024-01-01T01:30:00Z");
