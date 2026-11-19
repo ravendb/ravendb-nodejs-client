@@ -203,4 +203,20 @@ describe("RavenDB-11649", function () {
         }
     });
 
+    it("what changed when array property in array changed from null should return with relevant path", async function () {
+        const session = store.openSession();
+        const doc = new OuterClass();
+        doc.innerClassMatrix = [null];
+        const id = "docs/1";
+        await session.store(doc, id);
+        await session.saveChanges();
+
+        doc.innerClassMatrix[0] = [new InnerClass()];
+
+        const changes = session.advanced.whatChanged();
+
+        const changedPaths = changes[id].map(x => x.fieldPath);
+        assert.deepStrictEqual(changedPaths, ["innerClassMatrix[0]"]);
+    });
+
 });
