@@ -233,6 +233,10 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      */
     numberOfRequests: number;
     /**
+     * Gets the number of entities held in memory to manage Unit of Work
+     */
+    getNumberOfEntitiesInUnitOfWork(): number;
+    /**
      * Gets the store identifier for this session.
      * The store identifier is the identifier for the particular RavenDB instance.
      */
