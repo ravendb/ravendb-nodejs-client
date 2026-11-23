@@ -5,6 +5,7 @@ export * from "./AiSettingsCompareDifferences.js";
 export * from "./Settings/AbstractAiSettings.js";
 export * from "./Settings/IAiSettings.js";
 export * from "./Settings/OpenAiBaseSettings.js";
+export * from "./Settings/OpenAiChatApiSettings.js";
 export * from "./Settings/OpenAiSettings.js";
 export * from "./Settings/AzureOpenAiSettings.js";
 export * from "./Settings/OllamaSettings.js";

@@ -1,6 +1,8 @@
 import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
 import { StringUtil } from "../../../../../Utility/StringUtil.js";
+import type { OpenAiChatApiType } from "./OpenAiChatApiSettings.js";
+import type { OpenAiReasoningEffort } from "./OpenAiSettings.js";
 
 /**
  * The configuration for the Ollama API client.
@@ -31,6 +33,22 @@ export class OllamaSettings extends AbstractAiSettings {
      * When undefined, the parameter is not sent.
      */
     public temperature?: number;
+
+    /**
+     * Optional API key, for an Ollama behind an authenticating proxy. When set, it is sent as a Bearer token
+     * on chat requests; embeddings requests do not send it. Local Ollama deployments usually have no key.
+     */
+    public apiKey?: string;
+
+    /**
+     * The API that chat requests are sent to. When not set, "ChatCompletions" is used; "Responses" is opt-in.
+     */
+    public chatApi?: OpenAiChatApiType;
+
+    /**
+     * The reasoning effort for models that support it, e.g. "none", "low", "medium" or "high". Sent as is.
+     */
+    public reasoningEffort?: OpenAiReasoningEffort;
 
     public constructor(uri: string, model: string) {
         super();
@@ -69,7 +87,13 @@ export class OllamaSettings extends AbstractAiSettings {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 
-        if (this.think !== other.think) {
+        if (this.apiKey !== other.apiKey) {
+            differences |= AiSettingsCompareDifferences.AuthenticationSettings;
+        }
+
+        if (this.think !== other.think ||
+            this.chatApi !== other.chatApi ||
+            this.reasoningEffort !== other.reasoningEffort) {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 

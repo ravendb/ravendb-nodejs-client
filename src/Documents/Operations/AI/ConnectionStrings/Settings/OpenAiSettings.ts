@@ -1,4 +1,4 @@
-import { OpenAiBaseSettings } from "./OpenAiBaseSettings.js";
+import { OpenAiChatApiSettings } from "./OpenAiChatApiSettings.js";
 import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
 import { LiteralUnion } from "../../../../../Types/index.js";
@@ -8,7 +8,7 @@ export type OpenAiReasoningEffort = LiteralUnion<"none" | "minimal" | "low" | "m
 /**
  * The configuration for the OpenAI API client.
  */
-export class OpenAiSettings extends OpenAiBaseSettings {
+export class OpenAiSettings extends OpenAiChatApiSettings {
     /**
      * The value to use for the OpenAI-Organization request header. Users who belong to multiple organizations
      * can set this value to specify which organization is used for an API request. Usage from these API requests will
@@ -27,21 +27,9 @@ export class OpenAiSettings extends OpenAiBaseSettings {
     public projectId?: string;
 
     /**
-     * Controls the reasoning depth used by supported models (e.g. GPT-5 family).
-     * Lower values reduce internal reasoning, improving latency.
-     *
-     * Typical values are "none", "minimal", "low", "medium", "high", "xhigh" and "max". Model families accept
-     * different subsets. When not set, the model applies its own default.
-     *
-     * Sent to the provider as supplied (trimmed) and not validated by RavenDB, so new provider values can be used
-     * without a client update. OpenAI accepts lowercase values only. Legacy names ("Minimal", "Low", "Medium",
-     * "High") are normalized by the server.
-     */
-    public reasoningEffort?: OpenAiReasoningEffort;
-
-    /**
      * Optional seed for more reproducible sampling across requests.
      * Does not guarantee fully deterministic results.
+     * @deprecated Sent on the Chat Completions API only: the Responses API has no seed field, and OpenAI marks seed as deprecated.
      */
     public seed?: number;
 
@@ -88,8 +76,7 @@ export class OpenAiSettings extends OpenAiBaseSettings {
             differences |= AiSettingsCompareDifferences.AuthenticationSettings;
         }
 
-        if (this.reasoningEffort !== other.reasoningEffort ||
-            this.seed !== other.seed) {
+        if (this.seed !== other.seed) {
             differences |= AiSettingsCompareDifferences.EndpointConfiguration;
         }
 

@@ -1,9 +1,9 @@
-import { OpenAiBaseSettings } from "./OpenAiBaseSettings.js";
+import { OpenAiChatApiSettings } from "./OpenAiChatApiSettings.js";
 import { AbstractAiSettings } from "./AbstractAiSettings.js";
 import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js";
 import { StringUtil } from "../../../../../Utility/StringUtil.js";
 
-export class AzureOpenAiSettings extends OpenAiBaseSettings {
+export class AzureOpenAiSettings extends OpenAiChatApiSettings {
     /**
      * Azure OpenAI deployment name.
      * Learn more: https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource
