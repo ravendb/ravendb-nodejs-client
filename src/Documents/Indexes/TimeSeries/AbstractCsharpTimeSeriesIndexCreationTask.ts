@@ -1,3 +1,4 @@
+import { INDEXES } from "../../../Constants.js";
 import { AbstractGenericTimeSeriesIndexCreationTask } from "./AbstractGenericTimeSeriesIndexCreationTask.js";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition.js";
 import { TimeSeriesIndexDefinitionBuilder } from "./TimeSeriesIndexDefinitionBuilder.js";
@@ -31,6 +32,10 @@ export abstract class AbstractCsharpTimeSeriesIndexCreationTask extends Abstract
         indexDefinitionBuilder.priority = this.priority;
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
+
+        if (this.searchEngineType) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        }
 
         return indexDefinitionBuilder.toIndexDefinition(this.conventions);
     }

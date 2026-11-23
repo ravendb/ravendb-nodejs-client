@@ -1,3 +1,4 @@
+import { INDEXES } from "../../../Constants.js";
 import { AbstractIndexCreationTaskBase } from "../AbstractIndexCreationTaskBase.js";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition.js";
 import { IndexDefinition } from "../IndexDefinition.js";
@@ -98,6 +99,10 @@ export abstract class AbstractRawJavaScriptTimeSeriesIndexCreationTask extends A
         this._definition.priority = this.priority;
         this._definition.state = this.state;
         this._definition.deploymentMode = this.deploymentMode;
+
+        if (this.searchEngineType) {
+            this._definition.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        }
 
         return this._definition;
     }
