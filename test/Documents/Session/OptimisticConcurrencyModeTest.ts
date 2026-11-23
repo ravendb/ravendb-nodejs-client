@@ -1,4 +1,11 @@
-import { DocumentConventions, IDocumentSession, IDocumentStore, SessionOptions } from "../../../src/index.js";
+import {
+    DocumentConventions,
+    IDocumentSession,
+    IDocumentStore,
+    InMemoryDocumentSessionOperations,
+    OptimisticConcurrencyMode,
+    SessionOptions
+} from "../../../src/index.js";
 import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 
@@ -39,15 +46,15 @@ describe("OptimisticConcurrencyModeTest", function () {
         assertThat(session.advanced.useOptimisticConcurrency).isFalse();
     });
 
-    it("plainFieldWrite_doesNotUpdateMode", async () => {
-        const session = store.openSession({ optimisticConcurrencyMode: "Writes" } as SessionOptions);
-        assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("Writes");
-        assertThat(session.advanced.useOptimisticConcurrency).isTrue();
+    it("useOptimisticConcurrency_mapsCorrectly", async () => {
+        const session = store.openSession();
+        assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("None");
 
-        // direct field write only updates the boolean — mode is unchanged
-        session.advanced.useOptimisticConcurrency = false;
-        assertThat(session.advanced.useOptimisticConcurrency).isFalse();
+        session.advanced.useOptimisticConcurrency = true;
         assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("Writes");
+
+        session.advanced.useOptimisticConcurrency = false;
+        assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("None");
     });
 
     it("canConfigureOptimisticConcurrencyModeForSessions", async () => {
@@ -93,15 +100,117 @@ describe("OptimisticConcurrencyModeTest", function () {
         assertThat(conventions.optimisticConcurrencyMode).isEqualTo("WritesAndReads");
     });
 
-    it("sessionOptionsMode_doesNotPreventUseOptimisticConcurrencyChange", async () => {
+    it("useOptimisticConcurrency_afterSessionOptionsOptimisticConcurrencyMode_shouldThrow", async () => {
         const session = store.openSession({ optimisticConcurrencyMode: "WritesAndReads" } as SessionOptions);
-        assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("WritesAndReads");
 
-        session.advanced.useOptimisticConcurrency = false;
-        // plain field write — no guard on session; mode field is not updated
-        assertThat(session.advanced.useOptimisticConcurrency).isFalse();
-        assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("WritesAndReads");
+        await assertThrows(() => {
+            session.advanced.useOptimisticConcurrency = true;
+        }, err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("useOptimisticConcurrency");
+        });
     });
+
+    it("useOptimisticConcurrency_afterOptimisticConcurrencyMode_shouldThrow", async () => {
+        const session = store.openSession({ optimisticConcurrencyMode: "WritesAndReads" });
+        session.advanced.optimisticConcurrencyMode = "Writes";
+
+        await assertThrows(() => {
+            session.advanced.useOptimisticConcurrency = true;
+        }, err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("useOptimisticConcurrency");
+        });
+    });
+
+    it("optimisticConcurrencyMode_afterUseOptimisticConcurrency_shouldThrow", async () => {
+        const session = store.openSession();
+        session.advanced.useOptimisticConcurrency = true;
+
+        await assertThrows(() => {
+            session.advanced.optimisticConcurrencyMode = "WritesAndReads";
+        }, err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("optimisticConcurrencyMode");
+        });
+    });
+
+    it("useOptimisticConcurrency_whenInheritedFromConventions_shouldNotThrow", async () => {
+        const conventionsStore = await storeWithConventionsMode("Writes");
+        try {
+            const session = conventionsStore.openSession();
+
+            session.advanced.useOptimisticConcurrency = false;
+            assertThat(session.advanced.optimisticConcurrencyMode).isEqualTo("None");
+        } finally {
+            await disposeTestDocumentStore(conventionsStore);
+        }
+    });
+
+    for (const mode of ["Writes", "WritesAndReads"] as const) {
+        it(`optimisticConcurrencyMode_${mode}_withClusterWide_shouldThrow`, async () => {
+            await assertOpenSessionThrows({ transactionMode: "ClusterWide", optimisticConcurrencyMode: mode });
+            await assertOpenSessionThrows({ optimisticConcurrencyMode: mode, transactionMode: "ClusterWide" });
+        });
+
+        it(`optimisticConcurrencyMode_${mode}_withNoTracking_shouldThrow`, async () => {
+            await assertOpenSessionThrows({ noTracking: true, optimisticConcurrencyMode: mode });
+            await assertOpenSessionThrows({ optimisticConcurrencyMode: mode, noTracking: true });
+        });
+
+        it(`noTracking_withOptimisticConcurrencyMode_${mode}_fromConventions_shouldThrow`, async () => {
+            const conventionsStore = await storeWithConventionsMode(mode);
+            try {
+                await assertThrows(() => conventionsStore.openSession({ noTracking: true }), err => {
+                    assertThat(err.name).isEqualTo("InvalidOperationException");
+                    assertThat(err.message).contains("optimisticConcurrencyMode");
+                });
+            } finally {
+                await disposeTestDocumentStore(conventionsStore);
+            }
+        });
+    }
+
+    it("optimisticConcurrencyMode_None_withClusterWide_shouldNotThrow", async () => {
+        store.openSession({ transactionMode: "ClusterWide", optimisticConcurrencyMode: "None" });
+        store.openSession({ optimisticConcurrencyMode: "None", transactionMode: "ClusterWide" });
+    });
+
+    it("optimisticConcurrencyMode_withSingleNode_shouldNotThrow", async () => {
+        store.openSession({ transactionMode: "SingleNode", optimisticConcurrencyMode: "WritesAndReads" });
+        store.openSession({ optimisticConcurrencyMode: "WritesAndReads", transactionMode: "SingleNode" });
+    });
+
+    it("optimisticConcurrencyMode_None_withNoTracking_shouldNotThrow", async () => {
+        store.openSession({ noTracking: true, optimisticConcurrencyMode: "None" });
+        store.openSession({ optimisticConcurrencyMode: "None", noTracking: true });
+    });
+
+    it("canConfigureNoTrackingForSessions", async () => {
+        const trackingSession = store.openSession({ noTracking: false }) as unknown as InMemoryDocumentSessionOperations;
+        assertThat(trackingSession.noTracking).isFalse();
+
+        const noTrackingSession = store.openSession({ noTracking: true }) as unknown as InMemoryDocumentSessionOperations;
+        assertThat(noTrackingSession.noTracking).isTrue();
+    });
+
+    async function assertOpenSessionThrows(options: SessionOptions): Promise<void> {
+        await assertThrows(() => store.openSession(options), err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("optimisticConcurrencyMode");
+        });
+    }
+
+    async function storeWithConventionsMode(mode: OptimisticConcurrencyMode): Promise<IDocumentStore> {
+        testContext.customizeStore = async s => {
+            s.conventions.optimisticConcurrencyMode = mode;
+        };
+        try {
+            return await testContext.getDocumentStore();
+        } finally {
+            testContext.customizeStore = null;
+        }
+    }
 
     (RavenTestContext.isRavenDbServerVersion("7.2") ? describe : describe.skip)("registerForConcurrencyCheck", function () {
 

@@ -242,6 +242,7 @@ export interface IAdvancedDocumentSessionOperations extends SessionEventsEmitter
      * Gets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
+     * @deprecated useOptimisticConcurrency is obsolete and will be removed in the next major version. Please use optimisticConcurrencyMode instead.
      */
     useOptimisticConcurrency: boolean;
 
