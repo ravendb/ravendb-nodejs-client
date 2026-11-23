@@ -70,5 +70,20 @@ describe("MetadataAsDictionary", function () {
             assert.strictEqual(true, nested.isDirty());
             assert.strictEqual(false, metadata.isDirty());
         });
+
+        it("keeps dirty flag when nothing changes", function () {
+            metadata["@collection"] = "Users";
+            delete metadata["@refresh"];
+            assert.strictEqual(false, metadata.isDirty());
+        });
+
+        it("updates dirty flag on new key and on delete of existing key", function () {
+            metadata["@refresh"] = "2030-01-01T00:00:00.0000000Z";
+            assert.strictEqual(true, metadata.isDirty());
+
+            const other = createMetadata();
+            delete other["@collection"];
+            assert.strictEqual(true, other.isDirty());
+        });
     });
 });

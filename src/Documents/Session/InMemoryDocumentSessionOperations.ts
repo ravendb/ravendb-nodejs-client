@@ -1763,10 +1763,10 @@ export abstract class InMemoryDocumentSessionOperations
                     continue;
                 }
 
-                const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
+                InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
 
                 let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
-                if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
+                if (!this._entityChanged(document, entityValue, null)) {
                     continue;
                 }
 
