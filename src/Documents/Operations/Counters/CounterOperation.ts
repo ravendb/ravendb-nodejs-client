@@ -6,7 +6,7 @@ export class CounterOperation {
     
     private _counterName: string;
     
-    private _delta: number;
+    private _delta: number = 1;
     
     protected _changeVector: string;
     
