@@ -83,10 +83,13 @@ describe("RavenDB_18936Test", function () {
 
 
 async function assertTerm(store: IDocumentStore, index: string, fieldName: string, termsThatShouldBeStored: string[]) {
-    const terms = await store.maintenance.send(new GetTermsOperation(index, fieldName, null, 1024));
+    const getTerms = () => store.maintenance.send(new GetTermsOperation(index, fieldName, null, 1024));
 
-    assertThat(termsThatShouldBeStored)
-        .hasSize(terms.length);
+    await testContext.waitForValue(async () => (await getTerms()).length, termsThatShouldBeStored.length);
+
+    const terms = await getTerms();
+    assertThat(terms)
+        .hasSize(termsThatShouldBeStored.length);
 
     for (const term of termsThatShouldBeStored) {
         assertThat(terms)
