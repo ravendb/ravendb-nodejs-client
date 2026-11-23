@@ -100,6 +100,7 @@ export class QueryOperation {
     */
 
     public complete<T extends object>(documentType?: DocumentType<T>): T[] {
+        this._session.assertNotDisposed();
         const queryResult = this._currentQueryResults.createSnapshot();
 
         const result = [] as T[];

@@ -2294,6 +2294,16 @@ export abstract class InMemoryDocumentSessionOperations
         }
     }
 
+    public assertNotDisposed(): void {
+        if (this._disposed) {
+            throwError("InvalidOperationException", "The session has already been disposed and cannot be used");
+        }
+
+        if (this._documentStore.isDisposed()) {
+            throwError("InvalidOperationException", "The document store has already been disposed and cannot be used");
+        }
+    }
+
     public dispose(isDisposing?: boolean): void {
         if (this._disposed) {
             return;
