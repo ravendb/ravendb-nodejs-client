@@ -94,8 +94,8 @@ export class JsonOperation {
                 }
 
                 JsonOperation._newChange(fieldPath, prop, newProp, oldProp, docChanges, "FieldChanged");
-            } else if (!newProp) {
-                if (oldProp) {
+            } else if (newProp === null) {
+                if (oldProp !== null) {
                     if (!changes) {
                         return true;
                     }
