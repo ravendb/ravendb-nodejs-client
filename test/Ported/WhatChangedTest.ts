@@ -322,7 +322,7 @@ describe("WhatChangedTest", function () {
     })
 
     // We don't support whatChanged for metadata
-    it.skip("what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork", async () => {
+    it("what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork", async () => {
         const docId = "d/1";
 
         {
@@ -333,7 +333,7 @@ describe("WhatChangedTest", function () {
             const meta = session.advanced.getMetadataFor(d);
 
             meta["Test-A"] = ["a", "a", "a"];
-            meta["Test-B"] = ["c", "c", "c"];
+            meta["Test-C"] = ["c", "c", "c"];
             await session.saveChanges();
         }
 
