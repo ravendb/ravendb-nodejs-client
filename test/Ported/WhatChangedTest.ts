@@ -442,6 +442,83 @@ describe("WhatChangedTest", function () {
                 .isNull();
         }
     })
+
+    it("removingAndAddingSameAmountOfFieldsToObjectShouldWork", async () => {
+        const docId = "d/1";
+
+        {
+            const session = store.openSession();
+            const d = new Doc();
+            await session.store(d, docId);
+            const meta = session.advanced.getMetadataFor(d);
+
+            meta["Test-A"] = ["a", "a", "a"];
+            meta["Test-C"] = ["c", "c", "c"];
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            meta["Test-A"] = ["b", "a", "c"];
+
+            const changes = session.advanced.whatChanged();
+            assertThat(Object.keys(changes)).hasSize(1);
+            assertThat(changes[docId]).hasSize(2);
+            assertThat(changes[docId][0].change).isEqualTo("ArrayValueChanged");
+            assertThat(changes[docId][0].fieldName).isEqualTo("Test-A");
+            assertThat(changes[docId][1].change).isEqualTo("ArrayValueChanged");
+            assertThat(changes[docId][1].fieldName).isEqualTo("Test-A");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+
+            const changes = session.advanced.whatChanged();
+            assertThat(Object.keys(changes)).hasSize(1);
+            assertThat(Object.values(changes)[0][0].change).isEqualTo("RemovedField");
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+            delete meta["Test-C"];
+            meta["Test-B"] = ["b", "b", "b"];
+            meta["Test-D"] = ["d", "d", "d"];
+
+            const changes = session.advanced.whatChanged();
+            assertThat(Object.keys(changes)).hasSize(1);
+            assertThat(changes[docId]).hasSize(4);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-A").map(x => x.change), ["RemovedField"]);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-C").map(x => x.change), ["RemovedField"]);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-B").map(x => x.change), ["NewField"]);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-D").map(x => x.change), ["NewField"]);
+        }
+
+        {
+            const session = store.openSession();
+            const d = await session.load(docId, Doc);
+            const meta = session.advanced.getMetadataFor(d);
+
+            delete meta["Test-A"];
+            meta["Test-B"] = ["b", "b", "b"];
+
+            const changes = session.advanced.whatChanged();
+            assertThat(Object.keys(changes)).hasSize(1);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-A").map(x => x.change), ["RemovedField"]);
+            assert.deepStrictEqual(changes[docId].filter(x => x.fieldName === "Test-B").map(x => x.change), ["NewField"]);
+        }
+    });
 });
 
 

@@ -48,7 +48,6 @@ export class JsonOperation {
             CONSTANTS.Documents.Metadata.COLLECTION,
             CONSTANTS.Documents.Metadata.CHANGE_VECTOR,
             CONSTANTS.Documents.Metadata.ID,
-            CONSTANTS.Documents.Metadata.KEY,
         ];
 
         for (const field of removedFields) {
