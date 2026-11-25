@@ -1763,10 +1763,10 @@ export abstract class InMemoryDocumentSessionOperations
                     continue;
                 }
 
-                const dirtyMetadata = InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
+                InMemoryDocumentSessionOperations._updateMetadataModifications(entityValue);
 
                 let document = this.entityToJson.convertEntityToJson(entityKey, entityValue);
-                if (!this._entityChanged(document, entityValue, null) && !dirtyMetadata) {
+                if (!this._entityChanged(document, entityValue, null)) {
                     continue;
                 }
 
@@ -1852,25 +1852,22 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     private static _updateMetadataModifications(documentInfo: DocumentInfo) {
-        let dirty = false;
-
-        if (documentInfo.metadataInstance) {
-            if (documentInfo.metadataInstance.isDirty()) {
-                dirty = true;
-            }
-
-            for (const prop of Object.keys(documentInfo.metadataInstance)) {
-                const propValue = documentInfo.metadataInstance[prop];
-                if (propValue && (typeof propValue["isDirty"] === "function"
-                        && (propValue as IMetadataDictionary).isDirty())) {
-                    dirty = true;
-                }
-
-                documentInfo.metadata[prop] = ObjectUtil.deepJsonClone(propValue);
-            }
+        const metadataInstance = documentInfo.metadataInstance;
+        if (!metadataInstance) {
+            return false;
         }
 
-        return dirty;
+        const dirty = metadataInstance.isDirty() || Object.values(metadataInstance).some(propValue =>
+            propValue && typeof propValue["isDirty"] === "function" && (propValue as IMetadataDictionary).isDirty());
+        if (!dirty) {
+            return false;
+        }
+
+        // a new object, so the original document snapshot used by the change diff stays untouched
+        documentInfo.metadata = Object.fromEntries(Object.entries(metadataInstance)
+            .map(([prop, propValue]) => [prop, ObjectUtil.deepJsonClone(propValue)]));
+
+        return true;
     }
 
     public async delete(id: string): Promise<void>;
@@ -2144,6 +2141,7 @@ export abstract class InMemoryDocumentSessionOperations
      */
     public hasChanges(): boolean {
         for (const entity of this.documentsByEntity) {
+            InMemoryDocumentSessionOperations._updateMetadataModifications(entity.value);
             const document = this.entityToJson.convertEntityToJson(entity.key, entity.value);
             if (this._entityChanged(document, entity.value, null)) {
                 return true;
@@ -2208,6 +2206,7 @@ export abstract class InMemoryDocumentSessionOperations
             return false;
         }
 
+        InMemoryDocumentSessionOperations._updateMetadataModifications(documentInfo);
         const document = this.entityToJson.convertEntityToJson(entity, documentInfo);
         return this._entityChanged(document, documentInfo, null);
     }

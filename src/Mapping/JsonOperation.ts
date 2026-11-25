@@ -48,7 +48,6 @@ export class JsonOperation {
             CONSTANTS.Documents.Metadata.COLLECTION,
             CONSTANTS.Documents.Metadata.CHANGE_VECTOR,
             CONSTANTS.Documents.Metadata.ID,
-            CONSTANTS.Documents.Metadata.KEY,
         ];
 
         for (const field of removedFields) {
@@ -95,8 +94,8 @@ export class JsonOperation {
                 }
 
                 JsonOperation._newChange(fieldPath, prop, newProp, oldProp, docChanges, "FieldChanged");
-            } else if (!newProp) {
-                if (oldProp) {
+            } else if (newProp === null) {
+                if (oldProp !== null) {
                     if (!changes) {
                         return true;
                     }

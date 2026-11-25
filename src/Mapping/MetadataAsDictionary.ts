@@ -77,11 +77,15 @@ const hiddenMetadataKeys = new Set<string | symbol>(["getParentKey", "getParent"
 // shared by every metadata proxy; reads use the default behavior, so there is no get trap
 const changeTrackingHandler: ProxyHandler<MetadataAsDictionary> = {
     set(obj, prop, value) {
-        metadataDirtiness.set(obj, true);
+        if (!Object.hasOwn(obj, prop) || Reflect.get(obj, prop) !== value) {
+            metadataDirtiness.set(obj, true);
+        }
         return Reflect.set(obj, prop, value);
     },
     deleteProperty(obj, prop) {
-        metadataDirtiness.set(obj, true);
+        if (Object.hasOwn(obj, prop)) {
+            metadataDirtiness.set(obj, true);
+        }
         return Reflect.deleteProperty(obj, prop);
     },
     ownKeys(target) {
