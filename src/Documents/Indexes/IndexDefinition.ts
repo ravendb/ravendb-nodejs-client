@@ -33,6 +33,7 @@ export class IndexDefinition extends IndexDefinitionBase {
     private _indexSourceType: IndexSourceType;
     public archivedDataProcessingBehavior: ArchivedDataProcessingBehavior;
     public configuration: IndexConfiguration = {};
+    public schemaDefinitions: Record<string, string>;
     public outputReduceToCollection: string;
     public reduceOutputIndex: number;
     public patternForOutputReduceToCollectionReferences: string;
