@@ -7,6 +7,10 @@ export class TypedTimeSeriesRangeAggregation<T extends object> {
     public first: T;
     public average: T;
     public sum: T;
+    public percentile: number[];
+    public slope: number[];
+    public standardDeviation: number[];
+    public key: unknown;
     public to: Date;
     public from: Date;
 }

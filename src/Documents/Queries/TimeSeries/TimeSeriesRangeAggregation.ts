@@ -10,6 +10,10 @@ export class TimeSeriesRangeAggregation {
     public first: number[];
     public average: number[];
     public sum: number[];
+    public percentile: number[];
+    public slope: number[];
+    public standardDeviation: number[];
+    public key: unknown;
     public to: Date;
     public from: Date;
 
@@ -25,6 +29,10 @@ export class TimeSeriesRangeAggregation {
         typedEntry.sum = this.sum ? TimeSeriesValuesHelper.setFields(clazz, this.sum, false) : null;
         typedEntry.count = this.count ? TimeSeriesValuesHelper.setFields(clazz, this.count, false) : null;
         typedEntry.average = this.average ? TimeSeriesValuesHelper.setFields(clazz, this.average, false) : null;
+        typedEntry.percentile = this.percentile;
+        typedEntry.slope = this.slope;
+        typedEntry.standardDeviation = this.standardDeviation;
+        typedEntry.key = this.key;
 
         return typedEntry;
     }
