@@ -74,6 +74,7 @@ export class DocumentConventions {
     private _findCollectionName: (constructorOrTypeChecker: ObjectTypeDescriptor) => string;
 
     private _identityProperty: string;
+    private _findIdentityPropertyNameFromCollectionName: (collectionName: string) => string;
 
     private _findJsTypeName: (ctorOrTypeChecker: ObjectTypeDescriptor) => string;
     private _findJsType: (id: string, doc: object) => ObjectTypeDescriptor;
@@ -622,6 +623,19 @@ export class DocumentConventions {
     public set findCollectionName(value) {
         this._assertNotFrozen();
         this._findCollectionName = value;
+    }
+
+    /**
+     * Gets the function that returns the identity property name for a collection. When set, nested documents
+     * (carrying @metadata with @id and @collection) inside results without an id get that property set to their id.
+     */
+    public get findIdentityPropertyNameFromCollectionName() {
+        return this._findIdentityPropertyNameFromCollectionName;
+    }
+
+    public set findIdentityPropertyNameFromCollectionName(value) {
+        this._assertNotFrozen();
+        this._findIdentityPropertyNameFromCollectionName = value;
     }
 
     public get documentIdGenerator() {
