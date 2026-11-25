@@ -1,3 +1,4 @@
+import { INDEXES } from "../../../Constants.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { CountersIndexDefinitionBuilder } from "../Counters/CountersIndexDefinitionBuilder.js";
 import { TimeSeriesIndexDefinition } from "./TimeSeriesIndexDefinition.js";
@@ -40,6 +41,10 @@ export abstract class AbstractMultiMapTimeSeriesIndexCreationTask extends Abstra
         indexDefinitionBuilder.priority = this.priority;
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
+
+        if (this.searchEngineType) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        }
 
         const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
         indexDefinition.maps = new Set(this.maps);

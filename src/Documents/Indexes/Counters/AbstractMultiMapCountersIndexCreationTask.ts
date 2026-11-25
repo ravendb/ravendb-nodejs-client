@@ -1,3 +1,4 @@
+import { INDEXES } from "../../../Constants.js";
 import { AbstractGenericCountersIndexCreationTask } from "./AbstractGenericCountersIndexCreationTask.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { CountersIndexDefinition } from "./CountersIndexDefinition.js";
@@ -40,6 +41,10 @@ export abstract class AbstractMultiMapCountersIndexCreationTask extends Abstract
         indexDefinitionBuilder.priority = this.priority;
         indexDefinitionBuilder.state = this.state;
         indexDefinitionBuilder.deploymentMode = this.deploymentMode;
+
+        if (this.searchEngineType) {
+            indexDefinitionBuilder.configuration[INDEXES.INDEXING_STATIC_SEARCH_ENGINE_TYPE] = this.searchEngineType;
+        }
 
         const indexDefinition = indexDefinitionBuilder.toIndexDefinition(this.conventions, false);
         indexDefinition.maps = new Set(this.maps);
