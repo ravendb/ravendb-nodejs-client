@@ -176,7 +176,9 @@ export abstract class RavenCommand<TResult> {
                 return RavenCommand._sendWithDispatcher(agent, uri, body, restOptions, this._readsWholeResponse);
             }
             optionsToUse = {
-                body: body instanceof Readable ? RavenCommand._toWebStream(body) : bodyToUse,
+                ...(body instanceof Readable
+                    ? { body: RavenCommand._toWebStream(body), duplex: "half" }
+                    : { body: bodyToUse }),
                 ...restOptions,
                 dispatcher: agent
             } as RequestInit;
