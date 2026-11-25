@@ -290,6 +290,8 @@ export * from "./Documents/Operations/PatchStatus.js";
 export * from "./Documents/Operations/Revisions/ConfigureRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/GetRevisionsOperation.js";
 export * from "./Documents/Operations/Revisions/EnforceRevisionsConfigurationOperation.js";
+export * from "./Documents/Operations/Revisions/DeleteRevisionsOperation.js";
+export * from "./Documents/Operations/Revisions/RevertRevisionsByIdOperation.js";
 export * from "./Documents/Operations/Revisions/RevisionsResult.js";
 export * from "./Documents/Operations/RevisionsCollectionConfiguration.js";
 export * from "./Documents/Operations/RevisionsConfiguration.js";
