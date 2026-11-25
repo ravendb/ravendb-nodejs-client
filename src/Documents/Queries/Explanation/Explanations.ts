@@ -11,6 +11,10 @@ export class Explanations {
         this._explanations = value;
     }
 
+    public getExplanations(key: string): string[] | null {
+        return this._explanations && Object.hasOwn(this._explanations, key) ? this._explanations[key] : null;
+    }
+
     public update(queryResult: QueryResult) {
         this._explanations = queryResult.explanations;
     }
