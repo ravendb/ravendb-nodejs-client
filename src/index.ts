@@ -246,6 +246,7 @@ export * from "./Documents/Operations/PatchRequest.js";
 export * from "./Documents/Operations/GetDetailedStatisticsOperation.js";
 export * from "./Documents/Commands/Batches/BatchOptions.js";
 export * from "./Documents/Commands/Batches/DeleteAttachmentCommandData.js";
+export * from "./Documents/Commands/Batches/DeletePrefixedCommandData.js";
 export * from "./Documents/Commands/Batches/PatchCommandData.js";
 export * from "./Documents/Commands/Batches/JsonPatchCommandData.js";
 export * from "./Documents/Operations/JsonPatchDocument.js";
