@@ -213,6 +213,10 @@ export { NextIdentityForOperation } from "./Documents/Operations/Identities/Next
 export { SeedIdentityForOperation } from "./Documents/Operations/Identities/SeedIdentityForOperation.js";
 export type { IOperationProgress } from "./Documents/Operations/IOperationProgress.js";
 export type { IOperationResult } from "./Documents/Operations/IOperationResult.js";
+export type * from "./Documents/Smuggler/SmugglerResult.js";
+export type { BackupResult, WithDatesAsStrings } from "./Documents/Operations/Backups/BackupResult.js";
+export type { RestoreResult } from "./ServerWide/Operations/RestoreResult.js";
+export type { CompactionResult, CompactionProgress, CompactionProgressBase } from "./ServerWide/Operations/CompactionResult.js";
 export type { OperationState, OperationStatus } from "./Documents/Operations/OperationState.js";
 export {
     UpdateExternalReplicationOperation
