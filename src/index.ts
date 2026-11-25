@@ -8,6 +8,7 @@ export * from "./Types/index.js";
 export * from "./Http/AggressiveCacheOptions.js";
 export * from "./Http/ClusterRequestExecutor.js";
 export * from "./Http/ClusterTopology.js";
+export type { ClusterNodeStatus } from "./Http/ClusterNodeStatus.js";
 export * from "./Http/CurrentIndexAndNode.js";
 export * from "./Http/CurrentIndexAndNodeAndEtag.js";
 export * from "./Http/IBroadcast.js";
