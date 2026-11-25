@@ -85,11 +85,13 @@ export class OperationExecutor {
 
         if (operation.resultType === "OperationId") {
             const idResult = command.result as OperationIdResult;
+            const nodeTag = command.selectedNodeTag || idResult.operationNodeTag;
             return new OperationCompletionAwaiter(
                 this.getRequestExecutor(),
                 this.getRequestExecutor().conventions,
                 idResult.operationId,
-                command.selectedNodeTag || idResult.operationNodeTag);
+                nodeTag,
+                () => this._store.changes(this._databaseName, nodeTag));
 
         } else if (operation.resultType === "PatchResult") {
             const patchOperationResult = new PatchOperationResult<TResult>();

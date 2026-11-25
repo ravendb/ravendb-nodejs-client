@@ -1,4 +1,5 @@
 export { DocumentConventions } from "./Documents/Conventions/DocumentConventions.js";
+export type { OperationStatusFetchMode } from "./Documents/Conventions/DocumentConventions.js";
 export { BulkInsertConventions } from "./Documents/Conventions/BulkInsertConventions.js";
 export * from "./Documents/Conventions/SessionPatchBehavior.js";
 export type { RavenErrorType } from "./Exceptions/index.js";
@@ -211,8 +212,9 @@ export { DeleteIndexOperation } from "./Documents/Operations/Indexes/DeleteIndex
 export type { GetServerWideBackupConfigurationsResponse } from "./Documents/Operations/GetServerWideBackupConfigurationsResponse.js";
 export { NextIdentityForOperation } from "./Documents/Operations/Identities/NextIdentityForOperation.js";
 export { SeedIdentityForOperation } from "./Documents/Operations/Identities/SeedIdentityForOperation.js";
-export type { IOperationProgress } from "./Documents/Operations/IOperationProgress.js";
+export type { IOperationProgress, DeterminateProgress, IndeterminateProgressCount, IndeterminateProgress } from "./Documents/Operations/IOperationProgress.js";
 export type { IOperationResult } from "./Documents/Operations/IOperationResult.js";
+export type { BulkOperationResult, IBulkOperationDetails, BulkOperationPatchDetails, BulkOperationDeleteDetails } from "./Documents/Operations/BulkOperationResult.js";
 export type { OperationState, OperationStatus } from "./Documents/Operations/OperationState.js";
 export {
     UpdateExternalReplicationOperation
