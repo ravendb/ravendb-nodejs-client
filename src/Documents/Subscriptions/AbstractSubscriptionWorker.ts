@@ -198,7 +198,18 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         return this;
     }
 
+    /**
+     * Disconnects without waiting for the subscription to stop. Use disposeAsync() to wait.
+     */
     public dispose(): void {
+        void this.disposeAsync(false);
+    }
+
+    /**
+     * Disconnects and, by default, waits up to 60 seconds for the subscription to stop
+     * (until "end" was emitted), like C# DisposeAsync.
+     */
+    public async disposeAsync(waitForSubscriptionTask: boolean = true): Promise<void> {
         if (this._disposed) {
             return;
         }
@@ -211,12 +222,21 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             this._parser.end();
         }
 
-        this._subscriptionLocalRequestExecutor?.dispose();
-
         if (!this._subscriptionTask) {
+            this._subscriptionLocalRequestExecutor?.dispose();
             this._setState("Stopped");
             this._emitter.emit("end");
+            return;
         }
+
+        if (waitForSubscriptionTask) {
+            let timer: ReturnType<typeof setTimeout>;
+            const timeout = new Promise<void>(resolve => timer = setTimeout(resolve, 60_000));
+            await Promise.race([this._subscriptionTask, timeout]);
+            clearTimeout(timer);
+        }
+
+        this._subscriptionLocalRequestExecutor?.dispose();
     }
 
 
