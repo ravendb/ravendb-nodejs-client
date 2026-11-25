@@ -4,6 +4,7 @@ import {
     IDocumentStore,
     PatchCommandData,
     PatchRequest,
+    PutDocumentCommand,
     TransactionMode
 } from "../../../src/index.js";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
@@ -129,6 +130,19 @@ describe("OptimisticConcurrency", function () {
             const session = tombstoneStore.openSession();
             session.advanced.defer(new PatchCommandData(id, "someConflictedChangeVector", PatchRequest.forScript("this.Prop = Changed"), null));
             await assertThrows(() => session.saveChanges(), assertConcurrencyException);
+            assertThat(await countOfTombstones()).isGreaterThan(0);
+        });
+
+        it("merged put command when document already deleted and fail on concurrency should not delete tombstone", async () => {
+            await storeAndDeleteTestObj();
+
+            assertThat(await countOfTombstones()).isGreaterThan(0);
+            const putCommand = new PutDocumentCommand(id, "someConflictedChangeVector", {
+                "@metadata": {
+                    "@collection": tombstoneStore.conventions.getCollectionNameForType(TestObj)
+                }
+            });
+            await assertThrows(() => tombstoneStore.getRequestExecutor().execute(putCommand), assertConcurrencyException);
             assertThat(await countOfTombstones()).isGreaterThan(0);
         });
     });
