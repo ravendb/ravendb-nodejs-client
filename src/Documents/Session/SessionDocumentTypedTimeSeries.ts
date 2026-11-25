@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { SessionTimeSeriesBase } from "./SessionTimeSeriesBase.js";
 import { ISessionDocumentTypedTimeSeries } from "./ISessionDocumentTypedTimeSeries.js";
 import { ClassConstructor } from "../../Types/index.js";
@@ -44,6 +45,10 @@ export class SessionDocumentTypedTimeSeries<T extends object> extends SessionTim
 
         const results = await this._getFromCache(from, to, null, start, pageSize);
         return results.map(x => x.asTypedEntry(this._clazz));
+    }
+
+    public stream(from?: Date, to?: Date, offset?: number): Promise<Readable> {
+        return this._streamEntries(from, to, offset, entry => entry.asTypedEntry(this._clazz));
     }
 
     public append(timestamp: Date, entry: T): void;

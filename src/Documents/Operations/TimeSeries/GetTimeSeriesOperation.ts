@@ -201,6 +201,16 @@ export class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
     }
 }
 
+export function reviveTimeSeriesEntry(raw: any): TimeSeriesEntry {
+    const result = new TimeSeriesEntry();
+    result.timestamp = DateUtil.utc.parse(raw.Timestamp);
+    result.isRollup = raw.IsRollup;
+    result.tag = raw.Tag;
+    result.values = raw.Values;
+    result.nodeValues = raw.NodeValues;
+    return result;
+}
+
 export function reviveTimeSeriesRangeResult(json: ServerResponse<TimeSeriesRangeResult>): TimeSeriesRangeResult {
     const result = new TimeSeriesRangeResult();
 

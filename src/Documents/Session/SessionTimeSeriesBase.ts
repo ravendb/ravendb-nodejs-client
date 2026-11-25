@@ -11,7 +11,7 @@ import { TimeSeriesBatchCommandData } from "../Commands/Batches/TimeSeriesBatchC
 import { TimeSeriesEntry } from "./TimeSeries/TimeSeriesEntry.js";
 import { TimeSeriesRangeResult } from "../Operations/TimeSeries/TimeSeriesRangeResult.js";
 import { DatesComparator, definedDate, leftDate, rightDate } from "../../Primitives/DatesComparator.js";
-import { GetTimeSeriesOperation } from "../Operations/TimeSeries/GetTimeSeriesOperation.js";
+import { GetTimeSeriesOperation, reviveTimeSeriesEntry } from "../Operations/TimeSeries/GetTimeSeriesOperation.js";
 import { CaseInsensitiveKeysMap } from "../../Primitives/CaseInsensitiveKeysMap.js";
 import { TimeSeriesRange } from "../Operations/TimeSeries/TimeSeriesRange.js";
 import { GetMultipleTimeSeriesOperation } from "../Operations/TimeSeries/GetMultipleTimeSeriesOperation.js";
@@ -19,6 +19,12 @@ import { CONSTANTS } from "../../Constants.js";
 import { ITimeSeriesIncludeBuilder } from "./Loaders/ITimeSeriesIncludeBuilder.js";
 import { TimeSeriesDetails } from "../Operations/TimeSeries/TimeSeriesDetails.js";
 import { IncrementalTimeSeriesBatchCommandData } from "../Commands/Batches/IncrementalTimeSeriesBatchCommandData.js";
+import { pipeline, Readable, Transform } from "node:stream";
+import { StringBuilder } from "../../Utility/StringBuilder.js";
+import { DateUtil } from "../../Utility/DateUtil.js";
+import { TimeUtil } from "../../Utility/TimeUtil.js";
+import { StreamCommand } from "../Commands/StreamCommand.js";
+import { ResultsArrayItemsStream } from "../../Mapping/Json/Streams/ResultsArrayItemsStream.js";
 
 export class SessionTimeSeriesBase {
     protected docId: string;
@@ -108,6 +114,37 @@ export class SessionTimeSeriesBase {
 
     public deleteAt(at: Date) {
         this.delete(at, at);
+    }
+
+    protected async _streamEntries<T>(from: Date, to: Date, offset: number, map: (entry: TimeSeriesEntry) => T): Promise<Readable> {
+        const url = new StringBuilder("streams/timeseries?")
+            .append("docId=").append(encodeURIComponent(this.docId))
+            .append("&name=").append(encodeURIComponent(this.name));
+
+        if (from) {
+            url.append("&from=").append(encodeURIComponent(DateUtil.utc.stringify(from)));
+        }
+
+        if (to) {
+            url.append("&to=").append(encodeURIComponent(DateUtil.utc.stringify(to)));
+        }
+
+        if (offset) {
+            url.append("&offset=").append(encodeURIComponent(TimeUtil.millisToTimeSpan(offset)));
+        }
+
+        const command = new StreamCommand(url.toString());
+        this.session.incrementRequestCount();
+        await this.session.requestExecutor.execute(command, this.session.sessionInfo);
+
+        const entries = new Transform({
+            objectMode: true,
+            transform(raw, encoding, callback) {
+                callback(null, map(reviveTimeSeriesEntry(raw)));
+            }
+        });
+
+        return pipeline(command.result.stream, new ResultsArrayItemsStream(), entries, TypeUtil.NOOP);
     }
 
     private _removeFromCacheIfNeeded(from: Date, to: Date) {

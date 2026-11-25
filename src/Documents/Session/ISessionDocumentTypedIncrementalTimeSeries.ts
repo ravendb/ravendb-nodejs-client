@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { ISessionDocumentDeleteTimeSeriesBase } from "./ISessionDocumentDeleteTimeSeriesBase.js";
 import { TypedTimeSeriesEntry } from "./TimeSeries/TypedTimeSeriesEntry.js";
 
@@ -39,4 +40,9 @@ export interface ISessionDocumentTypedIncrementalTimeSeries<TValues extends obje
     increment(value: number): void;
     increment(timestamp: Date, entry: TValues): void;
     increment(entry: TValues): void;
+
+    /**
+     * Streams the entries between from and to (inclusive, default: all), with timestamps shifted by offset milliseconds.
+     */
+    stream(from?: Date, to?: Date, offset?: number): Promise<Readable>;
 }
