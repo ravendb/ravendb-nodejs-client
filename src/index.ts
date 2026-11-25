@@ -417,6 +417,7 @@ export * from "./Documents/Operations/Backups/Sharding/SingleShardRestoreSetting
 // INDEXES
 export { GetIndexOperation } from "./Documents/Operations/Indexes/GetIndexOperation.js";
 export { GetIndexErrorsOperation } from "./Documents/Operations/Indexes/GetIndexErrorsOperation.js";
+export { GetIndexPerformanceStatisticsOperation } from "./Documents/Operations/Indexes/GetIndexPerformanceStatisticsOperation.js";
 export * from "./Documents/Indexes/Enums.js";
 export * from "./Documents/Indexes/IndexDeploymentMode.js";
 export * from "./Documents/Indexes/IndexResetMode.js";
@@ -436,6 +437,7 @@ export * from "./Documents/Indexes/RollingIndex.js";
 export * from "./Documents/Indexes/RollingIndexDeployment.js";
 export * from "./Documents/Indexes/RollingIndexState.js";
 export * from "./Documents/Indexes/IndexStats.js";
+export type * from "./Documents/Indexes/IndexPerformanceStats.js";
 export * from "./Documents/Indexes/IndexSourceType.js";
 export * from "./Documents/Indexes/index.js";
 export * from "./Documents/Indexes/StronglyTyped.js";
