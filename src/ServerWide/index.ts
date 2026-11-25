@@ -42,6 +42,8 @@ import {
     GenAiConfiguration
 } from "../Documents/Operations/AI/index.js";
 import { AiAgentConfiguration } from "../Documents/Operations/AI/Agents/config/AiAgentConfiguration.js";
+import { SchemaValidationConfiguration } from "../Documents/Operations/SchemaValidation/SchemaValidationConfiguration.js";
+import { RemoteAttachmentsConfiguration } from "../Documents/Attachments/RemoteAttachmentsConfiguration.js";
 
 export interface ScriptResolver {
     script: string;
@@ -65,6 +67,7 @@ export interface DatabaseRecord {
     topology?: DatabaseTopology;
     sharding?: ShardingConfiguration;
     conflictSolverConfig?: ConflictSolver;
+    schemaValidation?: SchemaValidationConfiguration;
     documentsCompression?: DocumentsCompressionConfiguration;
     sorters?: { [key: string]: SorterDefinition };
     analyzers?: { [key: string]: AnalyzerDefinition };
@@ -78,6 +81,7 @@ export interface DatabaseRecord {
     expiration?: ExpirationConfiguration;
     refresh?: RefreshConfiguration;
     dataArchival?: DataArchivalConfiguration;
+    remoteAttachments?: RemoteAttachmentsConfiguration;
     integrations?: IntegrationConfigurations;
     periodicBackups?: PeriodicBackupConfiguration[];
     externalReplications?: ExternalReplication[];
@@ -104,6 +108,7 @@ export interface DatabaseRecord {
     client?: ClientConfiguration;
     studio?: StudioConfiguration;
     truncatedClusterTransactionIndex?: number;
+    truncatedClusterTransactionCommandsCount?: number;
     unusedDatabaseIds?: string[];
 }
 
