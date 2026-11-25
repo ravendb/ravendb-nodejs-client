@@ -2,6 +2,7 @@ export { DocumentConventions } from "./Documents/Conventions/DocumentConventions
 export { BulkInsertConventions } from "./Documents/Conventions/BulkInsertConventions.js";
 export * from "./Documents/Conventions/SessionPatchBehavior.js";
 export type { RavenErrorType } from "./Exceptions/index.js";
+export type { ConcurrencyViolation, ViolationOnType } from "./Exceptions/index.js";
 export * from "./Types/index.js";
 
 // HTTP
