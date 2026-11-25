@@ -6,7 +6,7 @@ import { ISuggestionBuilder } from "./ISuggestionBuilder.js";
 export interface ISuggestionDocumentQuery<T> {
     execute(): Promise<SuggestionsResponseObject>;
 
-    executeLazy(): Lazy<SuggestionsResponseObject>;
+    executeLazy(onEval?: (result: SuggestionsResponseObject) => void): Lazy<SuggestionsResponseObject>;
 
     andSuggestUsing(suggestion: SuggestionBase): ISuggestionDocumentQuery<T>;
 

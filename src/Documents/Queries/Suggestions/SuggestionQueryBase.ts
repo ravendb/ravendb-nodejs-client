@@ -49,7 +49,7 @@ export abstract class SuggestionQueryBase {
         return results;
     }
 
-    public executeLazy(): Lazy<SuggestionsResponseObject> {
+    public executeLazy(onEval?: (result: SuggestionsResponseObject) => void): Lazy<SuggestionsResponseObject> {
         this._query = this._getIndexQuery();
 
         return (this._session as DocumentSession).addLazyOperation(
@@ -58,7 +58,7 @@ export abstract class SuggestionQueryBase {
                 this._query,
                 result => this._invokeAfterQueryExecuted(result),
                 (result) => this._processResults(result)
-            ));
+            ), onEval);
     }
 
     protected abstract _getIndexQuery(updateAfterQueryExecuted?: boolean): IndexQuery;

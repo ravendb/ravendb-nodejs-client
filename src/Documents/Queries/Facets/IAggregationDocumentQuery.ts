@@ -10,5 +10,5 @@ export interface IAggregationDocumentQuery<T> {
 
     execute(): Promise<FacetResultObject>;
 
-    executeLazy(): Lazy<FacetResultObject>;
+    executeLazy(onEval?: (result: FacetResultObject) => void): Lazy<FacetResultObject>;
 }

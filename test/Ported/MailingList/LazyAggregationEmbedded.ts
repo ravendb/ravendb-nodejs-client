@@ -3,6 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 
 import {
     AbstractJavaScriptIndexCreationTask,
+    FacetResultObject,
     IDocumentStore,
 } from "../../../src/index.js";
 
@@ -70,5 +71,26 @@ describe("lazy aggregation embedded", function () {
 
         assert.strictEqual(userStats["users/1"], 2);
         assert.strictEqual(userStats["users/2"], 1);
+    });
+
+    it("calls the executeLazy callback when pending lazy operations are executed", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Task(), { assigneeId: "users/1" }), "tasks/1");
+            await session.saveChanges();
+        }
+
+        await new TaskIndex().execute(store);
+        await testContext.waitForIndexing(store);
+
+        const session = store.openSession();
+        let facets: FacetResultObject;
+        session.query({ indexName: new TaskIndex().getIndexName() })
+            .aggregateBy(f => f.byField("assigneeId"))
+            .executeLazy(x => facets = x);
+
+        await session.advanced.eagerly.executeAllPendingLazyOperations();
+
+        assert.strictEqual(facets["assigneeId"].values[0].range, "users/1");
     });
 });
