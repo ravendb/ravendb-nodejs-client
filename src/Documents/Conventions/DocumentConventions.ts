@@ -62,7 +62,7 @@ export class DocumentConventions {
 
     private _disableAtomicDocumentWritesInClusterWideTransaction: boolean;
 
-    private _disableTcpCompression = true; // not yet supported
+    private _disableTcpCompression = false;
 
     private _shouldIgnoreEntityChanges: (sessionOperations: InMemoryDocumentSessionOperations, entity: object, documentId: string) => boolean;
 
@@ -348,6 +348,15 @@ export class DocumentConventions {
 
     public get isDisableTcpCompression() {
         return this._disableTcpCompression;
+    }
+
+    public get disableTcpCompression() {
+        return this._disableTcpCompression;
+    }
+
+    public set disableTcpCompression(value: boolean) {
+        this._assertNotFrozen();
+        this._disableTcpCompression = value;
     }
 
     /**

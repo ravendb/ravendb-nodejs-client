@@ -2,7 +2,8 @@ import { DocumentType } from "../DocumentAbstractions.js";
 import { getLogger } from "../../Utility/LogUtil.js";
 import { SubscriptionWorkerOptions } from "./SubscriptionWorkerOptions.js";
 import { Socket } from "node:net";
-import { pipeline, Readable, Transform } from "node:stream";
+import { pipeline, Readable, Transform, Writable } from "node:stream";
+import type { ZstdDecompress } from "node:zlib";
 import { EventEmitter } from "node:events";
 import { ServerNode } from "../../Http/ServerNode.js";
 import { IRequestExecutorOptions, RequestExecutor } from "../../Http/RequestExecutor.js";
@@ -13,6 +14,7 @@ import { getError, RavenErrorType, throwError } from "../../Exceptions/index.js"
 import {
     SUBSCRIPTION_TCP_VERSION,
     SupportedFeatures,
+    TCP_CONNECTIONS_WITH_COMPRESSION,
     TcpConnectionHeaderMessage
 } from "../../ServerWide/Tcp/TcpConnectionHeaderMessage.js";
 import { TcpNegotiateParameters } from "../../ServerWide/Tcp/TcpNegotiateParameters.js";
@@ -50,6 +52,9 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
     protected readonly _options: SubscriptionWorkerOptions<TType>;
     private _tcpClient: Socket;
     private _parser: Transform;
+    private _input: Transform;
+    private _output: Writable;
+    private _decompressor: ZstdDecompress;
     protected _disposed: boolean = false;
     protected _subscriptionTask: Promise<void>;
     protected _forcedTopologyUpdateAttempts = 0;
@@ -232,18 +237,47 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         return this._options ? this._options.subscriptionName : null;
     }
 
-    protected _shouldUseCompression() {
-        let compressionSupport: boolean = false;
-
+    protected async _shouldUseCompression(): Promise<boolean> {
         const version = this.subscriptionTcpVersion ?? SUBSCRIPTION_TCP_VERSION;
-        if (version >= 53_000 && !this.getRequestExecutor().conventions.isDisableTcpCompression) {
-            compressionSupport = true;
+        if (version < TCP_CONNECTIONS_WITH_COMPRESSION || this.getRequestExecutor().conventions.disableTcpCompression) {
+            return false;
         }
 
-        return compressionSupport;
+        const { createZstdCompress } = await import("node:zlib");
+        return typeof createZstdCompress === "function";
+    }
+
+    private async _useCompression(socket: Socket): Promise<void> {
+        const { constants, createZstdCompress, createZstdDecompress } = await import("node:zlib");
+
+        const compressor = createZstdCompress({ flush: constants.ZSTD_e_flush });
+        compressor.on("error", err => socket.destroy(err));
+        compressor.pipe(socket);
+        this._output = compressor;
+
+        this._decompressor = createZstdDecompress();
+        this._decompressor.on("data", chunk => this._input.push(chunk));
+        this._decompressor.on("error", err => this._input.destroy(err));
+    }
+
+    private _closeCompression(): void {
+        this._decompressor?.destroy();
+        this._decompressor = null;
+
+        if (this._output && this._output !== this._tcpClient) {
+            this._output.destroy();
+        }
+    }
+
+    private _write(payload: object): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this._output.write(JSON.stringify(payload, null, 0), err => err ? reject(err) : resolve());
+        });
     }
 
     private async _connectToServer(): Promise<Socket> {
+        this._closeCompression();
+
         const command = new GetTcpInfoForRemoteTaskCommand(
             "Subscription/" + this._dbName, this._dbName,
             this._options ? this._options.subscriptionName : null, true);
@@ -299,6 +333,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             this._options.connectionStreamTimeout);
 
         this._tcpClient = result.socket;
+        this._output = this._tcpClient;
 
         this._supportedFeatures = result.supportedFeatures;
 
@@ -309,7 +344,11 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                 + this._supportedFeatures.protocolVersion);
         }
 
-        await this._sendOptions(this._tcpClient, this._options);
+        if (this._supportedFeatures.dataCompression) {
+            await this._useCompression(this._tcpClient);
+        }
+
+        await this._sendOptions(this._options);
 
         this.setLocalRequestExecutor(command.getRequestedNode().url, {
             authOptions: requestExecutor.getAuthOptions(),
@@ -332,7 +371,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             destinationUrl: chosenUrl,
             destinationServerId: tcpInfo.serverId,
             licensedFeatures: {
-                dataCompression: this._shouldUseCompression()
+                dataCompression: await this._shouldUseCompression()
             }
         } as TcpNegotiateParameters;
 
@@ -360,7 +399,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
         return tcpCommand.result;
     }
 
-    private async _sendOptions(socket: Socket, options: SubscriptionWorkerOptions<TType>) {
+    private async _sendOptions(options: SubscriptionWorkerOptions<TType>) {
         const payload = {
             SubscriptionName: options.subscriptionName,
             TimeToWaitBeforeConnectionRetry:
@@ -373,9 +412,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             CloseWhenNoDocsLeft: options.closeWhenNoDocsLeft || false,
         };
 
-        return new Promise<void>(resolve => {
-            socket.write(JSON.stringify(payload, null, 0), () => resolve());
-        });
+        return this._write(payload);
     }
 
     private async _ensureParser(socket: Socket): Promise<void> {
@@ -396,8 +433,18 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             }
         });
 
+        this._input = new Transform({
+            transform: (chunk, encoding, callback) => this._decompressor
+                ? this._decompressor.write(chunk, err => callback(err))
+                : callback(null, chunk),
+            flush: callback => this._decompressor
+                ? this._decompressor.flush(() => callback())
+                : callback()
+        });
+
         this._parser = pipeline([
             socket,
+            this._input,
             new Parser({ jsonStreaming: true, streamValues: false }),
             new StreamValues(),
             keysTransform
@@ -595,6 +642,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             } finally {
                 socket.end();
                 this._parser.end();
+                this._closeCompression();
             }
         } catch (err) {
             if (!this._disposed) {
@@ -632,7 +680,7 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                     })
                     .then(() => {
                         if (tcpClientCopy && tcpClientCopy.writable) {
-                            return this._sendAck(batch, tcpClientCopy);
+                            return this._sendAck(batch);
                         }
                     });
             }
@@ -833,17 +881,13 @@ export abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
             .then(() => this._readNextObject());
     }
 
-    private async _sendAck(batch: TBatch, networkStream: Socket): Promise<void> {
+    private async _sendAck(batch: TBatch): Promise<void> {
         const payload = {
             ChangeVector: batch.lastSentChangeVectorInBatch,
             Type: "Acknowledge"
         };
 
-        return new Promise<void>((resolve, reject) => {
-            networkStream.write(JSON.stringify(payload, null, 0), (err) => {
-                err ? reject(err) : resolve();
-            });
-        });
+        return this._write(payload);
     }
 
 
