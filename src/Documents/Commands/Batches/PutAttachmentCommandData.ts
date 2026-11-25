@@ -5,6 +5,7 @@ import { StringUtil } from "../../../Utility/StringUtil.js";
 import { throwError } from "../../../Exceptions/index.js";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { RemoteAttachmentFlags } from "../../Attachments/RemoteAttachmentFlags.js";
+import { PutAttachmentCommandHelper } from "./PutAttachmentCommandHelper.js";
 
 interface DocumentAttachmentDto {
     Id: string;
@@ -52,6 +53,8 @@ export class PutAttachmentCommandData implements ICommandData {
         this.contentType = contentType;
         this.changeVector = changeVector;
         this.remoteParameters = remoteParameters;
+
+        PutAttachmentCommandHelper.validateStream(stream);
     }
 
     public serialize(conventions: DocumentConventions): object {

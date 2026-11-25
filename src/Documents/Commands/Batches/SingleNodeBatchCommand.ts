@@ -67,6 +67,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 }
 
                 const { attStream } = putAttachmentCommandData;
+                PutAttachmentCommandHelper.validateStream(attStream);
                 if (this._attachmentStreams.has(attStream)) {
                     PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
                 } else {

@@ -10,6 +10,7 @@ import {
 import { Readable, Writable } from "node:stream";
 import { User } from "../../Assets/Entities.js";
 import { bufferToReadable, finishedAsync } from "../../../src/Utility/StreamUtil.js";
+import { assertThrows } from "../../Utils/AssertExtensions.js";
 
 describe("Attachments Session", function () {
 
@@ -398,5 +399,60 @@ describe("Attachments Session", function () {
             assert.ok(!(await session.advanced.attachments.exists("users/1", "background-photo")));
             assert.ok(!(await session.advanced.attachments.exists("users/2", "profile")));
         }
+    });
+
+    it("throw if stream is disposed", async () => {
+        const session = store.openSession();
+        const user = Object.assign(new User(), { name: "Fitzchak" });
+        await session.store(user, "users/1");
+
+        const profileStream = Readable.from([Buffer.from([1, 2, 3])]);
+        session.advanced.attachments.store(user, "profile.png", profileStream, "image/png");
+        profileStream.destroy();
+        const backgroundStream = Readable.from([Buffer.from([10, 20, 30, 40, 50])]);
+        session.advanced.attachments.store(user, "background-photo.jpg", backgroundStream, "ImGgE/jPeG");
+        backgroundStream.destroy();
+        const fileStream = Readable.from([Buffer.from([1, 2, 3, 4, 5])]);
+        session.advanced.attachments.store(user, "fileNAME_#$1^%_בעברית.txt", fileStream);
+        fileStream.destroy();
+
+        await assertThrows(() => session.saveChanges(), err => {
+            assert.strictEqual(err.name, "InvalidOperationException");
+            assert.strictEqual(err.message,
+                "Cannot put an attachment with a not readable stream. "
+                + "Make sure that the specified stream is readable and was not disposed.");
+        });
+    });
+
+    it("put attachment and delete should throw", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Fitzchak" }), "users/1");
+            await session.saveChanges();
+        }
+
+        const session = store.openSession();
+        const user = await session.load("users/1", User);
+        session.advanced.attachments.store(user, "profile.png", Buffer.from([1, 2, 3]), "image/png");
+        await session.delete(user);
+
+        await assertThrows(() => session.saveChanges(), err => {
+            assert.strictEqual(err.name, "InvalidOperationException");
+            assert.strictEqual(err.message,
+                "Cannot perform save because document users/1 has been deleted by the session "
+                + "and is also taking part in deferred AttachmentPUT command");
+        });
+    });
+
+    it("put lot of attachments", async () => {
+        const session = store.openSession();
+        await session.store(Object.assign(new User(), { name: "Fitzchak" }), "users/1");
+
+        for (let i = 0; i < 100; i++) {
+            session.advanced.attachments.store(
+                "users/1", "Big And Very Long File Name " + i, Buffer.from([1, 2, 3]), "image/png");
+        }
+
+        await session.saveChanges();
     });
 });

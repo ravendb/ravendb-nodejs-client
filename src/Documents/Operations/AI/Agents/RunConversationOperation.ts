@@ -20,6 +20,7 @@ import { JsonSerializer } from "../../../../Mapping/Json/Serializer.js";
 import { ObjectUtil } from "../../../../Utility/ObjectUtil.js";
 import { StringUtil } from "../../../../Utility/StringUtil.js";
 import { readToBuffer } from "../../../../Utility/StreamUtil.js";
+import { PutAttachmentCommandHelper } from "../../../Commands/Batches/PutAttachmentCommandHelper.js";
 import { Dispatcher } from "undici-types";
 
 export class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
@@ -146,6 +147,12 @@ class RunConversationCommand<TAnswer>
         this._streamCallback = streamCallback;
         this._outputOptions = outputOptions;
         this._conventions = conventions;
+
+        for (const command of attachmentCommands ?? []) {
+            if (command.kind === "put") {
+                PutAttachmentCommandHelper.validateStream(command.stream);
+            }
+        }
 
         // When streaming is enabled, we need to handle raw response.
         // The property path may be an empty string when streaming raw text (noSchema), so check for null only.

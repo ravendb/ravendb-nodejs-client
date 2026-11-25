@@ -9,6 +9,7 @@ import { Stream } from "node:stream";
 import { DocumentConventions } from "../../Conventions/DocumentConventions.js";
 import { RavenCommand } from "../../../Http/RavenCommand.js";
 import { ServerNode } from "../../../Http/ServerNode.js";
+import { PutAttachmentCommandHelper } from "../../Commands/Batches/PutAttachmentCommandHelper.js";
 
 export class PutAttachmentOperation implements IOperation<AttachmentDetails> {
     private readonly _documentId: string;
@@ -64,6 +65,8 @@ export class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
         this._stream = stream;
         this._contentType = contentType;
         this._changeVector = changeVector;
+
+        PutAttachmentCommandHelper.validateStream(stream);
     }
 
     public createRequest(node: ServerNode): HttpRequestParameters {
