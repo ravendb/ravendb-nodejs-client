@@ -67,4 +67,30 @@ describe("MultiGetBasic", function () {
         assertThat(secondCommand.result[1].statusCode)
             .isEqualTo(304);
     });
+
+    it("can use multi get to batch get document requests", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Ayende" }));
+            await session.store(Object.assign(new User(), { name: "Oren" }));
+            await session.saveChanges();
+        }
+
+        const requestExecutor = store.getRequestExecutor();
+
+        const command = new MultiGetCommand(requestExecutor, store.conventions, [
+            getRequest("users/1-A"),
+            getRequest("users/2-A")
+        ]);
+        try {
+            await requestExecutor.execute(command);
+        } finally {
+            command.dispose();
+        }
+
+        assertThat(JSON.parse(command.result[0].result).Results[0].name)
+            .isEqualTo("Ayende");
+        assertThat(JSON.parse(command.result[1].result).Results[0].name)
+            .isEqualTo("Oren");
+    });
 });
