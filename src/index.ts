@@ -834,6 +834,8 @@ export * from "./ServerWide/Operations/ModifyDatabaseTopologyOperation.js";
 export * from "./ServerWide/Operations/ModifyDatabaseTopologyResult.js";
 
 export * from "./ServerWide/Sharding/AddDatabaseShardOperation.js";
+export * from "./ServerWide/Sharding/AddPrefixedShardingSettingOperation.js";
+export * from "./ServerWide/Sharding/DeletePrefixedShardingSettingOperation.js";
 export * from "./ServerWide/Sharding/AddNodeToOrchestratorTopologyOperation.js";
 export * from "./ServerWide/Sharding/MigrationStatus.js";
 export * from "./ServerWide/Sharding/OrchestratorConfiguration.js";
@@ -841,6 +843,7 @@ export * from "./ServerWide/Sharding/PrefixedShardingSetting.js";
 export * from "./ServerWide/Sharding/RemoveNodeFromOrchestratorTopologyOperation.js";
 export * from "./ServerWide/Sharding/ShardBucketMigration.js";
 export * from "./ServerWide/Sharding/ShardingConfiguration.js";
+export * from "./ServerWide/Sharding/UpdatePrefixedShardingSettingOperation.js";
 
 // MAPPING
 export { TypesAwareObjectMapper } from "./Mapping/ObjectMapper.js";
