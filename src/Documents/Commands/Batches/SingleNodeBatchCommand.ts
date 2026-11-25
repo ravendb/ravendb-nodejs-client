@@ -50,6 +50,7 @@ export class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         this._conventions = conventions;
         this._options = options;
         this._mode = mode;
+        this.timeout = options?.requestTimeout;
 
         if (!conventions) {
             throwError("InvalidArgumentException", "conventions cannot be null");
