@@ -72,7 +72,10 @@ export class GetIndexStatisticsCommand extends RavenCommand<IndexStats> {
             {
                 nestedTypes: {
                     "results[].collections": "Map",
-                    "results[].collections$MAP": "CollectionStats"
+                    "results[].collections$MAP": "CollectionStats",
+                    "results[].lastQueryingTime": "date",
+                    "results[].createdTimestamp": "date",
+                    "results[].lastIndexingTime": "date"
                 }
             }, new Map([[CollectionStats.name, CollectionStats]]));
 
