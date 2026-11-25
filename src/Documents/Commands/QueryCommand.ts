@@ -42,6 +42,7 @@ export class QueryCommand extends AbstractQueryCommand<QueryResult, { [param: st
     }
 
     protected _getContent(): string {
+        this._session.assertNotDisposed();
         return writeIndexQuery(this._session.conventions, this._indexQuery);
     }
 
@@ -51,6 +52,7 @@ export class QueryCommand extends AbstractQueryCommand<QueryResult, { [param: st
             return;
         }
 
+        this._session.assertNotDisposed();
         let body: string = null;
         this.result = await QueryCommand.parseQueryResultResponseAsync(
             bodyStream, this._session.conventions, fromCache, b => body = b);

@@ -7,7 +7,7 @@ import {
     DocumentStore, MultiDatabaseHiLoIdGenerator,
 } from "../../src/index.js";
 import { ArrayUtil } from "../../src/Utility/ArrayUtil.js";
-import { assertThat } from "../Utils/AssertExtensions.js";
+import { assertThat, assertThrows } from "../Utils/AssertExtensions.js";
 
 describe("HiLo", function () {
 
@@ -320,6 +320,26 @@ describe("HiLo", function () {
             .hasSize(count * 4);
         assertThat(productsIds)
             .hasSize(count * 4);
+    });
+
+    it("saveChanges after store dispose should throw", async () => {
+        const disposedStore = await testContext.getDocumentStore();
+        {
+            const session = disposedStore.openSession();
+            await session.store(new User());
+            await session.saveChanges();
+        }
+
+        const session = disposedStore.openSession();
+        await session.store(new User());
+
+        await disposeTestDocumentStore(disposedStore);
+
+        await session.store(new User());
+        await assertThrows(() => session.saveChanges(), err => {
+            assertThat(err.name).isEqualTo("InvalidOperationException");
+            assertThat(err.message).contains("document store has already been disposed");
+        });
     });
 
 });

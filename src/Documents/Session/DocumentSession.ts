@@ -226,6 +226,7 @@ export class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public async saveChanges(): Promise<void> {
+        this.assertNotDisposed();
         const saveChangeOperation = new BatchOperation(this);
         let command: SingleNodeBatchCommand;
         try {
