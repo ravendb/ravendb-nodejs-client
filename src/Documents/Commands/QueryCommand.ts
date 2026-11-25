@@ -5,6 +5,7 @@ import { throwError } from "../../Exceptions/index.js";
 import { Stream } from "node:stream";
 import { ServerCasing, ServerResponse } from "../../Types/index.js";
 import { QueryTimings } from "../Queries/Timings/QueryTimings.js";
+import { QueryInspectionNode } from "../Queries/Timings/QueryInspectionNode.js";
 import { StringUtil } from "../../Utility/StringUtil.js";
 import { readToEnd } from "../../Utility/StreamUtil.js";
 import { ObjectUtil } from "../../Utility/ObjectUtil.js";
@@ -90,6 +91,7 @@ export class QueryCommand extends AbstractQueryCommand<QueryResult, { [param: st
 
         const mapped = new QueryTimings();
         mapped.durationInMs = timings.DurationInMs;
+        mapped.queryPlan = QueryCommand._mapQueryPlanToLocalObject(timings.QueryPlan);
         mapped.timings = timings.Timings ? {} : undefined;
         if (timings.Timings) {
             for (const time of Object.keys(timings.Timings)) {
@@ -97,6 +99,18 @@ export class QueryCommand extends AbstractQueryCommand<QueryResult, { [param: st
             }
         }
         return mapped;
+    }
+
+    private static _mapQueryPlanToLocalObject(node: ServerCasing<ServerResponse<QueryInspectionNode>>): QueryInspectionNode {
+        if (!node) {
+            return undefined;
+        }
+
+        return {
+            operation: node.Operation,
+            parameters: node.Parameters,
+            children: node.Children?.map(x => QueryCommand._mapQueryPlanToLocalObject(x))
+        };
     }
 
 

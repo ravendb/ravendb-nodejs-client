@@ -697,6 +697,7 @@ export * from "./Documents/Queries/Highlighting/HighlightingOptions.js";
 export * from "./Documents/Queries/Highlighting/HighlightingParameters.js";
 export * from "./Documents/Queries/Highlighting/Hightlightings.js";
 export * from "./Documents/Queries/Timings/QueryTimings.js";
+export * from "./Documents/Queries/Timings/QueryInspectionNode.js";
 export * from "./Documents/Queries/Facets/AggregationDocumentQuery.js";
 export * from "./Documents/Queries/Facets/AggregationQueryBase.js";
 export * from "./Documents/Queries/Facets/GenericRangeFacet.js";
