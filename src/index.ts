@@ -470,6 +470,8 @@ export * from "./Utility/VectorSearchUtil.js"
 export * from "./Documents/Replication/ExternalReplication.js";
 export * from "./Documents/Replication/ReplicationNode.js";
 export * from "./Documents/Replication/ExternalReplicationBase.js";
+export type * from "./Documents/Replication/ReplicationPerformance.js";
+export * from "./Documents/Operations/Replication/GetReplicationPerformanceStatisticsOperation.js";
 
 // STORE
 export * from "./Documents/DocumentAbstractions.js";
