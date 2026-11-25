@@ -1,5 +1,5 @@
 import { IMaintenanceOperation, OperationResultType } from "./OperationAbstractions.js";
-import { OngoingTask } from "./OngoingTasks/OngoingTask.js";
+import { OngoingTask, OngoingTaskEmbeddingsGeneration } from "./OngoingTasks/OngoingTask.js";
 import { OngoingTaskType } from "./OngoingTasks/OngoingTaskType.js";
 import { TypeUtil } from "../../Utility/TypeUtil.js";
 import { HttpRequestParameters } from "../../Primitives/Http.js";
@@ -16,6 +16,9 @@ import { OlapEtlConfiguration } from "./Etl/Olap/OlapEtlConfiguration.js";
 import { ElasticSearchEtlConfiguration } from "./Etl/ElasticSearch/ElasticSearchEtlConfiguration.js";
 import { QueueEtlConfiguration } from "./Etl/Queue/QueueEtlConfiguration.js";
 import { Transformation } from "./Etl/Transformation.js";
+import { GenAiConfiguration } from "./AI/GenAiConfiguration.js";
+import { EmbeddingsGenerationConfiguration } from "./AI/EmbeddingsGenerationConfiguration.js";
+import { TimeUtil } from "../../Utility/TimeUtil.js";
 
 export class GetOngoingTaskInfoOperation implements IMaintenanceOperation<OngoingTask> {
     private readonly _taskName: string;
@@ -159,6 +162,20 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 }
                 break;
             }
+            case "GenAi": {
+                nestedTypes = {
+                    configuration: "GenAiConfiguration",
+                    "configuration.transforms": "Transformation"
+                };
+                break;
+            }
+            case "EmbeddingsGeneration": {
+                nestedTypes = {
+                    configuration: "EmbeddingsGenerationConfiguration",
+                    "configuration.transforms": "Transformation"
+                };
+                break;
+            }
             case "Backup": {
                 nestedTypes = {
                     lastFullBackup: "date",
@@ -180,6 +197,13 @@ class GetOngoingTaskInfoCommand extends RavenCommand<OngoingTask> {
                 nestedTypes
             },
             knownTypes);
+
+        if (this._type === "EmbeddingsGeneration" && this.result) {
+            const configuration = (this.result as OngoingTaskEmbeddingsGeneration).configuration;
+            configuration.embeddingsCacheExpiration = TimeUtil.timeSpanToDuration(configuration.embeddingsCacheExpiration as unknown as string);
+            configuration.embeddingsCacheForQueryingExpiration = TimeUtil.timeSpanToDuration(configuration.embeddingsCacheForQueryingExpiration as unknown as string);
+        }
+
         return body;
     }
 
@@ -196,4 +220,6 @@ const knownTypes = new Map<string, any>([
     [ElasticSearchEtlConfiguration.name, ElasticSearchEtlConfiguration],
     [QueueEtlConfiguration.name, QueueEtlConfiguration],
     [Transformation.name, Transformation],
+    [GenAiConfiguration.name, GenAiConfiguration],
+    [EmbeddingsGenerationConfiguration.name, EmbeddingsGenerationConfiguration],
 ]);
