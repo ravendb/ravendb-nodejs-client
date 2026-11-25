@@ -5,8 +5,10 @@ import { AiSettingsCompareDifferences } from "../AiSettingsCompareDifferences.js
  */
 export abstract class AbstractAiSettings {
     /**
-     * Maximum number of query embedding batches that can be processed concurrently.
-     * Allows users to override the database global value.
+     * Maximum number of concurrent embedding batches for each embeddings generation task that uses this
+     * connection string. RavenDB can run up to this number of source-document batches and up to the same
+     * number of search-term batches at the same time.
+     * Overrides the server or database default set by `Ai.Embeddings.MaxConcurrentBatches`.
      */
     public embeddingsMaxConcurrentBatches?: number;
 
