@@ -1165,7 +1165,7 @@ export class RequestExecutor implements IDisposable {
 
                     const dbMissingHeader = response.headers.get(HEADERS.DATABASE_MISSING);
                     if (dbMissingHeader) {
-                        throwError("DatabaseDoesNotExistException", dbMissingHeader as string);
+                        throwError("DatabaseDoesNotExistException", decodeURIComponent(dbMissingHeader));
                     }
 
                     this._throwFailedToContactAllNodes(command, req);
