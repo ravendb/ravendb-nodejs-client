@@ -1,3 +1,4 @@
+import assert from "node:assert";
 import {
     DocumentInfo,
     IDocumentSession,
@@ -312,4 +313,59 @@ class Employee {
 
         return addressId;
     }
+
+    function prepareForSaveChanges(session: IDocumentSession) {
+        return (session as unknown as InMemoryDocumentSessionOperations).prepareForSaveChanges();
+    }
+
+    function serializedTrackedEntityIds(saveChangesData: ReturnType<typeof prepareForSaveChanges>): string[] {
+        const trackChangesCommand = saveChangesData.sessionCommands.find(c => c.type === "BatchTrackChanges");
+        assertThat(trackChangesCommand).isNotNull();
+        const serialized = trackChangesCommand.serialize(store.conventions) as { TrackedEntities: Record<string, string> };
+        return Object.keys(serialized.TrackedEntities);
+    }
+
+    it("writesAndReads_ModifiedEntityShouldBeExcludedFromBatchTrackChangesCommand", async () => {
+        await storeEmployees(
+            ["employees/1-A", { firstName: "Jerry" }],
+            ["employees/2-A", { firstName: "Egor" }],
+            ["employees/3-A", { firstName: "Dana" }]);
+
+        const session = openWritesAndReadsSession();
+        await session.load("employees/1-A", Employee);
+        const egor = await session.load("employees/2-A", Employee);
+        await session.load("employees/3-A", Employee);
+
+        egor.firstName = "Egor Modified";
+
+        const saveChangesData = prepareForSaveChanges(session);
+        const putIds = saveChangesData.sessionCommands.filter(c => c.type === "PUT").map(c => c.id);
+        assert.deepStrictEqual(putIds, ["employees/2-A"]);
+
+        const trackedEntityIds = serializedTrackedEntityIds(saveChangesData);
+        assertThat(trackedEntityIds).contains("employees/1-A");
+        assertThat(trackedEntityIds).contains("employees/3-A");
+        assertThat(trackedEntityIds.includes("employees/2-A")).isFalse();
+    });
+
+    it("writesAndReads_DeferredDeleteById_IsStillCheckedByBatchTrackChangesCommand", async () => {
+        await storeEmployees(
+            ["employees/1-A", { firstName: "Jerry" }],
+            ["employees/2-A", { firstName: "Egor" }]);
+
+        const session = openWritesAndReadsSession();
+        await session.load("employees/1-A", Employee);
+        await session.load("employees/2-A", Employee);
+
+        await session.delete("employees/2-A");
+
+        const saveChangesData = prepareForSaveChanges(session);
+        assertThat(saveChangesData.sessionCommands.some(c => c.id === "employees/2-A")).isFalse();
+        assertThat(saveChangesData.deferredCommands.some(c => c.type === "DELETE" && c.id === "employees/2-A"))
+            .isTrue();
+
+        const trackedEntityIds = serializedTrackedEntityIds(saveChangesData);
+        assertThat(trackedEntityIds).contains("employees/1-A");
+        assertThat(trackedEntityIds).contains("employees/2-A");
+    });
 });
