@@ -34,6 +34,9 @@ export class LazyQueryOperation<T extends object> implements ILazyOperation {
         request.url = "/queries";
         request.method = "POST";
         request.query = "?queryHash=" + this._queryOperation.indexQuery.getQueryHash(this._session.conventions.objectMapper);
+        if (this._queryOperation.indexQuery.tag) {
+            request.query += "&tag=" + encodeURIComponent(this._queryOperation.indexQuery.tag);
+        }
         request.body = writeIndexQuery(this._session.conventions, this._queryOperation.indexQuery);
         return request;
     }

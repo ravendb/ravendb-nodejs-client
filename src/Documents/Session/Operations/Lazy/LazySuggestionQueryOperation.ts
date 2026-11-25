@@ -36,6 +36,9 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
         request.url = "/queries";
         request.method = "POST";
         request.query = "?queryHash=" + this._indexQuery.getQueryHash(this._session.conventions.objectMapper);
+        if (this._indexQuery.tag) {
+            request.query += "&tag=" + encodeURIComponent(this._indexQuery.tag);
+        }
         request.body = writeIndexQuery(this._session.conventions, this._indexQuery);
 
         return request;
