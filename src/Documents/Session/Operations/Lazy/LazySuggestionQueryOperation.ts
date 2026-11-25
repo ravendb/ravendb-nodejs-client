@@ -33,6 +33,7 @@ export class LazySuggestionQueryOperation implements ILazyOperation {
 
     public createRequest(): GetRequest {
         const request = new GetRequest();
+        request.canCacheAggressively = !this._indexQuery.disableCaching && !this._indexQuery.waitForNonStaleResults;
         request.url = "/queries";
         request.method = "POST";
         request.query = "?queryHash=" + this._indexQuery.getQueryHash(this._session.conventions.objectMapper);

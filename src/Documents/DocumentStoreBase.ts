@@ -1,6 +1,7 @@
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor.js";
 import { EventEmitter } from "node:events";
 import { IDocumentStore, SessionDisposingEventArgs } from "./IDocumentStore.js";
+import { AggressivelyCacheForOptions } from "./IDocumentStore.js";
 import { throwError } from "../Exceptions/index.js";
 import { validateUri } from "../Utility/UriUtil.js";
 import { IAuthOptions } from "../Auth/AuthOptions.js";
@@ -45,11 +46,6 @@ export abstract class DocumentStoreBase
     extends EventEmitter
     implements IDocumentStore {
 
-    /* TBD 4.1
-    public abstract disableAggressiveCaching(): IDisposable;
-    public abstract disableAggressiveCaching(database: string): IDisposable;
-    */
-
     protected constructor() {
         super();
         this._subscriptions = new DocumentSubscriptions(this as any as DocumentStore);
@@ -63,13 +59,17 @@ export abstract class DocumentStoreBase
         return this._disposed;
     }
 
-    // TBD: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    public abstract aggressivelyCacheFor<T>(duration: number, action: () => T | Promise<T>): Promise<T>;
+    public abstract aggressivelyCacheFor<T>(
+        duration: number, options: AggressivelyCacheForOptions, action: () => T | Promise<T>): Promise<T>;
+
+    public abstract disableAggressiveCaching<T>(action: () => T | Promise<T>): Promise<T>;
+    public abstract disableAggressiveCaching<T>(database: string, action: () => T | Promise<T>): Promise<T>;
 
     public abstract changes(): IDatabaseChanges;
     public abstract changes(database: string): IDatabaseChanges;
     public abstract changes(database: string, nodeTag: string): IDatabaseChanges;
 
-    // TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 
     public abstract identifier: string;
 
@@ -247,7 +247,14 @@ export abstract class DocumentStoreBase
 
     public abstract getRequestExecutor(databaseName?: string): RequestExecutor;
 
-    // TBD public IDisposable AggressivelyCache(string database = null)
+    public aggressivelyCache<T>(action: () => T | Promise<T>): Promise<T>;
+    public aggressivelyCache<T>(database: string, action: () => T | Promise<T>): Promise<T>;
+    public aggressivelyCache<T>(databaseOrAction: string | (() => T | Promise<T>), action?: () => T | Promise<T>): Promise<T> {
+        const database = typeof databaseOrAction === "string" ? databaseOrAction : undefined;
+        const { duration, mode } = this.conventions.aggressiveCache;
+        return this.aggressivelyCacheFor(duration, { mode, database },
+            typeof databaseOrAction === "function" ? databaseOrAction : action);
+    }
 
     protected _eventHandlers: [string, (eventArgs: any) => void][] = [];
 

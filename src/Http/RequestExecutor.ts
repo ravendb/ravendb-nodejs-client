@@ -1,4 +1,5 @@
 import { Readable } from "node:stream";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { acquireSemaphore, SemaphoreAcquisitionContext } from "../Utility/SemaphoreUtil.js";
 import { getLogger, ILogger } from "../Utility/LogUtil.js";
 import { Timer } from "../Primitives/Timer.js";
@@ -191,7 +192,21 @@ export class RequestExecutor implements IDisposable {
 
     private _topologyTakenFromNode: ServerNode;
 
-    public aggressiveCaching: AggressiveCacheOptions = null;
+    private readonly _aggressiveCaching = new AsyncLocalStorage<AggressiveCacheOptions | null>();
+
+    /**
+     * Aggressive caching options of the current async flow, set by DocumentStore.aggressivelyCacheFor.
+     */
+    public get aggressiveCaching(): AggressiveCacheOptions | null {
+        return this._aggressiveCaching.getStore() ?? null;
+    }
+
+    /**
+     * Runs the action, and everything it starts, with the given aggressive caching options.
+     */
+    public withAggressiveCaching<T>(options: AggressiveCacheOptions | null, action: () => T): T {
+        return this._aggressiveCaching.run(options, action);
+    }
 
     private _updateTopologyTimer: Timer;
 
@@ -1086,6 +1101,9 @@ export class RequestExecutor implements IDisposable {
 
         let url: string;
         const req = this._createRequest(chosenNode, command, u => url = u);
+        if (!req) {
+            return; // the command answered from the cache (a fully cached multi-get)
+        }
 
         const controller = new AbortController();
 
@@ -1359,13 +1377,17 @@ export class RequestExecutor implements IDisposable {
         const aggressiveCacheOptions = this.aggressiveCaching;
         if (aggressiveCacheOptions
             && cachedItem.age < aggressiveCacheOptions.duration
-            && !cachedItem.mightHaveBeenModified
+            && (!cachedItem.mightHaveBeenModified || aggressiveCacheOptions.mode !== "TrackChanges")
             && command.canCacheAggressively) {
             if (cachedItem.item.flags === "NotFound") {
                 // if this is a cached delete, we only respect it if it _came_ from an aggressively cached
                 // block, otherwise, we'll run the request again
+                if (!cachedItem.item.aggressivelyCached) {
+                    return false;
+                }
 
-                return false;
+                await command.setResponseFromCache(cachedValue);
+                return true;
             } else {
                 await command.setResponseFromCache(cachedValue);
                 return true;
@@ -1604,7 +1626,7 @@ export class RequestExecutor implements IDisposable {
         const readBody = () => readToEnd(responseBodyStream);
         switch (response.status) {
             case StatusCodes.NotFound: {
-                this._cache.setNotFound(url);
+                this._cache.setNotFound(url, !!this.aggressiveCaching);
 
                 return command.responseBehavior.tryHandleNotFound(command, response);
             }

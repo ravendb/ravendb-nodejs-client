@@ -23,8 +23,37 @@ import { ShardingConventions } from "./ShardingConventions.js";
 import { plural } from "../../ext/pluralize/pluralize.js";
 import { HttpCompressionAlgorithm } from "../../Http/HttpCompressionAlgorithm.js";
 import {RuntimeUtil} from "../../Utility/RuntimeUtil.js";
+import { AggressiveCacheMode } from "../../Http/AggressiveCacheOptions.js";
 
 export type IdConvention = (databaseName: string, entity: object) => Promise<string>;
+
+export class AggressiveCacheConventions {
+    private _duration: number = 24 * 60 * 60 * 1000;
+    private _mode: AggressiveCacheMode = "TrackChanges";
+
+    public constructor(private readonly _assertNotFrozen: () => void) {
+    }
+
+    /** Milliseconds a cached response is served without asking the server. Default: one day. */
+    public get duration(): number {
+        return this._duration;
+    }
+
+    public set duration(value: number) {
+        this._assertNotFrozen();
+        this._duration = value;
+    }
+
+    /** Default: TrackChanges. */
+    public get mode(): AggressiveCacheMode {
+        return this._mode;
+    }
+
+    public set mode(value: AggressiveCacheMode) {
+        this._assertNotFrozen();
+        this._mode = value;
+    }
+}
 export type IValueForQueryConverter<T> =
     (fieldName: Field<T>, value: T, forRange: boolean, stringValue: (value: any) => void) => boolean;
 
@@ -90,6 +119,7 @@ export class DocumentConventions {
     private _waitForIndexesAfterSaveChangesTimeout: number | undefined;
     private _waitForReplicationAfterSaveChangesTimeout: number | undefined;
     private _waitForNonStaleResultsTimeout: number | undefined;
+    private readonly _aggressiveCache = new AggressiveCacheConventions(() => this._assertNotFrozen());
 
     private _loadBalancerContextSeed: number;
     private _loadBalanceBehavior: LoadBalanceBehavior;
@@ -480,6 +510,13 @@ export class DocumentConventions {
     public set waitForIndexesAfterSaveChangesTimeout(value: number) {
         this._assertNotFrozen();
         this._waitForIndexesAfterSaveChangesTimeout = value;
+    }
+
+    /**
+     * Defaults used by DocumentStore.aggressivelyCache().
+     */
+    public get aggressiveCache(): AggressiveCacheConventions {
+        return this._aggressiveCache;
     }
 
     public get waitForNonStaleResultsTimeout() {

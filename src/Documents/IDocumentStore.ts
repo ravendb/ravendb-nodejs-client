@@ -16,6 +16,7 @@ import { IDisposable } from "../Types/Contracts.js";
 import { MaintenanceOperationExecutor } from "./Operations/MaintenanceOperationExecutor.js";
 import { OperationExecutor } from "./Operations/OperationExecutor.js";
 import { RequestExecutor } from "../Http/RequestExecutor.js";
+import { AggressiveCacheMode } from "../Http/AggressiveCacheOptions.js";
 import { DocumentConventions } from "./Conventions/DocumentConventions.js";
 import { InMemoryDocumentSessionOperations } from "./Session/InMemoryDocumentSessionOperations.js";
 import { BulkInsertOperation } from "./BulkInsertOperation.js";
@@ -152,6 +153,13 @@ export interface DocumentStoreEventEmitter {
     removeListener(eventName: "executorsDisposed", eventHandler: (callback: () => void) => void): void;
 }
 
+export interface AggressivelyCacheForOptions {
+    /** Default: conventions.aggressiveCache.mode. */
+    mode?: AggressiveCacheMode;
+    /** Default: the store's database. */
+    database?: string;
+}
+
 export interface IDocumentStore extends IDisposable,
     SessionEventsProxy,
     DocumentStoreEventEmitter {
@@ -186,8 +194,27 @@ export interface IDocumentStore extends IDisposable,
      */
     changes(database: string, nodeTag: string): IDatabaseChanges;
 
-    // TBD 4.1 IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
-    // TBD 4.1 IDisposable AggressivelyCache(string database = null);
+    /**
+     * Runs the action with aggressive caching: responses cached by this store are served without asking the
+     * server for `duration` milliseconds. Only the action and what it starts are affected.
+     */
+    aggressivelyCacheFor<T>(duration: number, action: () => T | Promise<T>): Promise<T>;
+    /** @see aggressivelyCacheFor */
+    aggressivelyCacheFor<T>(duration: number, options: AggressivelyCacheForOptions, action: () => T | Promise<T>): Promise<T>;
+
+    /**
+     * Runs the action with aggressive caching, using conventions.aggressiveCache for duration and mode.
+     */
+    aggressivelyCache<T>(action: () => T | Promise<T>): Promise<T>;
+    /** @see aggressivelyCache */
+    aggressivelyCache<T>(database: string, action: () => T | Promise<T>): Promise<T>;
+
+    /**
+     * Runs the action without aggressive caching, also inside an aggressivelyCache* action.
+     */
+    disableAggressiveCaching<T>(action: () => T | Promise<T>): Promise<T>;
+    /** @see disableAggressiveCaching */
+    disableAggressiveCaching<T>(database: string, action: () => T | Promise<T>): Promise<T>;
 
     /**
      * Setup the context for no aggressive caching
