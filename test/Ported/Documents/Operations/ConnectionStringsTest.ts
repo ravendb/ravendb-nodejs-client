@@ -171,6 +171,30 @@ describe("ConnectionStringsTest", function () {
             .hasSize(0);
     });
 
+    it("canStoreElasticSearchEncodedApiKey", async () => {
+        const connectionString = Object.assign(new ElasticSearchConnectionString(), {
+            name: "es-encoded",
+            nodes: ["http://127.0.0.1:9200"],
+            authentication: {
+                apiKey: {
+                    encodedApiKey: "aWQ6c2VjcmV0"
+                }
+            }
+        });
+
+        await store.maintenance.send(new PutConnectionStringOperation(connectionString));
+
+        const result = await store.maintenance.send(new GetConnectionStringsOperation("es-encoded", "ElasticSearch"));
+        const apiKey = result.elasticSearchConnectionStrings["es-encoded"].authentication.apiKey;
+
+        assertThat(apiKey.encodedApiKey)
+            .isEqualTo("aWQ6c2VjcmV0");
+        assertThat(apiKey.apiKeyId)
+            .isNull();
+        assertThat(apiKey.apiKey)
+            .isNull();
+    });
+
     ((RavenTestContext.isRavenDbServerVersion("7.2") && !RavenTestContext.isPullRequest) ? it : it.skip)("connectionStringNamesKeepOriginalCasing", async () => {
         // Names are dictionary keys and must not be camel-cased by response deserialization,
         // including names containing dots (which break any single-path-segment ignore regex).
