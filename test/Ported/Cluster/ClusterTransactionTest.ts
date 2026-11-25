@@ -8,6 +8,7 @@ import {
 } from "../../../src/index.js";
 import { assertThat, assertThrows } from "../../Utils/AssertExtensions.js";
 import { COMPARE_EXCHANGE } from "../../../src/Constants.js";
+import { ClusterTransactionOperationsBase } from "../../../src/Documents/Session/ClusterTransactionOperationsBase.js";
 
 describe("ClusterTransactionTest", function () {
 
@@ -231,6 +232,30 @@ describe("ClusterTransactionTest", function () {
         val = await store.operations.send(new GetCompareExchangeValueOperation(compareExchangeKey, AtomicGuard));
         assertThat(val.value.locked)
             .isTrue();
+    });
+
+    it("cluster wide transaction when loading deleted doc should not including missing atomic gard", async () => {
+        let id: string;
+
+        {
+            const session = store.openSession({ transactionMode: "ClusterWide" });
+            const user = Object.assign(new User(), { name: "Test" });
+
+            await session.store(user);
+            await session.saveChanges();
+
+            session.delete(user);
+            await session.saveChanges();
+
+            id = user.id;
+        }
+
+        {
+            const session = store.openSession({ transactionMode: "ClusterWide" });
+            await session.load(id, User);
+            const clusterTransaction = session.advanced.clusterTransaction as unknown as ClusterTransactionOperationsBase;
+            assertThat(clusterTransaction.numberOfTrackedCompareExchangeValues).isEqualTo(0);
+        }
     });
 });
 

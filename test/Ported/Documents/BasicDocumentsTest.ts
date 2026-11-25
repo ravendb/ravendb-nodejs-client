@@ -4,9 +4,10 @@ import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 import {
     IDocumentStore,
     DocumentSession,
-    GetDocumentsCommand
+    GetDocumentsCommand,
+    InMemoryDocumentSessionOperations
 } from "../../../src/index.js";
-import { User, Person } from "../../Assets/Entities.js";
+import { User, Person, Employee } from "../../Assets/Entities.js";
 
 describe("Basic documents test", function () {
 
@@ -140,5 +141,26 @@ describe("Basic documents test", function () {
             assert.ok(doc2Properties.includes("@metadata"));
             assert.strictEqual(doc2Properties.length, 1);
         }
+    });
+
+    it("can calculate documents by entity count", async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new Employee(), { firstName: "Jerry" }), "employees/1-A");
+            await session.store(Object.assign(new Employee(), { firstName: "Egor" }), "employees/2-A");
+            await session.saveChanges();
+        }
+
+        const session = store.openSession({});
+        const jerry = await session.load("employees/1-A", Employee);
+        const egor = await session.load("employees/2-A", Employee);
+
+        const unitOfWork = session as unknown as InMemoryDocumentSessionOperations;
+        assert.strictEqual(unitOfWork.getNumberOfEntitiesInUnitOfWork(), 2);
+
+        session.advanced.evict(jerry);
+        session.advanced.evict(egor);
+
+        assert.strictEqual(unitOfWork.getNumberOfEntitiesInUnitOfWork(), 0);
     });
 });

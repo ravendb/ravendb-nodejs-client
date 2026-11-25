@@ -3,6 +3,7 @@ import { testContext, disposeTestDocumentStore } from "../Utils/TestUtil.js";
 
 import {
     IDocumentStore,
+    InMemoryDocumentSessionOperations,
 } from "../../src/index.js";
 import { User } from "../Assets/Entities.js";
 
@@ -98,5 +99,37 @@ describe("StoreTest", function () {
             assert.ok(key);
             assert.ok(iMetadataDictionary[key]);
         }
+    });
+
+    it("refresh stored document", async () => {
+        const outerSession = store.openSession();
+        const user = Object.assign(new User(), { name: "RavenDB" });
+        await outerSession.store(user, "users/1");
+        await outerSession.saveChanges();
+
+        const changeVector = outerSession.advanced.getChangeVectorFor(user);
+        const lastModified = outerSession.advanced.getLastModifiedFor(user).getTime();
+        assert.ok(changeVector);
+        assert.ok(!Number.isNaN(lastModified));
+
+        {
+            const innerSession = store.openSession();
+            const loadedUser = await innerSession.load("users/1", User);
+            loadedUser.age = 10;
+            await innerSession.saveChanges();
+        }
+
+        const docInfo = (outerSession as unknown as InMemoryDocumentSessionOperations).documentsById.getValue("users/1");
+        assert.ok(docInfo);
+
+        await outerSession.advanced.refresh(user);
+
+        const docInfoLastModified = new Date(docInfo.metadata["@last-modified"]).getTime();
+        assert.ok(docInfo.changeVector);
+        assert.ok(!Number.isNaN(docInfoLastModified));
+        assert.notStrictEqual(docInfo.changeVector, changeVector);
+        assert.notStrictEqual(docInfoLastModified, lastModified);
+        assert.notStrictEqual(outerSession.advanced.getChangeVectorFor(user), changeVector);
+        assert.notStrictEqual(outerSession.advanced.getLastModifiedFor(user).getTime(), lastModified);
     });
 });

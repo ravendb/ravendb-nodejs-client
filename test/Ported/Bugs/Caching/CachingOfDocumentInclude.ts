@@ -247,6 +247,67 @@ describe("CachingOfDocumentInclude", function () {
                 .isEqualTo(1);
         }
     });
+
+    it("will refresh result when main document changes", async () => {
+        {
+            const s = store.openSession();
+            await s.store(Object.assign(new User(), { name: "Ayende" }));
+            await s.store(Object.assign(new User(), { partnerId: "users/1-A" }));
+            await s.saveChanges();
+        }
+
+        {
+            const s = store.openSession();
+            await s.include("partnerId").load<User>("users/2-A");
+            await s.saveChanges();
+        }
+
+        {
+            const s = store.openSession();
+            const user = await s.include("partnerId").load<User>("users/2-A");
+            assertThat(s.advanced.requestExecutor.cache.numberOfItems)
+                .isEqualTo(1);
+            user.name = "Foo";
+            await s.saveChanges();
+        }
+
+        {
+            const s = store.openSession();
+            await s.include("partnerId").load<User>("users/2-A");
+            assertThat(s.advanced.requestExecutor.cache.numberOfItems)
+                .isEqualTo(1);
+        }
+    });
+
+    it("will refresh result when included document changes", async () => {
+        {
+            const s = store.openSession();
+            await s.store(Object.assign(new User(), { name: "Ayende" }));
+            await s.store(Object.assign(new User(), { partnerId: "users/1-A" }));
+            await s.saveChanges();
+        }
+
+        {
+            const s = store.openSession();
+            await s.include("partnerId").load<User>("users/2-A");
+        }
+
+        {
+            const s = store.openSession();
+            await s.include("partnerId").load<User>("users/2-A");
+            assertThat(s.advanced.requestExecutor.cache.numberOfItems)
+                .isEqualTo(1);
+            (await s.load<User>("users/1-A")).name = "foo";
+            await s.saveChanges();
+        }
+
+        {
+            const s = store.openSession();
+            await s.include("partnerId").load<User>("users/2-A");
+            assertThat(s.advanced.requestExecutor.cache.numberOfItems)
+                .isEqualTo(1);
+        }
+    });
 });
 
 class Product {
