@@ -65,6 +65,8 @@ import { TimeUtil } from "../../src/Utility/TimeUtil.js";
                 .isTrue();
             assertThat(backupStatus.status.isEncrypted)
                 .isFalse();
+            assertThat(backupStatus.status.lastRaftIndex.lastFullBackupEtag)
+                .isGreaterThan(0);
         } finally {
             rmSync(backupDir, { recursive: true, force: true });
         }
