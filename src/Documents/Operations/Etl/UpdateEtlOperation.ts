@@ -12,14 +12,16 @@ import { RaftIdGenerator } from "../../../Utility/RaftIdGenerator.js";
 export class UpdateEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateEtlOperationResult> {
     private readonly _taskId: number;
     private readonly _configuration: EtlConfiguration<T>;
+    private readonly _transformationsToReset: string[];
 
-    public constructor(taskId: number, configuration: EtlConfiguration<T>) {
+    public constructor(taskId: number, configuration: EtlConfiguration<T>, transformationsToReset?: string[]) {
         this._taskId = taskId;
         this._configuration = configuration;
+        this._transformationsToReset = transformationsToReset;
     }
 
     getCommand(conventions: DocumentConventions): RavenCommand<UpdateEtlOperationResult> {
-        return new UpdateEtlCommand(conventions, this._taskId, this._configuration);
+        return new UpdateEtlCommand(conventions, this._taskId, this._configuration, this._transformationsToReset);
     }
 
     public get resultType(): OperationResultType {
@@ -33,13 +35,16 @@ class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEt
     private readonly _conventions: DocumentConventions;
     private readonly _taskId: number;
     private readonly _configuration: EtlConfiguration<T>;
+    private readonly _transformationsToReset: string[];
 
-    public constructor(conventions: DocumentConventions, taskId: number, configuration: EtlConfiguration<T>) {
+    public constructor(conventions: DocumentConventions, taskId: number, configuration: EtlConfiguration<T>,
+                       transformationsToReset: string[]) {
         super();
 
         this._conventions = conventions;
         this._taskId = taskId;
         this._configuration = configuration;
+        this._transformationsToReset = transformationsToReset;
     }
 
     get isReadRequest(): boolean {
@@ -47,7 +52,10 @@ class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEt
     }
 
     createRequest(node: ServerNode): HttpRequestParameters {
-        const uri = node.url + "/databases/" + node.database + "/admin/etl?id=" + this._taskId;
+        let uri = node.url + "/databases/" + node.database + "/admin/etl?id=" + this._taskId;
+        for (const transformation of this._transformationsToReset ?? []) {
+            uri += "&reset=" + encodeURIComponent(transformation);
+        }
 
         const body = this._serializer.serialize(this._configuration.serialize(this._conventions));
         const headers = this._headers().typeAppJson().build();
