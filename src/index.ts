@@ -79,6 +79,8 @@ export * from "./ServerWide/Operations/Logs/GetLogsConfigurationOperation.js";
 export * from "./ServerWide/Operations/Logs/LogLevel.js";
 export * from "./ServerWide/Operations/Logs/LogFilter.js";
 export * from "./ServerWide/Operations/Logs/SetLogsConfigurationOperation.js";
+export * from "./ServerWide/Operations/TrafficWatch/GetTrafficWatchConfigurationOperation.js";
+export * from "./ServerWide/Operations/TrafficWatch/PutTrafficWatchConfigurationOperation.js";
 export * from "./ServerWide/Operations/Configuration/GetServerWideClientConfigurationOperation.js";
 export * from "./ServerWide/Operations/Configuration/GetServerWideBackupConfigurationsOperation.js";
 export * from "./ServerWide/Operations/Configuration/PutServerWideBackupConfigurationOperation.js";
