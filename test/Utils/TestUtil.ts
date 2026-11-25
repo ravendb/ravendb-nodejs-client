@@ -50,6 +50,7 @@ class TestServiceLocator extends RavenServerLocator {
     public getCommandArguments() {
         const cliOpts = [
             "--ServerUrl=http://127.0.0.1:0",
+            "--Backup.MaxNumberOfConcurrentBackups=4",
             "--Features.Availability=Experimental"
         ];
 
