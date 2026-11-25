@@ -10,5 +10,10 @@ export interface AiAgentToolQuery {
     query: string;
     parametersSampleObject?: string; // JSON example of parameters
     parametersSchema?: string; // JSON schema for parameters
+    /**
+     * Sends parametersSchema in strict mode; it must follow the provider's strict rules.
+     * A schema built from parametersSampleObject is always strict.
+     */
+    strict?: boolean;
     options?: AiAgentToolQueryOptions;
 }

@@ -235,6 +235,7 @@ export class GenAiConfiguration extends AbstractAiIntegrationConfiguration {
             Query: query.query,
             ParametersSampleObject: query.parametersSampleObject,
             ParametersSchema: query.parametersSchema,
+            Strict: query.strict ? true : undefined,
             Options: query.options ? {
                 AllowModelQueries: query.options.allowModelQueries,
                 AddToInitialContext: query.options.addToInitialContext
