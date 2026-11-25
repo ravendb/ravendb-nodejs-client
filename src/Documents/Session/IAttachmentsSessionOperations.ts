@@ -1,4 +1,5 @@
-import { AttachmentResult } from "../Attachments/index.js";
+import { AttachmentEnumeratorResult, AttachmentResult } from "../Attachments/index.js";
+import { AttachmentRequest } from "../Operations/Attachments/AttachmentRequest.js";
 import { IAttachmentsSessionOperationsBase } from "./IAttachmentsSessionOperationsBase.js";
 
 export interface IAttachmentsSessionOperations extends IAttachmentsSessionOperationsBase {
@@ -16,6 +17,12 @@ export interface IAttachmentsSessionOperations extends IAttachmentsSessionOperat
      * Returns the attachment by the entity and attachment name.
      */
     get(entity: object, name: string): Promise<AttachmentResult | null>;
+
+    /**
+     * Returns the requested attachments in a single request. Missing attachments are skipped.
+     * Each attachment's data stream is valid only until the next one is requested from the iterator.
+     */
+    get(attachments: AttachmentRequest[]): Promise<AsyncGenerator<AttachmentEnumeratorResult>>;
 
     /**
      * Returns the inclusive byte range [from, to] of the attachment by the document id and attachment name.

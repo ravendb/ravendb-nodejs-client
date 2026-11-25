@@ -1074,6 +1074,20 @@ attachment.data
 > <small>[get attachment](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Documents/ReadmeSamples.ts#L241)</small>  
 > <small>[can get & delete attachments](https://github.com/ravendb/ravendb-nodejs-client/blob/5c14565d0c307d22e134530c8d63b09dfddcfb5b/test/Ported/Attachments/AttachmentsSessionTest.ts#L133)</small>
 
+#### Get many attachments in a single request
+```javascript
+const attachments = await session.advanced.attachments.get([
+    new AttachmentRequest("users/1-A", "photo.png"),
+    new AttachmentRequest("users/2-A", "cv.pdf")
+]);
+
+// Missing attachments are skipped. Each attachment's data stream
+// is valid only until the next attachment is requested.
+for await (const { details, data } of attachments) {
+    await pipeline(data, fs.createWriteStream(details.name));
+}
+```
+
 #### Check if attachment exists
 ```javascript
 await session.advanced.attachments.exists(doc.id, "photo.png");

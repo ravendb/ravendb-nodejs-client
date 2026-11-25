@@ -2,8 +2,10 @@ import { DocumentSessionAttachmentsBase } from "./DocumentSessionAttachmentsBase
 import { IAttachmentsSessionOperations } from "./IAttachmentsSessionOperations.js";
 import { InMemoryDocumentSessionOperations } from "./InMemoryDocumentSessionOperations.js";
 import { HeadAttachmentCommand } from "../Commands/HeadAttachmentCommand.js";
-import { AttachmentResult } from "../Attachments/index.js";
+import { AttachmentEnumeratorResult, AttachmentResult } from "../Attachments/index.js";
 import { GetAttachmentOperation } from "../Operations/Attachments/GetAttachmentOperation.js";
+import { GetAttachmentsOperation } from "../Operations/Attachments/GetAttachmentsOperation.js";
+import { AttachmentRequest } from "../Operations/Attachments/AttachmentRequest.js";
 
 export class DocumentSessionAttachments
     extends DocumentSessionAttachmentsBase implements IAttachmentsSessionOperations {
@@ -21,9 +23,16 @@ export class DocumentSessionAttachments
 
     public async get(entity: object, name: string): Promise<AttachmentResult>;
     public async get(documentId: string, name: string): Promise<AttachmentResult>;
+    public async get(attachments: AttachmentRequest[]): Promise<AsyncGenerator<AttachmentEnumeratorResult>>;
     public async get(
-        idOrEntity: string | object,
-        name: string): Promise<AttachmentResult> {
+        idOrEntity: string | object | AttachmentRequest[],
+        name?: string): Promise<AttachmentResult | AsyncGenerator<AttachmentEnumeratorResult>> {
+        if (Array.isArray(idOrEntity)) {
+            const operation = new GetAttachmentsOperation(idOrEntity, "Document");
+            this._session.incrementRequestCount();
+            return this._session.operations.send(operation, this._sessionInfo);
+        }
+
         const operation: GetAttachmentOperation =
             new GetAttachmentOperation(this._getDocumentId(idOrEntity), name, "Document", null);
         this._session.incrementRequestCount();
