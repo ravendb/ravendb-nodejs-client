@@ -1,4 +1,7 @@
-import { IDocumentStore, TypedTimeSeriesEntry } from "../../../src/index.js";
+import { Readable } from "node:stream";
+import { randomBytes, randomInt } from "node:crypto";
+import { GetCountersOperation, IDocumentStore, TypedTimeSeriesEntry } from "../../../src/index.js";
+import { readToBuffer } from "../../../src/Utility/StreamUtil.js";
 import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
 import { User } from "../../Assets/Entities.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
@@ -540,6 +543,58 @@ describe("TypedBulkInsert", function () {
                 .get();
 
             await validateValues(baseLine, vals);
+        }
+    });
+
+    it("canHaveBulkInsertWithDocumentsAndAttachmentAndCountersAndTypedTimeSeries", async function () {
+        const count = 100;
+        const size = 64 * 1024;
+        const baseline = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate()));
+        const attachments = new Map<string, { name: string, bytes: Buffer }>();
+
+        const bulkInsert = store.bulkInsert();
+        try {
+            for (let i = 0; i < count; i++) {
+                const id = "name/" + i;
+                await bulkInsert.store(Object.assign(new User(), { name: "Name_" + i }), id);
+            }
+
+            for (let i = 0; i < count; i++) {
+                const id = "name/" + i;
+                const bytes = randomBytes(size);
+                const name = id + "_" + randomInt(100);
+                attachments.set(id, { name, bytes });
+
+                await bulkInsert.attachmentsFor(id).store(name, Readable.from([bytes]));
+
+                await bulkInsert.countersFor(id).increment(name);
+
+                const timeSeriesBulkInsert = bulkInsert.timeSeriesFor(HeartRateMeasure, id, "HeartRate");
+                try {
+                    await timeSeriesBulkInsert.append(addMinutes(baseline, 1), HeartRateMeasure.create(59), "watches/fitBit");
+                } finally {
+                    timeSeriesBulkInsert.dispose();
+                }
+            }
+        } finally {
+            await bulkInsert.finish();
+        }
+
+        for (const [id, { name, bytes }] of attachments) {
+            const session = store.openSession();
+
+            const timeSeriesVal = (await session.timeSeriesFor(id, "HeartRate", HeartRateMeasure).get())[0];
+            assertThat(timeSeriesVal.value.heartRate).isEqualTo(59);
+            assertThat(timeSeriesVal.tag).isEqualTo("watches/fitBit");
+            assertThat(timeSeriesVal.timestamp.getTime()).isEqualTo(addMinutes(baseline, 1).getTime());
+
+            const attachment = await session.advanced.attachments.get(id, name);
+            attachment.data.resume();
+            assertThat((await readToBuffer(attachment.data)).equals(bytes)).isTrue();
+            attachment.dispose();
+
+            const counters = await store.operations.send(new GetCountersOperation(id, [name]));
+            assertThat(counters.counters[0].totalValue).isEqualTo(1);
         }
     });
 });
