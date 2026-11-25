@@ -261,6 +261,47 @@ _describe(
                         source.dispose();
                     }
                 });
+
+                _it("reports replication progress in the replication task info", async () => {
+                    let source: DocumentStore;
+                    let destination: DocumentStore;
+
+                    try {
+                        source = await testContext.getDocumentStore();
+                        try {
+                            destination = await testContext.getDocumentStore();
+
+                            const [{ taskId }] = await replication.setupReplication(source, destination);
+
+                            const session = source.openSession();
+                            await session.store(new User(), "users/1");
+                            await session.saveChanges();
+
+                            const getTask = async () => await source.maintenance.send(
+                                new GetOngoingTaskInfoOperation(taskId, "Replication")) as OngoingTaskReplication;
+
+                            await testContext.waitForValue(async () => {
+                                const task = await getTask();
+                                return !!task.lastAcceptedChangeVectorFromDestination
+                                    && task.lastAcceptedChangeVectorFromDestination === task.sourceDatabaseChangeVector;
+                            }, true);
+
+                            const ongoingTask = await getTask();
+
+                            assertThat(ongoingTask.fromToString)
+                                .contains(source.database)
+                                .contains(destination.database);
+                            assertThat(ongoingTask.lastDatabaseEtag)
+                                .isGreaterThan(0);
+                            assertThat(ongoingTask.lastSentEtag)
+                                .isEqualTo(ongoingTask.lastDatabaseEtag);
+                        } finally {
+                            destination.dispose();
+                        }
+                    } finally {
+                        source.dispose();
+                    }
+                });
             });
         });
     });
