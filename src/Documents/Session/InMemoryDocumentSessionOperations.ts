@@ -207,9 +207,9 @@ export abstract class InMemoryDocumentSessionOperations
 
     public maxNumberOfRequestsPerSession: number;
 
-    public useOptimisticConcurrency: boolean;
-
     private _optimisticConcurrencyMode: OptimisticConcurrencyMode;
+    private _useOptimisticConcurrencyWasSet: boolean = false;
+    private _optimisticConcurrencyModeWasSet: boolean = false;
 
     protected _deferredCommands: ICommandData[] = [];
 
@@ -259,7 +259,21 @@ export abstract class InMemoryDocumentSessionOperations
 
         this._optimisticConcurrencyMode = options.optimisticConcurrencyMode
             ?? this._requestExecutor.conventions.optimisticConcurrencyMode;
-        this.useOptimisticConcurrency = this._optimisticConcurrencyMode !== "None";
+
+        if (options.optimisticConcurrencyMode != null) {
+            this._optimisticConcurrencyModeWasSet = true;
+        }
+
+        if (options.transactionMode === "ClusterWide"
+            && options.optimisticConcurrencyMode != null && options.optimisticConcurrencyMode !== "None") {
+            throwError("InvalidOperationException",
+                `optimisticConcurrencyMode cannot be set to ${options.optimisticConcurrencyMode} when transactionMode is ClusterWide.`);
+        }
+
+        if (this.noTracking && this._optimisticConcurrencyMode !== "None") {
+            throwError("InvalidOperationException",
+                `optimisticConcurrencyMode cannot be set to ${this._optimisticConcurrencyMode} when noTracking is true.`);
+        }
         this.maxNumberOfRequestsPerSession = this._requestExecutor.conventions.maxNumberOfRequestsPerSession;
         this._generateEntityIdOnTheClient =
             new GenerateEntityIdOnTheClient(this._requestExecutor.conventions,
@@ -287,8 +301,35 @@ export abstract class InMemoryDocumentSessionOperations
     }
 
     public set optimisticConcurrencyMode(value: OptimisticConcurrencyMode) {
+        if (this._useOptimisticConcurrencyWasSet) {
+            throwError("InvalidOperationException",
+                "optimisticConcurrencyMode cannot be set when useOptimisticConcurrency was set. " +
+                "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        this._optimisticConcurrencyModeWasSet = true;
         this._optimisticConcurrencyMode = value;
-        this.useOptimisticConcurrency = value !== "None";
+    }
+
+    /**
+     * @deprecated useOptimisticConcurrency is obsolete and will be removed in the next major version. Please use optimisticConcurrencyMode instead.
+     */
+    public get useOptimisticConcurrency(): boolean {
+        return this._optimisticConcurrencyMode !== "None";
+    }
+
+    /**
+     * @deprecated useOptimisticConcurrency is obsolete and will be removed in the next major version. Please use optimisticConcurrencyMode instead.
+     */
+    public set useOptimisticConcurrency(value: boolean) {
+        if (this._optimisticConcurrencyModeWasSet) {
+            throwError("InvalidOperationException",
+                "useOptimisticConcurrency cannot be set when optimisticConcurrencyMode was set. " +
+                "Please use optimisticConcurrencyMode instead of useOptimisticConcurrency.");
+        }
+
+        this._useOptimisticConcurrencyWasSet = true;
+        this._optimisticConcurrencyMode = value ? "Writes" : "None";
     }
 
     protected abstract _generateId(entity: object): Promise<string>;
@@ -1564,7 +1605,7 @@ export abstract class InMemoryDocumentSessionOperations
             return;
         }
 
-        if (this.useOptimisticConcurrency) {
+        if (this._optimisticConcurrencyMode !== "None") {
             throwError(
                 "InvalidOperationException",
                 "useOptimisticConcurrency is not supported with TransactionMode set to "
@@ -1723,7 +1764,7 @@ export abstract class InMemoryDocumentSessionOperations
                         result.onSuccess.removeDocumentById(documentInfo.id);
                     }
 
-                    if (!this.useOptimisticConcurrency) {
+                    if (this._optimisticConcurrencyMode === "None") {
                         changeVector = null;
                     }
                     const beforeDeleteEventArgs =
@@ -1796,7 +1837,7 @@ export abstract class InMemoryDocumentSessionOperations
                 result.onSuccess.updateEntityDocumentInfo(entityValue, document);
 
                 let changeVector: string;
-                if (this.useOptimisticConcurrency) {
+                if (this._optimisticConcurrencyMode !== "None") {
                     if (entityValue.concurrencyCheckMode !== "Disabled") {
                         // if the user didn't provide a change vector, we'll test for an empty one
                         changeVector = entityValue.changeVector || "";
@@ -1945,7 +1986,7 @@ export abstract class InMemoryDocumentSessionOperations
             this._knownMissingIds.addWithoutTracking(id);
         }
 
-        changeVector = this.useOptimisticConcurrency ? changeVector : null;
+        changeVector = this._optimisticConcurrencyMode !== "None" ? changeVector : null;
 
         if (this._countersByDocId) {
             this._countersByDocId.delete(id);
