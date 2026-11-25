@@ -1,6 +1,7 @@
 import { Readable } from "node:stream";
 import { acquireSemaphore, SemaphoreAcquisitionContext } from "../Utility/SemaphoreUtil.js";
 import { getLogger, ILogger } from "../Utility/LogUtil.js";
+import { getTopologyHash, TopologyCacheKind, tryLoadTopology, trySaveTopology } from "./TopologyLocalCache.js";
 import { Timer } from "../Primitives/Timer.js";
 import { ServerNode } from "./ServerNode.js";
 import { RavenCommand, ResponseDisposeHandling } from "./RavenCommand.js";
@@ -235,6 +236,8 @@ export class RequestExecutor implements IDisposable {
     protected _clientConfigurationEtag: string = "0";
 
     protected _topologyEtag: number = 0;
+    protected _topologyHash: string;
+    protected readonly _topologyCacheKind: TopologyCacheKind = "database";
 
     private readonly _conventions: DocumentConventions;
 
@@ -694,6 +697,8 @@ export class RequestExecutor implements IDisposable {
             });
 
             const topology = getTopology.result;
+            await trySaveTopology(this._topologyCacheKind, this._topologyHash, this._databaseName, topology, this.conventions);
+
             if (!this._nodeSelector) {
                 this._nodeSelector = new NodeSelector(topology);
 
@@ -938,6 +943,9 @@ export class RequestExecutor implements IDisposable {
 
     protected async _firstTopologyUpdate(inputUrls: string[], applicationIdentifier?: string): Promise<void> {
         const initialUrls: string[] = RequestExecutor.validateUrls(inputUrls, this._authOptions);
+        if (!this.conventions.disableTopologyCache) {
+            this._topologyHash = getTopologyHash(initialUrls);
+        }
 
         const topologyUpdateErrors: { url: string, error: Error | string }[] = [];
 
@@ -972,14 +980,24 @@ export class RequestExecutor implements IDisposable {
         const tryUpdateTopologyOnAllNodes = async () => {
             for (const url of initialUrls) {
                 if (await tryUpdateTopology(url, this._databaseName)) {
-                    return;
+                    return true;
                 }
             }
 
             return false;
         };
 
-        await tryUpdateTopologyOnAllNodes();
+        if (!await tryUpdateTopologyOnAllNodes()) {
+            const cachedTopology = await tryLoadTopology(this._topologyCacheKind, this._topologyHash, this._databaseName, this.conventions);
+            if (cachedTopology) {
+                this._nodeSelector?.dispose();
+                this._nodeSelector = new NodeSelector(cachedTopology);
+                this._topologyEtag = RequestExecutor.INITIAL_TOPOLOGY_ETAG;
+                this._initializeUpdateTopologyTimer();
+                return;
+            }
+        }
+
         const topology = new Topology();
         topology.etag = this._topologyEtag;
 
