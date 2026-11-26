@@ -2,7 +2,9 @@ import {
     AddGenAiOperation,
     GenAiConfiguration,
     GenAiTransformation,
+    GetOngoingTaskInfoOperation,
     IDocumentStore,
+    OngoingTaskGenAi,
     PutConnectionStringOperation,
     StartingPointChangeVector,
     UpdateGenAiOperation
@@ -102,6 +104,37 @@ import {AiConnectionString, OpenAiSettings} from "../../../../src/Documents/Oper
         assertThat(updateResult).isNotNull();
         assertThat(updateResult.taskId).isEqualTo(addResult.taskId + 1);
         assertThat(updateResult.raftCommandIndex).isGreaterThan(0);
+    });
+
+    it("canUpdateGenAiEtlTaskUsingConfigurationFromOngoingTaskInfo", async () => {
+        const csName = await putAiConnectionString(store);
+
+        const config = createBaseGenAiConfiguration(csName);
+        config.prompt = "Enrich user document: {{context}}";
+        config.sampleObject = JSON.stringify({result: "sample"});
+        config.updateScript = "function update(doc, result) { doc.genai = result; return doc; }";
+
+        const addResult = await store.maintenance.send(new AddGenAiOperation(config));
+
+        const task = await store.maintenance.send(
+            new GetOngoingTaskInfoOperation(addResult.taskId, "GenAi")) as OngoingTaskGenAi;
+
+        assertThat(task.connectionStringName).isEqualTo(csName);
+        assertThat(task.configuration instanceof GenAiConfiguration).isTrue();
+        assertThat(task.configuration.genAiTransformation.validateScript()).isNull();
+        assertThat(task.configuration.validate().length).isEqualTo(0);
+
+        task.configuration.prompt = "Updated prompt: {{context}}";
+
+        const updateResult = await store.maintenance.send(
+            new UpdateGenAiOperation(task.taskId, task.configuration));
+
+        const updatedTask = await store.maintenance.send(
+            new GetOngoingTaskInfoOperation(updateResult.taskId, "GenAi")) as OngoingTaskGenAi;
+
+        assertThat(updatedTask.configuration.prompt).isEqualTo("Updated prompt: {{context}}");
+        assertThat(updatedTask.configuration.identifier).isEqualTo(config.identifier);
+        assertThat(updatedTask.configuration.genAiTransformation.script).isEqualTo(config.genAiTransformation.script);
     });
 
     it("cannotCreateGenAiEtlWithoutSchemaOrSampleObject", async () => {
