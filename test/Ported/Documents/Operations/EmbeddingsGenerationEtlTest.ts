@@ -6,6 +6,7 @@ import {
     EmbeddingsGenerationConfiguration,
     GetOngoingTaskInfoOperation,
     IDocumentStore,
+    OngoingTaskEmbeddingsGeneration,
     PutConnectionStringOperation,
     UpdateEmbeddingsGenerationOperation
 } from "../../../../src/index.js";
@@ -392,6 +393,59 @@ import {assertThat} from "../../../Utils/AssertExtensions.js";
         assertThat(task.taskId).isEqualTo(taskId);
         assertThat(task.taskType).isEqualTo("EmbeddingsGeneration");
         assertThat(task.taskName).isEqualTo(config.name);
+    });
+
+    it("can update embeddings generation task using configuration from ongoing task info", async () => {
+        const csName = await putEmbeddingsConnectionString(store);
+
+        const config = new EmbeddingsGenerationConfiguration();
+        config.name = "Products Embeddings Reprocess Test";
+        config.collection = "Products";
+        config.connectionStringName = csName;
+        config.identifier = config.generateIdentifier();
+        config.embeddingsPathConfigurations = [
+            {
+                path: "Description",
+                chunkingOptions: {
+                    chunkingMethod: "PlainTextSplit",
+                    maxTokensPerChunk: 256,
+                    overlapTokens: 0
+                }
+            }
+        ];
+        config.chunkingOptionsForQuerying = {
+            chunkingMethod: "PlainTextSplit",
+            maxTokensPerChunk: 256,
+            overlapTokens: 0
+        };
+        config.embeddingsCacheExpiration = 30 * 24 * 60 * 60 * 1000;
+
+        const addResult = await store.maintenance.send(new AddEmbeddingsGenerationOperation(config));
+
+        const task = await store.maintenance.send(
+            new GetOngoingTaskInfoOperation(addResult.taskId, "EmbeddingsGeneration")) as OngoingTaskEmbeddingsGeneration;
+
+        assertThat(task.connectionStringName).isEqualTo(csName);
+        assertThat(task.configuration instanceof EmbeddingsGenerationConfiguration).isTrue();
+        assertThat(task.configuration.storeChunkText).isFalse();
+        assertThat(task.configuration.embeddingsCacheExpiration).isEqualTo(config.embeddingsCacheExpiration);
+
+        task.configuration.storeChunkText = true;
+
+        const updateResult = await store.maintenance.send(
+            new UpdateEmbeddingsGenerationOperation(task.taskId, task.configuration));
+
+        const updatedTask = await store.maintenance.send(
+            new GetOngoingTaskInfoOperation(updateResult.taskId, "EmbeddingsGeneration")) as OngoingTaskEmbeddingsGeneration;
+
+        assertThat(updatedTask.configuration.storeChunkText).isTrue();
+        assertThat(updatedTask.configuration.identifier).isEqualTo(config.identifier);
+        assertThat(updatedTask.configuration.quantization).isEqualTo(config.quantization);
+        assertThat(updatedTask.configuration.embeddingsCacheExpiration).isEqualTo(config.embeddingsCacheExpiration);
+        assertThat(updatedTask.configuration.embeddingsCacheForQueryingExpiration).isEqualTo(config.embeddingsCacheForQueryingExpiration);
+        assertThat(updatedTask.configuration.embeddingsPathConfigurations.length).isEqualTo(1);
+        assertThat(updatedTask.configuration.embeddingsPathConfigurations[0].path).isEqualTo("Description");
+        assertThat(updatedTask.configuration.embeddingsPathConfigurations[0].chunkingOptions.maxTokensPerChunk).isEqualTo(256);
     });
 });
 
