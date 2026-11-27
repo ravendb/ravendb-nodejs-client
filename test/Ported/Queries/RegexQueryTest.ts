@@ -1,4 +1,5 @@
 import assert from "node:assert"
+import { milliseconds } from "date-fns";
 import { testContext, disposeTestDocumentStore } from "../../Utils/TestUtil.js";
 
 import {
@@ -40,6 +41,24 @@ describe("Regex query", function () {
 
         const result = await query.all();
         assert.strictEqual(result.length, 4);
+    });
+
+    it("queries with regex should work", async () => {
+        const session = store.openSession();
+        const res = await session.advanced
+            .rawQuery("from RegexMes as r where Regex(r.text,\"^[a-z ]{2,4}love\")", RegexMe)
+            .waitForNonStaleResults(milliseconds({ minutes: 3 }))
+            .all();
+        assert.strictEqual(res.length, 4);
+    });
+
+    it("queries with regex and escaped chars should work", async () => {
+        const session = store.openSession();
+        const res = await session.advanced
+            .rawQuery("from RegexMes as r where Regex(r.text,\"^(\\\\w+\\\\s+){4}\\\\w+$\")", RegexMe)
+            .waitForNonStaleResults(milliseconds({ minutes: 3 }))
+            .all();
+        assert.strictEqual(res.length, 1);
     });
 });
 

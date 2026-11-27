@@ -837,3 +837,257 @@ import { delay } from "../../src/Utility/PromiseUtil.js";
         }
     })
 });
+
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RevisionsTests", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
+
+    it("CanGetNullForNotExistsDocument", async () => {
+        await setupDefaultRevisions(store);
+
+        const session = store.openSession();
+        const revisions = await session.advanced.revisions.getFor<User>("users/1");
+        assert.deepStrictEqual(revisions, []);
+
+        const metadata = await session.advanced.revisions.getMetadataFor("users/1");
+        assert.deepStrictEqual(metadata, []);
+    });
+
+    it("WillCreateValidRevisionWhenCompressionDocumentWasSaved", async () => {
+        const user = new User();
+        user.name = "1".repeat(4096 * 2);
+
+        await setupDefaultRevisions(store);
+
+        {
+            const session = store.openSession();
+            await session.store(user);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const actualUser = await session.load(user.id, User);
+            assertThat(actualUser.name).isEqualTo(user.name);
+
+            const users = await session.advanced.revisions.getFor(user.id, { documentType: User });
+            assertThat(users).hasSize(1);
+            assertThat(users[0].name).isEqualTo(user.name);
+        }
+    });
+
+    it("WillDeleteOldRevisions", async () => {
+        const company = new Company();
+        company.name = "Company #1";
+
+        await setupDefaultRevisions(store);
+
+        {
+            const session = store.openSession();
+            await session.store(company);
+            await session.saveChanges();
+            for (let i = 0; i < 10; i++) {
+                company.name = "Company #2: " + i;
+                await session.saveChanges();
+            }
+        }
+
+        const session = store.openSession();
+        const revisions = await session.advanced.revisions.getFor(company.id, { documentType: Company });
+        assertThat(revisions).hasSize(5);
+        assertThat(revisions[0].name).isEqualTo("Company #2: 9");
+        assertThat(revisions[4].name).isEqualTo("Company #2: 5");
+    });
+
+    it("RevisionsOrder", async () => {
+        await setupDefaultRevisions(store);
+
+        for (const name of ["Hibernating", "Hibernating Rhinos", "Hibernating Rhinos - RavenDB"]) {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name }), "users/1");
+            await session.store(Object.assign(new User(), { name: name + "11" }), "users/11");
+            await session.saveChanges();
+        }
+
+        const session = store.openSession();
+        const users = await session.advanced.revisions.getFor("users/1", { documentType: User });
+        assert.deepStrictEqual(users.map(x => x.name), ["Hibernating Rhinos - RavenDB", "Hibernating Rhinos", "Hibernating"]);
+    });
+
+    it("CanGetCountersSnapshotInRevisions", async () => {
+        await setupDefaultRevisions(store);
+
+        {
+            const session = store.openSession();
+            await session.store(new Company(), "companies/1-A");
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1-A", Company);
+
+            company.name = "HR";
+            await session.saveChanges();
+
+            session.countersFor(company).increment("Likes", 100);
+            await session.saveChanges();
+
+            // no revision for this one
+            session.countersFor(company).increment("Likes", 50);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const companiesRevisions = await session.advanced.revisions.getFor("companies/1-A", { documentType: Company });
+            assertThat(companiesRevisions).hasSize(3);
+            const metadatas = companiesRevisions.map(c => session.advanced.getMetadataFor(c));
+
+            assertThat(companiesRevisions[0].name).isEqualTo("HR");
+            assert.deepStrictEqual({ ...metadatas[0][CONSTANTS.Documents.Metadata.REVISION_COUNTERS] }, { Likes: 100 });
+
+            assertThat(companiesRevisions[1].name).isEqualTo("HR");
+            assert.ok(!(CONSTANTS.Documents.Metadata.REVISION_COUNTERS in metadatas[1]));
+
+            assert.ok(companiesRevisions[2].name == null);
+            assert.ok(!(CONSTANTS.Documents.Metadata.REVISION_COUNTERS in metadatas[2]));
+        }
+
+        {
+            const session = store.openSession();
+            const company = await session.load("companies/1-A", Company);
+
+            company.name = "Hibernating Rhinos";
+            await session.saveChanges();
+
+            session.countersFor(company).increment("Dislikes", 20);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const companiesRevisions = await session.advanced.revisions.getFor("companies/1-A", { documentType: Company });
+            assertThat(companiesRevisions).hasSize(5);
+            const metadatas = companiesRevisions.map(c => session.advanced.getMetadataFor(c));
+
+            assertThat(companiesRevisions[0].name).isEqualTo("Hibernating Rhinos");
+            assert.deepStrictEqual({ ...metadatas[0][CONSTANTS.Documents.Metadata.REVISION_COUNTERS] }, { Likes: 150, Dislikes: 20 });
+
+            assertThat(companiesRevisions[1].name).isEqualTo("Hibernating Rhinos");
+            assert.deepStrictEqual({ ...metadatas[1][CONSTANTS.Documents.Metadata.REVISION_COUNTERS] }, { Likes: 150 });
+
+            assertThat(companiesRevisions[2].name).isEqualTo("HR");
+            assert.deepStrictEqual({ ...metadatas[2][CONSTANTS.Documents.Metadata.REVISION_COUNTERS] }, { Likes: 100 });
+
+            assertThat(companiesRevisions[3].name).isEqualTo("HR");
+            assert.ok(!(CONSTANTS.Documents.Metadata.REVISION_COUNTERS in metadatas[3]));
+
+            assert.ok(companiesRevisions[4].name == null);
+            assert.ok(!(CONSTANTS.Documents.Metadata.REVISION_COUNTERS in metadatas[4]));
+        }
+    });
+
+    it("GetRevisionsByIdShouldGetNotModifiedStatus", async () => {
+        const company = new Company();
+        company.name = "Company Name";
+
+        await setupDefaultRevisions(store);
+
+        {
+            const session = store.openSession();
+            await session.store(company);
+            await session.saveChanges();
+        }
+
+        {
+            const session = store.openSession();
+            const company2 = await session.load(company.id, Company);
+            company2.name = "Hibernating Rhinos";
+            await session.saveChanges();
+        }
+
+        const session = store.openSession();
+        let status: number;
+        const url = "/revisions?&id=" + encodeURIComponent(company.id);
+        session.advanced.requestExecutor.on("succeedRequest", args => {
+            if (args.url.includes(url)) {
+                status = args.response.status;
+            }
+        });
+
+        const maxDate = new Date("9999-12-31T23:59:59.999Z");
+
+        let revision = await session.advanced.revisions.get(company.id, maxDate, Company);
+        assertThat(revision).isNotNull();
+        assert.notStrictEqual(status, 304);
+
+        revision = await session.advanced.revisions.get(company.id, maxDate, Company);
+        assertThat(revision).isNotNull();
+        assertThat(status).isEqualTo(304);
+    });
+
+    it("GetRevisionsByChangeVectorsShouldGetNotModifiedStatus", async () => {
+        const id = "users/1";
+        await setupDefaultRevisions(store);
+
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Fitzchak" }), id);
+            await session.saveChanges();
+        }
+
+        for (let i = 0; i < 10; i++) {
+            const session = store.openSession();
+            const user = await session.load(id, User);
+            user.name = "Fitzchak " + i;
+            await session.saveChanges();
+        }
+
+        const session = store.openSession();
+        const revisionsMetadata = await session.advanced.revisions.getMetadataFor(id);
+        assertThat(revisionsMetadata).hasSize(11);
+
+        const changeVectors = revisionsMetadata.map(x => x[CONSTANTS.Documents.Metadata.CHANGE_VECTOR] as string);
+        changeVectors.push("NotExistsChangeVector");
+
+        let status: number;
+        const url = "/revisions?" + changeVectors.map(cv => "&changeVector=" + encodeURIComponent(cv)).join("");
+        session.advanced.requestExecutor.on("succeedRequest", args => {
+            if (args.url.includes(url)) {
+                status = args.response.status;
+            }
+        });
+
+        let revisions = await session.advanced.revisions.get(changeVectors, Company);
+        assertThat(revisions).isNotNull();
+        assert.notStrictEqual(status, 304);
+
+        revisions = await session.advanced.revisions.get(changeVectors, Company);
+        assertThat(revisions).isNotNull();
+        assertThat(status).isEqualTo(304);
+    });
+});
+
+async function setupDefaultRevisions(store: IDocumentStore) {
+    const collection = (config: Partial<RevisionsCollectionConfiguration>) =>
+        Object.assign(new RevisionsCollectionConfiguration(), config);
+
+    const configuration = new RevisionsConfiguration();
+    configuration.defaultConfig = collection({ disabled: false, minimumRevisionsToKeep: 5 });
+    configuration.collections = new Map([
+        ["Users", collection({ disabled: false, purgeOnDelete: true, minimumRevisionsToKeep: 123 })],
+        ["People", collection({ disabled: false, minimumRevisionsToKeep: 10 })],
+        ["Comments", collection({ disabled: true })],
+        ["Products", collection({ disabled: true })]
+    ]);
+
+    await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
+}

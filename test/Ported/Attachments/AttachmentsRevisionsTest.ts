@@ -5,7 +5,11 @@ import {
     DeleteDocumentCommand,
     GetStatisticsOperation, IDocumentSession,
     IDocumentStore, PutAttachmentOperation,
-    CONSTANTS
+    CONSTANTS,
+    AttachmentDetails,
+    ConfigureRevisionsOperation,
+    RevisionsCollectionConfiguration,
+    RevisionsConfiguration
 } from "../../../src/index.js";
 import { User } from "../../Assets/Entities.js";
 
@@ -252,3 +256,138 @@ import { User } from "../../Assets/Entities.js";
             }
         };
 });
+
+describe("AttachmentsRevisions", function () {
+
+    let store: IDocumentStore;
+
+    beforeEach(async function () {
+        store = await testContext.getDocumentStore();
+    });
+
+    afterEach(async () =>
+        await disposeTestDocumentStore(store));
+
+    it("ReplaceAttachmentsStreamAfterRevisionsEnabled", async () => {
+        await storeUserWithProfileAttachment();
+        await setupUsersRevisions(store);
+
+        const result = await store.operations.send(
+            new PutAttachmentOperation("users/1", "foo/bar", Buffer.from([10, 20, 30, 40, 50]), "ImGgE/jPeG"));
+        assertAttachmentDetails(result, "ImGgE/jPeG", HASH_10_20_30_40_50);
+
+        await assertAttachmentsPerRevision(2);
+        await assertAttachmentHashes({ [HASH_1_2_3]: 1, [HASH_10_20_30_40_50]: 2 });
+    });
+
+    it("ReplaceAttachmentsStreamAndDocumentAfterRevisionsEnabled", async () => {
+        await storeUserWithProfileAttachment();
+        await setupUsersRevisions(store);
+
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1", User);
+            user.age = 30;
+            session.advanced.attachments.store(user, "foo/bar", Buffer.from([10, 20, 30, 40, 50]), "ImGgE/jPeG");
+            await session.saveChanges();
+        }
+
+        await assertAttachmentsPerRevision(3);
+        await assertAttachmentHashes({ [HASH_1_2_3]: 2, [HASH_10_20_30_40_50]: 2 });
+    });
+
+    it("ModifyAttachmentsDetailsAfterRevisionsEnabled", async () => {
+        await storeUserWithProfileAttachment();
+        await setupUsersRevisions(store);
+
+        const result = await store.operations.send(
+            new PutAttachmentOperation("users/1", "foo/bar", Buffer.from([1, 2, 3]), "ImGgE/jPeG"));
+        assertAttachmentDetails(result, "ImGgE/jPeG", HASH_1_2_3);
+
+        await assertAttachmentsPerRevision(2);
+        await assertAttachmentHashes({ [HASH_1_2_3]: 3 });
+    });
+
+    it("ModifyAttachmentsDetailsAndDocumentAfterRevisionsEnabled", async () => {
+        await storeUserWithProfileAttachment();
+        await setupUsersRevisions(store);
+
+        {
+            const session = store.openSession();
+            const user = await session.load("users/1", User);
+            user.age = 30;
+            session.advanced.attachments.store(user, "foo/bar", Buffer.from([1, 2, 3]), "ImGgE/jPeG");
+            await session.saveChanges();
+        }
+
+        await assertAttachmentsPerRevision(3);
+        await assertAttachmentHashes({ [HASH_1_2_3]: 4 });
+    });
+
+    const HASH_1_2_3 = "EcDnm3HDl2zNDALRMQ4lFsCO3J2Lb1fM1oDWOk2Octo=";
+    const HASH_10_20_30_40_50 = "igkD5aEdkdAsAB/VpYm1uFlfZIP9M2LSUsD6f6RVW9U=";
+
+    const storeUserWithProfileAttachment = async () => {
+        {
+            const session = store.openSession();
+            await session.store(Object.assign(new User(), { name: "Fitzchak" }), "users/1");
+            await session.saveChanges();
+        }
+
+        const result = await store.operations.send(
+            new PutAttachmentOperation("users/1", "foo/bar", Buffer.from([1, 2, 3]), "image/png"));
+        assertAttachmentDetails(result, "image/png", HASH_1_2_3);
+    };
+
+    const assertAttachmentDetails = (result: AttachmentDetails, contentType: string, hash: string) => {
+        assert.strictEqual(result.name, "foo/bar");
+        assert.strictEqual(result.documentId, "users/1");
+        assert.strictEqual(result.contentType, contentType);
+        assert.strictEqual(result.hash, hash);
+    };
+
+    const assertAttachmentsPerRevision = async (expectedRevisions: number) => {
+        const session = store.openSession();
+        const revisions = await session.advanced.revisions.getMetadataFor("users/1");
+        assert.strictEqual(revisions.length, expectedRevisions);
+        for (const revision of revisions) {
+            assert.strictEqual(revision[CONSTANTS.Documents.Metadata.ATTACHMENTS].length, 1);
+        }
+    };
+
+    const assertAttachmentHashes = async (expectedCountsPerHash: Record<string, number>) => {
+        const session = store.openSession();
+        const user = await session.load("users/1", User);
+        const revisions = await session.advanced.revisions.getMetadataFor("users/1");
+
+        const countsPerHash: Record<string, number> = {};
+        for (const metadata of [session.advanced.getMetadataFor(user), ...revisions]) {
+            for (const attachment of metadata[CONSTANTS.Documents.Metadata.ATTACHMENTS]) {
+                countsPerHash[attachment.hash] = (countsPerHash[attachment.hash] ?? 0) + 1;
+            }
+        }
+        assert.deepStrictEqual(countsPerHash, expectedCountsPerHash);
+
+        const statistics = await store.maintenance.send(new GetStatisticsOperation());
+        const expectedCounts = Object.values(expectedCountsPerHash);
+        assert.strictEqual(statistics.countOfUniqueAttachments, expectedCounts.length);
+        assert.strictEqual(statistics.countOfAttachments, expectedCounts.reduce((a, b) => a + b, 0));
+    };
+});
+
+async function setupUsersRevisions(store: IDocumentStore) {
+    const configuration = new RevisionsConfiguration();
+    configuration.defaultConfig = Object.assign(new RevisionsCollectionConfiguration(), {
+        disabled: false,
+        minimumRevisionsToKeep: 5
+    });
+    configuration.collections = new Map([
+        ["Users", Object.assign(new RevisionsCollectionConfiguration(), {
+            disabled: false,
+            purgeOnDelete: true,
+            minimumRevisionsToKeep: 4
+        })]
+    ]);
+
+    await store.maintenance.send(new ConfigureRevisionsOperation(configuration));
+}
