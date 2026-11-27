@@ -8,10 +8,10 @@ import {
     PutServerWideClientConfigurationOperation,
     ReorderDatabaseMembersOperation
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-describe("ClientConfigurationTests", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("ClientConfigurationTests", function () {
 
     let store: DocumentStore;
 

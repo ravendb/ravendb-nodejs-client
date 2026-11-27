@@ -7,7 +7,7 @@ import {
     RevisionsCollectionConfiguration,
     RevisionsConfiguration
 } from "../../../src/index.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
 class User {
@@ -16,7 +16,7 @@ class User {
     public names: string[];
 }
 
-describe("RavenDB_23217", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_23217", function () {
 
     let store: IDocumentStore;
 

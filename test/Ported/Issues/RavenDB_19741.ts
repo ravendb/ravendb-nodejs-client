@@ -4,10 +4,10 @@ import {
     ToggleDatabasesStateOperation
 } from "../../../src/index.js";
 import { User } from "../../Assets/Entities.js";
-import { disposeTestDocumentStore, testContext } from "../../Utils/TestUtil.js";
+import { disposeTestDocumentStore, RavenTestContext, testContext } from "../../Utils/TestUtil.js";
 import { assertThat } from "../../Utils/AssertExtensions.js";
 
-describe("RavenDB_19741", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RavenDB_19741", function () {
 
     let store: IDocumentStore;
 

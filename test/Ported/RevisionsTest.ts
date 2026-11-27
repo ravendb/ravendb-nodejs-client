@@ -838,7 +838,7 @@ import { delay } from "../../src/Utility/PromiseUtil.js";
     })
 });
 
-describe("RevisionsTests", function () {
+(RavenTestContext.isPullRequest ? describe.skip : describe)("RevisionsTests", function () {
 
     let store: IDocumentStore;
 
